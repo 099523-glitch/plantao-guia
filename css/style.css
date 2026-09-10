@@ -2,6 +2,8 @@
    Guia de Plantao - layout manual (capa + sumario lateral + doc)
    Trocar as variaveis abaixo troca o tema inteiro.
    =========================================================== */
+/* O tema padrão é CLARO, independente do sistema operacional.
+   Escuro só com data-tema="escuro", por escolha do usuário. */
 :root{
   color-scheme:light;
   /* superfícies — cinzas frios, neutros */
@@ -32,19 +34,6 @@
   --raio:8px;
 }
 
-@media(prefers-color-scheme:dark){
-  :root:not([data-tema="claro"]){
-    color-scheme:dark;
-    --paper:#0C111A; --card:#131A26; --line:#232D3D; --line-forte:#33405480;
-    --ink:#E8EDF4; --ink-2:#C3CDDA; --steel:#8B98A9;
-    --acento:#6BA6E8; --acento-forte:#8CBDF2; --acento-suave:#152438; --acento-borda:#27405E;
-    --fire:#F27A70; --fire-bg:#8E1C16; --fire-soft:#2A1412;
-    --amber:#E8A33D; --amber-soft:#2B2113; --amber-ink:#F0B45C; --on-amber:#101828;
-    --verde:#5BC98B; --verde-soft:#10261B;
-    --inv-bg:#1B2534; --inv-fg:#E8EDF4; --inv-mut:#8B98A9;
-    --sombra:rgba(0,0,0,.3); --shadow:0 1px 2px rgba(0,0,0,.3);
-  }
-}
 :root[data-tema="escuro"]{
   color-scheme:dark;
   --paper:#0C111A; --card:#131A26; --line:#232D3D; --line-forte:#334054;
@@ -1855,14 +1844,7 @@ body.banc-cheia #btnBancTop::after{content:"";position:absolute;top:6px;right:6p
 .hc-sub,.qx-sub,.sc-lista,.res-sub,.pd-nota,.rx-obs,.ferr-calc-sub,.cc-n,
 .pasta-resumo,.hs-lista a i,.ferr-card-sub,.atb-nota,.fonte-linha,
 .gov-nota,.sint-txt span,.ferr-quando,.pd-cruz,.vazio-nota{font-size:13px}
-:root:not([data-tema="claro"]){color-scheme:dark}
-@media(prefers-color-scheme:dark){
-  :root:not([data-tema="claro"]){
-    --steel:#A3AFC0;          /* era #8B98A9: cinza secundário mais claro */
-    --ink-2:#D3DBE6;
-    --line:#2A3547;
-  }
-}
+/* contraste do escuro: cinza secundário mais claro que o do tema claro */
 :root[data-tema="escuro"]{--steel:#A3AFC0;--ink-2:#D3DBE6;--line:#2A3547}
 
 /* fundo invertido tem que virar junto com o tema, senão o escuro
@@ -1874,7 +1856,6 @@ body.banc-cheia #btnBancTop::after{content:"";position:absolute;top:6px;right:6p
   color:var(--inv-fg)}
 .ferr-toast{background:var(--inv-bg);color:var(--inv-fg)}
 /* texto sobre o cinza: escurece quando o cinza clareia (tema escuro) */
-@media(prefers-color-scheme:dark){:root:not([data-tema="claro"]){--on-steel:#0C111A}}
 :root[data-tema="escuro"]{--on-steel:#0C111A}
 /* nota do nó final: cinza sobre verde-claro ficava a 4,46 */
 .fx.fim .fx-nota{color:var(--ink-2)}

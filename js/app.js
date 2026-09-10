@@ -1195,11 +1195,9 @@
 
   /* ---------- modo noturno ---------- */
   var btnTema = document.getElementById('btnTema');
+  /* claro é o padrão; escuro é escolha, não herança do sistema */
   function temaEfetivo() {
-    var forcado = document.documentElement.dataset.tema;
-    if (forcado) return forcado;
-    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
-      ? 'escuro' : 'claro';
+    return document.documentElement.dataset.tema === 'escuro' ? 'escuro' : 'claro';
   }
   function pintaBotaoTema() {
     var escuro = temaEfetivo() === 'escuro';
@@ -1211,11 +1209,12 @@
     document.documentElement.dataset.tema = novo;
     try { localStorage.setItem('tema', novo); } catch (e) { /* modo privado */ }
     pintaBotaoTema();
+    /* a barra do navegador acompanha o tema escolhido */
+    var m = document.querySelector('meta[name="theme-color"]');
+    if (m) m.setAttribute('content', novo === 'escuro' ? '#0C111A' : '#F6F7F9');
+    if (window.UI && UI.anuncia) UI.anuncia(novo === 'escuro' ? 'Modo noturno ligado' : 'Modo claro');
   });
   pintaBotaoTema();
-  if (window.matchMedia) {
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', pintaBotaoTema);
-  }
 
   /* ---------- sumario: a area abre e fecha no mesmo clique ---------- */
   toc.addEventListener('click', function (e) {

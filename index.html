@@ -7,8 +7,7 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="description" content="Condutas, prescrições, antibióticos, escores e doses de emergência para o plantão. Funciona sem internet.">
 <meta name="color-scheme" content="light dark">
-<meta name="theme-color" content="#F6F7F9" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0C111A" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F6F7F9">
 
 <!-- fontes locais: nada de CDN, o plantão pode estar sem rede -->
 <link rel="preload" href="fontes-web/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
@@ -24,7 +23,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <script>
 /* antes de pintar a tela: evita o flash branco ao abrir no escuro */
-try{var t=localStorage.getItem('tema');if(t)document.documentElement.dataset.tema=t;}catch(e){}
+/* claro é o padrão; só aplica escuro se o usuário tiver escolhido */
+try{if(localStorage.getItem('tema')==='escuro'){document.documentElement.dataset.tema='escuro';
+  var m=document.querySelector('meta[name="theme-color"]');if(m)m.content='#0C111A';}}catch(e){}
 </script>
 </head>
 <body>
