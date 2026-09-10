@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Guia de Plantão — Condutas Clínicas</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="Condutas, prescrições, antibióticos, escores e doses de emergência para o plantão. Funciona sem internet.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#F6F7F9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0C111A" media="(prefers-color-scheme: dark)">
+
+<!-- fontes locais: nada de CDN, o plantão pode estar sem rede -->
+<link rel="preload" href="fontes-web/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/fontes.css">
+<link rel="stylesheet" href="css/style.css">
+
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icones/icone.svg" type="image/svg+xml">
+<link rel="icon" href="favicon.png" sizes="192x192" type="image/png">
+<link rel="apple-touch-icon" href="icones/icone-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Plantão">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<script>
+/* antes de pintar a tela: evita o flash branco ao abrir no escuro */
+try{var t=localStorage.getItem('tema');if(t)document.documentElement.dataset.tema=t;}catch(e){}
+</script>
+</head>
+<body>
+
+<header class="topo">
+  <div class="topo-inner">
+    <button type="button" class="icone menu-btn" id="btnMenu" aria-label="Abrir o sumário" aria-expanded="false"></button>
+
+    <a class="marca" href="#">Condutas de <span class="fire">Plantão</span></a>
+
+    <div class="topo-busca">
+      <input type="search" id="busca" class="busca" placeholder="Buscar conduta, quadro, droga ou dose  ( / )"
+             autocomplete="off" aria-label="Buscar em todo o guia">
+      <button type="button" class="busca-x" id="btnBuscaX" aria-label="Limpar a busca" hidden></button>
+    </div>
+
+    <div class="topo-acoes">
+      <!-- no celular o peso vira botão; a etiqueta mostra o valor quando há um -->
+      <button type="button" class="icone peso-btn" id="btnPeso" aria-label="Peso do paciente"
+              aria-expanded="false" title="Peso do paciente"></button>
+      <label class="peso-campo" id="pesoCampo" title="Peso do paciente: resolve as doses por quilo">
+        <input type="number" id="peso" inputmode="decimal" min="1" max="300" step="0.1" placeholder="—" aria-label="Peso do paciente em quilos">
+        <span>kg</span>
+      </label>
+      <button type="button" class="icone" id="btnBancTop" aria-label="Abrir o rascunho"
+              aria-controls="banc" aria-expanded="false" title="Rascunho"></button>
+      <button type="button" class="icone" id="btnTema" aria-label="Alternar modo noturno" title="Modo noturno"></button>
+      <button type="button" class="icone" id="btnAjustes" aria-label="Ajustes" title="Ajustes"></button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <nav class="side" id="side" aria-label="Sumário do guia">
+    <div class="side-topo">
+      <span class="toc-title">Sumário</span>
+      <button type="button" class="icone side-x" id="btnSideX" aria-label="Fechar o sumário"></button>
+    </div>
+    <div class="atalhos" id="atalhos"></div>
+    <div class="toc-links" id="toc"></div>
+  </nav>
+
+  <main class="doc" id="doc"></main>
+
+  <!-- rascunho: painel fixo à direita, em todas as telas -->
+  <aside class="banc ferr" id="banc" aria-label="Rascunho">
+    <div class="banc-alca" id="bancAlca" role="separator" aria-orientation="vertical"
+         aria-label="Largura do rascunho" tabindex="0"></div>
+    <div class="banc-topo">
+      <h2>Rascunho</h2>
+      <span class="banc-conta" id="bancConta"></span>
+      <button type="button" class="icone banc-x" id="btnBancX" aria-label="Fechar o rascunho" title="Fechar"></button>
+    </div>
+    <textarea class="banc-txt" id="ferrBancada" spellcheck="false"
+              placeholder="Toque em + num cartão para empilhar aqui. Dá para editar antes de copiar."></textarea>
+    <div class="banc-acoes">
+      <button type="button" class="ferr-btn peq forte" data-acao="banc-copiar">Copiar tudo</button>
+      <button type="button" class="ferr-btn peq" data-acao="banc-imprimir">Imprimir</button>
+      <button type="button" class="ferr-btn peq" data-acao="banc-limpar">Limpar</button>
+    </div>
+  </aside>
+  <button type="button" class="banc-aba" id="btnBanc" aria-controls="banc" aria-expanded="false">
+    <span class="banc-aba-ico"></span><span class="banc-aba-txt">Rascunho</span>
+    <span class="banc-aba-n" id="bancAbaN" hidden></span>
+  </button>
+</div>
+
+<div class="veu" id="veu" hidden></div>
+<p class="so-leitor" id="aviva" role="status" aria-live="polite" aria-atomic="true"></p>
+
+<div class="primeira" id="primeira" hidden>
+  <div class="primeira-caixa" role="dialog" aria-modal="true" aria-labelledby="primeiraT">
+    <h2 id="primeiraT">Antes de usar</h2>
+    <p>Este guia é <b>apoio à decisão</b>, em avaliação. O conteúdo clínico foi
+       redigido a partir de diretrizes brasileiras e <b>ainda não passou por
+       revisão médica formal</b>.</p>
+    <p>Confira dose, apresentação e a diretriz vigente antes de prescrever.
+       Não use como fonte única.</p>
+    <button type="button" class="ferr-btn forte" id="primeiraOk">Entendi</button>
+  </div>
+</div>
+
+<!-- ajustes -->
+<aside class="painel" id="ajustes" hidden aria-label="Ajustes">
+  <div class="painel-topo">
+    <h2>Ajustes</h2>
+    <button type="button" class="icone" id="btnAjustesX" aria-label="Fechar"></button>
+  </div>
+  <div class="painel-corpo">
+    <label class="opcao">
+      <input type="checkbox" id="optAutor">
+      <span><b>Modo autor</b>Mostra as condutas ainda não preenchidas e o contador de progresso. Desligado, o guia só exibe o que já está pronto.</span>
+    </label>
+    <label class="opcao">
+      <input type="checkbox" id="optResumo">
+      <span><b>Abrir condutas em resumo</b>Mostra só red flags, passo a passo, doses e prescrição. O resto fica atrás do botão “completo”.</span>
+    </label>
+
+    <label class="opcao">
+      <input type="checkbox" id="optConferir">
+      <span><b>Conferir antes de copiar</b>Mostra um checklist de peso, alergia, função renal, gestação e padronização antes de copiar prescrição ou antibiótico. Desligado por padrão.</span>
+    </label>
+
+    <div class="painel-sec">
+      <h3>Suas edições</h3>
+      <p>Tudo que você edita fica só neste aparelho. Exporte para levar a outro ou para não perder ao limpar o navegador.</p>
+      <div class="painel-acoes">
+        <button type="button" class="ferr-btn forte" id="btnExportar">Exportar backup</button>
+        <button type="button" class="ferr-btn" id="btnImportar">Importar backup</button>
+        <input type="file" id="arqImportar" accept="application/json,.json" hidden>
+      </div>
+      <p class="painel-conta" id="contaEdicoes"></p>
+    </div>
+
+    <div class="painel-sec">
+      <h3>Zerar</h3>
+      <p>Apaga todas as suas edições, favoritas e preferências deste aparelho, voltando ao conteúdo padrão.</p>
+      <div class="painel-acoes">
+        <button type="button" class="ferr-btn perigo" id="btnZerar">Apagar tudo deste aparelho</button>
+      </div>
+    </div>
+
+    <p class="painel-rodape">Apoio à decisão, não substitui o julgamento clínico.
+      Conferir sempre dose e indicação na diretriz vigente e na padronização da unidade.</p>
+  </div>
+</aside>
+
+<nav class="tabbar" aria-label="Navegação">
+  <a href="#" data-nav="home"><span data-ico="lupa"></span>Buscar</a>
+  <a href="#cardio" data-nav="guia"><span data-ico="livro"></span>Guia</a>
+  <a href="#presc" data-nav="presc"><span data-ico="receita"></span><b class="rot-longo">Prescrições</b><b class="rot-curto">Receitas</b></a>
+  <a href="#atb" data-nav="atb"><span data-ico="micro"></span><b class="rot-longo">Antibióticos</b><b class="rot-curto">ATB</b></a>
+  <button type="button" class="tab-mais" id="btnMais"><span data-ico="menu"></span>Mais</button>
+</nav>
+
+<footer>Guia de Plantão &bull; <em>sempre confirmar dose e indicação na diretriz vigente</em></footer>
+
+<script src="js/icones.js"></script>
+<script src="js/dados.js"></script>
+<script src="js/subpastas.js"></script>
+  <script src="js/queixas.js"></script>
+<script src="js/ferramentas-dados.js"></script>
+<script src="js/scores-dados.js"></script>
+<script src="js/pediatria-dados.js"></script>
+<script src="js/ferramentas.js"></script>
+<script src="js/app.js"></script>
+<script src="js/ui.js"></script>
+<script>
+/* offline: registra o service worker e avisa quando há versão nova */
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').then(function (reg) {
+      reg.addEventListener('updatefound', function () {
+        var novo = reg.installing;
+        if (!novo) return;
+        novo.addEventListener('statechange', function () {
+          if (novo.state === 'installed' && navigator.serviceWorker.controller && window.UI) {
+            UI.avisoAtualizacao(function () {
+              novo.postMessage('pular-espera');
+              location.reload();
+            });
+          }
+        });
+      });
+    }).catch(function () { /* sem service worker o guia continua funcionando online */ });
+  });
+}
+</script>
+</body>
+</html>

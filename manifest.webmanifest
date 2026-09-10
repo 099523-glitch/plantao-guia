@@ -1,0 +1,26 @@
+{
+  "name": "Condutas de Plantão",
+  "short_name": "Plantão",
+  "description": "Guia de condutas, prescrições, antibióticos, escores e doses para o plantão.",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#F6F7F9",
+  "theme_color": "#175CA8",
+  "categories": ["medical", "reference", "productivity"],
+  "icons": [
+    { "src": "icones/icone.svg",     "sizes": "any",     "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icones/icone-192.png", "sizes": "192x192", "type": "image/png",     "purpose": "any" },
+    { "src": "icones/icone-512.png", "sizes": "512x512", "type": "image/png",     "purpose": "any" },
+    { "src": "icones/icone-512.png", "sizes": "512x512", "type": "image/png",     "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Estou diante de um paciente com…", "short_name": "Queixas", "url": "./index.html#queixa" },
+    { "name": "Doses de emergência", "short_name": "Doses", "url": "./index.html#doses" },
+    { "name": "Sala vermelha", "short_name": "Crítico", "url": "./index.html#critico" },
+    { "name": "Antibióticos", "short_name": "ATB", "url": "./index.html#atb" }
+  ]
+}

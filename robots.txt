@@ -1,0 +1,3 @@
+# Em avaliação de usabilidade: link direto sim, buscador não.
+User-agent: *
+Disallow: /
