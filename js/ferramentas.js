@@ -1616,6 +1616,111 @@
       '</div></details>';
   }
 
+  /* ============================================================
+     PROTÓTIPO — prescrever em dois cliques
+     Só na Cólica renal, para comparar com o formato atual.
+     Tudo vem marcado; desmarcar é opcional. Um botão copia o que
+     estiver marcado das duas partes de uma vez.
+     ============================================================ */
+  var QUADRO_PROTO = 'q-colica-renal';
+  var rxFora = {};   /* { quadroId: { 'unidade:2':1 } } — o que foi desmarcado */
+
+  function foraDe(q, parte, i) {
+    return !!(rxFora[q.id] && rxFora[q.id][parte + ':' + i]);
+  }
+  function alternaItem(q, parte, i) {
+    if (!rxFora[q.id]) rxFora[q.id] = {};
+    var k = parte + ':' + i;
+    if (rxFora[q.id][k]) delete rxFora[q.id][k]; else rxFora[q.id][k] = 1;
+  }
+  function contaMarcados(q) {
+    var n = 0;
+    ['unidade', 'receita'].forEach(function (parte) {
+      rxDe(q, parte).forEach(function (_, i) { if (!foraDe(q, parte, i)) n++; });
+    });
+    return n;
+  }
+
+  /* o texto final: as duas partes, só o que ficou marcado */
+  function textoProto(q) {
+    var bl = [];
+    var u = rxDe(q, 'unidade').filter(function (_, i) { return !foraDe(q, 'unidade', i); });
+    if (u.length) {
+      bl.push('NA UNIDADE\n' + u.map(function (x, i) { return linhaUnidade(x, i + 1); }).join('\n'));
+    }
+    var r = rxDe(q, 'receita').filter(function (_, i) { return !foraDe(q, 'receita', i); });
+    if (r.length) {
+      var COL = 58, n = 0;
+      var lin = ['RECEITA — USO ORAL', ''];
+      r.forEach(function (x) {
+        n++;
+        var med = String(x.med || '').replace(/\*/g, '');
+        var qt = qtdTexto(x.uso) || '__________';
+        var esq = (n < 10 ? ' ' : '') + n + ' - ' + med + ' ';
+        lin.push(esq + new Array(Math.max(3, COL - esq.length) + 1).join('.') + ' ' + qt);
+        lin.push('     ' + String(x.uso || '').replace(/\*/g, ''));
+        lin.push('');
+      });
+      while (lin.length && !lin[lin.length - 1]) lin.pop();
+      bl.push(lin.join('\n'));
+    }
+    return bl.join('\n\n');
+  }
+
+  function linhaProto(q, parte, x, i) {
+    var fora = foraDe(q, parte, i);
+    var vazio = parte === 'unidade' && (!x.dose || x.dose === '\u2014');
+    var qt = parte === 'receita' ? qtdTexto(x.uso) : '';
+    return '<label class="pp-item' + (fora ? ' fora' : '') + '">' +
+      '<input type="checkbox"' + (fora ? '' : ' checked') +
+        ' data-acao="proto-item" data-id="' + esc(q.id) + '"' +
+        ' data-parte="' + parte + '" data-i="' + i + '">' +
+      '<span class="pp-txt">' +
+        '<span class="pp-med">' + esc(x.med) + '</span>' +
+        '<span class="pp-linha">' +
+          (parte === 'unidade'
+            ? (vazio ? '' : '<b>' + esc(x.dose) + '</b>' +
+                 (x.via && x.via !== '\u2014' ? '<i>' + esc(x.via) + '</i>' : '')) +
+              (x.obs ? '<em>' + esc(x.obs) + '</em>' : '')
+            : '<b>' + esc(x.uso) + '</b>' + (qt ? '<i>' + esc(qt) + '</i>' : '')) +
+        '</span>' +
+      '</span></label>';
+  }
+
+  function corpoProto(q) {
+    var n = contaMarcados(q);
+    var h = '<div class="ferr-quadro-corpo pp">';
+    if (q.atencao) h += '<div class="ferr-atencao"><b>Atenção</b>' + esc(q.atencao) + '</div>';
+
+    [['unidade', 'Na unidade'], ['receita', 'Receita para casa']].forEach(function (par) {
+      var lista = rxDe(q, par[0]);
+      if (!lista.length) return;
+      var todosFora = lista.every(function (_, i) { return foraDe(q, par[0], i); });
+      h += '<section class="pp-parte"><h5>' + par[1] +
+        '<button type="button" class="pp-todos" data-acao="proto-todos" ' +
+          'data-id="' + esc(q.id) + '" data-parte="' + par[0] + '">' +
+          (todosFora ? 'marcar todos' : 'desmarcar todos') + '</button></h5>' +
+        lista.map(function (x, i) { return linhaProto(q, par[0], x, i); }).join('') +
+      '</section>';
+    });
+
+    h += blocoSintomaticos('quadro:' + q.id);
+
+    /* a barra que resolve tudo */
+    h += '<div class="pp-barra">' +
+      '<button type="button" class="pp-copiar" data-acao="proto-copiar" data-id="' + esc(q.id) + '"' +
+        (n ? '' : ' disabled') + '>' + ICO('copiar') +
+        ' Copiar prescrição<span>' + n + (n === 1 ? ' item' : ' itens') + '</span></button>' +
+      '<button type="button" class="pp-sec" data-acao="proto-imprimir" data-id="' + esc(q.id) + '"' +
+        (n ? '' : ' disabled') + ' title="Imprimir">' + ICO('laudo') + '</button>' +
+      '<button type="button" class="pp-sec" data-acao="proto-rascunho" data-id="' + esc(q.id) + '"' +
+        (n ? '' : ' disabled') + ' title="Enviar ao rascunho">' + ICO('empilhar') + '</button>' +
+      (q.conduta ? '<a class="pp-sec ver" href="#' + esc(q.conduta) + '" title="Ver a conduta">' +
+        ICO('livro') + '</a>' : '') +
+    '</div>';
+    return h + '</div>';
+  }
+
   function acoesRx(q, parte) {
     return '<div class="rx-acoes">' +
       '<button type="button" class="ferr-btn peq forte" data-acao="quadro-copiar" ' +
@@ -1772,7 +1877,7 @@
               '<button type="button" title="Editar" data-acao="quadro-editar" data-id="' + esc(q.id) + '"'+ICO('lapis')+'</button>' +
               '<button type="button" title="Apagar" data-acao="quadro-apagar" data-id="' + esc(q.id) + '"'+ICO('fechar')+'</button>' +
             '</div>' +
-            (aberto ? corpoQuadro(q) : '') +
+            (aberto ? (q.id === QUADRO_PROTO ? corpoProto(q) : corpoQuadro(q)) : '') +
           '</article>';
         }).join('') + '</div>' +
       '</section>';
@@ -2050,21 +2155,11 @@
   var SECOES = [
     { id:'presc', nome:'Prescrições', icone:'receita',
       lead:'',
-      filhas: function () {
-        var q = Base.quadros();
-        var grupos = [];
-        q.forEach(function (x) { if (grupos.indexOf(x.grupo) === -1) grupos.push(x.grupo); });
-        return [
-          { id:'quadro', nome:'Por quadro clínico', icone:'esteto',
-            conta: q.length + ' quadros',
-            ex: '',
-            tela: function () { return telaQuadros(); } },
-          { id:'pediatria', nome:'Pediatria', icone:'crianca',
-            conta: FERR_PEDIA.length + ' medicações',
-            ex: '',
-            tela: function () { return telaPediatria(); } }
-        ];
-      } },
+      plana: function () { return telaQuadros(); } },
+
+    { id:'pediatria', nome:'Pediatria', icone:'crianca',
+      lead:'',
+      plana: function () { return telaPediatria(); } },
 
     { id:'calc', nome:'Calculadoras', icone:'calc',
       lead:'',
@@ -2393,7 +2488,7 @@
     var out = [];
 
     Base.quadros().forEach(function (q) {
-      out.push({ tipo:'quadro', id:q.id, titulo:q.nome, sub:q.sub, href:'#presc/quadro',
+      out.push({ tipo:'quadro', id:q.id, titulo:q.nome, sub:q.sub, href:'#presc',
         abre:q.id,
         texto:[q.nome, q.sub, q.grupo, (q.tags||[]).join(' '), q.atencao,
           (q.unidade||[]).map(function(u){return u.med+' '+u.dose+' '+u.obs;}).join(' '),
@@ -2618,6 +2713,35 @@
     }
 
     if (acao === 'calc-ramo') { filtroRamo = v; calcAberta = null; redesenhaFixo(); return; }
+
+    /* --- protótipo de prescrição --- */
+    if (acao === 'proto-todos') {
+      var qp = quadroDe(id), pa = b.dataset.parte;
+      if (!qp) return;
+      var l = rxDe(qp, pa);
+      var todosFora = l.every(function (_, i) { return foraDe(qp, pa, i); });
+      if (!rxFora[qp.id]) rxFora[qp.id] = {};
+      l.forEach(function (_, i) {
+        if (todosFora) delete rxFora[qp.id][pa + ':' + i];
+        else rxFora[qp.id][pa + ':' + i] = 1;
+      });
+      redesenhaFixo(); return;
+    }
+    if (acao === 'proto-copiar') {
+      var q1p = quadroDe(id);
+      if (q1p) copiarClinico(textoProto(q1p), q1p.nome, 'presc');
+      return;
+    }
+    if (acao === 'proto-imprimir') {
+      var q2p = quadroDe(id);
+      if (q2p) imprimir(q2p.nome + (q2p.sub ? ' — ' + q2p.sub : ''), textoProto(q2p));
+      return;
+    }
+    if (acao === 'proto-rascunho') {
+      var q3p = quadroDe(id);
+      if (q3p) pilha(textoProto(q3p));
+      return;
+    }
 
     if (acao === 'presc-pedia') { setModoPed(!modoPed()); redesenhaFixo(); return; }
 
@@ -2947,6 +3071,12 @@
     if (!acao) return;
     var ctx = t.dataset.ctx, id = t.dataset.id;
 
+    if (acao === 'proto-item') {
+      var qi = quadroDe(t.dataset.id);
+      if (!qi) return;
+      alternaItem(qi, t.dataset.parte, +t.dataset.i);
+      redesenhaFixo(); return;
+    }
     if (acao === 'med-volume') { var s1 = selItem(ctx, id); if (s1) s1.volume = t.value; redesenhaFixo(); return; }
     if (acao === 'med-modo')   { var s2 = selItem(ctx, id); if (s2) s2.modo = t.value; redesenhaFixo(); return; }
     if (acao === 'presc-desfecho') { desfecho[ctx] = t.value; redesenhaFixo(); return; }

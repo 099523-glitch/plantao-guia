@@ -266,11 +266,11 @@
      continuam válidas e caem em "por quadro clínico" */
   var LEGADO = {
     'agora':'', 'protocolos':'cardio', 'prescrever':'presc', 'plantao':'favoritas',
-    'presc/oral':'presc/quadro', 'presc/im':'presc/quadro',
-    'presc/ev':'presc/quadro', 'presc/especiais':'presc/quadro',
-    'ferramentas/quadros':'presc/quadro', 'ferramentas/oral':'presc/quadro',
-    'ferramentas/im':'presc/quadro', 'ferramentas/ev':'presc/quadro',
-    'ferramentas/especiais':'presc/quadro', 'ferramentas/atb':'atb',
+    'presc/pediatria':'pediatria', 'presc/quadro':'presc',
+    'presc/oral':'presc', 'presc/im':'presc', 'presc/ev':'presc',
+    'presc/especiais':'presc', 'ferramentas/quadros':'presc',
+    'ferramentas/oral':'presc', 'ferramentas/im':'presc',
+    'ferramentas/ev':'presc', 'ferramentas/especiais':'presc', 'ferramentas/atb':'atb',
     'ferramentas/calculadoras':'calc', 'ferramentas/anamnese':'prontuario/modelos',
     'ferramentas/conduta':'prontuario/conduta', 'ferramentas/evasao':'prontuario/evasao',
     'ferramentas/laudos':'prontuario/laudos', 'ferramentas':'presc'
@@ -688,7 +688,7 @@
     return null;
   }
   var HREF_ATALHO = {
-    calc: '#calc', score: '#scores', presc: '#presc/quadro', atb: '#atb'
+    calc: '#calc', score: '#scores', presc: '#presc', atb: '#atb'
   };
   function hrefAtalho(a) {
     if (a.tipo === 'conduta') {

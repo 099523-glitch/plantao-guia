@@ -1945,3 +1945,52 @@ body.banc-cheia #btnBancTop::after{content:"";position:absolute;top:6px;right:6p
 .cc-grade .ferr-quadro.aberto .ferr-calc-seta .ico{color:var(--acento)}
 .cc-grade .ferr-quadro-corpo{padding:14px}
 .ferr-grupos>.atb-secao{margin-bottom:22px}
+
+/* ===========================================================
+   PROTÓTIPO DE PRESCRIÇÃO — dois cliques
+   =========================================================== */
+.pp-parte{margin-top:14px}
+.pp-parte h5{display:flex;align-items:center;gap:10px;font-size:10.5px;font-weight:700;
+  letter-spacing:.09em;text-transform:uppercase;color:var(--steel);
+  padding-bottom:6px;margin-bottom:4px;border-bottom:1px solid var(--line)}
+.pp-todos{margin-left:auto;border:0;background:none;padding:2px 4px;cursor:pointer;
+  font-family:inherit;font-size:10.5px;font-weight:600;letter-spacing:.03em;
+  text-transform:none;color:var(--acento);text-decoration:underline}
+.pp-todos:hover{color:var(--acento-forte)}
+.pp-item{display:flex;align-items:flex-start;gap:11px;padding:11px 10px;cursor:pointer;
+  border-radius:7px;border:1px solid transparent}
+.pp-item:hover{background:var(--paper)}
+.pp-item input{margin-top:2px;width:19px;height:19px;flex-shrink:0;accent-color:var(--acento);cursor:pointer}
+.pp-txt{flex:1;min-width:0}
+.pp-med{display:block;font-size:14.5px;font-weight:600;color:var(--ink);line-height:1.3}
+.pp-linha{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;margin-top:3px}
+.pp-linha b{font-size:14px;font-weight:700;color:var(--acento);font-variant-numeric:tabular-nums}
+.pp-linha i{font-style:normal;font-size:10.5px;font-weight:600;letter-spacing:.04em;
+  color:var(--steel);background:var(--paper);border:1px solid var(--line);
+  border-radius:4px;padding:1px 7px}
+.pp-linha em{flex-basis:100%;font-style:normal;font-size:12.5px;color:var(--steel);line-height:1.45}
+.pp-item.fora{opacity:.42}
+.pp-item.fora .pp-med,.pp-item.fora .pp-linha b{text-decoration:line-through}
+
+/* a barra que resolve: um botão grande e três atalhos */
+.pp-barra{position:sticky;bottom:0;display:flex;gap:8px;margin-top:18px;padding:13px 0 2px;
+  background:linear-gradient(to top,var(--card) 78%,transparent);
+  border-top:1px solid var(--line)}
+.pp-copiar{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  min-height:50px;padding:0 20px;border:0;border-radius:9px;cursor:pointer;
+  background:var(--acento);color:#fff;font-family:inherit;font-size:15.5px;font-weight:700}
+.pp-copiar:hover{background:var(--acento-forte)}
+.pp-copiar .ico{width:18px;height:18px}
+.pp-copiar span{font-size:12px;font-weight:600;opacity:.8;
+  border-left:1px solid rgba(255,255,255,.4);padding-left:10px;margin-left:2px}
+.pp-sec{display:inline-flex;align-items:center;justify-content:center;width:50px;min-height:50px;
+  border:1px solid var(--line-forte);border-radius:9px;background:var(--card);
+  color:var(--steel);cursor:pointer;text-decoration:none}
+.pp-sec:hover{border-color:var(--acento);color:var(--acento);background:var(--acento-suave)}
+.pp-sec .ico{width:18px;height:18px}
+.pp-copiar[disabled],.pp-sec[disabled]{opacity:.4;cursor:not-allowed}
+.pp-copiar[disabled]:hover{background:var(--acento)}
+@media(max-width:520px){
+  .pp-copiar{font-size:14.5px;padding:0 14px}
+  .pp-copiar span{display:none}
+}

@@ -54,8 +54,8 @@ nada fica escondido).
 #<area>                   capa da área, com as subpastas
 #<area>/<subpasta>        condutas da subpasta
 #<area>/<sub>/<id>        a conduta (o link curto #<area>/<id> também vale)
-#presc/quadro             prescrição por quadro clínico
-#presc/pediatria          pediatria com calculadora de dose
+#presc                    prescrição por quadro clínico
+#pediatria                doses pediátricas com calculadora
 #atb · #atb/<sitio>       antibióticos
 #calc · #scores           contas e escores
 #prontuario/<pasta>       texto de prontuário
@@ -63,7 +63,8 @@ nada fica escondido).
 ```
 
 Rotas antigas continuam válidas: `#presc/oral|im|ev|especiais` caem em
-`#presc/quadro`, e `#ferramentas/*` nos seus destinos atuais.
+`#presc`, `#presc/quadro` também cai em `#presc`, `#presc/pediatria` em
+`#pediatria`, e `#ferramentas/*` nos seus destinos atuais.
 
 ## Ordem clínica de uma conduta
 
