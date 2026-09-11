@@ -249,7 +249,12 @@
   liga('optAutor', 'autor', false);
   $('optAutor').addEventListener('change', pintaAutor);
   pintaAutor();
-  liga('optResumo', 'resumo', true);
+  /* o antigo "abrir em resumo" agora aplica o preset do filtro de blocos:
+     um interruptor só, sem uma segunda camada de estado escondida */
+  liga('optResumo', 'resumo', false);
+  $('optResumo').addEventListener('change', function () {
+    if (window.Guia && Guia.presetBlocos) Guia.presetBlocos(this.checked);
+  });
   liga('optConferir', 'conferir', false);
 
   /* =========================================================

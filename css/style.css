@@ -690,16 +690,24 @@ footer em{font-style:normal;color:var(--fire)}
 .res-mais{font-size:12px;color:var(--steel);padding:6px 13px}
 
 /* --- resumo x completo --- */
-.modo-leitura{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:22px}
-.modo-btn{font-family:'Inter',system-ui,sans-serif;font-weight:600;font-size:12px;padding:5px 13px;
-          border:1.5px solid var(--line);border-radius:20px;background:transparent;color:var(--steel);cursor:pointer;-webkit-appearance:none}
-.modo-btn:hover{border-color:var(--ink);color:var(--ink)}
-.modo-btn.on{background:var(--ink);border-color:var(--ink);color:var(--paper);font-weight:700}
-.modo-conta{font-size:11.5px;color:var(--steel);margin-left:4px}
-.ver-completo{display:block;width:100%;font-family:'Inter',system-ui,sans-serif;font-weight:700;font-size:13px;
-              padding:12px;margin-top:8px;border:1.5px dashed var(--line);border-radius:5px;
-              background:transparent;color:var(--steel);cursor:pointer;-webkit-appearance:none}
-.ver-completo:hover{border-color:var(--fire);border-style:solid;color:var(--fire)}
+/* --- filtro de blocos da conduta: um chip por tipo, o fluxograma nunca --- */
+.bfil{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:20px}
+.bfil-rot{font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--steel);margin-right:2px}
+.bfil-chip{font-family:inherit;font-weight:600;font-size:12px;padding:5px 13px;
+  border:1.5px solid var(--line);border-radius:20px;background:transparent;
+  color:var(--steel);cursor:pointer;-webkit-appearance:none;
+  transition:border-color .12s ease,color .12s ease,background .12s ease}
+.bfil-chip:hover{border-color:var(--ink);color:var(--ink)}
+.bfil-chip.on{background:var(--ink);border-color:var(--ink);color:var(--paper);font-weight:700}
+.bfil-chip:not(.on){text-decoration:line-through;text-decoration-thickness:1px;opacity:.62}
+.bfil-chip:focus-visible,.bfil-preset:focus-visible{outline:2px solid var(--acento);outline-offset:2px}
+.bfil-preset{margin-left:auto;font-family:inherit;font-weight:600;font-size:11.5px;
+  padding:5px 11px;border:1.5px dashed var(--line-forte);border-radius:20px;
+  background:transparent;color:var(--steel);cursor:pointer;-webkit-appearance:none}
+.bfil-preset:hover{border-style:solid;border-color:var(--acento);color:var(--acento)}
+.bfil-conta{font-size:11.5px;color:var(--steel);margin-left:4px;white-space:nowrap}
+@media(max-width:640px){.bfil-preset{margin-left:0}}
 
 /* --- botao de copiar link --- */
 .btn-link{flex-shrink:0;font-size:15px;line-height:1;background:none;border:0;color:var(--steel);cursor:pointer;padding:2px 4px}
@@ -710,7 +718,7 @@ footer em{font-style:normal;color:var(--fire)}
   .home-grade,.home-grade.areas{grid-template-columns:1fr 1fr}
   .cartao{padding:14px 13px}
   .res-item{padding:13px 34px 13px 13px}
-  .modo-btn{padding:8px 15px;font-size:13px}
+  .bfil-chip{padding:8px 15px;font-size:13px}
   .btn-fav,.btn-link{font-size:22px;padding:6px 8px}
   .ferr-aba{padding:11px 11px}
   .ferr-btn{padding:9px 13px}
@@ -725,7 +733,7 @@ footer em{font-style:normal;color:var(--fire)}
 }
 
 @media print{
-  .topo,.tabbar,.painel,.veu,.modo-leitura,.ver-completo,.btn-link,.home-busca{display:none!important}
+  .topo,.tabbar,.painel,.veu,.bfil,.btn-link,.home-busca{display:none!important}
 }
 
 /* ===========================================================
@@ -927,7 +935,7 @@ h3.sec .sn{background:var(--paper);color:var(--steel);border:1px solid var(--lin
 .ferr-chip.on{border-color:var(--acento);background:var(--acento-suave);color:var(--acento)}
 .ferr-chip{border-radius:6px}
 .ferr-subaba.on{background:var(--acento);border-color:var(--acento);color:#fff}
-.modo-btn.on{background:var(--acento);border-color:var(--acento);color:#fff}
+.bfil-chip.on{background:var(--acento);border-color:var(--acento);color:#fff}
 .ferr-med.on{border-color:var(--acento);background:var(--acento-suave)}
 .ferr-med-ctrl{background:transparent}
 .ferr-med-ctrl b{color:var(--acento)}
@@ -1150,8 +1158,7 @@ a.np-item:hover{border-color:var(--acento-borda);border-left-color:var(--amber);
 .rule.tip{background:var(--card);border-color:var(--line);border-left-color:var(--amber)}
 .rule.tip .rlabel{color:var(--amber-ink)}
 .rule.idea{background:var(--card);border-color:var(--line);border-left-color:var(--amber)}
-.modo-leitura .modo-btn{font-weight:600}
-.modo-conta{color:var(--steel);font-size:12px}
+
 
 /* ---------- doses de emergência (vista derivada) ---------- */
 .dz-grupo{margin:24px 0}

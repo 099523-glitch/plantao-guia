@@ -239,6 +239,9 @@
   function grava(chave, valor) {
     try { localStorage.setItem(chave, JSON.stringify(valor)); } catch (e) { /* modo privado */ }
   }
+  function apaga(chave) {
+    try { localStorage.removeItem(chave); } catch (e) { /* modo privado */ }
+  }
   var favoritas = ler('favoritas', []);
   try { localStorage.removeItem('recentes'); } catch (e) { /* modo privado */ }
 
@@ -291,7 +294,6 @@
   }
   function modoAutor()  { return pref('autor', false); }
   function resumoPadrao() { return pref('resumo', true); }
-  var resumoAberto = {};      // id -> true quando o usuario pediu o completo
   var areaAberta   = null;    // qual area esta expandida no sumario (independe da rota)
 
   /* no modo leitura, conduta sem conteudo nao aparece */
@@ -312,43 +314,90 @@
     return null;
   }
 
-  /* no resumo fica so o que se lê com o paciente na frente.
-     O fluxograma entra: e o bloco que mais se olha na hora.
-     Ficam de fora texto, lista e dica — leitura de estudo. */
-  var TIPO_RESUMO = { alerta:1, fluxo:1, passos:1, ordem:1, doses:1,
-                      prescricao:1, tempo:1, naofazer:1 };
+  /* ---------- filtro de blocos ----------
+     Um chip por bloco da conduta: clicar esconde aquele bloco em TODO
+     o guia, porque quem não quer ler red flags não quer em conduta
+     nenhuma. A chave é o TÍTULO, não o tipo: em queixa, `lista` cobre
+     "O que pedir", "Reavaliar" e "Internação x alta" ao mesmo tempo,
+     e um chip só apagaria os três.
+     O fluxograma não tem chip: nunca é escondido.
+     O chip apagado continua na barra dizendo o que está fora. */
+  var LEITURA = { texto:1, lista:1, dica:1 };   /* o que o "abrir em resumo" tira */
+
+  function chaveBloco(sec) {
+    if (sec.tipo !== 'lista') return sec.tipo;
+    var t = sec.titulo || LABEL.lista;
+    return 'lista::' + normaliza(t).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  }
+  function rotuloBloco(sec) { return sec.titulo || LABEL[sec.tipo] || sec.tipo; }
+
+  function blocosOff() {
+    var v = ler('pref:blocos-off', null);
+    return Array.isArray(v) ? v : [];
+  }
+  function blocoEscondido(sec) {
+    return sec.tipo !== 'fluxo' && blocosOff().indexOf(chaveBloco(sec)) > -1;
+  }
+  function alternaBloco(k) {
+    var off = blocosOff(), i = off.indexOf(k);
+    if (i > -1) off.splice(i, 1); else off.push(k);
+    grava('pref:blocos-off', off);
+  }
+
+  /* as chaves de todos os blocos de leitura do guia inteiro, para o
+     preset "só o essencial" valer em qualquer conduta */
+  var cacheLeitura = null;
+  function chavesLeitura() {
+    if (cacheLeitura) return cacheLeitura;
+    var out = {};
+    function varre(lista) {
+      (lista || []).forEach(function (p) {
+        (p.secoes || []).forEach(function (sec) {
+          if (LEITURA[sec.tipo]) out[chaveBloco(sec)] = 1;
+        });
+      });
+    }
+    varre(PROTOCOLOS);
+    if (typeof QUEIXAS !== 'undefined') varre(QUEIXAS);
+    cacheLeitura = Object.keys(out);
+    return cacheLeitura;
+  }
+  function soEssencial() { grava('pref:blocos-off', chavesLeitura().slice()); }
+  function tudoVisivel() { grava('pref:blocos-off', []); }
+
+  function barraBlocos(secoes) {
+    var chips = [], vistas = {}, n = 0;
+    secoes.forEach(function (sec) {
+      if (sec.tipo === 'fluxo') return;          /* o fluxograma não se esconde */
+      var k = chaveBloco(sec);
+      if (vistas[k]) return;
+      vistas[k] = 1;
+      var off = blocoEscondido(sec);
+      if (off) n++;
+      chips.push({ k:k, rot:rotuloBloco(sec), on:!off });
+    });
+    if (chips.length < 2) return '';
+    var essencial = chips.every(function (c) { return c.on === (chavesLeitura().indexOf(c.k) === -1); });
+    return '<div class="bfil"><span class="bfil-rot">Mostrar</span>' +
+      chips.map(function (c) {
+        return '<button type="button" class="bfil-chip' + (c.on ? ' on' : '') + '" ' +
+          'data-bloco="' + esc(c.k) + '" aria-pressed="' + (c.on ? 'true' : 'false') + '">' +
+          esc(c.rot) + '</button>';
+      }).join('') +
+      (n ? '<span class="bfil-conta">' + n + (n === 1 ? ' oculto' : ' ocultos') + '</span>' : '') +
+      '<button type="button" class="bfil-preset" data-bloco-preset="' +
+        (essencial ? 'tudo' : 'essencial') + '">' +
+        (essencial ? 'Mostrar tudo' : 'Só o essencial') + '</button>' +
+    '</div>';
+  }
 
   function corpoProtocolo(p) {
     var secoes = p.secoes || [];
-    var resumindo = resumoPadrao() && !resumoAberto[p.id] && secoes.length;
-    var mostra = secoes;
-    var escondidas = 0;
+    var mostra = secoes.filter(function (sec) { return !blocoEscondido(sec); });
 
-    if (resumindo) {
-      mostra = secoes.filter(function (sec) { return TIPO_RESUMO[sec.tipo]; });
-      escondidas = secoes.length - mostra.length;
-      if (!mostra.length) { mostra = secoes; escondidas = 0; resumindo = false; }
-    }
-
-    var html = '';
-    if (secoes.length && resumoPadrao()) {
-      html += '<div class="modo-leitura">' +
-        '<button type="button" class="modo-btn' + (resumindo ? ' on' : '') + '" data-resumo="' + esc(p.id) + '" data-v="resumo">Essencial</button>' +
-        '<button type="button" class="modo-btn' + (resumindo ? '' : ' on') + '" data-resumo="' + esc(p.id) + '" data-v="completo">Completo</button>' +
-        (escondidas ? '<span class="modo-conta">' + escondidas +
-          (escondidas === 1
-            ? ' bloco a mais em Completo'
-            : ' blocos a mais em Completo') + '</span>' : '') +
-      '</div>';
-    }
-
+    var html = barraBlocos(secoes);
     html += ficha(p);
     html += mostra.map(bloco).join('');
-
-    if (resumindo && escondidas) {
-      html += '<button type="button" class="ver-completo" data-resumo="' + esc(p.id) + '" data-v="completo">' +
-        'Ver a conduta completa &rarr;</button>';
-    }
     if (!(p.ficha || []).length && !secoes.length) {
       html += '<div class="pendente">Conduta ainda não preenchida.</div>';
     }
@@ -752,7 +801,9 @@
       '</ol></div>';
 
     /* 2. o corpo: red flags, fluxograma, exames, não fazer, reavaliar, destino */
-    html += (q.secoes || []).map(bloco).join('');
+    html += barraBlocos(q.secoes || []);
+    html += (q.secoes || []).filter(function (sec) { return !blocoEscondido(sec); })
+                            .map(bloco).join('');
 
     /* 3. ferramentas ligadas */
     if ((q.atalhos || []).length) {
@@ -1257,7 +1308,11 @@
     render: render,
     limpaBusca: function () { busca.value = ''; termoBusca = ''; render(); },
     buscando: function () { return !!termoBusca; },
-    prefMudou: function () { resumoAberto = {}; render(); }
+    prefMudou: function () { render(); },
+    presetBlocos: function (essencial) {
+      if (essencial) soEssencial(); else tudoVisivel();
+      render();
+    }
   };
 
   /* ---------- teclado: "/" cai na busca ---------- */
@@ -1270,7 +1325,7 @@
     busca.select();
   });
 
-  /* ---------- resumo x completo ---------- */
+  /* ---------- filtro de blocos da conduta ---------- */
   doc.addEventListener('click', function (e) {
     if (e.target.closest('[data-limpa-recentes]')) {
       grava('recentes', []); render(); return;
@@ -1283,13 +1338,19 @@
       if (window.Ferramentas && Ferramentas.copiarClinico) Ferramentas.copiarClinico(txt, alvo.titulo, 'presc');
       return;
     }
-    var b = e.target.closest('[data-resumo]');
+    var b = e.target.closest('[data-bloco],[data-bloco-preset]');
     if (!b) return;
-    var id = b.dataset.resumo;
-    if (b.dataset.v === 'completo') resumoAberto[id] = true; else delete resumoAberto[id];
+    if (b.dataset.blocoPreset === 'essencial')   soEssencial();
+    else if (b.dataset.blocoPreset === 'tudo')   tudoVisivel();
+    else                                         alternaBloco(b.dataset.bloco);
     var y = window.scrollY;
     render();
     window.scrollTo(0, y);
+    if (window.UI && UI.aviso) {
+      var fora = blocosOff().length;
+      UI.aviso(fora ? (fora === 1 ? '1 tipo de bloco oculto' : fora + ' tipos de bloco ocultos')
+                    : 'Todos os blocos visíveis');
+    }
   });
 
   /* ---------- copiar o link da conduta ---------- */

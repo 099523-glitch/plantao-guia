@@ -72,6 +72,18 @@ Preservada e **sem acordeões**: ficha rápida → **fluxograma** → red flags 
 passo a passo → doses → demais blocos → prescrição mínima (quando existe nos
 dados). Fluxogramas ficam visíveis por padrão, na posição original.
 
+### Filtro de blocos
+
+A barra "Mostrar" no topo da conduta traz um chip por bloco. Clicar esconde
+aquele bloco **em todo o guia** — quem não quer ler red flags não quer em
+conduta nenhuma. O chip apagado continua na barra, riscado, dizendo o que
+está fora; "Só o essencial" e "Mostrar tudo" fazem o extremo em um clique.
+
+**O fluxograma não tem chip e nunca é escondido.** A chave do filtro é o tipo
+do bloco, menos em `lista`: lá é o título, porque uma queixa usa `lista` para
+"O que pedir", "Reavaliar" e "Internação x alta" ao mesmo tempo, e um chip só
+apagaria os três. Fica em `pref:blocos-off`.
+
 ## Cartão de prescrição — dois cliques
 
 Abrir o quadro é o primeiro clique; **Copiar prescrição** é o segundo. Todos os
