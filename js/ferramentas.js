@@ -1583,6 +1583,7 @@
      Reaproveita FERR_PO, a lista de prescrição oral que já existe.
      O + empilha a linha no rascunho, sem sair da tela. */
   var sintAberto = null;   /* categoria expandida */
+  var pacAberto = false;   /* o cabeçalho do paciente está aberto? */
   var SINT_FORA = { 'Antibióticos':1 };   /* ATB tem tela própria */
 
   function blocoSintomaticos(ctxId) {
@@ -1617,12 +1618,53 @@
   }
 
   /* ============================================================
-     PROTÓTIPO — prescrever em dois cliques
-     Só na Cólica renal, para comparar com o formato atual.
-     Tudo vem marcado; desmarcar é opcional. Um botão copia o que
-     estiver marcado das duas partes de uma vez.
+     CABEÇALHO DO PACIENTE
+     Preenchido uma vez por plantão e colado no topo de toda
+     prescrição copiada, impressa ou empilhada. O peso é o mesmo
+     campo global do topo — não existe um segundo peso no app.
      ============================================================ */
-  var QUADRO_PROTO = 'q-colica-renal';
+  function pacNome()  { return String(ler('pac-nome', '') || '').trim(); }
+  function pacIdade() { return String(ler('pac-idade', '') || '').trim(); }
+
+  function pacResumo() {
+    var p = [], kg = pesoGlobal();
+    if (pacNome())  p.push(pacNome());
+    if (pacIdade()) p.push(pacIdade());
+    if (kg !== null) p.push(String(kg).replace('.', ',') + ' kg');
+    return p.join(' · ');
+  }
+  /* as linhas que abrem o texto copiado; vazio quando nada foi preenchido */
+  function cabPaciente() {
+    var r = pacResumo();
+    return r ? 'Paciente: ' + r + '\n' + hoje() + '\n\n' : '';
+  }
+  function hoje() {
+    var d = new Date(), z = function (n) { return (n < 10 ? '0' : '') + n; };
+    return z(d.getDate()) + '/' + z(d.getMonth() + 1) + '/' + d.getFullYear();
+  }
+
+  function blocoPaciente() {
+    var r = pacResumo(), kg = pesoGlobal();
+    return '<details class="pac"' + (pacAberto ? ' open' : '') + '>' +
+      '<summary>' + ICO('pessoa') + '<span>Paciente</span>' +
+        '<i>' + (r ? esc(r) : 'não informado') + '</i></summary>' +
+      '<div class="pac-campos">' +
+        '<label>Nome<input type="text" id="pacNome" value="' + esc(pacNome()) +
+          '" autocomplete="off" placeholder="opcional"></label>' +
+        '<label>Idade<input type="text" id="pacIdade" value="' + esc(pacIdade()) +
+          '" autocomplete="off" placeholder="ex.: 34 anos"></label>' +
+        '<label>Peso<input type="text" id="pacPeso" inputmode="decimal" value="' +
+          (kg === null ? '' : esc(String(kg).replace('.', ','))) + '" placeholder="kg"></label>' +
+        '<button type="button" class="ferr-btn peq" data-acao="pac-limpar">Limpar</button>' +
+      '</div></details>';
+  }
+
+  /* ============================================================
+     PRESCREVER EM DOIS CLIQUES
+     Abrir o quadro é o primeiro clique, copiar é o segundo.
+     Tudo vem marcado; desmarcar é opcional. Um botão só copia o
+     que estiver marcado das duas partes de uma vez.
+     ============================================================ */
   var rxFora = {};   /* { quadroId: { 'unidade:2':1 } } — o que foi desmarcado */
 
   function foraDe(q, parte, i) {
@@ -1664,7 +1706,50 @@
       while (lin.length && !lin[lin.length - 1]) lin.pop();
       bl.push(lin.join('\n'));
     }
-    return bl.join('\n\n');
+    if (!bl.length) return '';
+    return cabPaciente() + bl.join('\n\n');
+  }
+
+  /* ---------- ajuste rápido da posologia ----------
+     Reescreve só o número de dias ou o intervalo na frase já escrita.
+     A quantidade a dispensar é recalculada sozinha por qtdTexto(). */
+  var DIAS_OPC  = [3, 5, 7, 10];
+  var HORAS_OPC = [6, 8, 12, 24];
+
+  function diasDe(uso) {
+    var d = RX_DIAS.exec(uso || '');
+    if (!d || /semana/i.test(d[3])) return null;
+    return +(d[2] || d[1]);
+  }
+  function horasDe(uso) {
+    var h = RX_H.exec(uso || '');
+    return h ? +h[1] : null;
+  }
+  function trocaDias(uso, n) {
+    return String(uso).replace(RX_DIAS, 'por ' + n + ' dias');
+  }
+  function trocaHoras(uso, n) {
+    return String(uso).replace(RX_H, n === 24 ? '1 vez ao dia' : 'de ' + n + '/' + n + ' h');
+  }
+
+  function chipsUso(q, i, uso) {
+    var d = diasDe(uso), hr = horasDe(uso), c = '';
+    if (hr !== null) {
+      HORAS_OPC.forEach(function (n) {
+        if (n === hr) return;
+        c += '<button type="button" class="pp-chip" data-acao="rx-horas" ' +
+          'data-id="' + esc(q.id) + '" data-i="' + i + '" data-n="' + n + '">' +
+          (n === 24 ? '1x/dia' : n + '/' + n + 'h') + '</button>';
+      });
+    }
+    if (d !== null) {
+      DIAS_OPC.forEach(function (n) {
+        if (n === d) return;
+        c += '<button type="button" class="pp-chip" data-acao="rx-dias" ' +
+          'data-id="' + esc(q.id) + '" data-i="' + i + '" data-n="' + n + '">' + n + 'd</button>';
+      });
+    }
+    return c ? '<span class="pp-chips">' + c + '</span>' : '';
   }
 
   function linhaProto(q, parte, x, i) {
@@ -1684,6 +1769,8 @@
               (x.obs ? '<em>' + esc(x.obs) + '</em>' : '')
             : '<b>' + esc(x.uso) + '</b>' + (qt ? '<i>' + esc(qt) + '</i>' : '')) +
         '</span>' +
+        (parte === 'receita' ? chipsUso(q, i, x.uso) : '') +
+        (modoPed() ? blocoPedLinha(x.med) : '') +
       '</span></label>';
   }
 
@@ -1696,11 +1783,19 @@
       var lista = rxDe(q, par[0]);
       if (!lista.length) return;
       var todosFora = lista.every(function (_, i) { return foraDe(q, par[0], i); });
-      h += '<section class="pp-parte"><h5>' + par[1] +
-        '<button type="button" class="pp-todos" data-acao="proto-todos" ' +
-          'data-id="' + esc(q.id) + '" data-parte="' + par[0] + '">' +
-          (todosFora ? 'marcar todos' : 'desmarcar todos') + '</button></h5>' +
-        lista.map(function (x, i) { return linhaProto(q, par[0], x, i); }).join('') +
+      var editando = rxEditando === q.id + ':' + par[0];
+      h += '<section class="pp-parte' + (modoPed() ? ' ped' : '') + '"><h5>' +
+        '<span class="pp-tit">' + par[1] + '</span>' +
+        (rxAlterado(q, par[0]) ? '<span class="rx-mexido">' + ICO('lapis') + ' ajustada</span>' : '') +
+        '<button type="button" class="pp-todos" data-acao="rx-editar" ' +
+          'data-id="' + esc(q.id) + '" data-p="' + par[0] + '">' +
+          (editando ? 'cancelar' : 'editar') + '</button>' +
+        (editando ? '' :
+          '<button type="button" class="pp-todos" data-acao="proto-todos" ' +
+            'data-id="' + esc(q.id) + '" data-parte="' + par[0] + '">' +
+            (todosFora ? 'marcar todos' : 'desmarcar todos') + '</button>') + '</h5>' +
+        (editando ? formRx(q, par[0])
+                  : lista.map(function (x, i) { return linhaProto(q, par[0], x, i); }).join('')) +
       '</section>';
     });
 
@@ -1718,71 +1813,6 @@
       (q.conduta ? '<a class="pp-sec ver" href="#' + esc(q.conduta) + '" title="Ver a conduta">' +
         ICO('livro') + '</a>' : '') +
     '</div>';
-    return h + '</div>';
-  }
-
-  function acoesRx(q, parte) {
-    return '<div class="rx-acoes">' +
-      '<button type="button" class="ferr-btn peq forte" data-acao="quadro-copiar" ' +
-        'data-id="' + esc(q.id) + '" data-p="' + parte + '">' + ICO('copiar') + ' Copiar</button>' +
-      '<button type="button" class="ferr-btn peq" data-acao="quadro-imprimir" ' +
-        'data-id="' + esc(q.id) + '" data-p="' + parte + '">' + ICO('laudo') + ' Imprimir</button>' +
-      '<button type="button" class="ferr-btn peq" data-acao="rx-editar" ' +
-        'data-id="' + esc(q.id) + '" data-p="' + parte + '">' + ICO('lapis') + ' Editar</button>' +
-      '<button type="button" class="ferr-btn peq" data-acao="quadro-empilhar" ' +
-        'data-id="' + esc(q.id) + '" data-p="' + parte + '">' + ICO('empilhar') + ' Rascunho</button>' +
-      (rxAlterado(q, parte) ? '<span class="rx-mexido">' + ICO('lapis') + ' ajustada</span>' : '') +
-    '</div>';
-  }
-
-  function corpoQuadro(q) {
-    var h = '<div class="ferr-quadro-corpo">';
-
-    if (q.atencao) {
-      h += '<div class="ferr-atencao"><b>Atenção</b>' + esc(q.atencao) + '</div>';
-    }
-
-    if (q.unidade && q.unidade.length) {
-      h += '<section class="rx-parte"><h5>Na unidade</h5>';
-      if (rxEditando === q.id + ':unidade') { h += formRx(q, 'unidade'); }
-      else h += '<ol class="rx-lista">' +
-        rxDe(q, 'unidade').map(function (u) {
-          var vazio = !u.dose || u.dose === '—';
-          return '<li' + (modoPed() ? ' class="ped"' : '') + '>' +
-            '<span class="rx-med">' + esc(u.med) + '</span>' +
-            (vazio ? '' : '<span class="rx-dose">' + esc(u.dose) +
-               (u.via && u.via !== '—' ? '<i>' + esc(u.via) + '</i>' : '') + '</span>') +
-            (u.obs ? '<span class="rx-obs">' + esc(u.obs) + '</span>' : '') +
-            (modoPed() ? blocoPedLinha(u.med) : '') +
-          '</li>';
-        }).join('') + '</ol>';
-      h += acoesRx(q, 'unidade') + '</section>';
-    }
-
-    if (q.receita && q.receita.length) {
-      h += '<section class="rx-parte receita"><h5>Receita para casa</h5>';
-      if (rxEditando === q.id + ':receita') { h += formRx(q, 'receita'); }
-      else h += '<ol class="rx-lista">' +
-        rxDe(q, 'receita').map(function (r) {
-          var qt = qtdTexto(r.uso);
-          return '<li' + (modoPed() ? ' class="ped"' : '') + '>' +
-            '<span class="rx-linha">' +
-              '<span class="rx-med">' + esc(r.med) + '</span>' +
-              '<span class="rx-qtd' + (qt ? '' : ' vago') + '">' + esc(qt || '__________') + '</span>' +
-            '</span>' +
-            '<span class="rx-obs">' + esc(r.uso) + '</span>' +
-            (modoPed() ? blocoPedLinha(r.med) : '') + '</li>';
-        }).join('') + '</ol>';
-      h += acoesRx(q, 'receita') + '</section>';
-    }
-
-    h += blocoSintomaticos('quadro:' + q.id);
-
-    if (q.conduta) {
-      h += '<div class="rx-rodape"><a class="ferr-btn peq" href="#' + esc(q.conduta) + '">' +
-'Ver a conduta &rarr;' + '</a></div>';
-    }
-
     return h + '</div>';
   }
 
@@ -1877,7 +1907,7 @@
               '<button type="button" title="Editar" data-acao="quadro-editar" data-id="' + esc(q.id) + '"'+ICO('lapis')+'</button>' +
               '<button type="button" title="Apagar" data-acao="quadro-apagar" data-id="' + esc(q.id) + '"'+ICO('fechar')+'</button>' +
             '</div>' +
-            (aberto ? (q.id === QUADRO_PROTO ? corpoProto(q) : corpoQuadro(q)) : '') +
+            (aberto ? corpoProto(q) : '') +
           '</article>';
         }).join('') + '</div>' +
       '</section>';
@@ -1897,6 +1927,8 @@
     }
 
     if (form === 'quadro') html += formQuadro(form_alvo);
+
+    html += blocoPaciente();
 
     /* liga/desliga o modo pediatria */
     html += '<div class="ped-liga">' +
@@ -2052,7 +2084,7 @@
       esq + new Array(pontos + 1).join('.') + ' ' + qtd,
       '     ' + pos.join(', ') + '.'];
     if (e.dur && e.dur !== '\u2014') linhas.push('     Dura\u00e7\u00e3o: ' + e.dur + '.');
-    return linhas.join('\n');
+    return cabPaciente() + linhas.join('\n');
   }
 
   function corpoAtb(a) {
@@ -2256,6 +2288,7 @@
     /* algumas telas filhas ja trazem a propria area de trabalho */
     if (html.indexOf('id="ferrBancada"') === -1) html += bancada(secId);
     container.innerHTML = html + '</section>';
+    rolaAoAberto();
   };
 
   /* =========================================================
@@ -2297,6 +2330,7 @@
 
     html += bancada('atb');
     container.innerHTML = html + '</section>';
+    rolaAoAberto();
   };
 
   /* =========================================================
@@ -2545,6 +2579,22 @@
   };
   F.limpaIndice = function () { cacheIx = null; };
 
+  /* o item aberto pela busca precisa aparecer sozinho na tela:
+     abrir sem rolar deixa o cartao perdido no meio de 104 quadros */
+  var focarApos = null;
+  function rolaAoAberto() {
+    if (!focarApos) return;
+    var sel = focarApos; focarApos = null;
+    requestAnimationFrame(function () {
+      var el = document.querySelector(sel);
+      if (!el) return;
+      var topo = el.getBoundingClientRect().top + window.scrollY -
+                 (parseInt(getComputedStyle(document.documentElement)
+                   .getPropertyValue('--h-topo'), 10) || 57) - 14;
+      window.scrollTo({ top: Math.max(0, topo), behavior: 'smooth' });
+    });
+  }
+
   /* abre a aba certa ja com o item expandido (usado pela busca) */
   F.abrirItem = function (tipo, id) {
     if (tipo === 'quadro')      { quadroAberto = id; filtroQuadro = 'todos'; buscaQuadro = ''; }
@@ -2555,6 +2605,8 @@
       if (a) slugAtb = slugDoSitio(a.sitio);
     }
     if (tipo === 'manobra')     { filtroEx = 'todos'; }
+    focarApos = { quadro:'.ferr-quadro.aberto', calculadora:'.ferr-calc.aberta',
+                  score:'.ferr-calc.aberta', antibiotico:'.atb-item.aberto' }[tipo] || null;
   };
 
   F.desenha = function (container, sub) {
@@ -2729,6 +2781,28 @@
     }
 
     if (acao === 'calc-ramo') { filtroRamo = v; calcAberta = null; redesenhaFixo(); return; }
+
+    /* --- cabeçalho do paciente --- */
+    if (acao === 'pac-limpar') {
+      grava('pac-nome', ''); grava('pac-idade', '');
+      var gp = document.getElementById('peso');
+      if (gp) { gp.value = ''; gp.dispatchEvent(new Event('input', { bubbles:true })); }
+      pacAberto = true; redesenhaFixo(); return;
+    }
+
+    /* --- ajuste rápido de posologia --- */
+    if (acao === 'rx-dias' || acao === 'rx-horas') {
+      var qd = quadroDe(id);
+      if (!qd) return;
+      var itens = rxDe(qd, 'receita').map(function (x) { return { med:x.med, uso:x.uso }; });
+      var alvo = itens[+b.dataset.i];
+      if (!alvo) return;
+      alvo.uso = (acao === 'rx-dias')
+        ? trocaDias(alvo.uso, +b.dataset.n)
+        : trocaHoras(alvo.uso, +b.dataset.n);
+      rxGrava(qd, 'receita', itens);
+      redesenhaFixo(); return;
+    }
 
     /* --- protótipo de prescrição --- */
     if (acao === 'proto-todos') {
@@ -2995,6 +3069,13 @@
   });
 
   /* ---------- campos que mudam ---------- */
+  /* o acordeão do paciente tem que sobreviver aos redesenhos */
+  document.addEventListener('toggle', function (e) {
+    if (e.target && e.target.classList && e.target.classList.contains('pac')) {
+      pacAberto = e.target.open;
+    }
+  }, true);
+
   document.addEventListener('input', function (e) {
     var t = e.target;
     if (t.id === 'ferrBancada') {
@@ -3053,6 +3134,20 @@
       buscaPedia = t.value;
       var cp = document.getElementById('ferrListaPed');
       if (cp) cp.innerHTML = listaPedia();
+      return;
+    }
+    /* cabeçalho do paciente: grava e atualiza só o resumo do summary,
+       redesenhar aqui destruiria o próprio campo e mataria o foco */
+    if (t.id === 'pacNome' || t.id === 'pacIdade' || t.id === 'pacPeso') {
+      if (t.id === 'pacPeso') {
+        var gk = document.getElementById('peso');
+        if (gk) { gk.value = t.value; gk.dispatchEvent(new Event('input', { bubbles:true })); }
+        atualizaPorPeso();
+      } else {
+        grava(t.id === 'pacNome' ? 'pac-nome' : 'pac-idade', t.value);
+      }
+      var res = document.querySelector('.pac > summary > i');
+      if (res) res.textContent = pacResumo() || 'não informado';
       return;
     }
     /* o peso da aba pediatrica E o peso global: escreve no campo do topo */

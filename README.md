@@ -72,11 +72,27 @@ Preservada e **sem acordeões**: ficha rápida → **fluxograma** → red flags 
 passo a passo → doses → demais blocos → prescrição mínima (quando existe nos
 dados). Fluxogramas ficam visíveis por padrão, na posição original.
 
-## Cartão de prescrição
+## Cartão de prescrição — dois cliques
+
+Abrir o quadro é o primeiro clique; **Copiar prescrição** é o segundo. Todos os
+itens já vêm marcados: desmarcar um risca a linha, tira do texto copiado e
+desconta do contador no botão. "desmarcar todos" limpa uma seção inteira — com a
+unidade zerada, sai só a receita.
 
 Mostra só o que se copia: o alerta clínico, "Na unidade" e "Receita para casa".
-Quatro ações: **Copiar**, **Imprimir** (folha limpa, só a prescrição),
-**Área de escrita** (empilha e rola até a bancada) e **Ver a conduta**.
+Ao lado do botão grande, três atalhos: **Imprimir** (folha limpa),
+**Rascunho** (empilha e abre o painel já rolado no fim) e **Ver a conduta**.
+
+Nos itens da receita, chips reescrevem a posologia sem abrir o editor:
+`8/8h`, `12/12h`, `1x/dia`, `5d`, `7d`, `10d`. A quantidade a dispensar é
+recalculada sozinha, porque ela é aritmética da frase escrita.
+
+## Cabeçalho do paciente
+
+Acordeão no topo de Prescrições: nome, idade e peso. Preenchido uma vez por
+plantão, entra no topo de tudo que for copiado, impresso ou empilhado, com a
+data. O peso é o mesmo campo global do topo — não existe um segundo peso no
+aplicativo. Vazio, nenhuma linha é acrescentada.
 
 ## Offline
 
