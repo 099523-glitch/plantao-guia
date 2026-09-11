@@ -314,28 +314,22 @@
     return null;
   }
 
-  /* ---------- filtro de blocos ----------
-     Um chip por bloco da conduta: clicar esconde aquele bloco em TODO
-     o guia, porque quem não quer ler red flags não quer em conduta
-     nenhuma. A chave é o TÍTULO, não o tipo: em queixa, `lista` cobre
-     "O que pedir", "Reavaliar" e "Internação x alta" ao mesmo tempo,
-     e um chip só apagaria os três.
-     O fluxograma não tem chip: nunca é escondido.
-     O chip apagado continua na barra dizendo o que está fora. */
-  var LEITURA = { texto:1, lista:1, dica:1 };   /* o que o "abrir em resumo" tira */
+  /* ---------- dobrar um bloco ----------
+     Clicar no próprio bloco fecha ele: fica só o título, e clicar de
+     novo abre. Vale em todo o guia — quem fechou red flags não quer
+     red flags em conduta nenhuma. O fluxograma nunca dobra. */
+  var LEITURA = { texto:1, lista:1, dica:1 };   /* o que o "só o essencial" fecha */
 
   function chaveBloco(sec) {
     if (sec.tipo !== 'lista') return sec.tipo;
     var t = sec.titulo || LABEL.lista;
     return 'lista::' + normaliza(t).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   }
-  function rotuloBloco(sec) { return sec.titulo || LABEL[sec.tipo] || sec.tipo; }
-
   function blocosOff() {
     var v = ler('pref:blocos-off', null);
     return Array.isArray(v) ? v : [];
   }
-  function blocoEscondido(sec) {
+  function blocoDobrado(sec) {
     return sec.tipo !== 'fluxo' && blocosOff().indexOf(chaveBloco(sec)) > -1;
   }
   function alternaBloco(k) {
@@ -344,8 +338,8 @@
     grava('pref:blocos-off', off);
   }
 
-  /* as chaves de todos os blocos de leitura do guia inteiro, para o
-     preset "só o essencial" valer em qualquer conduta */
+  /* as chaves de todos os blocos de leitura do guia, para o preset
+     dos Ajustes valer em qualquer conduta */
   var cacheLeitura = null;
   function chavesLeitura() {
     if (cacheLeitura) return cacheLeitura;
@@ -365,39 +359,20 @@
   function soEssencial() { grava('pref:blocos-off', chavesLeitura().slice()); }
   function tudoVisivel() { grava('pref:blocos-off', []); }
 
-  function barraBlocos(secoes) {
-    var chips = [], vistas = {}, n = 0;
-    secoes.forEach(function (sec) {
-      if (sec.tipo === 'fluxo') return;          /* o fluxograma não se esconde */
-      var k = chaveBloco(sec);
-      if (vistas[k]) return;
-      vistas[k] = 1;
-      var off = blocoEscondido(sec);
-      if (off) n++;
-      chips.push({ k:k, rot:rotuloBloco(sec), on:!off });
-    });
-    if (chips.length < 2) return '';
-    var essencial = chips.every(function (c) { return c.on === (chavesLeitura().indexOf(c.k) === -1); });
-    return '<div class="bfil"><span class="bfil-rot">Mostrar</span>' +
-      chips.map(function (c) {
-        return '<button type="button" class="bfil-chip' + (c.on ? ' on' : '') + '" ' +
-          'data-bloco="' + esc(c.k) + '" aria-pressed="' + (c.on ? 'true' : 'false') + '">' +
-          esc(c.rot) + '</button>';
-      }).join('') +
-      (n ? '<span class="bfil-conta">' + n + (n === 1 ? ' oculto' : ' ocultos') + '</span>' : '') +
-      '<button type="button" class="bfil-preset" data-bloco-preset="' +
-        (essencial ? 'tudo' : 'essencial') + '">' +
-        (essencial ? 'Mostrar tudo' : 'Só o essencial') + '</button>' +
-    '</div>';
+  /* embrulha o bloco para poder dobrar; display:contents mantém o
+     layout exatamente como estava */
+  function dobravel(sec) {
+    var html = bloco(sec);
+    if (sec.tipo === 'fluxo') return html;
+    var d = blocoDobrado(sec);
+    return '<div class="dobra' + (d ? ' dobrado' : '') + '" data-dobra="' + esc(chaveBloco(sec)) + '"' +
+      ' title="' + (d ? 'Abrir' : 'Fechar') + ' este bloco em todo o guia">' + html + '</div>';
   }
 
   function corpoProtocolo(p) {
     var secoes = p.secoes || [];
-    var mostra = secoes.filter(function (sec) { return !blocoEscondido(sec); });
-
-    var html = barraBlocos(secoes);
-    html += ficha(p);
-    html += mostra.map(bloco).join('');
+    var html = ficha(p);
+    html += secoes.map(dobravel).join('');
     if (!(p.ficha || []).length && !secoes.length) {
       html += '<div class="pendente">Conduta ainda não preenchida.</div>';
     }
@@ -801,9 +776,7 @@
       '</ol></div>';
 
     /* 2. o corpo: red flags, fluxograma, exames, não fazer, reavaliar, destino */
-    html += barraBlocos(q.secoes || []);
-    html += (q.secoes || []).filter(function (sec) { return !blocoEscondido(sec); })
-                            .map(bloco).join('');
+    html += (q.secoes || []).map(dobravel).join('');
 
     /* 3. ferramentas ligadas */
     if ((q.atalhos || []).length) {
@@ -1338,19 +1311,16 @@
       if (window.Ferramentas && Ferramentas.copiarClinico) Ferramentas.copiarClinico(txt, alvo.titulo, 'presc');
       return;
     }
-    var b = e.target.closest('[data-bloco],[data-bloco-preset]');
+    var b = e.target.closest('[data-dobra]');
     if (!b) return;
-    if (b.dataset.blocoPreset === 'essencial')   soEssencial();
-    else if (b.dataset.blocoPreset === 'tudo')   tudoVisivel();
-    else                                         alternaBloco(b.dataset.bloco);
+    /* dentro do bloco ainda tem link e botão de copiar: não roubar o clique */
+    if (e.target.closest('a, button, input, textarea, select')) return;
+    var fechando = !b.classList.contains('dobrado');
+    alternaBloco(b.dataset.dobra);
     var y = window.scrollY;
     render();
     window.scrollTo(0, y);
-    if (window.UI && UI.aviso) {
-      var fora = blocosOff().length;
-      UI.aviso(fora ? (fora === 1 ? '1 tipo de bloco oculto' : fora + ' tipos de bloco ocultos')
-                    : 'Todos os blocos visíveis');
-    }
+    if (window.UI && UI.aviso) UI.aviso(fechando ? 'Bloco fechado' : 'Bloco aberto');
   });
 
   /* ---------- copiar o link da conduta ---------- */
