@@ -320,14 +320,21 @@
      red flags em conduta nenhuma. O fluxograma nunca dobra. */
   var LEITURA = { texto:1, lista:1, dica:1 };   /* o que o "só o essencial" fecha */
 
+  function rotuloBloco(sec) { return sec.titulo || LABEL[sec.tipo] || sec.tipo; }
   function chaveBloco(sec) {
     if (sec.tipo !== 'lista') return sec.tipo;
     var t = sec.titulo || LABEL.lista;
     return 'lista::' + normaliza(t).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   }
+  /* na primeira visita os blocos de leitura ("O que pedir", "Reavaliar",
+     "Internação x alta", dicas, observações) já vêm fechados: quem abre
+     uma conduta no plantão quer red flags, fluxograma e dose. */
   function blocosOff() {
     var v = ler('pref:blocos-off', null);
-    return Array.isArray(v) ? v : [];
+    if (Array.isArray(v)) return v;
+    var seed = chavesLeitura().slice();
+    grava('pref:blocos-off', seed);
+    return seed;
   }
   function blocoDobrado(sec) {
     return sec.tipo !== 'fluxo' && blocosOff().indexOf(chaveBloco(sec)) > -1;
@@ -365,8 +372,10 @@
     var html = bloco(sec);
     if (sec.tipo === 'fluxo') return html;
     var d = blocoDobrado(sec);
-    return '<div class="dobra' + (d ? ' dobrado' : '') + '" data-dobra="' + esc(chaveBloco(sec)) + '"' +
-      ' title="' + (d ? 'Abrir' : 'Fechar') + ' este bloco em todo o guia">' + html + '</div>';
+    return '<div class="dobra t-' + esc(sec.tipo) + (d ? ' dobrado' : '') +
+      '" data-dobra="' + esc(chaveBloco(sec)) + '"' +
+      ' role="button" tabindex="0" aria-expanded="' + (d ? 'false' : 'true') + '"' +
+      ' aria-label="' + esc(rotuloBloco(sec)) + ' — ' + (d ? 'abrir' : 'fechar') + '">' + html + '</div>';
   }
 
   function corpoProtocolo(p) {
@@ -1315,12 +1324,25 @@
     if (!b) return;
     /* dentro do bloco ainda tem link e botão de copiar: não roubar o clique */
     if (e.target.closest('a, button, input, textarea, select')) return;
+    dobra(b);
+  });
+
+  function dobra(b) {
     var fechando = !b.classList.contains('dobrado');
     alternaBloco(b.dataset.dobra);
     var y = window.scrollY;
     render();
     window.scrollTo(0, y);
     if (window.UI && UI.aviso) UI.aviso(fechando ? 'Bloco fechado' : 'Bloco aberto');
+  }
+
+  /* mesma dobra pelo teclado */
+  doc.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var b = e.target.closest && e.target.closest('[data-dobra]');
+    if (!b || b !== e.target) return;
+    e.preventDefault();
+    dobra(b);
   });
 
   /* ---------- copiar o link da conduta ---------- */

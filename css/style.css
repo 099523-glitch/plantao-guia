@@ -691,22 +691,42 @@ footer em{font-style:normal;color:var(--fire)}
 
 /* --- resumo x completo --- */
 /* --- dobrar um bloco: clicar nele fecha, sobra o título --- */
-.dobra{display:contents}
-.dobra>*{cursor:pointer}
-.dobra>* :where(a,button,input,textarea,select){cursor:auto}
+.dobra{position:relative;cursor:pointer}
+.dobra:focus-visible{outline:2px solid var(--acento);outline-offset:3px;border-radius:var(--raio)}
+.dobra :where(a,button,input,textarea,select){cursor:auto}
+.dobra .rule,.dobra .spec,.dobra .presc,.dobra>.sub-head{padding-right:38px}
+
+/* o chevron: gira ao abrir, some do papel */
+.dobra::after{content:'';position:absolute;right:15px;top:16px;width:7px;height:7px;
+  border-right:1.7px solid var(--steel);border-bottom:1.7px solid var(--steel);
+  transform:rotate(-135deg);opacity:.45;
+  transition:transform .16s ease,opacity .16s ease,border-color .16s ease;pointer-events:none}
+.dobra.dobrado::after{top:14px;transform:rotate(45deg);opacity:.8}
+.dobra:hover::after{opacity:1;border-color:var(--acento)}
+
+/* fechado: uma faixa fina e igual para todo tipo de bloco */
+.dobra.dobrado{border:1px solid var(--line);border-left:3px solid var(--line-forte);
+  border-radius:var(--raio);background:var(--card);margin:7px 0;padding:10px 38px 10px 14px}
+.dobra.dobrado:hover{background:var(--paper);border-color:var(--line-forte)}
+.dobra.dobrado.t-alerta,.dobra.dobrado.t-naofazer{border-left-color:var(--fire)}
+.dobra.dobrado.t-dica,.dobra.dobrado.t-texto{border-left-color:var(--amber)}
+.dobra.dobrado .rule,.dobra.dobrado .spec,.dobra.dobrado .presc{
+  border:0;background:none;padding:0;margin:0;box-shadow:none;border-radius:0}
 .dobra.dobrado .rule>*:not(.rlabel),
 .dobra.dobrado .spec>*:not(.spec-head),
 .dobra.dobrado .presc>*:not(.presc-head),
-.dobra.dobrado>.steps{display:none}
+.dobra.dobrado>.steps,
 .dobra.dobrado>.sub-head+*{display:none}
-.dobra.dobrado .rule{padding-top:11px;padding-bottom:11px;opacity:.72}
-.dobra.dobrado .spec,.dobra.dobrado .presc{opacity:.72}
-.dobra.dobrado .rlabel::after,
-.dobra.dobrado .spec-head::after,
-.dobra.dobrado .presc-head>span::after,
-.dobra.dobrado>.sub-head::after{content:' + abrir';font-weight:600;opacity:.6;letter-spacing:.02em}
-.dobra.dobrado>.sub-head{opacity:.72;margin-bottom:0}
-.dobra>*:hover .rlabel,.dobra>.sub-head:hover{text-decoration:underline;text-underline-offset:3px}
+.dobra.dobrado .rlabel,.dobra.dobrado>.sub-head{margin:0}
+.dobra.dobrado .spec-head,.dobra.dobrado .presc-head{
+  background:none;color:inherit;padding:0;border:0;letter-spacing:.07em}
+
+@media print{
+  .dobra::after{display:none}
+  .dobra.dobrado{border:0;padding:0;margin:revert}
+  .dobra.dobrado .rule>*,.dobra.dobrado .spec>*,.dobra.dobrado .presc>*,
+  .dobra.dobrado>*{display:revert}
+}
 
 /* --- botao de copiar link --- */
 .btn-link{flex-shrink:0;font-size:15px;line-height:1;background:none;border:0;color:var(--steel);cursor:pointer;padding:2px 4px}

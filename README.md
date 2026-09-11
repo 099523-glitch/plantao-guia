@@ -74,9 +74,14 @@ dados). Fluxogramas ficam visíveis por padrão, na posição original.
 
 ### Dobrar um bloco
 
-Clicar no próprio bloco fecha ele: sobra o título com um "+ abrir", e clicar
-de novo abre. Vale **em todo o guia** — quem fechou red flags não quer red
-flags em conduta nenhuma. Cliques em link ou botão dentro do bloco não dobram.
+Clicar no próprio bloco fecha ele: sobra uma faixa fina com o título e um
+chevron, e clicar de novo abre. Vale **em todo o guia** — quem fechou red
+flags não quer red flags em conduta nenhuma. Cliques em link ou botão dentro
+do bloco não dobram; Enter e espaço dobram pelo teclado.
+
+Os blocos de leitura ("O que pedir", "Reavaliar", "Internação x alta", dicas
+e observações) **já nascem fechados**: quem abre uma conduta no plantão quer
+red flags, fluxograma e dose.
 
 **O fluxograma não dobra.** A chave é o tipo do bloco, menos em `lista`: lá é
 o título, porque uma queixa usa `lista` para "O que pedir", "Reavaliar" e
