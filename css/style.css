@@ -1994,3 +1994,8 @@ body.banc-cheia #btnBancTop::after{content:"";position:absolute;top:6px;right:6p
   .pp-copiar{font-size:14.5px;padding:0 14px}
   .pp-copiar span{display:none}
 }
+
+/* o rascunho pisca uma vez quando recebe conteudo novo */
+@keyframes banc-chegou{from{box-shadow:inset 3px 0 0 var(--acento)}to{box-shadow:inset 3px 0 0 transparent}}
+.banc.banc-chegou{animation:banc-chegou 1.1s ease-out}
+@media(prefers-reduced-motion:reduce){.banc.banc-chegou{animation:none}}

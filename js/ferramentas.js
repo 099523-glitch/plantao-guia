@@ -2621,9 +2621,25 @@
     Base.setRascunho(CHAVE_BANC, novo);
     toast('Empilhado no rascunho');
     var b = document.getElementById('ferrBancada');
-    if (b) { b.value = novo; b.scrollTop = b.scrollHeight; }
+    if (b) b.value = novo;
     pintaBanc();
+    /* abrir ANTES de rolar: com o painel fechado a textarea nao tem altura
+       e o scrollTop nao sai do zero, escondendo o que acabou de entrar */
     if (window.UI && UI.abreBancada) UI.abreBancada();
+    mostraFim(b);
+  }
+
+  /* leva o painel ao trecho recem-empilhado e o pisca uma vez */
+  function mostraFim(b) {
+    if (!b) return;
+    requestAnimationFrame(function () {
+      b.scrollTop = b.scrollHeight;
+      var p = document.getElementById('banc');
+      if (!p) return;
+      p.classList.remove('banc-chegou');
+      void p.offsetWidth;
+      p.classList.add('banc-chegou');
+    });
   }
 
   /* =========================================================
