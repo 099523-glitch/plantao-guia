@@ -1756,16 +1756,17 @@
       porGrupo[q.grupo].push(q);
     });
     return '<div class="ferr-grupos">' + ordem.map(function (g) {
-      return '<section class="ferr-grupo">' +
-        '<h4>' + esc(g) + '<i>' + porGrupo[g].length + '</i></h4>' +
-        '<div class="ferr-quadros">' + porGrupo[g].map(function (q) {
+      return '<section class="atb-secao"><h4>' + esc(g) + '<i>' + porGrupo[g].length + '</i></h4>' +
+        '<div class="cc-grade">' + porGrupo[g].map(function (q) {
           var aberto = quadroAberto === q.id;
+          var n = (q.unidade || []).length + (q.receita || []).length;
           return '<article class="ferr-quadro' + (aberto ? ' aberto' : '') + '">' +
             '<button type="button" class="ferr-quadro-topo" data-acao="quadro-abrir" data-id="' + esc(q.id) + '">' +
               '<span class="ferr-quadro-nome">' + esc(q.nome) +
                 '<span class="ferr-quadro-sub">' + esc(q.sub) + '</span></span>' +
               (q.atencao ? '<span class="ferr-quadro-flag" title="Tem armadilha para conferir">!</span>' : '') +
-              '<span class="ferr-calc-seta">' + (aberto ? '▾' : '▸') + '</span>' +
+              '<span class="atb-n">' + n + (n === 1 ? ' item' : ' itens') + '</span>' +
+              '<span class="ferr-calc-seta">' + ICO(aberto ? 'setaBai' : 'setaDir') + '</span>' +
             '</button>' +
             '<div class="ferr-card-acoes">' +
               '<button type="button" title="Editar" data-acao="quadro-editar" data-id="' + esc(q.id) + '"'+ICO('lapis')+'</button>' +
@@ -1801,10 +1802,6 @@
         (modoPed() ? 'dose por quilo abaixo de cada linha' : 'mostra a dose por quilo em cada prescrição') +
       '</span></div>';
     if (modoPed()) html += barraPed();
-
-    /* busca local */
-    html += '<input type="search" class="ferr-busca-local" id="ferrBuscaQ" ' +
-      'placeholder="Buscar quadro, sintoma ou medicação…" value="' + esc(buscaQuadro) + '">';
 
     /* chips por grupo */
     var grupos = [];
@@ -2938,12 +2935,6 @@
       var cc = document.getElementById('ferrPediaCorpo');
       if (cc) cc.innerHTML = corpoPedia();
       atualizaPorPeso();
-      return;
-    }
-    if (t.id === 'ferrBuscaQ') {
-      buscaQuadro = t.value;
-      var cx = document.getElementById('ferrListaQ');
-      if (cx) cx.innerHTML = listaQuadros(Base.quadros());
       return;
     }
     if (t.dataset && t.dataset.calc) { mudouCalc(t); return; }
