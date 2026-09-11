@@ -1450,9 +1450,6 @@
      calculada. Onde não há, a linha fica marcada como dose de adulto:
      nada é inferido nem convertido por conta própria.
      ============================================================ */
-  function modoPed()      { return !!ler('pref:presc-pedia', false); }
-  function setModoPed(v)  { grava('pref:presc-pedia', !!v); }
-
   /* princípio ativo: o que vem antes do primeiro número */
   function ativoDe(nome) {
     return norm(nome).split(/\d/)[0].replace(/[^a-z+ ]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -1521,62 +1518,6 @@
   function atualizaPorPeso() {
     var cl = document.getElementById('ferrListaPed');
     if (cl) cl.innerHTML = listaPedia();
-    var cq = document.getElementById('ferrListaQ');
-    if (cq && modoPed()) cq.innerHTML = listaQuadros(Base.quadros());
-    var est = document.querySelector('.pd-estado');
-    if (est && cq) {
-      var novo = document.createElement('div');
-      novo.innerHTML = barraPed();
-      var subst = novo.querySelector('.pd-estado');
-      /* troca só os selos, para não destruir os campos em foco */
-      if (subst) {
-        var alvos = est.querySelectorAll('.pd-est-item');
-        var fonte = subst.querySelectorAll('.pd-est-item');
-        for (var i = 0; i < alvos.length && i < fonte.length; i++) {
-          alvos[i].textContent = fonte[i].textContent;
-          alvos[i].className = fonte[i].className;
-        }
-      }
-    }
-  }
-
-  function blocoPedLinha(nomeAdulto) {
-    var m = pedDe(nomeAdulto);
-    if (!m) {
-      return '<span class="rx-ped nao">' + ICO('alerta') +
-        'Sem dose pediátrica cadastrada — a linha acima é <b>dose de adulto</b>.</span>';
-    }
-    var l = linhaPed(m);
-    if (!l) return '';
-    if (l.veto) {
-      return '<span class="rx-ped veto">' + ICO('perigo') + esc(l.txt) + '</span>';
-    }
-    return '<span class="rx-ped ok">' + ICO('crianca') +
-      '<b>' + esc(m.nome) + '</b> ' + esc(l.regra) +
-      (l.freq ? ' · ' + esc(l.freq) : '') +
-      (l.calc ? ' <em>' + esc(l.calc) + '</em>'
-              : (l.semPeso ? ' <i>informe o peso</i>' : '')) + '</span>';
-  }
-
-  /* barra de estado do modo pediatria, no topo da tela de prescrições */
-  function barraPed() {
-    var kg = pesoGlobal(), idade = idadePedia();
-    return '<div class="pd-estado" role="status">' +
-      ICO('crianca') + '<b>Pediatria</b>' +
-      '<span class="pd-est-item' + (idade === null ? ' falta' : '') + '">' +
-        (idade === null ? 'idade não informada' : idadeTexto(idade)) + '</span>' +
-      '<span class="pd-est-item' + (kg === null ? ' falta' : '') + '">' +
-        (kg === null ? 'peso não informado' : String(kg).replace('.', ',') + ' kg') + '</span>' +
-      '<label class="pd-mini"><span>Peso</span>' +
-        '<input type="number" inputmode="decimal" step="0.1" min="0.5" max="150" id="ferrPesoPed" ' +
-        'placeholder="kg" value="' + (kg === null ? '' : kg) + '"></label>' +
-      '<label class="pd-mini"><span>Idade</span>' +
-        '<input type="number" inputmode="numeric" step="1" min="0" max="216" id="ferrIdadePed" ' +
-        'placeholder="meses" value="' + (idade === null ? '' : idade) + '"></label>' +
-    '</div>' +
-    '<p class="pd-cruz">' + ICO('alerta') +
-      '<span>Doses cruzadas com a aba Pediatria. A linha sem equivalente cadastrado fica marcada como ' +
-      '<b>dose de adulto</b> — não converta de cabeça.</span></p>';
   }
 
   /* ---------- sintomáticos ----------
@@ -1770,7 +1711,6 @@
             : '<b>' + esc(x.uso) + '</b>' + (qt ? '<i>' + esc(qt) + '</i>' : '')) +
         '</span>' +
         (parte === 'receita' ? chipsUso(q, i, x.uso) : '') +
-        (modoPed() ? blocoPedLinha(x.med) : '') +
       '</span></label>';
   }
 
@@ -1784,7 +1724,7 @@
       if (!lista.length) return;
       var todosFora = lista.every(function (_, i) { return foraDe(q, par[0], i); });
       var editando = rxEditando === q.id + ':' + par[0];
-      h += '<section class="pp-parte' + (modoPed() ? ' ped' : '') + '"><h5>' +
+      h += '<section class="pp-parte"><h5>' +
         '<span class="pp-tit">' + par[1] + '</span>' +
         (rxAlterado(q, par[0]) ? '<span class="rx-mexido">' + ICO('lapis') + ' ajustada</span>' : '') +
         '<button type="button" class="pp-todos" data-acao="rx-editar" ' +
@@ -1929,16 +1869,6 @@
     if (form === 'quadro') html += formQuadro(form_alvo);
 
     html += blocoPaciente();
-
-    /* liga/desliga o modo pediatria */
-    html += '<div class="ped-liga">' +
-      '<button type="button" class="chave' + (modoPed() ? ' on' : '') + '" data-acao="presc-pedia" ' +
-        'role="switch" aria-checked="' + (modoPed() ? 'true' : 'false') + '">' +
-        '<span class="chave-bola"></span></button>' +
-      '<span class="ped-liga-txt">' + ICO('crianca') + '<b>Modo pediatria</b>' +
-        (modoPed() ? 'dose por quilo abaixo de cada linha' : 'mostra a dose por quilo em cada prescrição') +
-      '</span></div>';
-    if (modoPed()) html += barraPed();
 
     /* chips por grupo */
     var grupos = [];
@@ -2832,8 +2762,6 @@
       if (q3p) pilha(textoProto(q3p));
       return;
     }
-
-    if (acao === 'presc-pedia') { setModoPed(!modoPed()); redesenhaFixo(); return; }
 
     /* --- sintomáticos --- */
     if (acao === 'sint-cat') {

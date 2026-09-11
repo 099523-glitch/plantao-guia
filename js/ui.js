@@ -67,7 +67,7 @@
       acceptNode: function (n) {
         if (!n.nodeValue || n.nodeValue.length < 4) return NodeFilter.FILTER_REJECT;
         var pai = n.parentNode;
-        if (!pai || pai.closest('.peso-calc, input, textarea, select, .ferr-saida, .pd-med, .rx-ped')) return NodeFilter.FILTER_REJECT;
+        if (!pai || pai.closest('.peso-calc, input, textarea, select, .ferr-saida, .pd-med')) return NodeFilter.FILTER_REJECT;
         RE_KG.lastIndex = 0;
         return RE_KG.test(n.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
       }

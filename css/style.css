@@ -1658,50 +1658,7 @@ body.banc-cheia #btnBancTop::after{content:"";position:absolute;top:6px;right:6p
 .banc-x{flex-shrink:0}
 [hidden]{display:none!important}
 
-/* ===========================================================
-   MODO PEDIATRIA nas prescrições
-   =========================================================== */
-.ped-liga{display:flex;align-items:center;gap:11px;padding:11px 14px;margin-bottom:12px;
-  border:1px solid var(--line);border-radius:var(--raio);background:var(--card)}
-.chave{position:relative;flex-shrink:0;width:46px;height:26px;padding:0;cursor:pointer;
-  border:1px solid var(--line-forte);border-radius:20px;background:var(--paper);
-  transition:background .15s ease,border-color .15s ease}
-.chave.on{background:var(--verde);border-color:var(--verde)}
-.chave-bola{position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;
-  background:var(--card);box-shadow:0 1px 3px rgba(16,24,40,.25);transition:transform .15s ease}
-.chave.on .chave-bola{transform:translateX(20px)}
-.chave:focus-visible{outline:2px solid var(--acento);outline-offset:2px}
-.ped-liga-txt{display:flex;align-items:center;flex-wrap:wrap;gap:7px;
-  font-size:12.5px;color:var(--steel);line-height:1.4}
-.ped-liga-txt .ico{width:16px;height:16px;color:var(--verde)}
-.ped-liga-txt b{font-size:13.5px;font-weight:600;color:var(--ink)}
-.pd-mini{display:flex;align-items:center;gap:5px}
-.pd-mini>span{font-size:9.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--steel)}
-.pd-mini input{width:66px;padding:4px 7px;border:1px solid var(--line-forte);border-radius:6px;
-  background:var(--card);color:var(--ink);font-size:12.5px;font-weight:600;
-  font-variant-numeric:tabular-nums;font-family:inherit}
-.pd-mini input:focus{border-color:var(--acento);box-shadow:0 0 0 3px var(--acento-suave);outline:none}
-.pd-cruz{display:flex;gap:7px;margin:-4px 0 14px;font-size:12px;color:var(--steel);line-height:1.45}
-.pd-cruz .ico{width:14px;height:14px;color:var(--amber);flex-shrink:0;margin-top:2px}
-
-/* a linha pediátrica, embaixo da linha de adulto */
-.rx-ped{display:flex;align-items:flex-start;gap:7px;margin-top:6px;padding:7px 10px;
-  border-radius:6px;font-size:12.5px;line-height:1.45}
-.rx-ped .ico{width:14px;height:14px;flex-shrink:0;margin-top:1px}
-.rx-ped b{font-weight:600}
-.rx-ped em{font-style:normal;font-weight:700}
-.rx-ped i{font-style:italic;opacity:.8}
-.rx-ped.ok{background:var(--verde-soft);color:var(--verde)}
-.rx-ped.ok b{color:var(--verde)}
-.rx-ped.nao{background:var(--paper);color:var(--steel);border:1px dashed var(--line-forte)}
-.rx-ped.nao b{color:var(--amber-ink)}
-.rx-ped.veto{background:var(--fire-soft);color:var(--fire);font-weight:500}
-/* em modo pediatria a linha de adulto perde o destaque */
-.rx-lista li.ped .rx-dose{color:var(--steel)}
-.rx-lista li.ped .rx-qtd{color:var(--steel);font-weight:500}
-
-/* barra de estado da pediatria (some numa limpeza anterior; vale para a
-   aba Pediatria e para o modo pediatria das prescrições) */
+/* barra de estado da aba Pediatria */
 .pd-estado{display:flex;align-items:center;flex-wrap:wrap;gap:9px;
   padding:10px 13px;margin-bottom:10px;border:1px solid var(--verde);border-left-width:4px;
   border-radius:var(--raio);background:var(--verde-soft)}
@@ -1711,7 +1668,6 @@ body.banc-cheia #btnBancTop::after{content:"";position:absolute;top:6px;right:6p
 .pd-est-item{font-size:12.5px;font-weight:600;color:var(--ink-2);background:var(--card);
   border:1px solid var(--line);border-radius:20px;padding:2px 10px;font-variant-numeric:tabular-nums}
 .pd-est-item.falta{color:var(--amber-ink);border-color:var(--amber);background:var(--amber-soft)}
-.pd-cruz>span{flex:1;min-width:0}
 
 /* ===========================================================
    ESCORES E CALCULADORAS — achar rápido
@@ -1842,7 +1798,7 @@ body.banc-cheia #btnBancTop::after{content:"";position:absolute;top:6px;right:6p
 /* --- texto secundário legível no escuro --- */
 .hc-sub,.qx-sub,.sc-lista,.res-sub,.pd-nota,.rx-obs,.ferr-calc-sub,.cc-n,
 .pasta-resumo,.hs-lista a i,.ferr-card-sub,.atb-nota,.fonte-linha,
-.gov-nota,.sint-txt span,.ferr-quando,.pd-cruz,.vazio-nota{font-size:13px}
+.gov-nota,.sint-txt span,.ferr-quando,.vazio-nota{font-size:13px}
 /* contraste do escuro: cinza secundário mais claro que o do tema claro */
 :root[data-tema="escuro"]{--steel:#A3AFC0;--ink-2:#D3DBE6;--line:#2A3547}
 
