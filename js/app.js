@@ -367,7 +367,7 @@
     if (sec.tipo === 'fluxo') return html;
     var d = blocoDobrado(sec);
     return '<div class="dobra t-' + esc(sec.tipo) + (d ? ' dobrado' : '') +
-      '" data-dobra="' + esc(chaveBloco(sec)) + '"' +
+      '" data-dobra="' + esc(chaveBloco(sec)) + '" data-bl="' + esc(chaveBloco(sec)) + '"' +
       ' role="button" tabindex="0" aria-expanded="' + (d ? 'false' : 'true') + '"' +
       ' aria-label="' + esc(rotuloBloco(sec)) + ' — ' + (d ? 'abrir' : 'fechar') + '">' + html + '</div>';
   }
@@ -375,7 +375,7 @@
   /* ordem única de leitura em todo o guia: o que fazer primeiro, depois o
      fluxograma, depois doses, e só então red flags, não fazer e o resto —
      na ordem em que foram escritos. Sort estável: empates não trocam. */
-  var POSICAO = { passos:0, ordem:0, fluxo:1, doses:2, alerta:3 };
+  var POSICAO = { alerta:0, doses:1, passos:2, ordem:2, fluxo:3 };
   function ordenaSecoes(secoes) {
     return (secoes || []).map(function (sec, i) { return { sec: sec, i: i }; })
       .sort(function (a, b) {
@@ -386,6 +386,51 @@
       })
       .map(function (x) { return x.sec; });
   }
+
+  /* a faixa do topo: os primeiros passos do pacote, do próprio dados.js.
+     Nada inventado — é a seção de passos/ordem da conduta, truncada. */
+  function faixaAgora(p) {
+    var sec = (p.secoes || []).filter(function (s) {
+      return (s.tipo === 'passos' || s.tipo === 'ordem') && (s.itens || []).length;
+    })[0];
+    if (!sec) return '';
+    var itens = sec.itens.slice(0, 4);
+    return '<div class="faca-agora">' +
+      '<div class="faca-agora-head"><span>Faça agora</span><i>' + esc(sec.titulo || 'Primeiros passos') + '</i></div>' +
+      '<ol class="faca-agora-grade">' + itens.map(function (i, n) {
+        return '<li><b>' + (n + 1) + '</b><span>' + rico(typeof i === 'string' ? i : (i.o_que || '')) + '</span></li>';
+      }).join('') + '</ol></div>';
+  }
+
+  /* o índice da própria conduta: fixo na lateral, chips no celular */
+  function indiceConduta(secoes) {
+    var itens = secoes.filter(function (s) { return s.tipo !== 'fluxo' || true; }).map(function (s) {
+      return '<a class="ic-item" href="#" data-ir="' + esc(chaveBloco(s)) + '">' +
+        '<span>' + esc(s.titulo || LABEL[s.tipo] || s.tipo) + '</span>' +
+        ((s.itens || []).length ? '<i>' + s.itens.length + '</i>' : '') + '</a>';
+    }).join('');
+    return '<nav class="ind-conduta">' +
+      '<span class="ic-rot">Nesta conduta</span>' + itens +
+      '<button type="button" class="ic-ess" data-so-essencial>Só o essencial</button></nav>';
+  }
+
+  doc.addEventListener('click', function (e) {
+    if (!e.target.closest('[data-so-essencial]')) return;
+    soEssencial(); render();
+    if (window.UI && UI.aviso) UI.aviso('Só o essencial');
+  });
+
+  /* rolar até o bloco sem mexer no hash (o hash é a rota do app) */
+  doc.addEventListener('click', function (e) {
+    var a = e.target.closest('[data-ir]');
+    if (!a) return;
+    e.preventDefault();
+    var alvo = doc.querySelector('[data-bl="' + a.getAttribute('data-ir').replace(/"/g, '') + '"]');
+    if (!alvo) return;
+    if (alvo.classList.contains('dobrado')) alvo.classList.remove('dobrado');
+    var y = alvo.getBoundingClientRect().top + window.pageYOffset - 70;
+    window.scrollTo({ top: y, behavior: 'smooth' });
+  });
 
   function corpoProtocolo(p) {
     var secoes = p.secoes || [];
@@ -634,7 +679,11 @@
           ICO('elo') + '</button>' +
       '</div>';
     if (p.resumo) html += '<p class="lead">' + rico(p.resumo) + '</p>';
-    html += '<div class="solo-corpo">' + corpoProtocolo(p) + '</div>';
+    html += faixaAgora(p);
+    html += '<div class="solo-duas">' +
+      indiceConduta(ordenaSecoes(p.secoes || [])) +
+      '<div class="solo-corpo">' + corpoProtocolo(p) + '</div>' +
+    '</div>';
     marcaRecente(p.id);
 
     html += '<p class="rodape-aviso">' + ICO('alerta') +

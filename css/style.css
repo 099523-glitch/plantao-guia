@@ -1,5 +1,4 @@
-/* ===========================================================
-   Guia de Plantao - layout manual (capa + sumario lateral + doc)
+/* ====================================================   Guia de Plantao - layout manual (capa + sumario lateral + doc)
    Trocar as variaveis abaixo troca o tema inteiro.
    =========================================================== */
 /* O tema padrão é CLARO, independente do sistema operacional.
@@ -46,8 +45,7 @@
   --sombra:rgba(0,0,0,.3); --shadow:0 1px 2px rgba(0,0,0,.3);
 }
 
-/* ============================================================
-   VOCABULÁRIO DE COMPONENTES
+/* =====================================================   VOCABULÁRIO DE COMPONENTES
    Use estas classes ao criar tela nova, em vez de redeclarar
    borda/raio/fundo. É o que impede Prescrições, Pediatria e
    Condutas de irem virando produtos diferentes.
@@ -363,8 +361,7 @@ footer em{font-style:normal;color:var(--fire)}
 .side a.sub.vazia{opacity:.55}
 .pasta-tag.vazia{background:transparent;color:var(--steel);border:1px dashed var(--line)}
 
-/* ===========================================================
-   FLUXOGRAMA (tipo de secao 'fluxo')
+/* ====================================================   FLUXOGRAMA (tipo de secao 'fluxo')
    Caixas em CSS, nao SVG: o texto reflui, escala no celular
    e imprime junto com o resto do manual.
    =========================================================== */
@@ -426,8 +423,7 @@ footer em{font-style:normal;color:var(--fire)}
   .fx{box-shadow:none}
 }
 
-/* ===========================================================
-   FERRAMENTAS DO PLANTAO
+/* ====================================================   FERRAMENTAS DO PLANTAO
    Tom mais quieto que o resto do manual: a sombra dura fica so
    no que e acao principal e na prescricao gerada.
    =========================================================== */
@@ -650,8 +646,7 @@ footer em{font-style:normal;color:var(--fire)}
   .ferr-saida{color:#000}
 }
 
-/* ===========================================================
-   TELA INICIAL, BUSCA UNIFICADA E MODO RESUMO
+/* ====================================================   TELA INICIAL, BUSCA UNIFICADA E MODO RESUMO
    =========================================================== */
 
 /* --- home --- */
@@ -759,8 +754,7 @@ footer em{font-style:normal;color:var(--fire)}
   .topo,.tabbar,.painel,.veu,.btn-link,.home-busca{display:none!important}
 }
 
-/* ===========================================================
-   ANTIBIÓTICOS — seção própria
+/* ====================================================   ANTIBIÓTICOS — seção própria
    =========================================================== */
 .atb-head{margin-bottom:22px}
 .atb-head .voltar{display:inline-block;margin-bottom:14px}
@@ -860,8 +854,7 @@ body:not(.autor) [data-acao$="-editar"],
 body:not(.autor) [data-acao$="-apagar"]{display:none!important}
 body:not(.autor) .ferr-card-acoes{gap:0}
 
-/* ===========================================================
-   AJUSTE CLÍNICO — tipografia, densidade e semântica de cor
+/* ====================================================   AJUSTE CLÍNICO — tipografia, densidade e semântica de cor
    Vermelho só significa emergência; o azul carrega a interação.
    =========================================================== */
 body{font-size:14.5px;line-height:1.6;color:var(--ink-2);
@@ -1104,8 +1097,7 @@ footer{border-top:1px solid var(--line);text-transform:none;letter-spacing:0;
   border-right:1px solid var(--line)}
 .solo-head{border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:18px}
 
-/* ===========================================================
-   QUEIXAS — porta de entrada por sintoma
+/* ====================================================   QUEIXAS — porta de entrada por sintoma
    =========================================================== */
 .qx-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:9px}
 .qx-cartao{display:block;padding:13px 14px;border:1px solid var(--line);border-radius:var(--raio);
@@ -1346,8 +1338,7 @@ a.np-item:hover{border-color:var(--acento-borda);border-left-color:var(--amber);
   .pd-campo input{width:72px}
 }
 
-/* ===========================================================
-   UX: celular, diálogos, governança e segurança da cópia
+/* ====================================================   UX: celular, diálogos, governança e segurança da cópia
    =========================================================== */
 
 /* --- peso como ação secundária no celular --- */
@@ -1428,8 +1419,7 @@ body.travado{overflow:hidden}
 /* --- campo de texto nos ajustes --- */
 
 
-/* ===========================================================
-   ACESSIBILIDADE
+/* ====================================================   ACESSIBILIDADE
    =========================================================== */
 .tabbar a,.tabbar button{min-height:48px}
 .icone{min-width:38px;min-height:38px}
@@ -1478,8 +1468,7 @@ body.travado{overflow:hidden}
 html{overflow-x:clip}
 .tabbar{width:100%;max-width:100vw;box-sizing:border-box}
 
-/* ===========================================================
-   CARTÃO DE PRESCRIÇÃO — só o que se copia
+/* ====================================================   CARTÃO DE PRESCRIÇÃO — só o que se copia
    =========================================================== */
 .rx-parte{margin-top:16px}
 .rx-parte + .rx-parte{margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
@@ -1602,8 +1591,7 @@ html{overflow-x:clip}
   .atb-linha{padding-right:12px}
 }
 
-/* ===========================================================
-   ÁREA DE ESCRITA — painel fixo à direita
+/* ====================================================   ÁREA DE ESCRITA — painel fixo à direita
    =========================================================== */
 .banc{display:none}
 .banc-aba{display:none}
@@ -1697,8 +1685,7 @@ body.banc-cheia #btnBancTop::after{content:"";position:absolute;top:6px;right:6p
   border:1px solid var(--line);border-radius:20px;padding:2px 10px;font-variant-numeric:tabular-nums}
 .pd-est-item.falta{color:var(--amber-ink);border-color:var(--amber);background:var(--amber-soft)}
 
-/* ===========================================================
-   ESCORES E CALCULADORAS — achar rápido
+/* ====================================================   ESCORES E CALCULADORAS — achar rápido
    =========================================================== */
 .cc-topo{margin-bottom:14px}
 .cc-topo h4{display:flex;align-items:center;gap:7px;font-size:10.5px;font-weight:700;
@@ -1747,8 +1734,7 @@ body.banc-cheia #btnBancTop::after{content:"";position:absolute;top:6px;right:6p
 .ferr-calc-seta .ico{width:15px;height:15px;color:var(--steel);flex-shrink:0}
 .cc-grade .ferr-calc.cc.aberta .ferr-calc-seta .ico{color:var(--acento)}
 
-/* ===========================================================
-   AJUSTES DE LEITURA E LAYOUT (revisão de UX)
+/* ====================================================   AJUSTES DE LEITURA E LAYOUT (revisão de UX)
    =========================================================== */
 
 /* só para leitor de tela */
@@ -1906,8 +1892,7 @@ body.banc-cheia #btnBancTop::after{content:"";position:absolute;top:6px;right:6p
 .cc-grade .ferr-quadro-corpo{padding:14px}
 .ferr-grupos>.atb-secao{margin-bottom:22px}
 
-/* ===========================================================
-   PRESCRIÇÃO EM DOIS CLIQUES
+/* ====================================================   PRESCRIÇÃO EM DOIS CLIQUES
    =========================================================== */
 /* cabeçalho do paciente: uma linha fechada, três campos aberta */
 .pac{margin-bottom:12px;border:1px solid var(--line);border-radius:var(--raio);background:var(--card)}
@@ -2218,8 +2203,7 @@ body.na-home .topo-busca{opacity:0;pointer-events:none}
 .side a.sub{border-left:0}
 
 
-/* ===========================================================
-   HOME OTIMIZADA — faixa de trabalho, urgência, áreas em 1º nível
+/* ====================================================   HOME OTIMIZADA — faixa de trabalho, urgência, áreas em 1º nível
    =========================================================== */
 
 /* a faixa: metade da altura do hero antigo, busca na mesma linha */
@@ -2227,7 +2211,9 @@ body.na-home .topo-busca{opacity:0;pointer-events:none}
   margin:16px 0 26px;padding:16px 22px;border-radius:14px;
   box-shadow:0 14px 32px -22px rgba(15,36,64,.7)}
 .hero.faixa::before{display:none}
-.hero.faixa .hero-saud{flex-shrink:0;display:flex;flex-direction:column;gap:3px}
+.hero.faixa{flex-wrap:wrap}
+.hero.faixa .hero-saud{flex:0 1 auto;min-width:0;display:flex;flex-direction:column;gap:3px}
+.hero.faixa .hero-busca{flex:1 1 320px}
 .hero.faixa .hero-pill{padding:0;background:none;letter-spacing:.14em}
 .hero.faixa h1{font-size:22px;line-height:1.1;margin:0}
 .hero.faixa .hero-busca{flex:1;min-width:0;margin:0;max-width:none;
@@ -2271,15 +2257,22 @@ body.na-home .topo-busca{display:none}
 .chips-q{display:flex;flex-wrap:wrap;gap:8px}
 .chip-q{display:inline-flex;align-items:center;min-height:36px;padding:8px 14px;
   border:1px solid var(--line);border-radius:20px;background:var(--card);
-  font-size:13.5px;font-weight:500;color:var(--ink-2,var(--ink));text-decoration:none;
+  font-size:13.5px;font-weight:500;color:var(--ink-2,var(--ink));text-decoration:none;white-space:nowrap;
   transition:border-color .14s ease,background .14s ease,color .14s ease}
 .chip-q:hover{border-color:var(--acento-borda);background:var(--acento-suave);color:var(--acento)}
 
-@media(max-width:1100px){
+@media(max-width:900px){
   .tile-grade.ferramentas{grid-template-columns:repeat(3,minmax(0,1fr))}
   .tile-grade.areas-home{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:820px){
   .linha-urg{grid-template-columns:1fr 1fr}
   .linha-urg .urg-fire{grid-column:1 / -1}
+}
+/* 4 colunas seguram até ~880px: o cartão de área tem 68 px e só o nome */
+@media(min-width:901px){
+  .tile-grade.areas-home{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .tile-grade.ferramentas{grid-template-columns:repeat(6,minmax(0,1fr))}
 }
 @media(max-width:720px){
   .hero.faixa{flex-direction:column;align-items:stretch;gap:12px;padding:14px 16px;margin:10px 0 20px}
@@ -2369,3 +2362,60 @@ body.na-home .topo-acoes{margin-left:auto}
 .side .nav-g.guia a.toplink{font-size:14px;font-weight:700}
 .side a.sub{border-left:2px solid var(--line);border-radius:0;padding-left:34px}
 .side a.sub.aqui{border-left-color:var(--acento)}
+
+/* ====================================================   CONDUTA ABERTA — faixa "faça agora" + índice fixo da conduta
+   =========================================================== */
+
+.faca-agora{margin:14px 0 18px;border:1px solid var(--fire-borda,#F0C4BE);border-radius:12px;
+  background:var(--fire-soft);overflow:hidden}
+.faca-agora-head{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--fire-bg);color:#fff}
+.faca-agora-head span{font-family:'Inter',system-ui,sans-serif;font-size:11px;font-weight:700;
+  letter-spacing:.13em;text-transform:uppercase}
+.faca-agora-head i{margin-left:auto;font-style:normal;font-size:11.5px;color:rgba(255,255,255,.85)}
+.faca-agora-grade{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;
+  margin:0;padding:0;list-style:none;background:var(--fire-borda,#F0C4BE)}
+.faca-agora-grade li{display:flex;gap:10px;padding:13px 15px;background:var(--fire-soft)}
+.faca-agora-grade b{flex:0 0 20px;height:20px;display:flex;align-items:center;justify-content:center;
+  border-radius:50%;background:var(--fire-bg);color:#fff;font-family:'JetBrains Mono',ui-monospace,monospace;
+  font-size:11px;font-weight:700}
+.faca-agora-grade span{font-size:14px;line-height:1.45;color:var(--ink)}
+
+/* duas colunas: índice fixo e corpo */
+.solo-duas{display:grid;grid-template-columns:216px minmax(0,1fr);gap:26px;align-items:start}
+.ind-conduta{position:sticky;top:70px;display:flex;flex-direction:column;gap:2px}
+.ic-rot{font-family:'Inter',system-ui,sans-serif;font-size:11px;font-weight:700;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--steel);margin-bottom:6px}
+.ic-item{display:flex;align-items:center;gap:8px;padding:8px 11px;border-left:2.5px solid var(--line);
+  font-size:13.5px;font-weight:600;color:var(--ink-2,var(--ink));text-decoration:none;
+  transition:background .14s ease,border-color .14s ease,color .14s ease}
+.ic-item:hover{background:var(--acento-suave);border-left-color:var(--acento);color:var(--acento)}
+.ic-item i{margin-left:auto;font-style:normal;font-family:'JetBrains Mono',ui-monospace,monospace;
+  font-size:11px;font-weight:500;color:var(--steel)}
+.ic-ess{margin-top:10px;min-height:38px;border:1px solid var(--line);border-radius:8px;background:var(--card);
+  font-family:'Inter',system-ui,sans-serif;font-size:13px;font-weight:600;color:var(--ink-2,var(--ink));cursor:pointer}
+.ic-ess:hover{border-color:var(--acento-borda);color:var(--acento)}
+
+@media(max-width:1000px){
+  .faca-agora-grade{grid-template-columns:1fr 1fr}
+  .solo-duas{grid-template-columns:1fr;gap:14px}
+  /* no celular o índice vira uma barra de chips que acompanha o topo */
+  .ind-conduta{position:sticky;top:56px;z-index:20;flex-direction:row;gap:7px;
+    margin:0 -20px;padding:9px 20px;background:var(--paper);
+    border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+    overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .ind-conduta::-webkit-scrollbar{display:none}
+  .ic-rot{display:none}
+  .ic-item{flex-shrink:0;min-height:32px;padding:0 12px;border:1px solid var(--line);border-radius:18px;
+    background:var(--card);white-space:nowrap;font-size:12.5px}
+  .ic-item i{display:none}
+  .ic-ess{flex-shrink:0;margin:0;padding:0 14px;border-radius:18px;min-height:32px;white-space:nowrap}
+}
+@media(max-width:560px){
+  .faca-agora-grade{grid-template-columns:1fr}
+  .faca-agora-grade li{padding:11px 14px}
+}
+@media print{
+  .ind-conduta{display:none}
+  .solo-duas{display:block}
+  .faca-agora{break-inside:avoid}
+}
