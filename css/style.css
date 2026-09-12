@@ -3016,3 +3016,30 @@ body:not(.autor) .ferr-barra[data-ctx="quadros"]{display:none}
 
 /* o texto da entrada tinha ficado branco sobre fundo claro (regra antiga da caixa escura) */
 .fx.inicio .fx-txt{color:var(--ink)}
+
+/* ===========================================================
+   CORREÇÕES DE RESPONSIVIDADE E DO SUMÁRIO
+   =========================================================== */
+/* o sumário fica abaixo do cabeçalho fixo (56 px) e rola até o fim */
+@media(min-width:961px){
+  .side{top:56px;max-height:calc(100vh - 56px);padding-bottom:40px;overscroll-behavior:contain}
+}
+/* grades no celular: colunas que encolhem (minmax 0) em vez de estourar a borda */
+@media(max-width:720px){
+  .linha-urg{grid-template-columns:minmax(0,1fr);gap:8px}
+  .linha-urg .urg-fire{grid-column:auto}
+  .tile-grade,.tile-grade.principal,.tile-grade.areas-home,.tile-grade.ferramentas{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tile,.el-card,.atb-sitio,.urg{min-width:0}
+  .tile-nome,.el-card-nome,.as-nome,.urg-txt b{overflow-wrap:anywhere}
+  .el-hub,.atb-grade{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ga-grade,.np-grade,.cc-grade,.faca-agora-grade{grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:960px){
+  /* as barras de chips fixas usam a mesma margem do .wrap (18 px), senão passam 2 px de cada lado */
+  .chips-grupo,.ind-conduta{margin-left:-18px;margin-right:-18px;padding-left:18px;padding-right:18px}
+  .ind-conduta{margin-bottom:18px}
+}
+@media(max-width:420px){
+  .tile-grade.areas-home,.tile-grade.ferramentas,.tile-grade.principal{grid-template-columns:minmax(0,1fr)}
+  .el-hub{grid-template-columns:minmax(0,1fr)}
+}
