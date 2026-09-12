@@ -1036,6 +1036,16 @@
   /* os dados são const de escopo global, não propriedades de window */
   function tam(lista) { return typeof lista !== 'undefined' && lista ? lista.length : 0; }
 
+  /* um cartão só para tudo na home: azulejo colorido + nome. O resto
+     vai no title, para não poluir. */
+  var PALETA = ['c-blue','c-fire','c-purple','c-orange','c-green','c-teal','c-pink','c-indigo','c-amber','c-cyan','c-slate'];
+  function tile(href, icone, nome, cor, dica) {
+    return '<a class="tile ' + esc(cor || 'c-blue') + '" href="' + esc(href) + '"' +
+      (dica ? ' title="' + esc(dica) + '"' : '') + '>' +
+      '<span class="tile-ico">' + ICO(icone) + '</span>' +
+      '<span class="tile-nome">' + esc(nome) + '</span></a>';
+  }
+
   function funcionalidades() {
     var lista = [
       { href:'#critico', icone:'perigo', nome:'Sala vermelha', cor:'c-fire',
@@ -1073,12 +1083,7 @@
         n: 'textos prontos' }
     ];
     return lista.map(function (f) {
-      return '<a class="fn-item ' + f.cor + '" href="' + esc(f.href) + '">' +
-        '<span class="fn-ico">' + ICO(f.icone) + '</span>' +
-        '<span class="fn-corpo"><b>' + esc(f.nome) + '</b>' +
-          '<span>' + esc(f.sub) + '</span></span>' +
-        '<span class="fn-n">' + esc(f.n) + '</span>' +
-        '<span class="fn-seta">' + ICO('setaDir') + '</span></a>';
+      return tile(f.href, f.icone, f.nome, f.cor, f.sub);
     }).join('');
   }
 
@@ -1101,15 +1106,13 @@
     html += '</div>';
 
     /* as funcionalidades, todas à vista */
-    html += '<div class="fn-lista">' + funcionalidades() + '</div>';
+    html += '<div class="tile-grade principal">' + funcionalidades() + '</div>';
 
     /* todas as queixas de cara: é a porta de entrada mais usada */
     if (temQueixas()) {
-      html += '<div class="home-sec"><h3>Queixas</h3><div class="qx-grade">' +
-        QUEIXAS.map(function (q) {
-          return '<a class="qx-cartao" href="#queixa/' + esc(q.id) + '">' +
-            '<span class="qx-ico">' + ICO(q.icone) + '</span>' +
-            '<span class="qx-nome">' + esc(q.nome) + '</span></a>';
+      html += '<div class="home-sec"><h3>Queixas</h3><div class="tile-grade">' +
+        QUEIXAS.map(function (q, i) {
+          return tile('#queixa/' + q.id, q.icone, q.nome, PALETA[i % PALETA.length], q.sub);
         }).join('') + '</div></div>';
     }
 
@@ -1135,14 +1138,11 @@
     }
 
     /* as áreas do guia, sempre à vista */
-    html += '<div class="home-sec"><h3>Áreas do guia</h3><div class="home-grade areas">' +
+    html += '<div class="home-sec"><h3>Áreas do guia</h3><div class="tile-grade">' +
       CATEGORIAS.map(function (c, ci) {
         var l = listaArea(c.id);
         if (!l.length) return '';
-        return '<a class="home-cartao area" href="#' + esc(c.id) + '">' +
-          '<span class="hc-num">' + dois(ci + 1) + '</span>' +
-          '<span class="hc-nome">' + esc(c.nome) + '</span>' +
-          '<span class="hc-sub">' + l.length + ' condutas</span></a>';
+        return tile('#' + c.id, c.icone, c.nome, PALETA[ci % PALETA.length], l.length + ' condutas');
       }).join('') + '</div></div>';
 
     doc.innerHTML = html + '</section>';

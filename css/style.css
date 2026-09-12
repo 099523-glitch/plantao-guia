@@ -2025,46 +2025,44 @@ body.na-home .topo-busca{opacity:0;pointer-events:none}
 .hero-nome button{font-family:'Inter',system-ui,sans-serif;font-weight:600;font-size:14px;min-height:40px;
   padding:0 18px;border:0;border-radius:10px;background:#FFFFFF;color:var(--hero-bg);cursor:pointer}
 
-/* a grade de funcionalidades: cartões iguais, ícone em azulejo colorido */
-.fn-lista{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:44px}
-.fn-item{position:relative;display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto auto;
-  column-gap:16px;row-gap:10px;align-items:start;padding:20px 20px 16px;min-height:132px;
-  border:1px solid var(--line);border-radius:16px;background:var(--card);text-decoration:none;color:var(--ink);
-  --tom:var(--acento);
-  transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease}
-.fn-item:hover{border-color:color-mix(in srgb,var(--tom) 45%,var(--line));box-shadow:0 14px 30px -18px color-mix(in srgb,var(--tom) 55%,transparent),var(--shadow);transform:translateY(-3px)}
-.fn-ico{grid-row:1/3;display:inline-flex;width:48px;height:48px;align-items:center;justify-content:center;border-radius:13px;
+/* o cartão da home: azulejo colorido + nome, compacto e igual em tudo */
+.tile-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin-bottom:36px}
+.tile-grade.principal{grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin-bottom:44px}
+.tile{display:flex;align-items:center;gap:13px;padding:12px 14px;min-height:64px;
+  border:1px solid var(--line);border-radius:14px;background:var(--card);text-decoration:none;color:var(--ink);
+  --tom:var(--acento);transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease}
+.tile:hover{border-color:color-mix(in srgb,var(--tom) 45%,var(--line));transform:translateY(-2px);
+  box-shadow:0 12px 26px -16px color-mix(in srgb,var(--tom) 55%,transparent),var(--shadow)}
+.tile-ico{flex-shrink:0;display:inline-flex;width:40px;height:40px;align-items:center;justify-content:center;border-radius:11px;
   color:var(--tom);background:color-mix(in srgb,var(--tom) 12%,var(--card));border:1px solid color-mix(in srgb,var(--tom) 22%,transparent);
   transition:transform .18s ease,background .18s ease}
-.fn-ico .ico{width:23px;height:23px}
-.fn-item:hover .fn-ico{transform:scale(1.06);background:color-mix(in srgb,var(--tom) 18%,var(--card))}
-.fn-corpo{min-width:0;padding-right:22px}
-.fn-corpo b{display:block;font-size:16px;font-weight:700;letter-spacing:-.01em;line-height:1.25}
-.fn-corpo span{display:block;font-size:13px;color:var(--steel);line-height:1.5;margin-top:4px}
-.fn-n{grid-column:2;align-self:end;justify-self:start;font-size:11.5px;font-weight:600;letter-spacing:.02em;color:var(--tom);
-  background:color-mix(in srgb,var(--tom) 9%,var(--card));border-radius:999px;padding:3px 9px;font-variant-numeric:tabular-nums}
-.fn-seta{position:absolute;top:20px;right:16px;color:var(--steel);opacity:.45;transition:opacity .18s ease,transform .18s ease}
-.fn-seta .ico{width:16px;height:16px}
-.fn-item:hover .fn-seta{opacity:1;color:var(--tom);transform:translateX(2px)}
-.fn-item.c-fire{--tom:#DC2626}.fn-item.c-blue{--tom:#2563EB}.fn-item.c-indigo{--tom:#4F46E5}.fn-item.c-orange{--tom:#EA580C}
-.fn-item.c-green{--tom:#059669}.fn-item.c-teal{--tom:#0D9488}.fn-item.c-pink{--tom:#DB2777}.fn-item.c-purple{--tom:#7C3AED}
-.fn-item.c-amber{--tom:#D97706}.fn-item.c-slate{--tom:#64748B}.fn-item.c-cyan{--tom:#0891B2}
-:root[data-tema="escuro"] .fn-item.c-fire{--tom:#F87171}:root[data-tema="escuro"] .fn-item.c-blue{--tom:#60A5FA}
-:root[data-tema="escuro"] .fn-item.c-indigo{--tom:#818CF8}:root[data-tema="escuro"] .fn-item.c-orange{--tom:#FB923C}
-:root[data-tema="escuro"] .fn-item.c-green{--tom:#34D399}:root[data-tema="escuro"] .fn-item.c-teal{--tom:#2DD4BF}
-:root[data-tema="escuro"] .fn-item.c-pink{--tom:#F472B6}:root[data-tema="escuro"] .fn-item.c-purple{--tom:#A78BFA}
-:root[data-tema="escuro"] .fn-item.c-amber{--tom:#FBBF24}:root[data-tema="escuro"] .fn-item.c-slate{--tom:#94A3B8}
-:root[data-tema="escuro"] .fn-item.c-cyan{--tom:#22D3EE}
-@media(prefers-reduced-motion:reduce){.fn-item,.fn-ico,.fn-seta,.el-card{transition:none}.fn-item:hover,.el-card:hover{transform:none}}
+.tile-ico .ico{width:20px;height:20px}
+.tile:hover .tile-ico{transform:scale(1.07);background:color-mix(in srgb,var(--tom) 18%,var(--card))}
+.tile-nome{font-size:14.5px;font-weight:600;letter-spacing:-.005em;line-height:1.3;min-width:0}
+.tile-grade.principal .tile{min-height:72px;padding:14px 16px}
+.tile-grade.principal .tile-ico{width:44px;height:44px;border-radius:12px}
+.tile-grade.principal .tile-ico .ico{width:22px;height:22px}
+.tile-grade.principal .tile-nome{font-size:15.5px;font-weight:700}
+.tile.c-fire{--tom:#DC2626}.tile.c-blue{--tom:#2563EB}.tile.c-indigo{--tom:#4F46E5}.tile.c-orange{--tom:#EA580C}
+.tile.c-green{--tom:#059669}.tile.c-teal{--tom:#0D9488}.tile.c-pink{--tom:#DB2777}.tile.c-purple{--tom:#7C3AED}
+.tile.c-amber{--tom:#D97706}.tile.c-slate{--tom:#64748B}.tile.c-cyan{--tom:#0891B2}
+:root[data-tema="escuro"] .tile.c-fire{--tom:#F87171}:root[data-tema="escuro"] .tile.c-blue{--tom:#60A5FA}
+:root[data-tema="escuro"] .tile.c-indigo{--tom:#818CF8}:root[data-tema="escuro"] .tile.c-orange{--tom:#FB923C}
+:root[data-tema="escuro"] .tile.c-green{--tom:#34D399}:root[data-tema="escuro"] .tile.c-teal{--tom:#2DD4BF}
+:root[data-tema="escuro"] .tile.c-pink{--tom:#F472B6}:root[data-tema="escuro"] .tile.c-purple{--tom:#A78BFA}
+:root[data-tema="escuro"] .tile.c-amber{--tom:#FBBF24}:root[data-tema="escuro"] .tile.c-slate{--tom:#94A3B8}
+:root[data-tema="escuro"] .tile.c-cyan{--tom:#22D3EE}
+@media(prefers-reduced-motion:reduce){.tile,.tile-ico,.el-card{transition:none}.tile:hover,.el-card:hover{transform:none}.tile:hover .tile-ico{transform:none}}
 .nome-medico{margin-bottom:14px}
-@media(max-width:1100px){.fn-lista{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
 @media(max-width:720px){
   .hero{margin:10px 0 28px;padding:36px 18px 32px;border-radius:16px}
   .hero p{font-size:14.5px;margin-bottom:20px}
   .hero-busca{padding:14px 15px;font-size:14.5px}
-  .fn-lista{grid-template-columns:1fr;gap:10px;margin-bottom:34px}
-  .fn-item{padding:16px 16px 14px;min-height:0}
-  .fn-corpo b{font-size:15px}
+  .tile-grade,.tile-grade.principal{grid-template-columns:1fr 1fr;gap:8px;margin-bottom:30px}
+  .tile{padding:10px 11px;min-height:56px;gap:10px;border-radius:12px}
+  .tile-grade.principal .tile{min-height:60px;padding:11px 12px}
+  .tile-ico,.tile-grade.principal .tile-ico{width:36px;height:36px;border-radius:10px}
+  .tile-nome,.tile-grade.principal .tile-nome{font-size:13.5px}
 }
 
 /* ===== eletrólitos: hub e ferramentas ===== */
