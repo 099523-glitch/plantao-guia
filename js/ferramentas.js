@@ -266,7 +266,7 @@
   var buscaAtb     = '';
   var filtroQuadro = 'todos';    /* grupo filtrado */
   /* contexto da prescrição: porta (na unidade) · internados (enfermaria) · casa (receita) */
-  var ctxRx = (function () { var v = ler('pref:rx-ctx', 'porta'); return v === 'internados' || v === 'casa' || v === 'atb' ? v : 'porta'; })();
+  var ctxRx = (function () { var v = ler('pref:rx-ctx', 'porta'); return v === 'internados' || v === 'casa' ? v : 'porta'; })();
   function partesDoCtx() { return ctxRx === 'casa' ? ['receita'] : ['unidade']; }
   var buscaQuadro  = '';         /* busca local da aba Prescrições */
   var inalSel  = {};
@@ -2002,13 +2002,33 @@
       return termos.every(function (t) { return ix.indexOf(t) !== -1; });
     });
 
-    if (!mostra.length) return '<div class="pendente">Nenhum quadro encontrado.</div>';
+    /* antibióticos: cada doença é uma linha, agrupada pelo sítio */
+    var atbs = (filtroQuadro === 'todos' || /^Antibi/.test(filtroQuadro)) ? Base.atb().filter(function (a) {
+      if (filtroQuadro !== 'todos' && 'Antibióticos · ' + a.sitio !== filtroQuadro) return false;
+      if (!termos.length) return true;
+      var ix = norm([a.quadro, a.sub, a.sitio, (a.tags || []).join(' '), a.agentes, a.atencao,
+        (a.escolha || []).concat(a.alt || []).map(function (e) { return e.atb + ' ' + e.dose; }).join(' ')].join(' '));
+      return termos.every(function (t) { return ix.indexOf(t) !== -1; });
+    }) : [];
+
+    if (!mostra.length && !atbs.length) return '<div class="pendente">Nenhum quadro encontrado.</div>';
 
     var porGrupo = {}, ordem = [];
     mostra.forEach(function (q) {
       if (!porGrupo[q.grupo]) { porGrupo[q.grupo] = []; ordem.push(q.grupo); }
       porGrupo[q.grupo].push(q);
     });
+    var atbPorSitio = {}, ordemAtb = [];
+    atbs.forEach(function (a) {
+      var g = 'Antibióticos · ' + a.sitio;
+      if (!atbPorSitio[g]) { atbPorSitio[g] = []; ordemAtb.push(g); }
+      atbPorSitio[g].push(a);
+    });
+    var htmlAtb = ordemAtb.map(function (g) {
+      return '<section class="atb-secao"><h4>' + esc(g) + '<i>' + atbPorSitio[g].length + '</i></h4>' +
+        '<div class="cc-grade">' + atbPorSitio[g].map(cartaoAtb).join('') + '</div></section>';
+    }).join('');
+
     return '<div class="ferr-grupos">' + ordem.map(function (g) {
       return '<section class="atb-secao"><h4>' + esc(g) + '<i>' + porGrupo[g].length + '</i></h4>' +
         '<div class="cc-grade">' + porGrupo[g].map(function (q) {
@@ -2038,7 +2058,7 @@
           '</article>';
         }).join('') + '</div>' +
       '</section>';
-    }).join('') + '</div>';
+    }).join('') + htmlAtb + '</div>';
   }
 
   /* ---------- internados: prescrição de enfermaria ---------- */
@@ -2129,25 +2149,11 @@
     html += '<div class="rx-ctx">' + [
         ['porta', 'Porta', 'na unidade — medicar e observar'],
         ['internados', 'Internados', 'prescrição de enfermaria'],
-        ['casa', 'Casa', 'receita para levar'],
-        ['atb', 'Antibióticos', 'esquema empírico por sítio']
+        ['casa', 'Casa', 'receita para levar']
       ].map(function (c) {
         return '<button type="button" class="rx-ctx-b' + (ctxRx === c[0] ? ' on' : '') + '" data-acao="rx-ctx" data-v="' + c[0] + '">' +
           '<b>' + c[1] + '</b><span>' + c[2] + '</span></button>';
       }).join('') + '</div>';
-
-    if (ctxRx === 'atb') {
-      var sitioAtual = slugAtb ? sitioDe(slugAtb) : null;
-      if (sitioAtual) {
-        html += '<div class="atb-head"><a class="voltar" href="#atb">&larr; Sítios</a>' +
-          '<div class="atb-titulo"><span class="atb-emoji">' + ICO(sitioAtual.icone) + '</span><h2>' + esc(sitioAtual.nome) + '</h2></div></div>';
-      }
-      html += '<input type="search" class="ferr-busca-local atb-busca" id="ferrBuscaAtb" ' +
-        'placeholder="Buscar por germe, antibiótico ou quadro…" value="' + esc(buscaAtb) + '">';
-      html += '<div id="ferrListaAtb">' + conteudoAtb(Base.atb()) + '</div>';
-      html += bancada('quadros');
-      return html;
-    }
 
     html += blocoPaciente();
 
@@ -2162,11 +2168,17 @@
     lista = lista.filter(function (q) { return (q[parte] || []).length; });
     var grupos = [];
     lista.forEach(function (q) { if (grupos.indexOf(q.grupo) === -1) grupos.push(q.grupo); });
+    var atbTodos = Base.atb();
+    SITIOS.forEach(function (st) {
+      if (atbTodos.some(function (a) { return a.sitio === st.nome; })) grupos.push('Antibióticos · ' + st.nome);
+    });
     html += '<div class="ferr-chips tira">' +
       '<button type="button" class="ferr-chip' + (filtroQuadro === 'todos' ? ' on' : '') +
-        '" data-acao="quadro-filtro" data-v="todos">Todos <i>' + lista.length + '</i></button>' +
+        '" data-acao="quadro-filtro" data-v="todos">Todos <i>' + (lista.length + atbTodos.length) + '</i></button>' +
       grupos.map(function (g) {
-        var n = lista.filter(function (q) { return q.grupo === g; }).length;
+        var n = /^Antibi/.test(g)
+          ? atbTodos.filter(function (a) { return 'Antibióticos · ' + a.sitio === g; }).length
+          : lista.filter(function (q) { return q.grupo === g; }).length;
         return '<button type="button" class="ferr-chip' + (filtroQuadro === g ? ' on' : '') +
           '" data-acao="quadro-filtro" data-v="' + esc(g) + '">' + esc(g) + ' <i>' + n + '</i></button>';
       }).join('') + '</div>';
@@ -2826,8 +2838,10 @@
 
   /* #atb e #atb/<sítio> caem nas Prescrições, no contexto Antibióticos */
   F.irAtb = function (slug) {
-    ctxRx = 'atb'; grava('pref:rx-ctx', 'atb');
-    slugAtb = slug || null; alvoAtb = null;
+    if (ctxRx === 'internados') { ctxRx = 'porta'; grava('pref:rx-ctx', 'porta'); }
+    var st = slug ? sitioDe(slug) : null;
+    filtroQuadro = st ? 'Antibióticos · ' + st.nome : 'todos';
+    alvoAtb = null;
   };
 
   /* abre a aba certa ja com o item expandido (usado pela busca) */
@@ -2835,9 +2849,8 @@
     if (tipo === 'quadro')      { quadroAberto = id; filtroQuadro = 'todos'; buscaQuadro = ''; }
     if (tipo === 'calculadora' || tipo === 'score') { calcAberta = id; }
     if (tipo === 'antibiotico') {
-      atbAberto = id; buscaAtb = ''; ctxRx = 'atb'; grava('pref:rx-ctx', 'atb');
-      var a = atbDe(id);
-      if (a) slugAtb = slugDoSitio(a.sitio);
+      atbAberto = id; buscaAtb = ''; buscaQuadro = ''; filtroQuadro = 'todos';
+      if (ctxRx === 'internados') { ctxRx = 'porta'; grava('pref:rx-ctx', 'porta'); }
     }
     if (tipo === 'manobra')     { filtroEx = 'todos'; }
     focarApos = { quadro:'.ferr-quadro.aberto', calculadora:'.ferr-calc.aberta',
@@ -3081,7 +3094,7 @@
       });
       redesenhaFixo(); return;
     }
-    if (acao === 'rx-ctx') { ctxRx = v; grava('pref:rx-ctx', v); quadroAberto = null; internadoAberto = null; if (v === 'atb') { slugAtb = null; buscaAtb = ''; } redesenhaFixo(); return; }
+    if (acao === 'rx-ctx') { ctxRx = v; grava('pref:rx-ctx', v); quadroAberto = null; internadoAberto = null; atbAberto = null; redesenhaFixo(); return; }
     if (acao === 'int-abrir') { internadoAberto = internadoAberto === id ? null : id; redesenhaFixo(); return; }
     if (acao === 'int-copiar') { var i1 = internadoDe(id); if (i1) copiarClinico(textoInternado(i1), i1.nome, 'presc'); return; }
     if (acao === 'int-imprimir') { var i2 = internadoDe(id); if (i2) imprimir(i2.nome, textoInternado(i2), i2.sub); return; }
