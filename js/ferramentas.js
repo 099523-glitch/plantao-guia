@@ -265,6 +265,9 @@
   var filtroAtb    = 'todos';
   var buscaAtb     = '';
   var filtroQuadro = 'todos';    /* grupo filtrado */
+  /* contexto da prescrição: porta (na unidade) · internados (enfermaria) · casa (receita) */
+  var ctxRx = (function () { var v = ler('pref:rx-ctx', 'porta'); return v === 'internados' || v === 'casa' ? v : 'porta'; })();
+  function partesDoCtx() { return ctxRx === 'casa' ? ['receita'] : ['unidade']; }
   var buscaQuadro  = '';         /* busca local da aba Prescrições */
   var inalSel  = {};
   var inalCiclos = 1;
@@ -1798,11 +1801,11 @@
   /* o texto final: as duas partes, só o que ficou marcado */
   function textoProto(q) {
     var bl = [];
-    var u = rxDe(q, 'unidade').filter(function (_, i) { return !foraDe(q, 'unidade', i); });
+    var u = ctxRx === 'casa' ? [] : rxDe(q, 'unidade').filter(function (_, i) { return !foraDe(q, 'unidade', i); });
     if (u.length) {
       bl.push('NA UNIDADE\n' + u.map(function (x, i) { return linhaUnidade(x, i + 1); }).join('\n'));
     }
-    var r = rxDe(q, 'receita').filter(function (_, i) { return !foraDe(q, 'receita', i); });
+    var r = ctxRx === 'porta' ? [] : rxDe(q, 'receita').filter(function (_, i) { return !foraDe(q, 'receita', i); });
     if (r.length) {
       var COL = 58, n = 0;
       var lin = ['RECEITA — USO ORAL', ''];
@@ -1817,6 +1820,9 @@
       });
       while (lin.length && !lin[lin.length - 1]) lin.pop();
       bl.push(lin.join('\n'));
+      if (ctxRx === 'casa' && (q.orientacoes || []).length) {
+        bl.push('ORIENTAÇÕES\n' + q.orientacoes.map(function (o) { return '- ' + String(o).replace(/\*/g, ''); }).join('\n'));
+      }
     }
     if (!bl.length) return '';
     return cabPaciente() + bl.join('\n\n');
@@ -1891,6 +1897,7 @@
     if (q.atencao) h += '<div class="ferr-atencao"><b>Atenção</b>' + esc(q.atencao) + '</div>';
 
     [['unidade', 'Na unidade'], ['receita', 'Receita para casa']].forEach(function (par) {
+      if (partesDoCtx().indexOf(par[0]) === -1) return;
       var lista = rxDe(q, par[0]);
       if (!lista.length) return;
       var todosFora = lista.every(function (_, i) { return foraDe(q, par[0], i); });
@@ -1985,6 +1992,7 @@
   function listaQuadros(lista) {
     var termos = norm(buscaQuadro).split(/\s+/).filter(Boolean);
     var mostra = lista.filter(function (q) {
+      if (!(q[partesDoCtx()[0]] || []).length) return false;
       if (filtroQuadro !== 'todos' && q.grupo !== filtroQuadro) return false;
       if (!termos.length) return true;
       var ix = norm([q.nome, q.sub, q.grupo, (q.tags || []).join(' '), q.atencao,
@@ -2005,7 +2013,7 @@
       return '<section class="atb-secao"><h4>' + esc(g) + '<i>' + porGrupo[g].length + '</i></h4>' +
         '<div class="cc-grade">' + porGrupo[g].map(function (q) {
           var aberto = quadroAberto === q.id;
-          var n = (q.unidade || []).length + (q.receita || []).length;
+          var n = (q[partesDoCtx()[0]] || []).length;
           return '<article class="ferr-quadro' + (aberto ? ' aberto' : '') + '">' +
             '<div class="rxl">' +
               '<button type="button" class="rxl-abrir" data-acao="quadro-abrir" data-id="' + esc(q.id) + '"' +
@@ -2033,6 +2041,76 @@
     }).join('') + '</div>';
   }
 
+  /* ---------- internados: prescrição de enfermaria ---------- */
+  var internadoAberto = null;
+  function internadoDe(id) {
+    var l = typeof FERR_INTERNADOS !== 'undefined' ? FERR_INTERNADOS : [];
+    for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i];
+    return null;
+  }
+  function textoInternado(p) {
+    var t = cabPaciente() + 'PRESCRIÇÃO — ' + p.nome.toUpperCase() + (p.sub ? ' (' + p.sub + ')' : '') + '\n\n';
+    t += (p.itens || []).map(function (x, i) {
+      var l = (i + 1) + '. ' + x.med;
+      if (x.dose && x.dose !== '—') l += ' — ' + x.dose;
+      if (x.via && x.via !== '—') l += ' — ' + x.via;
+      if (x.obs) l += '\n   ' + x.obs;
+      return l;
+    }).join('\n');
+    if ((p.cuidados || []).length) t += '\n\nCUIDADOS\n' + p.cuidados.map(function (c) { return '- ' + c; }).join('\n');
+    return t;
+  }
+  function corpoInternado(p) {
+    var h = '<div class="ferr-quadro-corpo pp">';
+    h += '<section class="pp-parte"><h5><span class="pp-tit">Prescrição de enfermaria</span></h5>' +
+      (p.itens || []).map(function (x, i) {
+        return '<div class="pp-item"><span class="pp-txt">' +
+          '<span class="pp-med">' + (i + 1) + '. ' + esc(x.med) + '</span>' +
+          '<span class="pp-linha">' + (x.dose && x.dose !== '—' ? '<b>' + esc(x.dose) + '</b>' : '') +
+            (x.via && x.via !== '—' ? '<i>' + esc(x.via) + '</i>' : '') +
+            (x.obs ? '<em>' + esc(x.obs) + '</em>' : '') + '</span></span></div>';
+      }).join('') + '</section>';
+    if ((p.cuidados || []).length) {
+      h += '<section class="pp-parte"><h5><span class="pp-tit">Cuidados</span></h5><ul class="pp-cuidados">' +
+        p.cuidados.map(function (c) { return '<li>' + esc(c) + '</li>'; }).join('') + '</ul></section>';
+    }
+    h += '<div class="pp-barra">' +
+      '<button type="button" class="pp-copiar" data-acao="int-copiar" data-id="' + esc(p.id) + '">' + ICO('copiar') + ' Copiar prescrição</button>' +
+      '<button type="button" class="pp-imprimir" data-acao="int-imprimir" data-id="' + esc(p.id) + '">' + ICO('laudo') + ' Imprimir</button>' +
+      '<button type="button" class="pp-sec" data-acao="int-rascunho" data-id="' + esc(p.id) + '" title="Enviar ao rascunho">' + ICO('empilhar') + '</button>' +
+      (p.conduta ? '<a class="pp-sec ver" href="#' + esc(p.conduta) + '" title="Ver a conduta">' + ICO('livro') + '</a>' : '') +
+    '</div>';
+    return h + '</div>';
+  }
+  function listaInternados() {
+    var l = typeof FERR_INTERNADOS !== 'undefined' ? FERR_INTERNADOS : [];
+    var termos = norm(buscaQuadro).split(/\s+/).filter(Boolean);
+    var mostra = l.filter(function (p) {
+      if (!termos.length) return true;
+      var ix = norm([p.nome, p.sub, p.grupo, (p.itens || []).map(function (x) { return x.med + ' ' + x.obs; }).join(' ')].join(' '));
+      return termos.every(function (t) { return ix.indexOf(t) !== -1; });
+    });
+    if (!mostra.length) return '<div class="pendente">Nenhuma prescrição de internação encontrada.</div>';
+    var porGrupo = {}, ordem = [];
+    mostra.forEach(function (p) { if (!porGrupo[p.grupo]) { porGrupo[p.grupo] = []; ordem.push(p.grupo); } porGrupo[p.grupo].push(p); });
+    return '<div class="ferr-grupos">' + ordem.map(function (g) {
+      return '<section class="atb-secao"><h4>' + esc(g) + '<i>' + porGrupo[g].length + '</i></h4>' +
+        '<div class="cc-grade">' + porGrupo[g].map(function (p) {
+          var aberto = internadoAberto === p.id;
+          return '<article class="ferr-quadro' + (aberto ? ' aberto' : '') + '"><div class="rxl">' +
+            '<button type="button" class="rxl-abrir" data-acao="int-abrir" data-id="' + esc(p.id) + '" aria-expanded="' + (aberto ? 'true' : 'false') + '">' +
+              '<span class="rxl-seta">' + ICO(aberto ? 'setaBai' : 'setaDir') + '</span>' +
+              '<span class="rxl-nome">' + esc(p.nome) + '</span>' +
+              '<span class="rxl-sub">' + esc(p.sub) + '</span>' +
+              '<span class="rxl-n">' + (p.itens || []).length + '</span></button>' +
+            '<span class="rxl-acoes">' +
+              '<button type="button" class="rxl-btn" data-acao="int-copiar" data-id="' + esc(p.id) + '" title="Copiar prescrição">' + ICO('copiar') + '<i>Copiar</i></button>' +
+              '<button type="button" class="rxl-btn" data-acao="int-imprimir" data-id="' + esc(p.id) + '" title="Imprimir">' + ICO('laudo') + '<i>Imprimir</i></button>' +
+            '</span></div>' + (aberto ? corpoInternado(p) : '') + '</article>';
+        }).join('') + '</div></section>';
+    }).join('') + '</div>';
+  }
+
   function telaQuadros() {
     var lista = Base.quadros();
     var html = '';
@@ -2047,9 +2125,27 @@
 
     if (form === 'quadro') html += formQuadro(form_alvo);
 
+    /* onde o paciente está decide o que se copia */
+    html += '<div class="rx-ctx">' + [
+        ['porta', 'Porta', 'na unidade — medicar e observar'],
+        ['internados', 'Internados', 'prescrição de enfermaria'],
+        ['casa', 'Casa', 'receita para levar']
+      ].map(function (c) {
+        return '<button type="button" class="rx-ctx-b' + (ctxRx === c[0] ? ' on' : '') + '" data-acao="rx-ctx" data-v="' + c[0] + '">' +
+          '<b>' + c[1] + '</b><span>' + c[2] + '</span></button>';
+      }).join('') + '</div>';
+
     html += blocoPaciente();
 
-    /* chips por grupo */
+    if (ctxRx === 'internados') {
+      html += '<div id="ferrListaQ">' + listaInternados() + '</div>';
+      html += bancada('quadros');
+      return html;
+    }
+
+    /* chips por grupo (só os grupos que têm algo neste contexto) */
+    var parte = partesDoCtx()[0];
+    lista = lista.filter(function (q) { return (q[parte] || []).length; });
     var grupos = [];
     lista.forEach(function (q) { if (grupos.indexOf(q.grupo) === -1) grupos.push(q.grupo); });
     html += '<div class="ferr-chips tira">' +
@@ -2654,6 +2750,10 @@
     });
 
     if (window.Eletrolitos) Eletrolitos.indice().forEach(function (x) { out.push(x); });
+    (typeof FERR_INTERNADOS !== 'undefined' ? FERR_INTERNADOS : []).forEach(function (p) {
+      out.push({ tipo:'quadro', id:p.id, titulo:p.nome, sub:'Internados · ' + p.sub, href:'#presc', abre:p.id,
+        texto:[p.nome, p.sub, p.grupo, (p.itens || []).map(function (x) { return x.med + ' ' + x.obs; }).join(' ')].join(' ') });
+    });
 
     FERR_CALC.forEach(function (c) {
       out.push({ tipo:(c.tipo === 'escore' ? 'score' : 'calculadora'),
@@ -2961,6 +3061,11 @@
       });
       redesenhaFixo(); return;
     }
+    if (acao === 'rx-ctx') { ctxRx = v; grava('pref:rx-ctx', v); quadroAberto = null; internadoAberto = null; redesenhaFixo(); return; }
+    if (acao === 'int-abrir') { internadoAberto = internadoAberto === id ? null : id; redesenhaFixo(); return; }
+    if (acao === 'int-copiar') { var i1 = internadoDe(id); if (i1) copiarClinico(textoInternado(i1), i1.nome, 'presc'); return; }
+    if (acao === 'int-imprimir') { var i2 = internadoDe(id); if (i2) imprimir(i2.nome, textoInternado(i2), i2.sub); return; }
+    if (acao === 'int-rascunho') { var i3 = internadoDe(id); if (i3) pilha(textoInternado(i3)); return; }
     if (acao === 'proto-copiar') {
       var q1p = quadroDe(id);
       if (q1p) copiarClinico(textoProto(q1p), q1p.nome, 'presc');

@@ -3196,3 +3196,214 @@ FERR_QUADROS = FERR_QUADROS.concat([
   ] }
 
 ]);
+
+/* ===========================================================
+   INTERNADOS — prescrição de enfermaria, pronta para copiar.
+   Adulto, enfermaria (não UTI). Cada item: med | dose | via | obs.
+   Sempre conferir alergia, função renal, peso e gestação.
+   =========================================================== */
+var FERR_INTERNADOS = [
+
+{ id:'i-pac', grupo:'Respiratório', nome:'Pneumonia adquirida na comunidade', sub:'Enfermaria, sem critério de UTI', conduta:'resp/pac',
+  itens:[
+    { med:'Dieta', dose:'geral ou conforme aceitação', via:'VO', obs:'Jejum só se rebaixado ou com risco de broncoaspiração.' },
+    { med:'SF 0,9%', dose:'1000 mL', via:'EV', obs:'Correr em 12 h. Suspender quando aceitar líquidos bem.' },
+    { med:'Ceftriaxona 1 g', dose:'1 g', via:'EV', obs:'1x/dia, diluído em 100 mL de SF 0,9%, em 30 min. 7 dias.' },
+    { med:'Azitromicina 500 mg', dose:'500 mg', via:'VO', obs:'1x/dia, por 5 dias. Se não tolerar VO: claritromicina 500 mg EV 12/12 h.' },
+    { med:'Oxigênio', dose:'cateter nasal 1–3 L/min', via:'INAL', obs:'Se SpO2 < 92%. Alvo 92–96% (88–92% se DPOC).' },
+    { med:'Dipirona 1 g', dose:'1 g (2 mL)', via:'EV', obs:'De 6/6 h, se dor ou temperatura ≥ 37,8 °C.' },
+    { med:'Enoxaparina 40 mg', dose:'40 mg', via:'SC', obs:'1x/dia, profilaxia de TEV. Ajustar se ClCr < 30 (20 mg). Contraindicada se sangramento ativo ou plaquetas < 50.000.' },
+    { med:'Controles', dose:'SSVV e SpO2 de 6/6 h', via:'—', obs:'Balanço hídrico. Glicemia capilar de 12/12 h se diabético.' }
+  ],
+  cuidados:['Cabeceira elevada a 30°.', 'Deambular assim que possível.', 'Reavaliar em 48–72 h: sem melhora, rever o ATB e pedir imagem.', 'Hemocultura 2 amostras e escarro antes da 1ª dose se ainda não colhidos.'] },
+
+{ id:'i-dpoc', grupo:'Respiratório', nome:'Exacerbação de DPOC', sub:'Internado por dispneia e hipoxemia', conduta:'resp/dpoc-exacerbacao',
+  itens:[
+    { med:'Dieta', dose:'geral, hipercalórica fracionada', via:'VO', obs:'' },
+    { med:'Oxigênio', dose:'cateter nasal 1–2 L/min ou Venturi 24–28%', via:'INAL', obs:'Alvo de SpO2 88–92%. Não hiperoxigenar.' },
+    { med:'Salbutamol 100 mcg/jato', dose:'4 jatos com espaçador ou 10 gotas em NBZ', via:'INAL', obs:'De 4/4 h nas primeiras 24 h, depois 6/6 h. Nebulizar com SF 3 mL, ar comprimido se retentor.' },
+    { med:'Ipratrópio 0,25 mg/mL', dose:'40 gotas', via:'INAL', obs:'Junto com o salbutamol, de 6/6 h.' },
+    { med:'Prednisona 20 mg', dose:'40 mg (2 comprimidos)', via:'VO', obs:'1x/dia pela manhã, por 5 dias. Se não tolerar VO: hidrocortisona 100 mg EV 8/8 h.' },
+    { med:'Amoxicilina + clavulanato 875/125 mg', dose:'1 comprimido', via:'VO', obs:'De 12/12 h, por 5–7 dias. Indicada se escarro purulento ou VNI. Alternativa: azitromicina 500 mg 1x/dia 5 dias.' },
+    { med:'Enoxaparina 40 mg', dose:'40 mg', via:'SC', obs:'1x/dia, profilaxia de TEV.' },
+    { med:'Omeprazol 40 mg', dose:'40 mg', via:'VO', obs:'1x/dia enquanto usar corticoide, se história de úlcera ou uso de AINE/anticoagulante.' },
+    { med:'Controles', dose:'SSVV e SpO2 de 4/4 h', via:'—', obs:'Gasometria arterial se sonolência ou SpO2 caindo. Glicemia capilar de 6/6 h (corticoide).' }
+  ],
+  cuidados:['Cabeceira elevada.', 'VNI (BiPAP) se pH < 7,35 com pCO2 > 45 ou fadiga — chamar a equipe.', 'Manter os inalatórios de uso contínuo do paciente.', 'Fisioterapia respiratória.'] },
+
+{ id:'i-asma', grupo:'Respiratório', nome:'Crise de asma internada', sub:'Sem resposta completa na sala de emergência', conduta:'resp/asma-crise',
+  itens:[
+    { med:'Dieta', dose:'geral', via:'VO', obs:'' },
+    { med:'Oxigênio', dose:'cateter nasal 1–3 L/min', via:'INAL', obs:'Alvo de SpO2 93–95%.' },
+    { med:'Salbutamol 100 mcg/jato', dose:'4–8 jatos com espaçador', via:'INAL', obs:'De 4/4 h; espaçar conforme melhora. Ou 10–20 gotas em NBZ.' },
+    { med:'Ipratrópio 0,25 mg/mL', dose:'40 gotas', via:'INAL', obs:'De 6/6 h nas primeiras 24 h.' },
+    { med:'Prednisona 20 mg', dose:'40–60 mg', via:'VO', obs:'1x/dia pela manhã, por 5–7 dias. Sem desmame.' },
+    { med:'Sulfato de magnésio 10%', dose:'20 mL (2 g) + SF 0,9% 100 mL', via:'EV', obs:'Dose única em 20 min, se crise grave sem resposta na 1ª hora.' },
+    { med:'Enoxaparina 40 mg', dose:'40 mg', via:'SC', obs:'1x/dia se restrito ao leito.' },
+    { med:'Controles', dose:'SSVV, SpO2 e pico de fluxo de 4/4 h', via:'—', obs:'Glicemia capilar de 12/12 h.' }
+  ],
+  cuidados:['Iniciar ou retomar o corticoide inalatório antes da alta.', 'Sem sedativo.', 'Reavaliar a técnica inalatória e o plano de ação escrito.'] },
+
+{ id:'i-ic', grupo:'Cardiovascular', nome:'IC descompensada — perfil quente e úmido', sub:'Congestão sem hipoperfusão', conduta:'cardio/eap-ic-descompensada',
+  itens:[
+    { med:'Dieta', dose:'hipossódica (2 g de sódio/dia)', via:'VO', obs:'Restrição hídrica 1.000–1.500 mL/dia.' },
+    { med:'Furosemida 10 mg/mL', dose:'40 mg (4 mL)', via:'EV', obs:'De 12/12 h — ou 2,5x a dose oral prévia. Reavaliar diurese em 6 h: se < 100 mL/h, dobrar.' },
+    { med:'Cloreto de potássio 6% xarope', dose:'10 mL', via:'VO', obs:'De 8/8 h se K < 4,0. Dosar K e Mg diariamente.' },
+    { med:'Oxigênio', dose:'cateter nasal 2 L/min', via:'INAL', obs:'Se SpO2 < 90%.' },
+    { med:'Manter', dose:'IECA/BRA, betabloqueador e espironolactona da casa', via:'VO', obs:'Não suspender o betabloqueador se não houver hipotensão ou choque. Reduzir a dose se PAS < 90.' },
+    { med:'Enoxaparina 40 mg', dose:'40 mg', via:'SC', obs:'1x/dia, profilaxia de TEV.' },
+    { med:'Controles', dose:'SSVV de 6/6 h, balanço hídrico rigoroso', via:'—', obs:'Peso em jejum diariamente. Ureia, creatinina, Na e K diários.' }
+  ],
+  cuidados:['Cabeceira elevada a 45°.', 'Meta: perda de 0,5–1 kg/dia.', 'Procurar o gatilho: infecção, isquemia, arritmia, adesão, AINE.', 'Não usar AINE.'] },
+
+{ id:'i-tev', grupo:'Cardiovascular', nome:'TEP ou TVP — anticoagulação plena', sub:'Estável, sem indicação de trombólise', conduta:'cardio/tep',
+  itens:[
+    { med:'Dieta', dose:'geral', via:'VO', obs:'' },
+    { med:'Enoxaparina 1 mg/kg', dose:'___ mg (1 mg/kg)', via:'SC', obs:'De 12/12 h. ClCr < 30: 1 mg/kg 1x/dia. Peso > 120 kg ou gestante: discutir.' },
+    { med:'Rivaroxabana 15 mg', dose:'1 comprimido', via:'VO', obs:'De 12/12 h por 21 dias, depois 20 mg 1x/dia — alternativa à enoxaparina se não houver contraindicação (ClCr < 15, gestação, câncer ativo).' },
+    { med:'Oxigênio', dose:'cateter nasal 1–3 L/min', via:'INAL', obs:'Se SpO2 < 92%.' },
+    { med:'Dipirona 1 g', dose:'1 g', via:'EV', obs:'De 6/6 h se dor.' },
+    { med:'Controles', dose:'SSVV de 6/6 h', via:'—', obs:'Hemoglobina e plaquetas em 48 h e a cada 3 dias (trombocitopenia por heparina). Creatinina.' }
+  ],
+  cuidados:['Deambulação livre assim que anticoagulado.', 'Não fazer punção arterial ou IM sem necessidade.', 'Vigiar sangramento: gengiva, urina, fezes, queda de Hb.', 'Definir a duração (3 meses no mínimo) antes da alta.'] },
+
+{ id:'i-avc', grupo:'Neurológico', nome:'AVC isquêmico — fora da janela de trombólise', sub:'Enfermaria ou unidade de AVC', conduta:'neuro/avc-isquemico',
+  itens:[
+    { med:'Dieta', dose:'jejum até teste de deglutição', via:'VO', obs:'Liberar consistência conforme a fonoaudiologia. SNE se disfagia após 24–48 h.' },
+    { med:'SF 0,9%', dose:'1000 mL', via:'EV', obs:'Em 24 h (~40 mL/h). Sem soro glicosado.' },
+    { med:'AAS 100 mg', dose:'300 mg no 1º dia, depois 100 mg', via:'VO/SNE', obs:'1x/dia. Só após TC sem sangramento. Se trombolisado, iniciar após 24 h.' },
+    { med:'Atorvastatina 40 mg', dose:'80 mg', via:'VO/SNE', obs:'1x/dia à noite.' },
+    { med:'Anti-hipertensivo', dose:'só se PA > 220/120', via:'—', obs:'Sem trombólise, tolerar hipertensão nas primeiras 24 h. Retomar os anti-hipertensivos da casa após 24–48 h se estável.' },
+    { med:'Insulina regular', dose:'esquema conforme glicemia capilar', via:'SC', obs:'Alvo 140–180 mg/dL. Glicemia capilar de 6/6 h.' },
+    { med:'Enoxaparina 40 mg', dose:'40 mg', via:'SC', obs:'1x/dia, profilaxia de TEV, a partir do 2º dia (24 h após trombólise).' },
+    { med:'Controles', dose:'SSVV e escala neurológica (NIHSS/Glasgow) de 4/4 h nas primeiras 24 h', via:'—', obs:'Temperatura: tratar febre com dipirona. SpO2 alvo > 94%.' }
+  ],
+  cuidados:['Cabeceira a 30°.', 'Mudança de decúbito de 2/2 h.', 'Sem sonda vesical de rotina.', 'Fisioterapia e fonoaudiologia desde o 1º dia.', 'Investigar a causa: ECG, ecocardiograma, doppler de carótidas.'] },
+
+{ id:'i-abstinencia', grupo:'Neurológico', nome:'Síndrome de abstinência alcoólica', sub:'Tremor, sudorese e agitação — sem delirium tremens', conduta:'psiq/abstinencia-alcoolica',
+  itens:[
+    { med:'Dieta', dose:'geral', via:'VO', obs:'' },
+    { med:'Tiamina 100 mg/mL', dose:'300 mg (3 mL)', via:'IM ou EV', obs:'1x/dia por 3–5 dias. SEMPRE antes de qualquer glicose.' },
+    { med:'SF 0,9%', dose:'1000 mL', via:'EV', obs:'Em 12 h se desidratado. Repor K e Mg conforme exames.' },
+    { med:'Diazepam 10 mg', dose:'10 mg', via:'VO', obs:'De 6/6 h nas primeiras 24 h, depois reduzir 25%/dia. Resgate: 10 mg VO de 1/1 h se CIWA-Ar ≥ 10.' },
+    { med:'Ácido fólico 5 mg', dose:'5 mg', via:'VO', obs:'1x/dia.' },
+    { med:'Haloperidol 5 mg/mL', dose:'5 mg (1 mL)', via:'IM', obs:'Só se agitação com alucinação apesar do benzodiazepínico. Não substitui o diazepam.' },
+    { med:'Controles', dose:'SSVV e CIWA-Ar de 4/4 h', via:'—', obs:'Glicemia capilar de 6/6 h.' }
+  ],
+  cuidados:['Ambiente calmo e iluminado, sem contenção se possível.', 'Convulsão ou alucinação = delirium tremens iminente: avisar a equipe.', 'Sem glicose antes da tiamina.'] },
+
+{ id:'i-pielo', grupo:'Infeccioso', nome:'Pielonefrite aguda', sub:'Internada por vômito, febre alta ou sepse leve', conduta:'nefro/itu',
+  itens:[
+    { med:'Dieta', dose:'geral', via:'VO', obs:'' },
+    { med:'SF 0,9%', dose:'1000 mL', via:'EV', obs:'Em 8 h, depois manutenção conforme aceitação oral.' },
+    { med:'Ceftriaxona 1 g', dose:'1 g', via:'EV', obs:'1x/dia (2 g se sepse). 7–10 dias, trocando para VO conforme cultura após 48 h afebril.' },
+    { med:'Dipirona 1 g', dose:'1 g', via:'EV', obs:'De 6/6 h se dor ou febre.' },
+    { med:'Ondansetrona 4 mg', dose:'4–8 mg', via:'EV', obs:'De 8/8 h se náusea.' },
+    { med:'Enoxaparina 40 mg', dose:'40 mg', via:'SC', obs:'1x/dia se restrito ao leito.' },
+    { med:'Controles', dose:'SSVV de 6/6 h', via:'—', obs:'Diurese. Creatinina em 48 h.' }
+  ],
+  cuidados:['Urocultura e hemocultura antes da 1ª dose.', 'Febre após 72 h de ATB: USG ou TC para afastar abscesso ou obstrução.', 'Sonda vesical só se retenção.'] },
+
+{ id:'i-celulite', grupo:'Infeccioso', nome:'Celulite ou erisipela', sub:'Internada por extensão, febre ou falha da VO', conduta:'infecto/celulite-erisipela',
+  itens:[
+    { med:'Dieta', dose:'geral', via:'VO', obs:'' },
+    { med:'Cefazolina 1 g', dose:'2 g', via:'EV', obs:'De 8/8 h, diluído em 100 mL de SF. Alternativa: oxacilina 2 g EV 4/4 h. 7–10 dias, VO após melhora (cefalexina 500 mg 6/6 h).' },
+    { med:'Dipirona 1 g', dose:'1 g', via:'EV', obs:'De 6/6 h se dor ou febre.' },
+    { med:'Enoxaparina 40 mg', dose:'40 mg', via:'SC', obs:'1x/dia.' },
+    { med:'Controles', dose:'SSVV de 6/6 h', via:'—', obs:'Marcar a borda do eritema com caneta e a data.' }
+  ],
+  cuidados:['Membro elevado.', 'Tratar a porta de entrada (micose interdigital, ferida).', 'Dor desproporcional, bolha violácea ou crepitação = fasciíte: cirurgia agora.'] },
+
+{ id:'i-aspirativa', grupo:'Infeccioso', nome:'Pneumonia aspirativa', sub:'Idoso, disfagia ou rebaixamento', conduta:'resp/pac',
+  itens:[
+    { med:'Dieta', dose:'jejum até avaliação da deglutição', via:'—', obs:'SNE se disfagia; dieta pastosa e espessada se liberado.' },
+    { med:'SF 0,9%', dose:'1000 mL', via:'EV', obs:'Em 12 h.' },
+    { med:'Ceftriaxona 1 g', dose:'1 g', via:'EV', obs:'1x/dia, 7 dias.' },
+    { med:'Clindamicina 600 mg', dose:'600 mg', via:'EV', obs:'De 8/8 h. Alternativa única: amoxicilina + clavulanato 1 g EV 8/8 h (ou ampicilina-sulbactam 3 g 6/6 h).' },
+    { med:'Oxigênio', dose:'cateter nasal 1–3 L/min', via:'INAL', obs:'Se SpO2 < 92%.' },
+    { med:'Dipirona 1 g', dose:'1 g', via:'EV', obs:'De 6/6 h se dor ou febre.' },
+    { med:'Enoxaparina 40 mg', dose:'40 mg', via:'SC', obs:'1x/dia.' },
+    { med:'Controles', dose:'SSVV e SpO2 de 6/6 h', via:'—', obs:'' }
+  ],
+  cuidados:['Cabeceira a 30–45° permanente.', 'Higiene oral 3x/dia.', 'Fonoaudiologia.', 'Aspirar vias aéreas se necessário.'] },
+
+{ id:'i-gastro', grupo:'Gastro', nome:'Gastroenterite com desidratação', sub:'Vômito incoercível ou desidratação moderada', conduta:'gastro/diarreia-aguda',
+  itens:[
+    { med:'Dieta', dose:'líquida a leve, conforme aceitação', via:'VO', obs:'Reintroduzir cedo. Sem restrição de lactose se tolerar.' },
+    { med:'Ringer lactato', dose:'1000 mL', via:'EV', obs:'Em 1 h (bolus de 20–30 mL/kg se hipotenso), depois SF 0,9% 1000 mL de 8/8 h.' },
+    { med:'Ondansetrona 4 mg', dose:'8 mg', via:'EV', obs:'De 8/8 h se náusea ou vômito.' },
+    { med:'Dipirona 1 g', dose:'1 g', via:'EV', obs:'De 6/6 h se dor ou febre.' },
+    { med:'Cloreto de potássio 19,1%', dose:'10 mL em SF 0,9% 500 mL', via:'EV', obs:'Em 4 h, se K < 3,5. Ou xarope de KCl 6% 10 mL VO 8/8 h se tolerar.' },
+    { med:'Controles', dose:'SSVV de 6/6 h', via:'—', obs:'Balanço hídrico, diurese. Na, K e creatinina em 24 h.' }
+  ],
+  cuidados:['Sem antidiarreico se febre ou sangue nas fezes.', 'Antibiótico só se disenteria, imunossuprimido ou sepse (ciprofloxacino 500 mg 12/12 h 3 dias).', 'Isolamento de contato.', 'Coprocultura se sangue ou febre alta.'] },
+
+{ id:'i-pancreatite', grupo:'Gastro', nome:'Pancreatite aguda leve', sub:'Sem falência orgânica', conduta:'gastro/pancreatite-aguda',
+  itens:[
+    { med:'Dieta', dose:'jejum nas primeiras 24 h', via:'—', obs:'Liberar dieta leve com pouca gordura assim que a dor e a náusea permitirem, em geral em 24–48 h.' },
+    { med:'Ringer lactato', dose:'1000 mL', via:'EV', obs:'Em 2 h (5–10 mL/kg/h nas primeiras 4 h), depois 1000 mL de 8/8 h. Reavaliar volemia de 6/6 h — não hiper-hidratar.' },
+    { med:'Dipirona 1 g', dose:'1 g', via:'EV', obs:'De 6/6 h.' },
+    { med:'Tramadol 100 mg', dose:'100 mg + SF 100 mL', via:'EV', obs:'De 8/8 h se dor. Morfina 2–4 mg EV se refratária.' },
+    { med:'Ondansetrona 4 mg', dose:'8 mg', via:'EV', obs:'De 8/8 h.' },
+    { med:'Enoxaparina 40 mg', dose:'40 mg', via:'SC', obs:'1x/dia.' },
+    { med:'Controles', dose:'SSVV de 6/6 h, balanço hídrico', via:'—', obs:'Hematócrito, ureia e cálcio em 24 h. Glicemia capilar de 6/6 h.' }
+  ],
+  cuidados:['Sem antibiótico profilático.', 'USG de abdome para litíase: se biliar, colecistectomia na mesma internação.', 'Sem álcool.', 'Piora, febre ou falência de órgão após 48 h: TC com contraste.'] },
+
+{ id:'i-hda', grupo:'Gastro', nome:'Hemorragia digestiva alta — estável', sub:'Não varicosa, sem instabilidade', conduta:'gastro/hda',
+  itens:[
+    { med:'Dieta', dose:'jejum até a endoscopia', via:'—', obs:'Liberar dieta líquida 6 h após EDA sem sangramento ativo.' },
+    { med:'SF 0,9%', dose:'1000 mL', via:'EV', obs:'Em 8 h. Dois acessos calibrosos.' },
+    { med:'Omeprazol 40 mg', dose:'80 mg em bolus, depois 40 mg', via:'EV', obs:'De 12/12 h até a endoscopia. Se úlcera de alto risco: 8 mg/h em BIC por 72 h.' },
+    { med:'Ondansetrona 4 mg', dose:'8 mg', via:'EV', obs:'De 8/8 h se náusea.' },
+    { med:'Concentrado de hemácias', dose:'1 unidade', via:'EV', obs:'Se Hb < 7 g/dL (< 8 se coronariopata). Tipagem e reserva de 2 unidades.' },
+    { med:'Controles', dose:'SSVV de 4/4 h', via:'—', obs:'Hemoglobina de 6/6 h nas primeiras 24 h. Observar hematêmese, melena, síncope.' }
+  ],
+  cuidados:['Suspender AINE, AAS e anticoagulante — discutir a retomada do AAS após a EDA.', 'Cirrótico: ceftriaxona 1 g EV 1x/dia e terlipressina — fluxo de varizes.', 'EDA nas primeiras 24 h.', 'Sem sonda nasogástrica de rotina.'] },
+
+{ id:'i-colica', grupo:'Nefro e urológico', nome:'Cólica renal com dor refratária', sub:'Internada por dor persistente ou vômito', conduta:'nefro/colica-renal',
+  itens:[
+    { med:'Dieta', dose:'geral', via:'VO', obs:'Sem hiper-hidratação forçada.' },
+    { med:'SF 0,9%', dose:'500 mL', via:'EV', obs:'Em 4 h, só para manter a via e repor perdas.' },
+    { med:'Cetorolaco 30 mg/mL', dose:'30 mg (1 mL)', via:'EV', obs:'De 8/8 h por no máximo 3 dias, se creatinina normal e sem úlcera.' },
+    { med:'Dipirona 1 g', dose:'1 g', via:'EV', obs:'De 6/6 h.' },
+    { med:'Tramadol 100 mg', dose:'100 mg + SF 100 mL', via:'EV', obs:'De 8/8 h se dor refratária. Morfina 2–4 mg EV como resgate.' },
+    { med:'Tansulosina 0,4 mg', dose:'0,4 mg', via:'VO', obs:'1x/dia à noite, por até 4 semanas (cálculo distal 5–10 mm).' },
+    { med:'Ondansetrona 4 mg', dose:'8 mg', via:'EV', obs:'De 8/8 h se náusea.' },
+    { med:'Controles', dose:'SSVV de 6/6 h, diurese', via:'—', obs:'Filtrar toda a urina. Creatinina em 24 h.' }
+  ],
+  cuidados:['Febre + obstrução = urgência urológica (nefrostomia/duplo J).', 'Cálculo > 10 mm, rim único ou dor refratária após 24 h: urologia.', 'Deambulação livre.'] },
+
+{ id:'i-dm', grupo:'Metabólico', nome:'Diabetes descompensado — sem cetoacidose', sub:'Hiperglicemia em enfermaria', conduta:'endocrino/cetoacidose',
+  itens:[
+    { med:'Dieta', dose:'para diabético, fracionada em 6 refeições', via:'VO', obs:'' },
+    { med:'Insulina NPH', dose:'0,2–0,3 UI/kg/dia (___ UI)', via:'SC', obs:'2/3 pela manhã e 1/3 ao deitar. Se já usava, manter 80% da dose habitual.' },
+    { med:'Insulina regular — correção', dose:'conforme glicemia capilar pré-refeição', via:'SC', obs:'150–200: 2 UI · 201–250: 4 UI · 251–300: 6 UI · 301–350: 8 UI · > 350: 10 UI e avisar. Não corrigir ao deitar.' },
+    { med:'Glicemia capilar', dose:'antes das refeições e às 22 h', via:'—', obs:'Alvo 140–180 mg/dL. Hipoglicemia < 70: 20 mL de glicose 50% EV ou 15 g de açúcar VO e avisar.' },
+    { med:'Metformina', dose:'suspender', via:'—', obs:'Enquanto internado, com contraste ou creatinina alterada.' },
+    { med:'SF 0,9%', dose:'1000 mL', via:'EV', obs:'Em 12 h se desidratado.' },
+    { med:'Controles', dose:'SSVV de 6/6 h', via:'—', obs:'Na, K, creatinina e gasometria venosa se glicemia > 300 ou cetonúria.' }
+  ],
+  cuidados:['Cetonúria ou pH < 7,3 = cetoacidose: protocolo próprio.', 'Procurar o gatilho: infecção, corticoide, abandono.', 'Ajustar a NPH em 10–20% por dia conforme o perfil glicêmico.'] },
+
+{ id:'i-has', grupo:'Cardiovascular', nome:'Urgência hipertensiva internada', sub:'PA muito elevada sem lesão de órgão-alvo', conduta:'cardio/crise-hipertensiva',
+  itens:[
+    { med:'Dieta', dose:'hipossódica', via:'VO', obs:'' },
+    { med:'Captopril 25 mg', dose:'25 mg', via:'VO', obs:'Se PA > 180/110, pode repetir em 1 h. Meta: reduzir 20–25% em 24 h, não normalizar.' },
+    { med:'Anti-hipertensivos da casa', dose:'retomar todos', via:'VO', obs:'Ajustar as doses conforme a resposta.' },
+    { med:'Clonidina 0,1 mg', dose:'0,1 mg', via:'VO', obs:'De 8/8 h se refratário. Não suspender abruptamente.' },
+    { med:'Dipirona 1 g', dose:'1 g', via:'VO', obs:'De 6/6 h se cefaleia.' },
+    { med:'Controles', dose:'PA de 4/4 h', via:'—', obs:'Avisar se PAS > 200, PAD > 120 ou sintoma novo (dor torácica, dispneia, déficit).' }
+  ],
+  cuidados:['Sem nifedipino sublingual.', 'Dor torácica, dispneia, déficit ou creatinina subindo = emergência hipertensiva: nitroprussiato em UTI.', 'Investigar adesão e uso de AINE, descongestionante, cocaína.'] },
+
+{ id:'i-delirium', grupo:'Neurológico', nome:'Delirium em idoso internado', sub:'Agitação ou confusão aguda', conduta:'psiq/agitacao-psicomotora',
+  itens:[
+    { med:'Dieta', dose:'geral, assistida', via:'VO', obs:'Hidratação oral estimulada.' },
+    { med:'Haloperidol 2 mg/mL gotas', dose:'0,5–1 mg (5–10 gotas)', via:'VO', obs:'Até 2x/dia se agitação que ponha em risco. Máximo 3 mg/dia no idoso. Sem benzodiazepínico, exceto abstinência.' },
+    { med:'Haloperidol 5 mg/mL', dose:'2,5 mg (0,5 mL)', via:'IM', obs:'Só se risco imediato e recusa VO. ECG antes: QT longo contraindica.' },
+    { med:'Suspender', dose:'anticolinérgicos, benzodiazepínicos, opioides em excesso', via:'—', obs:'Revisar toda a prescrição.' },
+    { med:'Controles', dose:'SSVV de 6/6 h, CAM de 12/12 h', via:'—', obs:'Glicemia capilar. Diurese e evacuação diárias.' }
+  ],
+  cuidados:['Procurar a causa: infecção, dor, retenção urinária, fecaloma, hiponatremia, hipóxia, medicação.', 'Óculos, aparelho auditivo, relógio e luz do dia; família presente.', 'Sem contenção física de rotina; sem sonda vesical.', 'Mobilizar no dia.'] }
+];

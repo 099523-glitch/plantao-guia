@@ -9,7 +9,7 @@ dependência externa: abre o `index.html` e funciona — inclusive **sem interne
 |---|---|
 | Condutas | **135** em 12 áreas e **63 subpastas**, todas com fluxograma, red flags, doses, "não fazer" e destino |
 | Queixas | **16** portas de entrada por sintoma, para quem ainda não tem diagnóstico |
-| Prescrições por quadro | **104** quadros clínicos em 16 grupos |
+| Prescrições | **Porta** (na unidade) · **Internados** (17 prescrições de enfermaria, `FERR_INTERNADOS`) · **Casa** (receita + orientações) — o contexto decide o que se copia |
 | Pediatria | **37** medicações com dose por quilo calculada e faixa etária, mais **15** vetos por idade |
 | Antibióticos | **39** esquemas empíricos em 10 sítios, com painel de stewardship |
 | Escores e calculadoras | **41** escores em 11 ramos + 7 contas do plantão |
