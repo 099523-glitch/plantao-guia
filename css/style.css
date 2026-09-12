@@ -2428,8 +2428,7 @@ body.na-home .topo-acoes{margin-left:auto}
 }
 
 
-/* ===========================================================
-   LISTA DE ÁREA E SALA VERMELHA — grupo + linha de conduta
+/* ====================================================   LISTA DE ÁREA E SALA VERMELHA — grupo + linha de conduta
    =========================================================== */
 
 .chips-grupo{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 20px}
@@ -2542,3 +2541,84 @@ body:not(.rx-ajustes) .pp-item{cursor:default;padding:9px 4px}
 body:not(.rx-ajustes) .pp-item:hover{background:none}
 body:not(.rx-ajustes) .pp-item.fora{opacity:1}
 body:not(.autor) .ferr-barra[data-ctx="quadros"]{display:none}
+=======
+
+/* ===========================================================
+   QUEIXAS — capa em grupos e "não pode passar" no topo
+   =========================================================== */
+
+.lq-ico{flex-shrink:0;display:inline-flex;width:36px;height:36px;align-items:center;justify-content:center;
+  border-radius:9px;background:var(--acento-suave);color:var(--acento);align-self:center}
+.lq-ico .ico{width:18px;height:18px}
+.qx-grade{display:none}
+
+/* o bloco que agora abre a página */
+.naopode.alto{margin:0 0 20px}
+.naopode.alto h3{display:flex;align-items:center;gap:8px}
+.naopode.alto h3 i{font-style:normal;margin-left:auto;font-family:'JetBrains Mono',ui-monospace,monospace;
+  font-size:12px;font-weight:500;color:var(--steel)}
+.np-grade{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.naopode.alto .np-item{display:flex;align-items:center;gap:10px;margin:0;padding:12px 14px;
+  border:1px solid var(--fire-borda,#F0C4BE);border-radius:10px;background:var(--card)}
+.naopode.alto .np-item b{display:block;font-size:14.5px;font-weight:700;letter-spacing:-.01em}
+.naopode.alto .np-item span{display:block;font-size:12.5px;line-height:1.45;color:var(--steel);text-wrap:pretty}
+.naopode.alto a.np-item:hover{border-color:var(--fire);box-shadow:var(--shadow)}
+.naopode.alto .np-item i{margin-left:auto;flex-shrink:0;color:var(--fire)}
+
+@media(max-width:900px){ .np-grade{grid-template-columns:1fr} }
+
+
+/* ===========================================================
+   PRESCRIÇÕES — lista clínica: uma linha por quadro
+   =========================================================== */
+
+.cc-grade{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 14px}
+.ferr-quadro{border:1px solid var(--line);border-radius:8px;background:var(--card);overflow:hidden}
+.ferr-quadro.aberto{grid-column:1 / -1;border-color:var(--acento-borda);box-shadow:var(--shadow)}
+
+.rxl{display:flex;align-items:stretch;min-height:52px}
+.rxl-abrir{flex:1;min-width:0;display:flex;align-items:center;gap:10px;
+  padding:0 10px 0 6px;border:0;background:none;cursor:pointer;text-align:left;
+  font-family:'Inter',system-ui,sans-serif;color:var(--ink)}
+.rxl-abrir:hover{background:var(--paper)}
+.rxl-seta{flex-shrink:0;display:inline-flex;width:22px;justify-content:center;color:var(--steel)}
+.rxl-seta .ico{width:15px;height:15px}
+.rxl-nome{flex-shrink:0;max-width:46%;font-size:14.5px;font-weight:700;letter-spacing:-.01em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rxl-sub{flex:1;min-width:0;font-size:12.5px;color:var(--steel);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rxl-flag{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;
+  width:18px;height:18px;border-radius:50%;background:var(--fire-soft);color:var(--fire);
+  font-size:11px;font-weight:800}
+.rxl-n{flex-shrink:0;min-width:26px;text-align:right;
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;color:var(--steel)}
+
+.rxl-acoes{flex-shrink:0;display:flex;align-items:stretch;border-left:1px solid var(--line)}
+.rxl-btn{display:inline-flex;align-items:center;gap:6px;padding:0 12px;border:0;
+  border-right:1px solid var(--line);background:none;cursor:pointer;color:var(--steel);
+  font-family:'Inter',system-ui,sans-serif;font-size:12.5px;font-weight:600}
+.rxl-btn:last-child{border-right:0}
+.rxl-btn:hover{background:var(--acento-suave);color:var(--acento)}
+.rxl-btn .ico{width:15px;height:15px}
+.rxl-btn i{font-style:normal}
+.rxl-btn.so-ico{padding:0 10px}
+.rxl-btn.so-ico i{display:none}
+
+/* o cabeçalho de grupo ganha fio, como o resto do guia */
+.atb-secao>h4{display:flex;align-items:baseline;gap:8px;margin:18px 0 8px;
+  padding-bottom:6px;border-bottom:1px solid var(--line);
+  font-family:'Inter',system-ui,sans-serif;font-size:11px;font-weight:700;
+  letter-spacing:.13em;text-transform:uppercase;color:var(--steel)}
+.atb-secao>h4 i{margin-left:auto;font-style:normal;
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;font-weight:500}
+
+/* as pilhas antigas do cartão saem de cena */
+.q-rapido,.ferr-quadro .ferr-card-acoes{display:none}
+
+@media(max-width:1100px){ .cc-grade{grid-template-columns:1fr} }
+@media(max-width:700px){
+  .rxl-sub{display:none}
+  .rxl-nome{max-width:none;flex:1;white-space:normal;line-height:1.25}
+  .rxl-btn i{display:none}
+  .rxl-btn{padding:0 13px}
+}

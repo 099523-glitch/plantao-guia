@@ -1836,22 +1836,24 @@
           var aberto = quadroAberto === q.id;
           var n = (q.unidade || []).length + (q.receita || []).length;
           return '<article class="ferr-quadro' + (aberto ? ' aberto' : '') + '">' +
-            '<button type="button" class="ferr-quadro-topo" data-acao="quadro-abrir" data-id="' + esc(q.id) + '">' +
-              '<span class="ferr-quadro-nome">' + esc(q.nome) +
-                '<span class="ferr-quadro-sub">' + esc(q.sub) + '</span></span>' +
-              (q.atencao ? '<span class="ferr-quadro-flag" title="Tem armadilha para conferir">!</span>' : '') +
-              '<span class="atb-n">' + n + (n === 1 ? ' item' : ' itens') + '</span>' +
-              '<span class="ferr-calc-seta">' + ICO(aberto ? 'setaBai' : 'setaDir') + '</span>' +
-            '</button>' +
-            '<div class="q-rapido">' +
-              '<button type="button" class="qr-btn" data-acao="proto-copiar" data-id="' + esc(q.id) + '">' +
-                ICO('copiar') + ' Copiar</button>' +
-              '<button type="button" class="qr-btn" data-acao="proto-imprimir" data-id="' + esc(q.id) + '">' +
-                ICO('laudo') + ' Imprimir</button>' +
-            '</div>' +
-            '<div class="ferr-card-acoes">' +
-              '<button type="button" title="Editar" data-acao="quadro-editar" data-id="' + esc(q.id) + '">'+ICO('lapis')+'</button>' +
-              '<button type="button" title="Apagar" data-acao="quadro-apagar" data-id="' + esc(q.id) + '">'+ICO('fechar')+'</button>' +
+            '<div class="rxl">' +
+              '<button type="button" class="rxl-abrir" data-acao="quadro-abrir" data-id="' + esc(q.id) + '"' +
+                ' aria-expanded="' + (aberto ? 'true' : 'false') + '">' +
+                '<span class="rxl-seta">' + ICO(aberto ? 'setaBai' : 'setaDir') + '</span>' +
+                '<span class="rxl-nome">' + esc(q.nome) + '</span>' +
+                '<span class="rxl-sub">' + esc(q.sub) + '</span>' +
+                (q.atencao ? '<span class="rxl-flag" title="Tem armadilha para conferir">!</span>' : '') +
+                '<span class="rxl-n">' + n + '</span>' +
+              '</button>' +
+              '<span class="rxl-acoes">' +
+                '<button type="button" class="rxl-btn" data-acao="proto-copiar" data-id="' + esc(q.id) + '"' +
+                  ' title="Copiar prescrição">' + ICO('copiar') + '<i>Copiar</i></button>' +
+                '<button type="button" class="rxl-btn" data-acao="proto-imprimir" data-id="' + esc(q.id) + '"' +
+                  ' title="Imprimir receituário">' + ICO('laudo') + '<i>Imprimir</i></button>' +
+                (modoAutor() ?
+                  '<button type="button" class="rxl-btn so-ico" title="Editar" data-acao="quadro-editar" data-id="' + esc(q.id) + '">' + ICO('lapis') + '</button>' +
+                  '<button type="button" class="rxl-btn so-ico" title="Apagar" data-acao="quadro-apagar" data-id="' + esc(q.id) + '">' + ICO('fechar') + '</button>' : '') +
+              '</span>' +
             '</div>' +
             (aberto ? corpoProto(q) : '') +
           '</article>';

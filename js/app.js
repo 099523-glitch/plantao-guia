@@ -856,17 +856,44 @@
   }
 
   /* capa: "estou diante de um paciente com..." */
+  var QX_GRUPOS = [
+    { nome:'Respiração e circulação', ids:['dispneia','dor-toracica-q','hipotensao','palpitacoes','edema'] },
+    { nome:'Neurológico', ids:['alteracao-consciencia','convulsao-q','cefaleia-q','sincope-q','tontura','agitacao'] },
+    { nome:'Abdome e perdas', ids:['dor-abdominal','vomito-diarreia','sangramento'] },
+    { nome:'Sistêmico e metabólico', ids:['febre','glicemia'] }
+  ];
+  function linhaQueixa(q) {
+    return '<a class="lc" href="#queixa/' + esc(q.id) + '">' +
+      '<span class="lq-ico">' + ICO(q.icone) + '</span>' +
+      '<span class="lc-txt"><span class="lc-topo"><b>' + esc(q.nome) + '</b></span>' +
+        '<span class="lc-sub">' + esc(q.sub) + '</span></span>' +
+      '<span class="lc-seta">' + ICO('setaDir') + '</span></a>';
+  }
   function renderQueixas() {
+    var usados = {};
+    var grupos = QX_GRUPOS.map(function (g) {
+      var itens = g.ids.map(acharQueixa).filter(Boolean);
+      itens.forEach(function (q) { usados[q.id] = 1; });
+      return { nome:g.nome, itens:itens };
+    }).filter(function (g) { return g.itens.length; });
+    var sobra = QUEIXAS.filter(function (q) { return !usados[q.id]; });
+    if (sobra.length) grupos.push({ nome:'Outras', itens:sobra });
+
     var html = '<section class="phase">' +
-      '<div class="phase-head"><h2>Queixas</h2></div>' +
-      '<div class="qx-grade">' +
-      QUEIXAS.map(function (q) {
-        return '<a class="qx-cartao" href="#queixa/' + esc(q.id) + '">' +
-          '<span class="qx-ico">' + ICO(q.icone) + '</span>' +
-          '<span class="qx-nome">' + esc(q.nome) + '</span>' +
-          '<span class="qx-sub">' + esc(q.sub) + '</span></a>';
-      }).join('') +
-      '</div></section>';
+      '<div class="phase-head"><h2>Queixas</h2>' +
+        '<span class="phase-conta">' + QUEIXAS.length + '</span></div>' +
+      '<div class="barra-area"><span class="conta">quando ainda não há diagnóstico: abre com o que fazer agora e o que não pode passar</span></div>' +
+      '<div class="chips-grupo">' + grupos.map(function (g) {
+        return '<a class="cg" href="#" data-ir-grupo="' + esc(g.nome) + '">' + esc(g.nome) +
+          '<i>' + g.itens.length + '</i></a>';
+      }).join('') + '</div>' +
+      grupos.map(function (g) {
+        return '<div class="grupo-area" data-grupo="' + esc(g.nome) + '">' +
+          '<div class="ga-head"><span class="ga-nome">' + esc(g.nome) + '</span>' +
+            '<span class="ga-conta">' + g.itens.length + '</span></div>' +
+          '<div class="ga-grade">' + g.itens.map(linhaQueixa).join('') + '</div>' +
+        '</div>';
+      }).join('') + '</section>';
     doc.innerHTML = html;
   }
 
@@ -884,22 +911,11 @@
       (q.agora || []).map(function (x) { return '<li>' + rico(x) + '</li>'; }).join('') +
       '</ol></div>';
 
-    /* 2. o corpo: fluxograma, red flags, exames, não fazer, reavaliar, destino */
-    html += ordenaSecoes(q.secoes).map(dobravel).join('');
-
-    /* 3. ferramentas ligadas */
-    if ((q.atalhos || []).length) {
-      html += '<div class="qx-ferr"><h3>Ferramentas</h3><div class="qx-chips">' +
-        q.atalhos.map(function (a) {
-          var ab = abreAtalho(a);
-          return '<a class="qx-chip" href="' + esc(hrefAtalho(a)) + '"' +
-            (ab ? ' data-abre="' + esc(ab) + '"' : '') + '>' + esc(a.rotulo) + '</a>';
-        }).join('') + '</div></div>';
-    }
-
-    /* 4. o que não pode passar fecha a página */
+    /* 2. o que não pode passar vem ANTES do fluxograma: é o que muda a
+       conduta nos primeiros minutos, e cada item leva para a conduta */
     if ((q.naopode || []).length) {
-      html += '<div class="naopode"><h3>' + ICO('alerta') + ' N\u00e3o posso deixar passar</h3>' +
+      html += '<div class="naopode alto"><h3>' + ICO('alerta') + ' Não posso deixar passar' +
+        '<i>' + q.naopode.length + '</i></h3><div class="np-grade">' +
         q.naopode.map(function (d) {
           var alvo = d.conduta && acharConduta(d.conduta);
           var corpo = '<b>' + esc(d.dx) + '</b><span>' + rico(d.pista) + '</span>';
@@ -907,7 +923,22 @@
             ? '<a class="np-item" href="' + esc(hrefConduta(alvo)) + '">' + corpo +
               '<i>' + ICO('setaDir') + '</i></a>'
             : '<div class="np-item">' + corpo + '</div>';
-        }).join('') + '</div>';
+        }).join('') + '</div></div>';
+    }
+
+    /* 3. índice dos blocos, igual ao da conduta */
+    var secoes = ordenaSecoes(q.secoes);
+    html += '<div class="solo-duas">' + indiceConduta(secoes) +
+      '<div class="solo-corpo">' + secoes.map(dobravel).join('') + '</div></div>';
+
+    /* 4. ferramentas ligadas */
+    if ((q.atalhos || []).length) {
+      html += '<div class="qx-ferr"><h3>Ferramentas</h3><div class="qx-chips">' +
+        q.atalhos.map(function (a) {
+          var ab = abreAtalho(a);
+          return '<a class="qx-chip" href="' + esc(hrefAtalho(a)) + '"' +
+            (ab ? ' data-abre="' + esc(ab) + '"' : '') + '>' + esc(a.rotulo) + '</a>';
+        }).join('') + '</div></div>';
     }
 
     html += '<p class="fonte-linha">' + ICO('livro') + ' <b>Base:</b> ' + esc(q.fonte || '') +
