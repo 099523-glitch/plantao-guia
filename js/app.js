@@ -680,8 +680,6 @@
 
     var html = '<section class="phase solo">' + trilha +
       '<div class="solo-head">' +
-        '<span class="solo-num">' + (ci + 1) +
-          (d ? '.' + (subsDe(p.categoria).indexOf(d.sub) + 1) : '') + '.' + (pi + 1) + '</span>' +
         '<h2>' + esc(p.titulo) + '</h2>' +
         '<span class="pasta-tag ' + esc(g) + '">' + esc(g) + '</span>' +
         '<button type="button" class="btn-fav' + (ehFavorita(p.id) ? ' on' : '') +
@@ -1037,7 +1035,7 @@
     var html = '<section class="phase">' +
       '<div class="phase-head"><h2>Doses de emergência</h2></div>' +
       '<p class="ferr-lead">As drogas que não dão tempo de procurar, agrupadas por situação. Vista derivada das condutas: editar a conduta atualiza aqui.</p>' +
-      '<div class="tile-grade principal">' +
+      '<div class="tile-grade areas-home">' +
       DOSES_GRUPOS.map(function (g) {
         var n = contaGrupoDoses(g);
         if (!n) return '';
@@ -1307,17 +1305,11 @@
     if (gAtual) {
       html += '<a class="voltar" href="#' + esc(c.id) + '">' + ICO('setaEsq') + ' ' + esc(c.nome) + '</a>';
     }
-    html += '<div class="phase-head"><span class="big">' +
-      dois(ci + 1) + (gAtual ? '.' + dois(subsDe(c.id).indexOf(gAtual) + 1) : '') + '</span>' +
-      '<h2>' + esc(gAtual ? gAtual.nome : c.nome) + '</h2></div>';
-
-
-    var nBarra = gAtual ? listaSub(gAtual).length : lista.length;
-    html += '<div class="barra-area"><span class="conta">' +
-      (gAtual ? '' : subsDe(c.id).length ? subsDe(c.id).length + ' subpastas &middot; ' : '') +
-      nBarra + (nBarra === 1 ? ' conduta' : ' condutas') +
-      (modoAutor() ? ' &middot; ' + progresso(todas) + ' de ' + todas.length + ' preenchidas' : '') +
-    '</span></div>';
+    /* sem número nem contagem no cabeçalho: só o nome da área */
+    html += '<div class="phase-head"><h2>' + esc(gAtual ? gAtual.nome : c.nome) + '</h2></div>';
+    if (modoAutor()) {
+      html += '<div class="barra-area"><span class="conta">' + progresso(todas) + ' de ' + todas.length + ' preenchidas</span></div>';
+    }
 
     if (!lista.length) {
       html += '<div class="pendente">Esta área ainda não tem conduta preenchida. ' +
@@ -1335,16 +1327,14 @@
       html += '<div class="chips-grupo">' +
         '<a class="cg on" href="#' + esc(c.id) + '">Todas</a>' +
         vivos.map(function (g) {
-          return '<a class="cg" href="#' + esc(c.id) + '/' + esc(g.id) + '">' + esc(g.nome) +
-            '<i>' + listaSub(g).length + '</i></a>';
+          return '<a class="cg" href="#' + esc(c.id) + '/' + esc(g.id) + '">' + esc(g.nome) + '</a>';
         }).join('') + '</div>';
       html += vivos.map(function (g) {
         var gi = subsDe(c.id).indexOf(g);
         var dela = listaSub(g);
         return '<div class="grupo-area">' +
-          '<div class="ga-head"><span class="ga-num">' + dois(ci + 1) + '.' + dois(gi + 1) + '</span>' +
-            '<a class="ga-nome" href="#' + esc(c.id) + '/' + esc(g.id) + '">' + esc(g.nome) + '</a>' +
-            '<span class="ga-conta">' + dela.length + '</span></div>' +
+          '<div class="ga-head">' +
+            '<a class="ga-nome" href="#' + esc(c.id) + '/' + esc(g.id) + '">' + esc(g.nome) + '</a></div>' +
           '<div class="ga-grade">' + dela.map(function (p) { return linhaConduta(p); }).join('') + '</div>' +
         '</div>';
       }).join('');

@@ -2541,7 +2541,6 @@ body:not(.rx-ajustes) .pp-item{cursor:default;padding:9px 4px}
 body:not(.rx-ajustes) .pp-item:hover{background:none}
 body:not(.rx-ajustes) .pp-item.fora{opacity:1}
 body:not(.autor) .ferr-barra[data-ctx="quadros"]{display:none}
-=======
 
 /* ===========================================================
    QUEIXAS — capa em grupos e "não pode passar" no topo
@@ -2621,4 +2620,88 @@ body:not(.autor) .ferr-barra[data-ctx="quadros"]{display:none}
   .rxl-nome{max-width:none;flex:1;white-space:normal;line-height:1.25}
   .rxl-btn i{display:none}
   .rxl-btn{padding:0 13px}
+}
+
+
+/* ===========================================================
+   SISTEMA ÚNICO — três componentes para todo o app
+   1. tile de entrada (hubs)   2. linha de item   3. chip
+   Este bloco fecha as divergências entre as abas; vem por último
+   de propósito, para vencer as regras antigas de cada tela.
+   =========================================================== */
+
+/* ---------- 1. tile de entrada: hubs (ATB por sítio, prontuário,
+   eletrólitos, doses, ferramentas da home) ---------- */
+.atb-grade{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.atb-sitio{display:flex;align-items:center;gap:12px;min-height:68px;
+  padding:14px 15px;border:1px solid var(--line);border-radius:12px}
+.atb-sitio .as-emoji{flex-shrink:0;width:40px;height:40px;border-radius:10px;margin:0}
+.atb-sitio .as-emoji .ico{width:21px;height:21px}
+.atb-sitio .as-nome{flex:1;min-width:0;font-size:15.5px;font-weight:700;letter-spacing:-.01em}
+.atb-sitio .as-conta{flex-shrink:0;margin:0;padding:0;border:0;background:none;
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;font-weight:500;
+  letter-spacing:0;text-transform:none;color:var(--steel)}
+
+/* o hub de eletrólitos usava cartão centralizado: mesma linha dos outros */
+.el-hub{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.el-card{flex-direction:row;align-items:center;text-align:left;gap:12px;
+  min-height:68px;padding:14px 15px;border-radius:12px}
+.el-card:hover{transform:none}
+.el-card .el-sim{min-width:44px;height:44px;font-size:15px;border-radius:10px}
+.el-card-nome{margin:0;font-size:15.5px;font-weight:700;letter-spacing:-.01em}
+.el-card-sub{display:none}
+
+/* ---------- 2. linha de item: listas de conteúdo ---------- */
+/* scores e calculadoras */
+.ferr-calc.cc{border:1px solid var(--line);border-radius:8px}
+.ferr-calc.cc .ferr-calc-topo{padding:0 12px;min-height:52px;gap:10px}
+.ferr-calc.cc .ferr-calc-nome{font-size:14.5px;font-weight:700;letter-spacing:-.01em}
+.ferr-calc.cc .ferr-calc-sub{font-size:12.5px}
+.cc-n{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;color:var(--steel)}
+
+/* antibióticos: esquema por linha */
+.cc-grade .atb-topo{padding:0 12px;min-height:52px;gap:10px}
+.cc-grade .atb-nome{font-size:14.5px;font-weight:700;letter-spacing:-.01em}
+.cc-grade .atb-sub{font-size:12.5px}
+.atb-n{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px}
+
+/* manobras e sinais: sai da grade de cartões, entra na lista */
+.ferr-lista-ex{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 14px}
+.ferr-ex{border:1px solid var(--line);border-radius:8px}
+.ferr-ex-corpo{padding:0 58px 0 12px;min-height:52px;display:flex;align-items:center;gap:10px}
+.ferr-ex-nome{font-size:14.5px;font-weight:700;letter-spacing:-.01em;flex-shrink:0;max-width:46%;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ferr-ex-desc{margin:0;font-size:12.5px;flex:1;min-width:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ---------- 3. chip: um só desenho ---------- */
+.ferr-chips{gap:7px}
+.ferr-chip{display:inline-flex;align-items:center;gap:7px;min-height:32px;padding:0 13px;
+  border:1px solid var(--line);border-radius:18px;background:var(--card);
+  font-size:12.5px;font-weight:600;color:var(--ink-2,var(--ink));white-space:nowrap}
+.ferr-chip:hover{border-color:var(--acento-borda);color:var(--acento)}
+.ferr-chip.on{background:var(--acento);border-color:var(--acento);color:#fff;font-weight:600}
+.ferr-chip em,.ferr-chip i{font-style:normal;font-family:'JetBrains Mono',ui-monospace,monospace;
+  font-size:11px;font-weight:500;color:var(--steel)}
+.ferr-chip.on em,.ferr-chip.on i{color:rgba(255,255,255,.8)}
+.ferr-chips.tira .ferr-chip .ico{width:14px;height:14px;margin:0;vertical-align:0}
+
+/* ---------- cabeçalho de grupo e contagem: um dialeto só ---------- */
+.atb-secao>h4,.ferr-grupo>h4{display:flex;align-items:baseline;gap:8px;margin:18px 0 8px;
+  padding-bottom:6px;border-bottom:1px solid var(--line);
+  font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--steel)}
+.atb-secao>h4 i,.ferr-grupo>h4 i{margin-left:auto;font-style:normal;
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;font-weight:500}
+
+@media(max-width:1100px){
+  .atb-grade,.el-hub{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .ferr-lista-ex{grid-template-columns:1fr}
+}
+@media(max-width:700px){
+  .atb-grade,.el-hub{grid-template-columns:1fr 1fr}
+  .atb-sitio,.el-card{min-height:60px;padding:11px 12px;gap:10px}
+  .atb-sitio .as-emoji{width:34px;height:34px}
+  .atb-sitio .as-nome,.el-card-nome{font-size:13.5px}
+  .cc-grade .atb-sub,.ferr-calc.cc .ferr-calc-sub,.ferr-ex-desc{display:none}
+  .ferr-ex-nome{max-width:none;flex:1;white-space:normal}
 }
