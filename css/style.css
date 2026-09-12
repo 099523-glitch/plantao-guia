@@ -2419,3 +2419,66 @@ body.na-home .topo-acoes{margin-left:auto}
   .solo-duas{display:block}
   .faca-agora{break-inside:avoid}
 }
+
+
+/* ===========================================================
+   LISTA DE ÁREA E SALA VERMELHA — grupo + linha de conduta
+   =========================================================== */
+
+.chips-grupo{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 20px}
+.cg{display:inline-flex;align-items:center;gap:7px;min-height:32px;padding:0 13px;
+  border:1px solid var(--line);border-radius:18px;background:var(--card);
+  font-family:'Inter',system-ui,sans-serif;font-size:12.5px;font-weight:600;
+  color:var(--ink-2,var(--ink));text-decoration:none;white-space:nowrap;
+  transition:border-color .14s ease,color .14s ease}
+.cg:hover{border-color:var(--acento-borda);color:var(--acento)}
+.cg i{font-style:normal;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;
+  font-weight:500;color:var(--steel)}
+.cg.on{background:var(--acento);border-color:var(--acento);color:#fff}
+.cg.on i{color:rgba(255,255,255,.8)}
+
+.grupo-area{margin-bottom:20px}
+.ga-head{display:flex;align-items:baseline;gap:10px;border-bottom:1px solid var(--line);
+  padding-bottom:7px;margin-bottom:8px}
+.ga-num{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;font-weight:700;color:var(--acento)}
+.ga-nome{font-family:'Inter',system-ui,sans-serif;font-size:15px;font-weight:700;letter-spacing:-.012em;
+  color:var(--ink);text-decoration:none}
+a.ga-nome:hover{color:var(--acento)}
+.ga-quando{font-size:12.5px;color:var(--steel)}
+.ga-conta{margin-left:auto;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;color:var(--steel)}
+.ga-head.cr .ga-nome{color:var(--fire)}
+
+.ga-grade{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.lc{display:flex;align-items:stretch;gap:12px;min-height:62px;padding:12px 14px;
+  border:1px solid var(--line);border-radius:10px;background:var(--card);
+  text-decoration:none;color:var(--ink);transition:border-color .14s ease,box-shadow .14s ease}
+.lc:hover{border-color:var(--acento-borda);box-shadow:var(--shadow)}
+.lc-barra{flex-shrink:0;width:4px;border-radius:2px;background:var(--line-forte)}
+.lc.emergencia .lc-barra{background:var(--fire)}
+.lc.urgencia .lc-barra{background:#E5A33B}
+.lc-txt{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.lc-topo{display:flex;align-items:baseline;gap:8px}
+.lc-topo b{font-family:'Inter',system-ui,sans-serif;font-size:15px;font-weight:700;
+  letter-spacing:-.012em;line-height:1.25}
+.lc-tag{flex-shrink:0;font-style:normal;font-family:'Inter',system-ui,sans-serif;font-size:9.5px;
+  font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--steel)}
+.lc.emergencia .lc-tag{color:var(--fire)}
+.lc.urgencia .lc-tag{color:#B54708}
+.lc-sub{font-size:12.5px;line-height:1.45;color:var(--steel);text-wrap:pretty}
+.lc-seta{flex-shrink:0;align-self:center;color:var(--line-forte)}
+.lc-seta .ico{width:16px;height:16px}
+.lc:hover .lc-seta{color:var(--acento)}
+
+/* a grade antiga de subpastas sai de cena */
+.sub-grade{display:none}
+
+@media(max-width:900px){
+  .ga-grade{grid-template-columns:1fr}
+  .chips-grupo{position:sticky;top:56px;z-index:20;flex-wrap:nowrap;margin:0 -20px 16px;
+    padding:9px 20px;background:var(--paper);border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+  .chips-grupo::-webkit-scrollbar{display:none}
+  .cg{flex-shrink:0}
+  .ga-quando{display:none}
+}
+@media print{ .chips-grupo{display:none} .ga-grade{display:block} }

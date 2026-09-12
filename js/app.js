@@ -462,6 +462,19 @@
     '</a>';
   }
 
+  /* a linha da lista: título, uma frase e a gravidade — um toque abre */
+  function linhaConduta(p) {
+    var g = p.gravidade || 'rotina';
+    return '<a class="lc ' + esc(g) + '" href="' + esc(hrefConduta(p)) + '">' +
+      '<span class="lc-barra"></span>' +
+      '<span class="lc-txt">' +
+        '<span class="lc-topo"><b>' + esc(p.titulo) + '</b>' +
+          '<i class="lc-tag">' + esc(g) + '</i></span>' +
+        (p.resumo ? '<span class="lc-sub">' + rico(p.resumo) + '</span>' : '') +
+      '</span>' +
+      '<span class="lc-seta">' + ICO('setaDir') + '</span></a>';
+  }
+
   /* ---------- render ---------- */
   /* ---------- tolerância a erro de digitação ----------
      Só entra em ação quando a busca exata não achou nada: aí cada termo
@@ -711,26 +724,58 @@
   /* ---------- sala vermelha ----------
      As condutas que não admitem consulta demorada. Lista curada, não
      um filtro por gravidade: nem toda emergência é sala vermelha. */
-  var CRITICAS = [
-    'pcr-adulto','pcr-pediatrica','sca-com-supra','avc-isquemico','sepse',
-    'choque-abordagem','anafilaxia','status-epilepticus','hipoglicemia','hipercalemia',
-    'taquiarritmia-instavel','bradiarritmia','insuficiencia-respiratoria','eap-ic-descompensada',
-    'pneumotorax','tep','tamponamento','sequencia-rapida-intubacao','cardioversao-desfibrilacao',
-    'atendimento-trauma','tce','meningite','cetoacidose','sepse-pediatrica',
-    'crianca-gravemente-doente','intoxicado-abordagem','hda','sindrome-aortica'
+  var CRITICAS_GRUPOS = [
+    { nome:'Parada e via aérea', quando:'sem pulso, sem via aérea, sem oxigenação',
+      ids:['pcr-adulto','pcr-pediatrica','sequencia-rapida-intubacao','insuficiencia-respiratoria','cardioversao-desfibrilacao'] },
+    { nome:'Choque e circulação', quando:'perfusão ruim, pressão caindo',
+      ids:['choque-abordagem','sepse','sepse-pediatrica','anafilaxia','tamponamento','tep','sindrome-aortica'] },
+    { nome:'Coração instável', quando:'ritmo, isquemia e congestão',
+      ids:['sca-com-supra','taquiarritmia-instavel','bradiarritmia','eap-ic-descompensada'] },
+    { nome:'Neurológico agudo', quando:'tempo de cérebro',
+      ids:['avc-isquemico','status-epilepticus','tce','meningite'] },
+    { nome:'Metabólico', quando:'o exame muda a conduta na hora',
+      ids:['hipoglicemia','hipercalemia','cetoacidose'] },
+    { nome:'Trauma e sangramento', quando:'ABCDE e controle de hemorragia',
+      ids:['atendimento-trauma','pneumotorax','hda'] },
+    { nome:'Criança e intoxicação', quando:'limiar de agir menor',
+      ids:['crianca-gravemente-doente','intoxicado-abordagem'] }
   ];
+  var CRITICAS = CRITICAS_GRUPOS.reduce(function (t, g) { return t.concat(g.ids); }, []);
+
   function renderCritico() {
-    var lista = CRITICAS.map(acharConduta).filter(Boolean);
+    var grupos = CRITICAS_GRUPOS.map(function (g) {
+      return { nome:g.nome, quando:g.quando, itens:g.ids.map(acharConduta).filter(Boolean) };
+    }).filter(function (g) { return g.itens.length; });
+    var total = grupos.reduce(function (t, g) { return t + g.itens.length; }, 0);
+
     var html = '<section class="phase critico">' +
       '<div class="phase-head"><h2>Sala vermelha</h2>' +
-        '<span class="phase-conta">' + lista.length + '</span></div>' +
-      '<div class="cr-grade">' + lista.map(function (p) {
-        return '<a class="cr-cartao" href="' + esc(hrefConduta(p)) + '">' +
-          '<span class="cr-nome">' + esc(p.titulo) + '</span>' +
-          '<span class="cr-area">' + esc(area(p.categoria).nome) + '</span></a>';
-      }).join('') + '</div></section>';
+        '<span class="phase-conta">' + total + '</span></div>' +
+      '<div class="barra-area"><span class="conta">um toque abre a conduta completa — fluxo, doses e red flags</span></div>' +
+      '<div class="chips-grupo">' + grupos.map(function (g) {
+        return '<a class="cg" href="#" data-ir-grupo="' + esc(g.nome) + '">' + esc(g.nome) +
+          '<i>' + g.itens.length + '</i></a>';
+      }).join('') + '</div>' +
+      grupos.map(function (g) {
+        return '<div class="grupo-area" data-grupo="' + esc(g.nome) + '">' +
+          '<div class="ga-head cr"><span class="ga-nome">' + esc(g.nome) + '</span>' +
+            '<span class="ga-quando">' + esc(g.quando) + '</span>' +
+            '<span class="ga-conta">' + g.itens.length + '</span></div>' +
+          '<div class="ga-grade">' + g.itens.map(linhaConduta).join('') + '</div>' +
+        '</div>';
+      }).join('') + '</section>';
     doc.innerHTML = html;
   }
+
+  /* chips da sala vermelha: rolam até o grupo, sem mexer no hash */
+  doc.addEventListener('click', function (e) {
+    var a = e.target.closest('[data-ir-grupo]');
+    if (!a) return;
+    e.preventDefault();
+    var alvo = doc.querySelector('[data-grupo="' + a.getAttribute('data-ir-grupo').replace(/"/g, '') + '"]');
+    if (!alvo) return;
+    window.scrollTo({ top: alvo.getBoundingClientRect().top + window.pageYOffset - 66, behavior:'smooth' });
+  });
 
   /* ---------- subpastas: area > subpasta > conduta ----------
      SUBPASTAS e um const de topo, entao so o typeof cru enxerga. */
@@ -1251,26 +1296,29 @@
       var g = acharSub(c.id, subAtual);
       var gi = subsDe(c.id).indexOf(g);
       var dela = listaSub(g);
-      html += dela.map(function (p, pi) {
-        return cartao(p, (ci + 1) + '.' + (gi + 1) + '.' + (pi + 1), false);
-      }).join('');
+      html += '<div class="ga-grade">' + dela.map(linhaConduta).join('') + '</div>';
       if (!dela.length) html += '<div class="pendente">Nenhuma conduta preenchida nesta subpasta.</div>';
     } else if (subsDe(c.id).length) {
-      /* capa da area: as subpastas */
-      html += '<div class="sub-grade">' + subsDe(c.id).map(function (g, gi) {
+      /* capa da área: subpasta é cabeçalho de grupo e as condutas já aparecem */
+      var vivos = subsDe(c.id).filter(function (g) { return listaSub(g).length; });
+      html += '<div class="chips-grupo">' +
+        '<a class="cg on" href="#' + esc(c.id) + '">Todas</a>' +
+        vivos.map(function (g) {
+          return '<a class="cg" href="#' + esc(c.id) + '/' + esc(g.id) + '">' + esc(g.nome) +
+            '<i>' + listaSub(g).length + '</i></a>';
+        }).join('') + '</div>';
+      html += vivos.map(function (g) {
+        var gi = subsDe(c.id).indexOf(g);
         var dela = listaSub(g);
-        if (!dela.length) return '';
-        return '<a class="sub-cartao" href="#' + esc(c.id) + '/' + esc(g.id) + '">' +
-          '<span class="sc-num">' + dois(ci + 1) + '.' + dois(gi + 1) + '</span>' +
-          '<span class="sc-nome">' + esc(g.nome) + '</span>' +
-          '<span class="sc-lista">' + dela.slice(0, 4).map(function (p) { return esc(p.titulo); }).join(' &middot; ') +
-            (dela.length > 4 ? ' &middot; +' + (dela.length - 4) : '') + '</span>' +
-          '<span class="sc-conta">' + dela.length + '</span></a>';
-      }).join('') + '</div>';
-    } else {
-      html += lista.map(function (p, pi) {
-        return cartao(p, (ci + 1) + '.' + (pi + 1), false);
+        return '<div class="grupo-area">' +
+          '<div class="ga-head"><span class="ga-num">' + dois(ci + 1) + '.' + dois(gi + 1) + '</span>' +
+            '<a class="ga-nome" href="#' + esc(c.id) + '/' + esc(g.id) + '">' + esc(g.nome) + '</a>' +
+            '<span class="ga-conta">' + dela.length + '</span></div>' +
+          '<div class="ga-grade">' + dela.map(function (p) { return linhaConduta(p); }).join('') + '</div>' +
+        '</div>';
       }).join('');
+    } else {
+      html += '<div class="ga-grade">' + lista.map(linhaConduta).join('') + '</div>';
     }
     doc.innerHTML = html + '</section>';
   }
