@@ -915,7 +915,7 @@
       DOSES_GRUPOS.map(function (g) {
         var n = contaGrupoDoses(g);
         if (!n) return '';
-        return tile('#doses/' + g.id, g.icone, g.nome, g.cor, g.sub + ' · ' + n + (n === 1 ? ' conduta' : ' condutas'));
+        return tile('#doses/' + g.id, g.icone, g.nome, '', g.sub + ' · ' + n + (n === 1 ? ' conduta' : ' condutas'));
       }).join('') + '</div></section>';
     doc.innerHTML = html;
   }
@@ -1036,50 +1036,37 @@
      vai no title, para não poluir. */
   var PALETA = ['c-blue','c-fire','c-purple','c-orange','c-green','c-teal','c-pink','c-indigo','c-amber','c-cyan','c-slate'];
   function tile(href, icone, nome, cor, dica) {
-    return '<a class="tile ' + esc(cor || 'c-blue') + '" href="' + esc(href) + '"' +
+    return '<a class="tile' + (cor ? ' ' + esc(cor) : '') + '" href="' + esc(href) + '"' +
       (dica ? ' title="' + esc(dica) + '"' : '') + '>' +
       '<span class="tile-ico">' + ICO(icone) + '</span>' +
       '<span class="tile-nome">' + esc(nome) + '</span></a>';
   }
 
   function funcionalidades() {
-    var lista = [
-      { href:'#critico', icone:'perigo', nome:'Sala vermelha', cor:'c-fire',
-        sub:'Urgência e protocolos críticos — a primeira decisão vale mais que a leitura',
-        n: CRITICAS.length + ' condutas' },
-      { href:'#queixa', icone:'porta', nome:'Queixas', cor:'c-blue',
-        sub:'Porta de entrada por sintoma, antes do diagnóstico',
-        n: (temQueixas() ? QUEIXAS.length : 0) + ' queixas' },
-      { href:'#' + CATEGORIAS[0].id, icone:'livro', nome:'Guia clínico', cor:'c-indigo',
-        sub:'Fluxograma, red flags, doses e destino de cada conduta',
-        n: progresso(PROTOCOLOS) + ' condutas em ' + CATEGORIAS.length + ' áreas' },
-      { href:'#doses', icone:'seringa', nome:'Doses de emergência', cor:'c-orange',
-        sub:'As drogas que não dão tempo de procurar, por situação',
-        n: DOSES_GRUPOS.length + ' situações' },
-      { href:'#presc', icone:'receita', nome:'Prescrições', cor:'c-green',
-        sub:'Por quadro clínico, prontas para copiar em dois cliques',
-        n: tam(typeof FERR_QUADROS !== 'undefined' ? FERR_QUADROS : null) + ' quadros' },
-      { href:'#atb', icone:'micro', nome:'Antibióticos', cor:'c-teal',
-        sub:'Esquemas empíricos por sítio de infecção',
-        n: tam(typeof FERR_ATB !== 'undefined' ? FERR_ATB : null) + ' esquemas' },
-      { href:'#eletrolitos', icone:'gota', nome:'Eletrólitos', cor:'c-cyan',
-        sub:'Potássio, sódio, bicarbonato, magnésio e cálcio: valor entra, diluição e vazão saem',
-        n: (typeof Eletrolitos !== 'undefined' ? Eletrolitos.itens.length : 0) + ' ferramentas' },
-      { href:'#pediatria', icone:'crianca', nome:'Pediatria', cor:'c-pink',
-        sub:'Dose por quilo calculada e vetos por idade',
-        n: tam(typeof FERR_PEDIA !== 'undefined' ? FERR_PEDIA : null) + ' medicações' },
-      { href:'#scores', icone:'grafico', nome:'Scores', cor:'c-purple',
-        sub:'Escores clínicos com interpretação',
-        n: contaCalc('escore') + ' escores' },
-      { href:'#calc', icone:'calc', nome:'Calculadoras', cor:'c-amber',
-        sub:'As contas do plantão: gotejamento, correções, conversões',
-        n: contaCalc('formula') + ' contas' },
-      { href:'#prontuario', icone:'prontuar', nome:'Prontuário', cor:'c-slate',
-        sub:'Anamnese, manobras, conduta, evasão e laudos',
-        n: 'textos prontos' }
+    var nQ = temQueixas() ? QUEIXAS.length : 0;
+    var grupos = [
+      { nome:'Atendimento', itens:[
+        { href:'#critico', icone:'perigo', nome:'Sala vermelha', cor:'c-fire', sub:CRITICAS.length + ' condutas que não dão tempo de procurar' },
+        { href:'#queixa', icone:'porta', nome:'Queixas', sub:nQ + ' portas de entrada por sintoma' },
+        { href:'#doses', icone:'seringa', nome:'Doses de emergência', sub:DOSES_GRUPOS.length + ' situações' },
+        { href:'#' + CATEGORIAS[0].id, icone:'livro', nome:'Guia clínico', sub:progresso(PROTOCOLOS) + ' condutas em ' + CATEGORIAS.length + ' áreas' }
+      ] },
+      { nome:'Prescrever', itens:[
+        { href:'#presc', icone:'receita', nome:'Prescrições', sub:tam(typeof FERR_QUADROS !== 'undefined' ? FERR_QUADROS : null) + ' quadros clínicos' },
+        { href:'#atb', icone:'micro', nome:'Antibióticos', sub:tam(typeof FERR_ATB !== 'undefined' ? FERR_ATB : null) + ' esquemas empíricos' },
+        { href:'#pediatria', icone:'crianca', nome:'Pediatria', sub:tam(typeof FERR_PEDIA !== 'undefined' ? FERR_PEDIA : null) + ' medicações por quilo' },
+        { href:'#eletrolitos', icone:'gota', nome:'Eletrólitos', sub:(typeof Eletrolitos !== 'undefined' ? Eletrolitos.itens.length : 0) + ' ferramentas de correção' }
+      ] },
+      { nome:'Consultar', itens:[
+        { href:'#scores', icone:'grafico', nome:'Scores', sub:contaCalc('escore') + ' escores' },
+        { href:'#calc', icone:'calc', nome:'Calculadoras', sub:contaCalc('formula') + ' contas' },
+        { href:'#prontuario', icone:'prontuar', nome:'Prontuário', sub:'anamnese, manobras, laudos' }
+      ] }
     ];
-    return lista.map(function (f) {
-      return tile(f.href, f.icone, f.nome, f.cor, f.sub);
+    return grupos.map(function (g) {
+      return '<div class="home-sec"><h3>' + esc(g.nome) + '</h3><div class="tile-grade principal">' +
+        g.itens.map(function (f) { return tile(f.href, f.icone, f.nome, f.cor, f.sub); }).join('') +
+        '</div></div>';
     }).join('');
   }
 
@@ -1102,13 +1089,13 @@
     html += '</div>';
 
     /* as funcionalidades, todas à vista */
-    html += '<div class="tile-grade principal">' + funcionalidades() + '</div>';
+    html += funcionalidades();
 
     /* todas as queixas de cara: é a porta de entrada mais usada */
     if (temQueixas()) {
       html += '<div class="home-sec"><h3>Queixas</h3><div class="tile-grade">' +
         QUEIXAS.map(function (q, i) {
-          return tile('#queixa/' + q.id, q.icone, q.nome, PALETA[i % PALETA.length], q.sub);
+          return tile('#queixa/' + q.id, q.icone, q.nome, '', q.sub);
         }).join('') + '</div></div>';
     }
 
@@ -1138,7 +1125,7 @@
       CATEGORIAS.map(function (c, ci) {
         var l = listaArea(c.id);
         if (!l.length) return '';
-        return tile('#' + c.id, c.icone, c.nome, PALETA[ci % PALETA.length], l.length + ' condutas');
+        return tile('#' + c.id, c.icone, c.nome, '', l.length + ' condutas');
       }).join('') + '</div></div>';
 
     doc.innerHTML = html + '</section>';

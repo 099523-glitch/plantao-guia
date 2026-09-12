@@ -2025,43 +2025,42 @@ body.na-home .topo-busca{opacity:0;pointer-events:none}
 .hero-nome button{font-family:'Inter',system-ui,sans-serif;font-weight:600;font-size:14px;min-height:40px;
   padding:0 18px;border:0;border-radius:10px;background:#FFFFFF;color:var(--hero-bg);cursor:pointer}
 
-/* o cartão da home: azulejo colorido + nome, compacto e igual em tudo */
-.tile-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin-bottom:36px}
-.tile-grade.principal{grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin-bottom:44px}
-.tile{display:flex;align-items:center;gap:13px;padding:12px 14px;min-height:64px;
-  border:1px solid var(--line);border-radius:14px;background:var(--card);text-decoration:none;color:var(--ink);
-  --tom:var(--acento);transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease}
-.tile:hover{border-color:color-mix(in srgb,var(--tom) 45%,var(--line));transform:translateY(-2px);
-  box-shadow:0 12px 26px -16px color-mix(in srgb,var(--tom) 55%,transparent),var(--shadow)}
-.tile-ico{flex-shrink:0;display:inline-flex;width:40px;height:40px;align-items:center;justify-content:center;border-radius:11px;
-  color:var(--tom);background:color-mix(in srgb,var(--tom) 12%,var(--card));border:1px solid color-mix(in srgb,var(--tom) 22%,transparent);
-  transition:transform .18s ease,background .18s ease}
-.tile-ico .ico{width:20px;height:20px}
-.tile:hover .tile-ico{transform:scale(1.07);background:color-mix(in srgb,var(--tom) 18%,var(--card))}
-.tile-nome{font-size:14.5px;font-weight:600;letter-spacing:-.005em;line-height:1.3;min-width:0}
-.tile-grade.principal .tile{min-height:72px;padding:14px 16px}
-.tile-grade.principal .tile-ico{width:44px;height:44px;border-radius:12px}
+/* o cartão da home: sóbrio — um tom só (o acento), vermelho apenas na sala vermelha */
+.home-sec h3{color:var(--steel);font-weight:600;font-size:11px;letter-spacing:.12em;margin:0 0 10px}
+.tile-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:8px}
+.tile-grade.principal{grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:4px}
+.home .home-sec{margin-bottom:30px}
+.tile{display:flex;align-items:center;gap:12px;padding:11px 14px;min-height:56px;
+  border:1px solid var(--line);border-radius:10px;background:var(--card);text-decoration:none;color:var(--ink);
+  --tom:var(--acento);transition:border-color .16s ease,box-shadow .16s ease,transform .16s ease}
+.tile:hover{border-color:var(--acento-borda);box-shadow:var(--shadow);transform:translateY(-1px)}
+.tile-ico{flex-shrink:0;display:inline-flex;width:36px;height:36px;align-items:center;justify-content:center;border-radius:9px;
+  color:var(--tom);background:var(--acento-suave);transition:background .16s ease}
+.tile-ico .ico{width:18px;height:18px}
+.tile:hover .tile-ico{background:color-mix(in srgb,var(--tom) 16%,var(--card))}
+.tile-nome{font-size:14px;font-weight:600;letter-spacing:-.005em;line-height:1.3;min-width:0}
+/* os principais: cartão vertical, ícone em cima */
+.tile-grade.principal .tile{flex-direction:column;align-items:flex-start;gap:14px;padding:18px 18px 16px;min-height:118px;border-radius:14px}
+.tile-grade.principal .tile-ico{width:44px;height:44px;border-radius:11px;background:var(--acento);color:#fff}
+.tile-grade.principal .tile:hover .tile-ico{background:var(--acento-forte,var(--acento))}
 .tile-grade.principal .tile-ico .ico{width:22px;height:22px}
-.tile-grade.principal .tile-nome{font-size:15.5px;font-weight:700}
-.tile.c-fire{--tom:#DC2626}.tile.c-blue{--tom:#2563EB}.tile.c-indigo{--tom:#4F46E5}.tile.c-orange{--tom:#EA580C}
-.tile.c-green{--tom:#059669}.tile.c-teal{--tom:#0D9488}.tile.c-pink{--tom:#DB2777}.tile.c-purple{--tom:#7C3AED}
-.tile.c-amber{--tom:#D97706}.tile.c-slate{--tom:#64748B}.tile.c-cyan{--tom:#0891B2}
-:root[data-tema="escuro"] .tile.c-fire{--tom:#F87171}:root[data-tema="escuro"] .tile.c-blue{--tom:#60A5FA}
-:root[data-tema="escuro"] .tile.c-indigo{--tom:#818CF8}:root[data-tema="escuro"] .tile.c-orange{--tom:#FB923C}
-:root[data-tema="escuro"] .tile.c-green{--tom:#34D399}:root[data-tema="escuro"] .tile.c-teal{--tom:#2DD4BF}
-:root[data-tema="escuro"] .tile.c-pink{--tom:#F472B6}:root[data-tema="escuro"] .tile.c-purple{--tom:#A78BFA}
-:root[data-tema="escuro"] .tile.c-amber{--tom:#FBBF24}:root[data-tema="escuro"] .tile.c-slate{--tom:#94A3B8}
-:root[data-tema="escuro"] .tile.c-cyan{--tom:#22D3EE}
-@media(prefers-reduced-motion:reduce){.tile,.tile-ico,.el-card{transition:none}.tile:hover,.el-card:hover{transform:none}.tile:hover .tile-ico{transform:none}}
+.tile-grade.principal .tile-nome{font-size:15.5px;font-weight:700;letter-spacing:-.01em}
+.tile.c-fire{--tom:var(--fire)}
+.tile.c-fire .tile-ico{background:var(--fire-soft);color:var(--fire)}
+.tile-grade.principal .tile.c-fire .tile-ico{background:var(--fire-bg);color:#fff}
+.tile.c-fire:hover{border-color:var(--fire)}
+@media(prefers-reduced-motion:reduce){.tile,.tile-ico,.el-card{transition:none}.tile:hover,.el-card:hover{transform:none}}
+@media(max-width:1100px){.tile-grade.principal{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .nome-medico{margin-bottom:14px}
 @media(max-width:720px){
   .hero{margin:10px 0 28px;padding:36px 18px 32px;border-radius:16px}
   .hero p{font-size:14.5px;margin-bottom:20px}
   .hero-busca{padding:14px 15px;font-size:14.5px}
-  .tile-grade,.tile-grade.principal{grid-template-columns:1fr 1fr;gap:8px;margin-bottom:30px}
-  .tile{padding:10px 11px;min-height:56px;gap:10px;border-radius:12px}
-  .tile-grade.principal .tile{min-height:60px;padding:11px 12px}
-  .tile-ico,.tile-grade.principal .tile-ico{width:36px;height:36px;border-radius:10px}
+  .tile-grade,.tile-grade.principal{grid-template-columns:1fr 1fr;gap:8px}
+  .tile{padding:10px 11px;min-height:52px;gap:10px;border-radius:10px}
+  .tile-grade.principal .tile{min-height:0;flex-direction:row;align-items:center;gap:10px;padding:11px 12px}
+  .tile-ico,.tile-grade.principal .tile-ico{width:34px;height:34px;border-radius:9px}
+  .tile-grade.principal .tile-ico .ico{width:18px;height:18px}
   .tile-nome,.tile-grade.principal .tile-nome{font-size:13.5px}
 }
 
@@ -2205,59 +2204,19 @@ body.na-home .topo-busca{opacity:0;pointer-events:none}
   body.na-home .doc{max-width:1240px;margin:0 auto;width:100%}
 }
 
-/* ===== sumário no mesmo desenho da home: azulejo colorido + nome ===== */
+/* ===== sumário: ícones num azulejo neutro, acento só no ativo ===== */
 @media(min-width:961px){.side{padding-top:18px}}
-.side a.toplink{gap:11px;padding:7px 10px 7px 8px;margin:2px 0;border-left:0;border-radius:11px;font-weight:600;font-size:13.5px;color:var(--ink);--tom:var(--acento)}
-.side a.toplink>.ico{width:30px;height:30px;padding:6px;box-sizing:border-box;border-radius:9px;flex-shrink:0;
-  color:var(--tom);background:color-mix(in srgb,var(--tom) 12%,var(--card));border:1px solid color-mix(in srgb,var(--tom) 22%,transparent);
-  transition:transform .15s ease,background .15s ease}
+.side a.toplink{gap:11px;padding:6px 10px 6px 7px;margin:2px 0;border-left:0;border-radius:9px;font-weight:500;font-size:13.5px;color:var(--ink)}
+.side a.toplink>.ico{width:30px;height:30px;padding:7px;box-sizing:border-box;border-radius:8px;flex-shrink:0;
+  color:var(--steel);background:var(--paper);border:1px solid var(--line);transition:background .15s ease,color .15s ease}
 .side a.toplink:hover{background:var(--card);border-color:transparent;box-shadow:var(--shadow)}
-.side a.toplink:hover>.ico{transform:scale(1.06);background:color-mix(in srgb,var(--tom) 18%,var(--card))}
-.side a.toplink.active,.side a.toplink.porta,.side a.toplink.porta.active,.side a.ferr-top.active,.side a.atb-top.active{
-  background:color-mix(in srgb,var(--tom) 9%,var(--card));color:var(--ink);border-left:0}
-.side a.toplink.active>.ico,.side a.porta>.ico{color:var(--tom)}
-.side a.toplink.porta{margin-bottom:2px;font-weight:600;color:var(--ink)}
-.side a.toplink.porta:not(.active){background:transparent}
-.side a.toplink.critico{color:var(--ink)}
-.side a.toplink[href="#queixa"]{--tom:#2563EB}
-.side a.toplink[href="#critico"]{--tom:#DC2626}
-.side a.toplink[href="#doses"]{--tom:#EA580C}
-.side a.toplink[href="#presc"]{--tom:#059669}
-.side a.toplink[href="#eletrolitos"]{--tom:#0891B2}
-.side a.toplink[href="#pediatria"]{--tom:#DB2777}
-.side a.toplink[href="#calc"]{--tom:#D97706}
-.side a.toplink[href="#scores"]{--tom:#7C3AED}
-.side a.toplink[href="#prontuario"]{--tom:#64748B}
-.side a.toplink[href="#atb"]{--tom:#0D9488}
-.side a.toplink[href^="#cardio"],.side .nav-g a.toplink:not([href^="#queixa"]):not([href^="#critico"]):not([href^="#doses"]):not([href^="#presc"]):not([href^="#eletrolitos"]):not([href^="#pediatria"]):not([href^="#calc"]):not([href^="#scores"]):not([href^="#prontuario"]):not([href^="#atb"]){--tom:#4F46E5}
-:root[data-tema="escuro"] .side a.toplink[href="#queixa"]{--tom:#60A5FA}
-:root[data-tema="escuro"] .side a.toplink[href="#critico"]{--tom:#F87171}
-:root[data-tema="escuro"] .side a.toplink[href="#doses"]{--tom:#FB923C}
-:root[data-tema="escuro"] .side a.toplink[href="#presc"]{--tom:#34D399}
-:root[data-tema="escuro"] .side a.toplink[href="#eletrolitos"]{--tom:#22D3EE}
-:root[data-tema="escuro"] .side a.toplink[href="#pediatria"]{--tom:#F472B6}
-:root[data-tema="escuro"] .side a.toplink[href="#calc"]{--tom:#FBBF24}
-:root[data-tema="escuro"] .side a.toplink[href="#scores"]{--tom:#A78BFA}
-:root[data-tema="escuro"] .side a.toplink[href="#prontuario"]{--tom:#94A3B8}
-:root[data-tema="escuro"] .side a.toplink[href="#atb"]{--tom:#2DD4BF}
-.side a.toplink.active{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tom) 35%,transparent)}
+.side a.toplink:hover>.ico{color:var(--ink)}
+.side a.toplink.active,.side a.toplink.porta.active,.side a.ferr-top.active,.side a.atb-top.active{
+  background:var(--acento-suave);color:var(--acento);font-weight:600;border-left:0}
+.side a.toplink.active>.ico{background:var(--acento);color:#fff;border-color:var(--acento)}
+.side a.toplink.porta{margin-bottom:2px;font-weight:500;color:var(--ink);background:transparent;border-left:0}
+.side a.toplink.porta>.ico{color:var(--steel)}
+.side a.toplink.critico>.ico{color:var(--fire);background:var(--fire-soft);border-color:transparent}
+.side a.toplink.critico.active{background:var(--fire-soft);color:var(--fire)}
+.side a.toplink.critico.active>.ico{background:var(--fire-bg);color:#fff}
 .side a.sub{border-left:0}
-
-/* ===== cartões só com o nome: o texto complementar sai de todo o guia ===== */
-.ferr-quadro-sub,.atb-sub,.ferr-calc-sub,.ferr-card-sub,.ferr-card-previa,.pasta-resumo,.cr-area,.qx-sub,
-.as-conta,.cc-n,.ferr-quadro-topo .atb-n,.atb-topo .atb-n,.ferr-quadro-flag,.el-card-sub,.sc-lista,.ferr-ex-desc,.ferr-med-sub{display:none!important}
-.ferr-quadro-nome,.atb-nome,.ferr-calc-nome,.ferr-card-nome{line-height:1.3}
-.ferr-quadro-topo,.atb-topo{min-height:52px}
-
-/* ===== prescrição simples: sem caixas de marcar, chips nem "adicionar";
-   quem quiser ajustar liga "Ajustes na prescrição" nos Ajustes ===== */
-body:not(.rx-ajustes) .pp-item input[type="checkbox"],
-body:not(.rx-ajustes) .pp-todos,
-body:not(.rx-ajustes) .pp-chips,body:not(.rx-ajustes) .pp-chip,
-body:not(.rx-ajustes) .rx-mexido,
-body:not(.rx-ajustes) details.sint,
-body:not(.rx-ajustes) .pp-copiar>span{display:none!important}
-body:not(.rx-ajustes) .pp-item{cursor:default;padding:9px 4px}
-body:not(.rx-ajustes) .pp-item:hover{background:none}
-body:not(.rx-ajustes) .pp-item.fora{opacity:1}
-body:not(.autor) .ferr-barra[data-ctx="quadros"]{display:none}
