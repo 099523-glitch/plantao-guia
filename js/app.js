@@ -1042,91 +1042,69 @@
       '<span class="tile-nome">' + esc(nome) + '</span></a>';
   }
 
+  /* a linha de urgência: sala vermelha grande, doses e eletrólitos ao lado */
+  function urgencia() {
+    return '<div class="linha-urg">' +
+      '<a class="urg urg-fire" href="#critico"><span class="urg-ico">' + ICO('perigo') + '</span>' +
+        '<span class="urg-txt"><b>Sala vermelha</b><i>' + CRITICAS.length + ' condutas que não dão tempo de procurar</i></span></a>' +
+      '<a class="urg" href="#doses"><span class="urg-ico">' + ICO('seringa') + '</span>' +
+        '<span class="urg-txt"><b>Doses de emergência</b><i>' + DOSES_GRUPOS.length + ' situações</i></span></a>' +
+      '<a class="urg" href="#eletrolitos"><span class="urg-ico">' + ICO('gota') + '</span>' +
+        '<span class="urg-txt"><b>Eletrólitos</b><i>correção e vazão</i></span></a>' +
+      '</div>';
+  }
+
+  /* as ferramentas: segundo nível, linha compacta */
   function funcionalidades() {
-    var nQ = temQueixas() ? QUEIXAS.length : 0;
-    var grupos = [
-      { nome:'Atendimento', itens:[
-        { href:'#critico', icone:'perigo', nome:'Sala vermelha', cor:'c-fire', sub:CRITICAS.length + ' condutas que não dão tempo de procurar' },
-        { href:'#queixa', icone:'porta', nome:'Queixas', sub:nQ + ' portas de entrada por sintoma' },
-        { href:'#doses', icone:'seringa', nome:'Doses de emergência', sub:DOSES_GRUPOS.length + ' situações' },
-        { href:'#' + CATEGORIAS[0].id, icone:'livro', nome:'Guia clínico', sub:progresso(PROTOCOLOS) + ' condutas em ' + CATEGORIAS.length + ' áreas' }
-      ] },
-      { nome:'Prescrever', itens:[
-        { href:'#presc', icone:'receita', nome:'Prescrições', sub:tam(typeof FERR_QUADROS !== 'undefined' ? FERR_QUADROS : null) + ' quadros clínicos' },
-        { href:'#atb', icone:'micro', nome:'Antibióticos', sub:tam(typeof FERR_ATB !== 'undefined' ? FERR_ATB : null) + ' esquemas empíricos' },
-        { href:'#pediatria', icone:'crianca', nome:'Pediatria', sub:tam(typeof FERR_PEDIA !== 'undefined' ? FERR_PEDIA : null) + ' medicações por quilo' },
-        { href:'#eletrolitos', icone:'gota', nome:'Eletrólitos', sub:(typeof Eletrolitos !== 'undefined' ? Eletrolitos.itens.length : 0) + ' ferramentas de correção' }
-      ] },
-      { nome:'Consultar', itens:[
-        { href:'#scores', icone:'grafico', nome:'Scores', sub:contaCalc('escore') + ' escores' },
-        { href:'#calc', icone:'calc', nome:'Calculadoras', sub:contaCalc('formula') + ' contas' },
-        { href:'#prontuario', icone:'prontuar', nome:'Prontuário', sub:'anamnese, manobras, laudos' }
-      ] }
+    var itens = [
+      { href:'#presc',       icone:'receita',  nome:'Prescrições' },
+      { href:'#atb',         icone:'micro',    nome:'Antibióticos' },
+      { href:'#pediatria',   icone:'crianca',  nome:'Pediatria' },
+      { href:'#scores',      icone:'grafico',  nome:'Scores' },
+      { href:'#calc',        icone:'calc',     nome:'Calculadoras' },
+      { href:'#prontuario',  icone:'prontuar', nome:'Prontuário' }
     ];
-    return grupos.map(function (g) {
-      return '<div class="home-sec"><h3>' + esc(g.nome) + '</h3><div class="tile-grade principal">' +
-        g.itens.map(function (f) { return tile(f.href, f.icone, f.nome, f.cor, f.sub); }).join('') +
-        '</div></div>';
-    }).join('');
+    return '<div class="home-sec"><h3>Ferramentas</h3><div class="tile-grade ferramentas">' +
+      itens.map(function (f) { return tile(f.href, f.icone, f.nome, '', ''); }).join('') +
+      '</div></div>';
   }
 
   function renderHome() {
-    var favs = favoritas.map(acharConduta).filter(Boolean);
-    var recs = recentes().map(acharConduta).filter(Boolean)
-      .filter(function (p) { return favoritas.indexOf(p.id) === -1; });
     var nome = nomeMedico();
 
-    /* o painel escuro: saudação e a busca */
+    /* a faixa de trabalho: saudação à esquerda, busca na mesma linha */
     var html = '<section class="phase home">' +
-      '<div class="hero">' +
-        '<span class="hero-pill"><i></i>' + esc(saudacao()) + ' · ' + esc(dataHoje()) + '</span>' +
-        '<h1>' + (nome ? 'Bem-vindo, ' + esc(nome) : 'Bem-vindo ao plantão') + '</h1>' +
-        '<p>Condutas, prescrições, doses e escores em um só lugar.</p>' +
+      '<div class="hero faixa">' +
+        '<div class="hero-saud">' +
+          '<span class="hero-pill"><i></i>' + esc(saudacao()) + ' · ' + esc(dataHoje()) + '</span>' +
+          '<h1>' + (nome ? esc(nome) : 'Bem-vindo ao plantão') + '</h1>' +
+        '</div>' +
         '<label class="hero-busca">' + ICO('lupa') +
           '<input type="search" id="heroBusca" autocomplete="off" placeholder="Pesquise por sintoma, conduta, droga ou dose" aria-label="Buscar em todo o guia">' +
-          '<kbd>/</kbd></label>';
-    /* o nome se cadastra em Ajustes; a home não pergunta */
-    html += '</div>';
+          '<kbd>/</kbd></label>' +
+      '</div>';
 
-    /* as funcionalidades, todas à vista */
-    html += funcionalidades();
+    /* urgência em linha própria */
+    html += urgencia();
 
-    /* todas as queixas de cara: é a porta de entrada mais usada */
-    if (temQueixas()) {
-      html += '<div class="home-sec"><h3>Queixas</h3><div class="tile-grade">' +
-        QUEIXAS.map(function (q, i) {
-          return tile('#queixa/' + q.id, q.icone, q.nome, '', q.sub);
-        }).join('') + '</div></div>';
-    }
-
-    /* favoritos e recentes, discretos */
-    if (favs.length || recs.length) {
-      html += '<div class="home-sec duas">';
-      if (recs.length) {
-        html += '<div class="hs-col"><h3>' + ICO('relogio') + 'Recentes</h3><ul class="hs-lista">' +
-          recs.slice(0, 6).map(function (p) {
-            return '<li><a href="' + esc(hrefConduta(p)) + '">' + esc(p.titulo) +
-              '<i>' + esc(area(p.categoria).nome) + '</i></a></li>';
-          }).join('') + '</ul>' +
-          '<button type="button" class="hs-limpar" data-limpa-recentes>Limpar recentes</button></div>';
-      }
-      if (favs.length) {
-        html += '<div class="hs-col"><h3>' + ICO('estrela') + 'Favoritas</h3><ul class="hs-lista">' +
-          favs.slice(0, 6).map(function (p) {
-            return '<li><a href="' + esc(hrefConduta(p)) + '">' + esc(p.titulo) +
-              '<i>' + esc(area(p.categoria).nome) + '</i></a></li>';
-          }).join('') + '</ul></div>';
-      }
-      html += '</div>';
-    }
-
-    /* as áreas do guia, sempre à vista */
-    html += '<div class="home-sec"><h3>Áreas do guia</h3><div class="tile-grade">' +
-      CATEGORIAS.map(function (c, ci) {
+    /* as áreas: primeiro nível, é o gesto mais usado */
+    html += '<div class="home-sec"><h3>Áreas do guia</h3><div class="tile-grade areas-home">' +
+      CATEGORIAS.map(function (c) {
         var l = listaArea(c.id);
         if (!l.length) return '';
-        return tile('#' + c.id, c.icone, c.nome, '', l.length + ' condutas');
+        return tile('#' + c.id, c.icone, c.nome, '', '');
       }).join('') + '</div></div>';
+
+    /* ferramentas, segundo nível */
+    html += funcionalidades();
+
+    /* queixas em cápsula: cabem em duas linhas */
+    if (temQueixas()) {
+      html += '<div class="home-sec"><h3>Queixas</h3><div class="chips-q">' +
+        QUEIXAS.map(function (q) {
+          return '<a class="chip-q" href="#queixa/' + esc(q.id) + '">' + esc(q.nome) + '</a>';
+        }).join('') + '</div></div>';
+    }
 
     doc.innerHTML = html + '</section>';
   }

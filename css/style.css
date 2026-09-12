@@ -2220,3 +2220,80 @@ body.na-home .topo-busca{opacity:0;pointer-events:none}
 .side a.toplink.critico.active{background:var(--fire-soft);color:var(--fire)}
 .side a.toplink.critico.active>.ico{background:var(--fire-bg);color:#fff}
 .side a.sub{border-left:0}
+
+
+/* ===========================================================
+   HOME OTIMIZADA — faixa de trabalho, urgência, áreas em 1º nível
+   =========================================================== */
+
+/* a faixa: metade da altura do hero antigo, busca na mesma linha */
+.hero.faixa{display:flex;align-items:center;gap:18px;text-align:left;
+  margin:16px 0 26px;padding:16px 22px;border-radius:14px;
+  box-shadow:0 14px 32px -22px rgba(15,36,64,.7)}
+.hero.faixa::before{display:none}
+.hero.faixa .hero-saud{flex-shrink:0;display:flex;flex-direction:column;gap:3px}
+.hero.faixa .hero-pill{padding:0;background:none;letter-spacing:.14em}
+.hero.faixa h1{font-size:22px;line-height:1.1;margin:0}
+.hero.faixa .hero-busca{flex:1;min-width:0;margin:0;max-width:none;
+  padding:2px 14px 2px 18px;border-radius:12px;box-shadow:none}
+.hero.faixa .hero-busca input{font-size:15.5px;padding:11px 0}
+/* uma busca só na home: a do topo fica fora do caminho */
+body.na-home .topo-busca{display:none}
+
+/* urgência: sala vermelha maior, doses e eletrólitos ao lado */
+.linha-urg{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:12px;margin-bottom:26px}
+.urg{display:flex;align-items:center;gap:14px;padding:15px 18px;border:1px solid var(--line);
+  border-radius:12px;background:var(--card);text-decoration:none;color:var(--ink);
+  transition:border-color .16s ease,box-shadow .16s ease}
+.urg:hover{border-color:var(--acento-borda);box-shadow:var(--shadow)}
+.urg-ico{flex-shrink:0;display:inline-flex;width:40px;height:40px;align-items:center;justify-content:center;
+  border-radius:10px;background:var(--acento-suave);color:var(--acento)}
+.urg-ico .ico{width:21px;height:21px}
+.urg-txt{display:flex;flex-direction:column;gap:1px;min-width:0}
+.urg-txt b{font-size:16px;font-weight:700;letter-spacing:-.01em}
+.urg-txt i{font-style:normal;font-size:12.5px;color:var(--steel)}
+.urg.urg-fire{background:var(--fire-bg);border-color:var(--fire-bg);color:#fff}
+.urg.urg-fire:hover{filter:brightness(.94)}
+.urg.urg-fire .urg-ico{background:rgba(255,255,255,.16);color:#fff}
+.urg.urg-fire .urg-txt i{color:rgba(255,255,255,.85)}
+
+/* áreas no 1º nível: cartão de 68 px, 4 colunas */
+.tile-grade.areas-home{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.tile-grade.areas-home .tile{min-height:68px;padding:14px 15px;border-radius:12px}
+.tile-grade.areas-home .tile-ico{width:40px;height:40px;border-radius:10px}
+.tile-grade.areas-home .tile-ico .ico{width:21px;height:21px}
+.tile-grade.areas-home .tile-nome{font-size:15.5px;font-weight:700;letter-spacing:-.01em}
+
+/* ferramentas no 2º nível: linha de 52 px, 6 colunas */
+.tile-grade.ferramentas{grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+.tile-grade.ferramentas .tile{min-height:52px;padding:11px 12px;gap:10px;border-radius:10px}
+.tile-grade.ferramentas .tile-ico{width:0;height:auto;background:none;color:var(--acento)}
+.tile-grade.ferramentas .tile-ico .ico{width:18px;height:18px}
+.tile-grade.ferramentas .tile-nome{font-size:13.5px;font-weight:600}
+
+/* queixas em cápsula: 16 portas em duas linhas, alvo de 36 px */
+.chips-q{display:flex;flex-wrap:wrap;gap:8px}
+.chip-q{display:inline-flex;align-items:center;min-height:36px;padding:8px 14px;
+  border:1px solid var(--line);border-radius:20px;background:var(--card);
+  font-size:13.5px;font-weight:500;color:var(--ink-2,var(--ink));text-decoration:none;
+  transition:border-color .14s ease,background .14s ease,color .14s ease}
+.chip-q:hover{border-color:var(--acento-borda);background:var(--acento-suave);color:var(--acento)}
+
+@media(max-width:1100px){
+  .tile-grade.ferramentas{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .tile-grade.areas-home{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .linha-urg{grid-template-columns:1fr 1fr}
+  .linha-urg .urg-fire{grid-column:1 / -1}
+}
+@media(max-width:720px){
+  .hero.faixa{flex-direction:column;align-items:stretch;gap:12px;padding:14px 16px;margin:10px 0 20px}
+  .hero.faixa h1{font-size:19px}
+  .tile-grade.areas-home,.tile-grade.ferramentas{grid-template-columns:1fr 1fr;gap:9px}
+  .tile-grade.areas-home .tile{min-height:56px;padding:11px}
+  .tile-grade.areas-home .tile-nome{font-size:13.5px}
+  .chip-q{font-size:13px;padding:9px 13px}
+}
+@media print{ body.na-home .topo-busca{display:none} }
+
+/* sem a busca do topo, as ações voltam para a direita */
+body.na-home .topo-acoes{margin-left:auto}
