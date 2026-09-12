@@ -2814,3 +2814,43 @@ body:not(.autor) .ferr-barra[data-ctx="quadros"]{display:none}
   .el-rx-acoes{grid-column:1;grid-row:auto;align-self:start;margin-top:6px}
 }
 @media print{ .el-status{position:static} .el-rx-acoes{display:none} }
+
+
+/* ===========================================================
+   ESCALA DA DOSE — o número é o que se procura, então é o que
+   tem mais peso na linha. Antes dose, via e observação saíam
+   todos em 14,5px corrido.
+   =========================================================== */
+
+.spec-dose dl{grid-template-columns:210px minmax(0,1fr)}
+.spec-dose dt{display:flex;align-items:center;background:var(--card);
+  font-size:13.5px;font-weight:600;color:var(--ink-2,var(--ink));
+  letter-spacing:-.005em;padding:11px 14px}
+.spec-dose dd{display:grid;grid-template-columns:minmax(0,1fr) auto;
+  align-items:baseline;gap:2px 10px;padding:10px 14px}
+.dv-dose{grid-column:1;font-family:'JetBrains Mono',ui-monospace,monospace;
+  font-size:16px;font-weight:700;line-height:1.35;color:var(--ink);
+  font-variant-numeric:tabular-nums}
+.dv-via{grid-column:2;grid-row:1;justify-self:end;align-self:center;flex-shrink:0;
+  font-family:'Inter',system-ui,sans-serif;font-size:10.5px;font-weight:700;
+  letter-spacing:.09em;text-transform:uppercase;color:var(--acento);
+  background:var(--acento-suave);border-radius:5px;padding:3px 7px;white-space:nowrap}
+.dv-obs{grid-column:1 / -1;font-size:12.5px;line-height:1.5;color:var(--steel);text-wrap:pretty}
+
+@media(max-width:640px){
+  .spec-dose dl{grid-template-columns:1fr}
+  .spec-dose dt{padding:10px 13px 0;font-size:12.5px;font-weight:700;
+    letter-spacing:.04em;color:var(--steel);border-bottom:0}
+  .spec-dose dd{padding:2px 13px 11px;border-bottom:1px solid var(--line)}
+  .dv-dose{font-size:17px}
+}
+
+/* ===========================================================
+   BARRA SUPERIOR — os ícones sem rótulo pesavam como a busca
+   =========================================================== */
+
+.topo-acoes .icone{color:var(--steel);background:none;border-color:transparent}
+.topo-acoes .icone:hover{color:var(--acento);background:var(--acento-suave)}
+.peso-campo{border-color:var(--line-forte)}
+.peso-campo:focus-within{border-color:var(--acento);box-shadow:0 0 0 3px var(--acento-suave)}
+.topo-busca .busca:focus{border-color:var(--acento);box-shadow:0 0 0 3px var(--acento-suave)}

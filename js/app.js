@@ -129,10 +129,11 @@
     }
 
     if (t === 'doses') {
-      return '<div class="spec"><div class="spec-head">' + esc(titulo) + '</div><dl>' +
+      return '<div class="spec spec-dose"><div class="spec-head">' + esc(titulo) + '</div><dl>' +
         (sec.itens || []).map(function (d) {
-          var linha = rico(d.dose) + (d.via ? ' &middot; <strong>' + esc(d.via) + '</strong>' : '');
-          if (d.obs) linha += '<br><span class="muted">' + rico(d.obs) + '</span>';
+          var linha = '<span class="dv-dose">' + rico(d.dose) + '</span>' +
+            (d.via ? '<span class="dv-via">' + esc(d.via) + '</span>' : '');
+          if (d.obs) linha += '<span class="dv-obs">' + rico(d.obs) + '</span>';
           return '<dt>' + esc(d.droga) + '</dt><dd>' + linha + '</dd>';
         }).join('') + '</dl></div>';
     }
