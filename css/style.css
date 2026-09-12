@@ -2705,3 +2705,34 @@ body:not(.autor) .ferr-barra[data-ctx="quadros"]{display:none}
   .cc-grade .atb-sub,.ferr-calc.cc .ferr-calc-sub,.ferr-ex-desc{display:none}
   .ferr-ex-nome{max-width:none;flex:1;white-space:normal}
 }
+
+
+/* ===========================================================
+   CONDUTA — menos peso: índice em tira, fluxograma alinhado
+   =========================================================== */
+
+.solo-duas{display:block}
+.ind-conduta{position:sticky;top:56px;z-index:20;flex-direction:row;flex-wrap:nowrap;gap:7px;overflow-x:auto;
+  scrollbar-width:none;margin:0 0 18px;padding:9px 0;background:var(--paper);
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.ind-conduta::-webkit-scrollbar{display:none}
+.ind-conduta .cg{flex:0 0 auto}
+.cg-ess{cursor:pointer;font-family:'Inter',system-ui,sans-serif;color:var(--steel)}
+
+/* o fluxograma para de ser o centro da página */
+.fluxo-wrap{max-width:660px;margin:16px 0}
+.fluxo{align-items:stretch}
+.fx{text-align:left;padding:10px 13px;border-width:1px;box-shadow:none}
+.fx-txt{font-size:14px}
+.fx-nota{font-size:12px}
+.fx.inicio{background:var(--card);border-color:var(--line-forte);color:var(--ink)}
+.fx.inicio .fx-rot{color:var(--steel)}
+.fx.inicio .fx-nota{color:var(--steel)}
+.fx-seta{height:14px;margin-left:22px}
+.fx-par,.fx-ramos{justify-content:flex-start;gap:10px;margin-top:10px}
+.fx-ramo{align-items:stretch}
+.fx-chip{align-self:flex-start}
+.fx-chip::after{left:14px}
+
+/* o corpo respira: nada de bloco colado no outro */
+.solo-corpo>.dobra{margin-bottom:10px}

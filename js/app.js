@@ -330,8 +330,10 @@
     grava('pref:blocos-off', seed);
     return seed;
   }
+  /* o que o plantonista abriu a conduta para ver nunca vem fechado */
+  var SEMPRE_ABERTO = { fluxo:1, alerta:1, doses:1, passos:1, ordem:1, prescricao:1 };
   function blocoDobrado(sec) {
-    return sec.tipo !== 'fluxo' && blocosOff().indexOf(chaveBloco(sec)) > -1;
+    return !SEMPRE_ABERTO[sec.tipo] && blocosOff().indexOf(chaveBloco(sec)) > -1;
   }
   function alternaBloco(k) {
     var off = blocosOff(), i = off.indexOf(k);
@@ -402,16 +404,14 @@
       }).join('') + '</ol></div>';
   }
 
-  /* o índice da própria conduta: fixo na lateral, chips no celular */
+  /* o índice da própria conduta: uma tira de chips sob o título */
   function indiceConduta(secoes) {
-    var itens = secoes.filter(function (s) { return s.tipo !== 'fluxo' || true; }).map(function (s) {
-      return '<a class="ic-item" href="#" data-ir="' + esc(chaveBloco(s)) + '">' +
-        '<span>' + esc(s.titulo || LABEL[s.tipo] || s.tipo) + '</span>' +
+    if (!secoes.length) return '';
+    return '<nav class="chips-grupo ind-conduta">' + secoes.map(function (s) {
+      return '<a class="cg" href="#" data-ir="' + esc(chaveBloco(s)) + '">' +
+        esc(s.titulo || LABEL[s.tipo] || s.tipo) +
         ((s.itens || []).length ? '<i>' + s.itens.length + '</i>' : '') + '</a>';
-    }).join('');
-    return '<nav class="ind-conduta">' +
-      '<span class="ic-rot">Nesta conduta</span>' + itens +
-      '<button type="button" class="ic-ess" data-so-essencial>Só o essencial</button></nav>';
+    }).join('') + '<button type="button" class="cg cg-ess" data-so-essencial>Só o essencial</button></nav>';
   }
 
   doc.addEventListener('click', function (e) {
@@ -691,10 +691,8 @@
       '</div>';
     if (p.resumo) html += '<p class="lead">' + rico(p.resumo) + '</p>';
     html += faixaAgora(p);
-    html += '<div class="solo-duas">' +
-      indiceConduta(ordenaSecoes(p.secoes || [])) +
-      '<div class="solo-corpo">' + corpoProtocolo(p) + '</div>' +
-    '</div>';
+    html += indiceConduta(ordenaSecoes(p.secoes || []));
+    html += '<div class="solo-corpo">' + corpoProtocolo(p) + '</div>';
     marcaRecente(p.id);
 
     html += '<p class="rodape-aviso">' + ICO('alerta') +
@@ -926,8 +924,8 @@
 
     /* 3. índice dos blocos, igual ao da conduta */
     var secoes = ordenaSecoes(q.secoes);
-    html += '<div class="solo-duas">' + indiceConduta(secoes) +
-      '<div class="solo-corpo">' + secoes.map(dobravel).join('') + '</div></div>';
+    html += indiceConduta(secoes);
+    html += '<div class="solo-corpo">' + secoes.map(dobravel).join('') + '</div>';
 
     /* 4. ferramentas ligadas */
     if ((q.atalhos || []).length) {
