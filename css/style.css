@@ -2918,3 +2918,101 @@ body:not(.autor) .ferr-barra[data-ctx="quadros"]{display:none}
     width:auto;padding:0 !important}
   .dz-obs{grid-column:1 / -1;max-width:none;margin-top:3px}
 }
+
+
+/* ===========================================================
+   FLUXOGRAMA — trilho vertical com nós numerados
+   Antes: pilha de caixas centradas com um traço solto entre
+   elas — lia como lista de cartões, não como fluxo. Agora há
+   um trilho contínuo à esquerda, cada etapa é um nó numerado
+   sobre ele, a decisão é um losango e os ramos saem em árvore.
+   =========================================================== */
+
+.fluxo-wrap{max-width:860px}
+.fluxo{display:block;position:relative;padding-left:38px;counter-reset:fxn}
+/* o trilho: uma linha só, contínua, do primeiro ao último nó */
+.fluxo::before{content:"";position:absolute;left:11px;top:10px;bottom:10px;
+  width:2px;background:var(--line-forte);border-radius:1px}
+
+/* as setas soltas dão lugar ao trilho */
+.fluxo .fx-seta{display:none}
+
+/* caixa: alinhada à esquerda, com o nó sobre o trilho */
+.fluxo .fx{position:relative;text-align:left;margin:0 0 10px;padding:11px 14px}
+.fluxo .fx::before{content:"";position:absolute;left:-33px;top:12px;
+  width:12px;height:12px;border-radius:50%;background:var(--card);
+  border:2px solid var(--line-forte);box-sizing:border-box}
+
+/* etapa numerada: o número é o que faz ler como fluxo */
+.fluxo .fx.passo::before{counter-increment:fxn;content:counter(fxn);
+  left:-38px;top:8px;width:22px;height:22px;border-color:var(--acento);
+  color:var(--acento);background:var(--card);
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;line-height:1}
+
+/* início: nó cheio. fim: anel verde. alerta: anel vermelho */
+.fluxo .fx.inicio::before{background:var(--ink);border-color:var(--ink)}
+.fluxo .fx.fim::before{border-color:var(--verde);background:var(--verde-soft)}
+.fluxo .fx.alerta::before{border-color:var(--fire);background:var(--fire-soft)}
+
+/* decisão: losango sobre o trilho e a pergunta em destaque */
+.fluxo .fx.decisao{background:var(--card);border-color:var(--acento);
+  border-left-width:3px;border-radius:8px}
+.fluxo .fx.decisao::before{width:14px;height:14px;border-radius:2px;
+  transform:rotate(45deg);border-color:var(--acento);background:var(--card);
+  left:-34px;top:13px}
+.fluxo .fx.decisao .fx-txt{font-weight:700;font-size:15px}
+.fluxo .fx.decisao .fx-txt::after{content:"";display:inline}
+
+/* ramos: árvore com conector em T, caminhos lado a lado */
+.fluxo .fx-ramos{position:relative;display:grid;gap:12px;margin:0 0 14px;
+  grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);padding-top:18px}
+/* a barra horizontal que liga os caminhos */
+.fluxo .fx-ramos::before{content:"";position:absolute;top:9px;left:12%;right:12%;
+  height:2px;background:var(--line-forte)}
+/* o tronco que desce da decisão até a barra */
+.fluxo .fx-ramos::after{content:"";position:absolute;top:0;left:50%;
+  width:2px;height:9px;background:var(--line-forte)}
+.fluxo .fx-ramo{position:relative;display:block;padding-top:12px}
+/* a descida da barra para cada caminho */
+.fluxo .fx-ramo::before{content:"";position:absolute;top:-9px;left:50%;
+  width:2px;height:21px;background:var(--line-forte)}
+.fluxo .fx-ramo:first-child::before,.fluxo .fx-ramo:last-child::before{left:50%}
+.fluxo .fx-ramo .fx{margin:0}
+.fluxo .fx-ramo .fx::before{display:none}
+/* o rótulo do caminho fica no conector */
+.fluxo .fx-chip{display:block;position:relative;z-index:2;width:fit-content;
+  margin:0 auto 8px;text-align:center}
+.fluxo .fx-chip::after{display:none}
+
+/* caixas em paralelo continuam lado a lado, sem nó próprio */
+.fluxo .fx-par{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);
+  gap:10px;margin-bottom:10px}
+.fluxo .fx-par .fx{margin:0}
+.fluxo .fx-par .fx::before{left:-33px}
+.fluxo .fx-par .fx:not(:first-child)::before{display:none}
+
+@media(max-width:760px){
+  .fluxo{padding-left:32px}
+  .fluxo::before{left:9px}
+  .fluxo .fx::before{left:-27px}
+  .fluxo .fx.passo::before{left:-32px}
+  .fluxo .fx.decisao::before{left:-28px}
+  /* no celular os caminhos empilham: o conector vira fio à esquerda */
+  .fluxo .fx-ramos{grid-auto-flow:row;gap:10px;padding-top:10px;
+    padding-left:14px;border-left:2px solid var(--line-forte);margin-left:4px}
+  .fluxo .fx-ramos::before,.fluxo .fx-ramos::after{display:none}
+  .fluxo .fx-ramo{padding-top:0}
+  .fluxo .fx-ramo::before{top:16px;left:-14px;width:14px;height:2px}
+  .fluxo .fx-chip{margin:0 0 6px}
+  .fluxo .fx-par{grid-auto-flow:row}
+  .fluxo .fx-par .fx:not(:first-child)::before{display:block}
+}
+@media print{
+  .fluxo::before,.fluxo .fx-ramos::before,.fluxo .fx-ramos::after,
+  .fluxo .fx-ramo::before{background:#000}
+  .fluxo .fx{break-inside:avoid}
+}
+
+/* o texto da entrada tinha ficado branco sobre fundo claro (regra antiga da caixa escura) */
+.fx.inicio .fx-txt{color:var(--ink)}
