@@ -16,7 +16,7 @@ dependência externa: abre o `index.html` e funciona — inclusive **sem interne
 | Doses de emergência | 11 situações em cartões de área, cada um com as tabelas do grupo — vista derivada das condutas |
 | Eletrólitos | **7** ferramentas (K⁺, Na⁺ Adrogué-Madias, HCO₃⁻, Mg²⁺, Na corrigido, hipocalcemia, Ca corrigido): valor entra, diluição e vazão saem |
 | Sala vermelha | 28 condutas que não dão tempo de procurar |
-| Prontuário | modelos de anamnese, 42 manobras, conduta, evasão e laudos |
+| Prontuário | modelos de anamnese, **atestado** (nome, CPF, CID-10, afastamento ou comparecimento — gera o texto pronto para copiar/imprimir), conduta, evasão e laudos |
 
 ## Arquivos
 

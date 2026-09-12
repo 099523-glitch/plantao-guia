@@ -264,7 +264,7 @@
      continuam válidas e caem em "por quadro clínico" */
   var LEGADO = {
     'agora':'', 'protocolos':'cardio', 'prescrever':'presc', 'plantao':'favoritas',
-    'presc/pediatria':'pediatria', 'presc/quadro':'presc',
+    'presc/pediatria':'pediatria', 'presc/quadro':'presc', 'prontuario/manobras':'prontuario',
     'presc/oral':'presc', 'presc/im':'presc', 'presc/ev':'presc',
     'presc/especiais':'presc', 'ferramentas/quadros':'presc',
     'ferramentas/oral':'presc', 'ferramentas/im':'presc',

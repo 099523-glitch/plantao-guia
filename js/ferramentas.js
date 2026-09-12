@@ -408,6 +408,177 @@
     return html;
   }
 
+  /* ---------- atestado: nome, CPF, CID, dias → texto pronto ---------- */
+  var CIDS = [
+    ['A09','Diarreia e gastroenterite de origem infecciosa presumível'],
+    ['A90','Dengue'],['B34.9','Infecção viral não especificada'],['B01.9','Varicela'],
+    ['J00','Nasofaringite aguda (resfriado comum)'],['J01.9','Sinusite aguda'],['J02.9','Faringite aguda'],
+    ['J03.9','Amigdalite aguda'],['J04.0','Laringite aguda'],['J06.9','Infecção aguda das vias aéreas superiores'],
+    ['J11','Influenza (gripe)'],['J18.9','Pneumonia'],['J20.9','Bronquite aguda'],['J45.9','Asma'],
+    ['J44.1','DPOC com exacerbação aguda'],['H10.9','Conjuntivite'],['H66.9','Otite média'],['H81.1','Vertigem posicional benigna'],
+    ['K29.7','Gastrite'],['K30','Dispepsia'],['K52.9','Gastroenterite não infecciosa'],['K80.2','Cálculo da vesícula'],
+    ['K35.8','Apendicite aguda'],['K59.0','Constipação'],['R10.4','Dor abdominal'],['R11','Náusea e vômito'],
+    ['N10','Pielonefrite aguda'],['N20.0','Cálculo do rim'],['N23','Cólica renal'],['N30.0','Cistite aguda'],['N39.0','Infecção do trato urinário'],
+    ['N94.6','Dismenorreia'],['N76.0','Vaginite aguda'],['O21.0','Hiperêmese gravídica leve'],
+    ['M54.5','Dor lombar baixa'],['M54.2','Cervicalgia'],['M54.4','Lumbago com ciática'],['M79.1','Mialgia'],['M25.5','Dor articular'],
+    ['M10.9','Gota'],['M77.9','Entesopatia (tendinite)'],['S93.4','Entorse de tornozelo'],['S63.5','Entorse de punho'],
+    ['S61.9','Ferimento do punho e da mão'],['S01.9','Ferimento da cabeça'],['T14.0','Contusão'],['T14.1','Ferimento aberto'],
+    ['W57','Picada de inseto'],['L03.9','Celulite'],['L02.9','Abscesso cutâneo'],['L50.9','Urticária'],['L23.9','Dermatite de contato'],['B86','Escabiose'],
+    ['G43.9','Enxaqueca'],['G44.2','Cefaleia tensional'],['R51','Cefaleia'],['R42','Tontura'],['R55','Síncope'],['G40.9','Epilepsia'],
+    ['I10','Hipertensão arterial'],['I20.9','Angina'],['I48','Fibrilação atrial'],['R07.4','Dor torácica'],['I80.2','Trombose venosa profunda'],
+    ['E11.9','Diabetes mellitus tipo 2'],['E16.2','Hipoglicemia'],['E86','Desidratação'],['R50.9','Febre'],
+    ['F41.1','Ansiedade generalizada'],['F41.0','Transtorno de pânico'],['F32.9','Depressão'],['F43.0','Reação aguda ao estresse'],['F10.0','Intoxicação alcoólica aguda'],
+    ['K04.7','Abscesso periapical'],['K08.8','Dor de dente'],['Z00.0','Exame médico geral'],['Z76.3','Acompanhante de pessoa doente']
+  ];
+  var at = { tipo:'afast', nome:'', cpf:'', cid:'', cidTxt:'', dias:'1', data:'', ini:'', fim:'', comCid:false };
+  var atBuscaCid = '';
+
+  function hojeISO() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function dataBR(iso) {
+    var p = String(iso || '').split('-');
+    return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : '';
+  }
+  function dataExtenso(iso) {
+    var p = String(iso || '').split('-');
+    var meses = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+    return p.length === 3 ? parseInt(p[2], 10) + ' de ' + meses[parseInt(p[1], 10) - 1] + ' de ' + p[0] : '';
+  }
+  function extenso(n) {
+    var u = ['zero','um','dois','três','quatro','cinco','seis','sete','oito','nove','dez','onze','doze','treze','quatorze','quinze','dezesseis','dezessete','dezoito','dezenove'];
+    var d = ['','','vinte','trinta','quarenta','cinquenta','sessenta','setenta','oitenta','noventa'];
+    n = parseInt(n, 10);
+    if (isNaN(n) || n < 0) return '';
+    if (n < 20) return u[n];
+    if (n < 100) return d[Math.floor(n / 10)] + (n % 10 ? ' e ' + u[n % 10] : '');
+    return String(n);
+  }
+  function mascaraCPF(v) {
+    var d = String(v || '').replace(/\D/g, '').slice(0, 11);
+    return d.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+  }
+  function medico() {
+    var nome = ler('pref:nome', ''), crm = ler('pref:crm', ''), cidade = ler('pref:cidade', '');
+    return { nome: typeof nome === 'string' ? nome : '', crm: typeof crm === 'string' ? crm : '', cidade: typeof cidade === 'string' ? cidade : '' };
+  }
+
+  function textoAtestado() {
+    var m = medico();
+    if (!at.data) at.data = hojeISO();
+    var nome = at.nome.trim() || '________________________';
+    var cpf = at.cpf ? ', CPF ' + at.cpf : '';
+    var t = 'ATESTADO MÉDICO\n\n';
+    if (at.tipo === 'afast') {
+      var n = parseInt(at.dias, 10) || 1;
+      t += 'Atesto, para os devidos fins, que ' + nome + cpf + ' foi atendido(a) neste serviço em ' + dataBR(at.data) +
+        ', necessitando de afastamento de suas atividades por ' + n + ' (' + extenso(n) + ') dia' + (n === 1 ? '' : 's') +
+        ', a partir desta data.';
+    } else {
+      t += 'Atesto, para os devidos fins, que ' + nome + cpf + ' compareceu a este serviço em ' + dataBR(at.data) +
+        (at.ini ? ', das ' + at.ini + (at.fim ? ' às ' + at.fim : '') + ' horas' : '') + ', para atendimento médico.';
+    }
+    if (at.comCid && (at.cid || at.cidTxt)) {
+      t += '\n\nCID-10: ' + (at.cid || at.cidTxt) + ' (informado com autorização do(a) paciente).';
+    }
+    t += '\n\n' + (m.cidade ? m.cidade + ', ' : '') + dataExtenso(at.data) + '.';
+    t += '\n\n\n______________________________\n' + (m.nome || 'Dr(a). ________________') + (m.crm ? '\nCRM ' + m.crm : '\nCRM ________');
+    return t;
+  }
+
+  function cidsFiltrados() {
+    var q = norm(atBuscaCid);
+    if (!q) return [];
+    return CIDS.filter(function (c) { return norm(c[0] + ' ' + c[1]).indexOf(q) !== -1; }).slice(0, 8);
+  }
+
+  function telaAtestado() {
+    if (!at.data) at.data = hojeISO();
+    var m = medico();
+    var html = '<div class="at">';
+    html += '<div class="at-form">';
+    html += '<div class="el-opcoes"><span class="el-opcoes-rot">Tipo</span><div class="el-seg">' +
+      '<button type="button" class="el-op' + (at.tipo === 'afast' ? ' on' : '') + '" data-acao="at-tipo" data-v="afast">Afastamento</button>' +
+      '<button type="button" class="el-op' + (at.tipo === 'comp' ? ' on' : '') + '" data-acao="at-tipo" data-v="comp">Comparecimento</button>' +
+      '</div></div>';
+    html += '<div class="ferr-campos">' +
+      '<label class="ferr-campo larga"><span>Nome do(a) paciente</span><input type="text" data-at="nome" autocomplete="off" value="' + esc(at.nome) + '" placeholder="Nome completo"></label>' +
+      '<label class="ferr-campo"><span>CPF</span><input type="text" inputmode="numeric" data-at="cpf" autocomplete="off" value="' + esc(at.cpf) + '" placeholder="000.000.000-00"></label>' +
+      '<label class="ferr-campo"><span>Data</span><input type="date" data-at="data" value="' + esc(at.data) + '"></label>';
+    if (at.tipo === 'afast') {
+      html += '<label class="ferr-campo"><span>Dias de afastamento</span><input type="number" min="1" max="90" data-at="dias" value="' + esc(at.dias) + '"></label>';
+    } else {
+      html += '<label class="ferr-campo"><span>Chegada</span><input type="time" data-at="ini" value="' + esc(at.ini) + '"></label>' +
+        '<label class="ferr-campo"><span>Saída</span><input type="time" data-at="fim" value="' + esc(at.fim) + '"></label>';
+    }
+    html += '</div>';
+
+    /* CID */
+    html += '<div class="at-cid">' +
+      '<label class="ferr-check at-check"><input type="checkbox" data-at="comCid"' + (at.comCid ? ' checked' : '') + '>' +
+        '<span>Incluir CID-10 <i>só com autorização do(a) paciente</i></span></label>';
+    if (at.comCid) {
+      html += '<div class="ferr-campos">' +
+        '<label class="ferr-campo larga"><span>CID</span>' +
+          '<input type="text" data-at="cidBusca" autocomplete="off" placeholder="Buscar por código ou nome — ou digitar direto" value="' + esc(atBuscaCid) + '"></label></div>';
+      var lst = cidsFiltrados();
+      if (lst.length) {
+        html += '<div class="at-cids">' + lst.map(function (c) {
+          return '<button type="button" class="cg" data-acao="at-cid" data-v="' + esc(c[0]) + '"><b>' + esc(c[0]) + '</b> ' + esc(c[1]) + '</button>';
+        }).join('') + '</div>';
+      }
+      if (at.cid) html += '<div class="at-cid-sel">Selecionado: <b>' + esc(at.cid) + '</b> <button type="button" class="cg" data-acao="at-cid" data-v="">tirar</button></div>';
+    }
+    html += '</div>';
+
+    /* médico */
+    html += '<details class="at-medico"' + ((!m.nome || !m.crm) ? ' open' : '') + '><summary>Médico(a): ' +
+      esc(m.nome || 'sem nome') + (m.crm ? ' · CRM ' + esc(m.crm) : ' · sem CRM') + (m.cidade ? ' · ' + esc(m.cidade) : '') + '</summary>' +
+      '<div class="ferr-campos">' +
+        '<label class="ferr-campo"><span>Nome como assina</span><input type="text" data-at="mNome" value="' + esc(m.nome) + '" placeholder="Dr. Nome Sobrenome"></label>' +
+        '<label class="ferr-campo"><span>CRM</span><input type="text" data-at="mCrm" value="' + esc(m.crm) + '" placeholder="00000/UF"></label>' +
+        '<label class="ferr-campo"><span>Cidade</span><input type="text" data-at="mCidade" value="' + esc(m.cidade) + '" placeholder="Cidade"></label>' +
+      '</div><p class="ferr-nota">Fica salvo neste aparelho e vale para os próximos atestados.</p></details>';
+    html += '</div>';
+
+    /* saída */
+    html += '<div class="at-saida" id="atSaida">' + corpoAtestado() + '</div>';
+    return html + '</div>';
+  }
+  function corpoAtestado() {
+    var txt = textoAtestado();
+    return '<pre class="at-texto">' + esc(txt) + '</pre>' +
+      '<div class="pp-barra">' +
+        '<button type="button" class="pp-copiar" data-acao="at-copiar">' + ICO('copiar') + ' Copiar atestado</button>' +
+        '<button type="button" class="pp-imprimir" data-acao="at-imprimir">' + ICO('laudo') + ' Imprimir</button>' +
+        '<button type="button" class="pp-sec" data-acao="at-rascunho" title="Enviar ao rascunho">' + ICO('empilhar') + '</button>' +
+        '<button type="button" class="pp-sec" data-acao="at-limpar" title="Limpar">' + ICO('lixo') + '</button>' +
+      '</div>';
+  }
+  function redesenhaAtestadoSaida() {
+    var el = document.getElementById('atSaida');
+    if (el) el.innerHTML = corpoAtestado();
+  }
+
+  document.addEventListener('input', function (e) {
+    var el = e.target.closest && e.target.closest('[data-at]');
+    if (!el) return;
+    var k = el.dataset.at;
+    if (k === 'cpf') { el.value = mascaraCPF(el.value); at.cpf = el.value; }
+    else if (k === 'comCid') { at.comCid = el.checked; redesenhaFixo(); return; }
+    else if (k === 'cidBusca') { atBuscaCid = el.value; at.cidTxt = el.value; redesenhaFixo(); focaAt('cidBusca'); return; }
+    else if (k === 'mNome') { grava('pref:nome', el.value.trim()); }
+    else if (k === 'mCrm') { grava('pref:crm', el.value.trim()); }
+    else if (k === 'mCidade') { grava('pref:cidade', el.value.trim()); }
+    else at[k] = el.value;
+    redesenhaAtestadoSaida();
+  });
+  function focaAt(k) {
+    var i = document.querySelector('[data-at="' + k + '"]');
+    if (i) { i.focus(); try { i.setSelectionRange(i.value.length, i.value.length); } catch (x) { /* date */ } }
+  }
+
   /* ---------- manobras e sinais ---------- */
   function telaManobras() {
     var itens = Base.exame();
@@ -2152,10 +2323,10 @@
             conta: contaCards('anamnese') + ' modelos',
             ex: '',
             tela: function () { return telaPasta('anamnese', { nu:true, semManobras:true, semBancada:true }); } },
-          { id:'manobras', nome:'Manobras e sinais', icone:'lupa',
-            conta: Base.exame().length + ' achados',
+          { id:'atestado', nome:'Atestado', icone:'laudo',
+            conta: 'nome, CPF e CID',
             ex: '',
-            tela: function () { return telaManobras(); } },
+            tela: function () { return telaAtestado(); } },
           { id:'conduta',  nome:'Conduta e orientações', icone:'esteto',
             conta: contaCards('conduta') + ' textos',
             ex: '',
@@ -2500,10 +2671,7 @@
       });
     });
 
-    Base.exame().forEach(function (m) {
-      out.push({ tipo:'manobra', id:m.id, titulo:m.nome, sub:m.sistema,
-        href:'#prontuario/manobras', texto:[m.nome, m.sistema, m.desc, m.texto].join(' ') });
-    });
+    /* manobras e sinais saíram da navegação; ficam só como dado da anamnese */
 
     ['im','ev','has','psiq'].forEach(function (ctx) {
       Base.meds(ctx).forEach(function (m) {
@@ -2696,6 +2864,14 @@
 
     /* --- formularios --- */
     if (acao === 'form-fechar') { e.preventDefault(); fechaForm(); return; }
+
+    /* --- atestado --- */
+    if (acao === 'at-tipo')     { at.tipo = v; redesenhaFixo(); return; }
+    if (acao === 'at-cid')      { at.cid = v; if (v) { atBuscaCid = ''; at.cidTxt = ''; } redesenhaFixo(); return; }
+    if (acao === 'at-copiar')   { copiar(textoAtestado(), 'Atestado'); return; }
+    if (acao === 'at-rascunho') { pilha(textoAtestado()); return; }
+    if (acao === 'at-imprimir') { imprimir('Atestado médico', textoAtestado().replace(/^ATESTADO MÉDICO\n\n/, '')); return; }
+    if (acao === 'at-limpar')   { at = { tipo:at.tipo, nome:'', cpf:'', cid:'', cidTxt:'', dias:'1', data:hojeISO(), ini:'', fim:'', comCid:false }; atBuscaCid = ''; redesenhaFixo(); return; }
 
     /* --- pastas de texto --- */
     if (acao === 'card-novo')    { abreForm('card', null); return; }
