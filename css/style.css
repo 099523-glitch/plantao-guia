@@ -2159,7 +2159,6 @@ body.na-home .topo-busca{opacity:0;pointer-events:none}
   border-radius:var(--raio);background:var(--card);text-decoration:none;color:var(--acento);font-weight:600;font-size:13.5px}
 .el-conduta:hover{border-color:var(--acento-borda);box-shadow:var(--shadow)}
 .el-conduta .ico{width:16px;height:16px}
-.c-cyan{color:#0891B2}:root[data-tema="escuro"] .c-cyan{color:#22D3EE}
 @media(max-width:720px){
   .el-hub{grid-template-columns:1fr 1fr;gap:8px}
   .el-card{padding:16px 10px 14px}
@@ -2200,3 +2199,10 @@ body.na-home .topo-busca{opacity:0;pointer-events:none}
 .dz-sub{font-family:'Inter',system-ui,sans-serif;font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--steel);margin:12px 0 4px}
 @media(prefers-reduced-motion:reduce){.area-card,.area-ico,.area-card::after{transition:none}.area-card:hover{transform:none}.area-card:hover .area-ico{transform:none}}
 @media(max-width:720px){.area-grade{grid-template-columns:1fr;gap:10px}.area-card{padding:16px}.area-ico{width:48px;height:48px}}
+
+/* na home o sumário some: só o painel e as funcionalidades, centrados */
+@media(min-width:961px){
+  body.na-home .side{display:none}
+  body.na-home .wrap{grid-template-columns:minmax(0,1fr);gap:0}
+  body.na-home .doc{max-width:1240px;margin:0 auto;width:100%}
+}

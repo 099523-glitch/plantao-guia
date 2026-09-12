@@ -1097,12 +1097,7 @@
         '<label class="hero-busca">' + ICO('lupa') +
           '<input type="search" id="heroBusca" autocomplete="off" placeholder="Pesquise por sintoma, conduta, droga ou dose" aria-label="Buscar em todo o guia">' +
           '<kbd>/</kbd></label>';
-    if (!nome) {
-      html += '<form class="hero-nome" data-form-nome>' +
-        '<label for="campoNome">Como quer ser chamado?</label>' +
-        '<input id="campoNome" type="text" maxlength="40" autocomplete="off" placeholder="Dr. Gustavo">' +
-        '<button type="submit">Salvar</button></form>';
-    }
+    /* o nome se cadastra em Ajustes; a home não pergunta */
     html += '</div>';
 
     /* as funcionalidades, todas à vista */
