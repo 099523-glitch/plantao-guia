@@ -911,15 +911,11 @@
     var html = '<section class="phase">' +
       '<div class="phase-head"><h2>Doses de emergência</h2></div>' +
       '<p class="ferr-lead">As drogas que não dão tempo de procurar, agrupadas por situação. Vista derivada das condutas: editar a conduta atualiza aqui.</p>' +
-      '<div class="area-grade">' +
+      '<div class="tile-grade principal">' +
       DOSES_GRUPOS.map(function (g) {
         var n = contaGrupoDoses(g);
         if (!n) return '';
-        return '<a class="area-card ' + esc(g.cor) + '" href="#doses/' + esc(g.id) + '">' +
-          '<span class="area-ico">' + ICO(g.icone) + '</span>' +
-          '<span class="area-corpo"><b>' + esc(g.nome) + '</b><span>' + esc(g.sub) + '</span></span>' +
-          '<span class="area-n">' + n + (n === 1 ? ' conduta' : ' condutas') + '</span>' +
-        '</a>';
+        return tile('#doses/' + g.id, g.icone, g.nome, g.cor, g.sub + ' · ' + n + (n === 1 ? ' conduta' : ' condutas'));
       }).join('') + '</div></section>';
     doc.innerHTML = html;
   }
