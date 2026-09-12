@@ -78,6 +78,15 @@ doses → red flags → não fazer → demais blocos, na ordem em que foram escr
 navegação anterior/próxima saiu do pé da conduta. Fluxogramas ficam sempre
 visíveis e nunca dobram.
 
+### Cartões só com o nome
+
+Em todas as grades (quadros, ATB, escores, textos, condutas, sala vermelha) o
+cartão mostra só o nome; subtítulo e contagem ficam ocultos por CSS
+(`display:none` na lista de classes no fim de `style.css`). A prescrição por
+quadro abre em modo simples — itens sem caixa de marcar, sem chips de
+posologia e sem "adicionar sintomático"; **Ajustes › Ajustes na prescrição**
+(`pref:rx-ajustes`, `body.rx-ajustes`) liga tudo de volta.
+
 ### Dobrar um bloco
 
 Clicar no próprio bloco fecha ele: sobra uma faixa fina com o título e um

@@ -256,6 +256,10 @@
     if (window.Guia && Guia.presetBlocos) Guia.presetBlocos(this.checked);
   });
   liga('optConferir', 'conferir', false);
+  function pintaRx() { document.body.classList.toggle('rx-ajustes', pref('rx-ajustes', false)); }
+  liga('optRxAjustes', 'rx-ajustes', false);
+  $('optRxAjustes').addEventListener('change', pintaRx);
+  pintaRx();
 
   /* nome do médico: aparece na saudação da home */
   var campoNome = $('optNome');

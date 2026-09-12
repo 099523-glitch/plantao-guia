@@ -2242,3 +2242,22 @@ body.na-home .topo-busca{opacity:0;pointer-events:none}
 :root[data-tema="escuro"] .side a.toplink[href="#atb"]{--tom:#2DD4BF}
 .side a.toplink.active{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tom) 35%,transparent)}
 .side a.sub{border-left:0}
+
+/* ===== cartões só com o nome: o texto complementar sai de todo o guia ===== */
+.ferr-quadro-sub,.atb-sub,.ferr-calc-sub,.ferr-card-sub,.ferr-card-previa,.pasta-resumo,.cr-area,.qx-sub,
+.as-conta,.cc-n,.ferr-quadro-topo .atb-n,.atb-topo .atb-n,.ferr-quadro-flag,.el-card-sub,.sc-lista,.ferr-ex-desc,.ferr-med-sub{display:none!important}
+.ferr-quadro-nome,.atb-nome,.ferr-calc-nome,.ferr-card-nome{line-height:1.3}
+.ferr-quadro-topo,.atb-topo{min-height:52px}
+
+/* ===== prescrição simples: sem caixas de marcar, chips nem "adicionar";
+   quem quiser ajustar liga "Ajustes na prescrição" nos Ajustes ===== */
+body:not(.rx-ajustes) .pp-item input[type="checkbox"],
+body:not(.rx-ajustes) .pp-todos,
+body:not(.rx-ajustes) .pp-chips,body:not(.rx-ajustes) .pp-chip,
+body:not(.rx-ajustes) .rx-mexido,
+body:not(.rx-ajustes) details.sint,
+body:not(.rx-ajustes) .pp-copiar>span{display:none!important}
+body:not(.rx-ajustes) .pp-item{cursor:default;padding:9px 4px}
+body:not(.rx-ajustes) .pp-item:hover{background:none}
+body:not(.rx-ajustes) .pp-item.fora{opacity:1}
+body:not(.autor) .ferr-barra[data-ctx="quadros"]{display:none}
