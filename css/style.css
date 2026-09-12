@@ -2204,3 +2204,41 @@ body.na-home .topo-busca{opacity:0;pointer-events:none}
   body.na-home .wrap{grid-template-columns:minmax(0,1fr);gap:0}
   body.na-home .doc{max-width:1240px;margin:0 auto;width:100%}
 }
+
+/* ===== sumário no mesmo desenho da home: azulejo colorido + nome ===== */
+@media(min-width:961px){.side{padding-top:18px}}
+.side a.toplink{gap:11px;padding:7px 10px 7px 8px;margin:2px 0;border-left:0;border-radius:11px;font-weight:600;font-size:13.5px;color:var(--ink);--tom:var(--acento)}
+.side a.toplink>.ico{width:30px;height:30px;padding:6px;box-sizing:border-box;border-radius:9px;flex-shrink:0;
+  color:var(--tom);background:color-mix(in srgb,var(--tom) 12%,var(--card));border:1px solid color-mix(in srgb,var(--tom) 22%,transparent);
+  transition:transform .15s ease,background .15s ease}
+.side a.toplink:hover{background:var(--card);border-color:transparent;box-shadow:var(--shadow)}
+.side a.toplink:hover>.ico{transform:scale(1.06);background:color-mix(in srgb,var(--tom) 18%,var(--card))}
+.side a.toplink.active,.side a.toplink.porta,.side a.toplink.porta.active,.side a.ferr-top.active,.side a.atb-top.active{
+  background:color-mix(in srgb,var(--tom) 9%,var(--card));color:var(--ink);border-left:0}
+.side a.toplink.active>.ico,.side a.porta>.ico{color:var(--tom)}
+.side a.toplink.porta{margin-bottom:2px;font-weight:600;color:var(--ink)}
+.side a.toplink.porta:not(.active){background:transparent}
+.side a.toplink.critico{color:var(--ink)}
+.side a.toplink[href="#queixa"]{--tom:#2563EB}
+.side a.toplink[href="#critico"]{--tom:#DC2626}
+.side a.toplink[href="#doses"]{--tom:#EA580C}
+.side a.toplink[href="#presc"]{--tom:#059669}
+.side a.toplink[href="#eletrolitos"]{--tom:#0891B2}
+.side a.toplink[href="#pediatria"]{--tom:#DB2777}
+.side a.toplink[href="#calc"]{--tom:#D97706}
+.side a.toplink[href="#scores"]{--tom:#7C3AED}
+.side a.toplink[href="#prontuario"]{--tom:#64748B}
+.side a.toplink[href="#atb"]{--tom:#0D9488}
+.side a.toplink[href^="#cardio"],.side .nav-g a.toplink:not([href^="#queixa"]):not([href^="#critico"]):not([href^="#doses"]):not([href^="#presc"]):not([href^="#eletrolitos"]):not([href^="#pediatria"]):not([href^="#calc"]):not([href^="#scores"]):not([href^="#prontuario"]):not([href^="#atb"]){--tom:#4F46E5}
+:root[data-tema="escuro"] .side a.toplink[href="#queixa"]{--tom:#60A5FA}
+:root[data-tema="escuro"] .side a.toplink[href="#critico"]{--tom:#F87171}
+:root[data-tema="escuro"] .side a.toplink[href="#doses"]{--tom:#FB923C}
+:root[data-tema="escuro"] .side a.toplink[href="#presc"]{--tom:#34D399}
+:root[data-tema="escuro"] .side a.toplink[href="#eletrolitos"]{--tom:#22D3EE}
+:root[data-tema="escuro"] .side a.toplink[href="#pediatria"]{--tom:#F472B6}
+:root[data-tema="escuro"] .side a.toplink[href="#calc"]{--tom:#FBBF24}
+:root[data-tema="escuro"] .side a.toplink[href="#scores"]{--tom:#A78BFA}
+:root[data-tema="escuro"] .side a.toplink[href="#prontuario"]{--tom:#94A3B8}
+:root[data-tema="escuro"] .side a.toplink[href="#atb"]{--tom:#2DD4BF}
+.side a.toplink.active{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--tom) 35%,transparent)}
+.side a.sub{border-left:0}
