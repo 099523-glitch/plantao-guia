@@ -1001,43 +1001,43 @@
 
   function funcionalidades() {
     var lista = [
-      { href:'#critico', icone:'perigo', nome:'Sala vermelha', classe:'critico',
-        sub:'As condutas em que a primeira decisão vale mais que a leitura',
+      { href:'#critico', icone:'perigo', nome:'Sala vermelha', cor:'c-fire',
+        sub:'Urgência e protocolos críticos — a primeira decisão vale mais que a leitura',
         n: CRITICAS.length + ' condutas' },
-      { href:'#queixa', icone:'porta', nome:'Queixas',
+      { href:'#queixa', icone:'porta', nome:'Queixas', cor:'c-blue',
         sub:'Porta de entrada por sintoma, antes do diagnóstico',
         n: (temQueixas() ? QUEIXAS.length : 0) + ' queixas' },
-      { href:'#' + CATEGORIAS[0].id, icone:'livro', nome:'Guia clínico',
+      { href:'#' + CATEGORIAS[0].id, icone:'livro', nome:'Guia clínico', cor:'c-indigo',
         sub:'Fluxograma, red flags, doses e destino de cada conduta',
-        n: progresso(PROTOCOLOS) + ' condutas · ' + CATEGORIAS.length + ' áreas' },
-      { href:'#doses', icone:'seringa', nome:'Doses de emergência',
+        n: progresso(PROTOCOLOS) + ' condutas em ' + CATEGORIAS.length + ' áreas' },
+      { href:'#doses', icone:'seringa', nome:'Doses de emergência', cor:'c-orange',
         sub:'As drogas que não dão tempo de procurar, por situação',
         n: DOSES_GRUPOS.length + ' situações' },
-      { href:'#presc', icone:'receita', nome:'Prescrições',
+      { href:'#presc', icone:'receita', nome:'Prescrições', cor:'c-green',
         sub:'Por quadro clínico, prontas para copiar em dois cliques',
         n: tam(typeof FERR_QUADROS !== 'undefined' ? FERR_QUADROS : null) + ' quadros' },
-      { href:'#atb', icone:'micro', nome:'Antibióticos',
+      { href:'#atb', icone:'micro', nome:'Antibióticos', cor:'c-teal',
         sub:'Esquemas empíricos por sítio de infecção',
         n: tam(typeof FERR_ATB !== 'undefined' ? FERR_ATB : null) + ' esquemas' },
-      { href:'#pediatria', icone:'crianca', nome:'Pediatria',
+      { href:'#pediatria', icone:'crianca', nome:'Pediatria', cor:'c-pink',
         sub:'Dose por quilo calculada e vetos por idade',
         n: tam(typeof FERR_PEDIA !== 'undefined' ? FERR_PEDIA : null) + ' medicações' },
-      { href:'#scores', icone:'grafico', nome:'Scores',
+      { href:'#scores', icone:'grafico', nome:'Scores', cor:'c-purple',
         sub:'Escores clínicos com interpretação',
         n: contaCalc('escore') + ' escores' },
-      { href:'#calc', icone:'calc', nome:'Calculadoras',
+      { href:'#calc', icone:'calc', nome:'Calculadoras', cor:'c-amber',
         sub:'As contas do plantão: gotejamento, correções, conversões',
         n: contaCalc('formula') + ' contas' },
-      { href:'#prontuario', icone:'prontuar', nome:'Prontuário',
+      { href:'#prontuario', icone:'prontuar', nome:'Prontuário', cor:'c-slate',
         sub:'Anamnese, manobras, conduta, evasão e laudos',
         n: 'textos prontos' }
     ];
     return lista.map(function (f) {
-      return '<a class="fn-cartao' + (f.classe ? ' ' + f.classe : '') + '" href="' + esc(f.href) + '">' +
-        '<span class="fn-ico">' + ICO(f.icone) + '</span>' +
-        '<span class="fn-corpo"><b>' + esc(f.nome) + '</b><span>' + esc(f.sub) + '</span></span>' +
-        '<span class="fn-n">' + esc(f.n) + '</span>' +
-        '<span class="fn-seta">' + ICO('setaDir') + '</span></a>';
+      return '<a class="fn-item" href="' + esc(f.href) + '">' +
+        '<span class="fn-ico ' + f.cor + '">' + ICO(f.icone) + '</span>' +
+        '<span class="fn-corpo"><b>' + esc(f.nome) + '</b>' +
+          '<span>' + esc(f.sub) + '</span>' +
+          '<small>' + esc(f.n) + '</small></span></a>';
     }).join('');
   }
 
@@ -1047,24 +1047,25 @@
       .filter(function (p) { return favoritas.indexOf(p.id) === -1; });
     var nome = nomeMedico();
 
+    /* o painel escuro: saudação e a busca */
     var html = '<section class="phase home">' +
-      '<div class="home-hero">' +
-        '<p class="home-data">' + esc(dataHoje()) + '</p>' +
-        '<h1>' + esc(saudacao()) + (nome ? ', ' + esc(nome) : '') + '</h1>' +
-        '<p class="home-sub">O que você precisa agora?</p>' +
-        '<button type="button" class="home-dica" data-foco="busca">' +
-          ICO('lupa') + '<span>Buscar sintoma, conduta, droga ou dose</span>' +
+      '<div class="hero">' +
+        '<span class="hero-pill"><i></i>' + esc(saudacao()) + ' · ' + esc(dataHoje()) + '</span>' +
+        '<h1>' + (nome ? 'Bem-vindo, ' + esc(nome) : 'Bem-vindo ao plantão') + '</h1>' +
+        '<p>Condutas, prescrições, doses e escores em um só lugar.</p>' +
+        '<button type="button" class="hero-busca" data-foco="busca">' +
+          ICO('lupa') + '<span>Pesquise por sintoma, conduta, droga ou dose</span>' +
           '<kbd>/</kbd></button>';
     if (!nome) {
-      html += '<form class="home-nome" data-form-nome>' +
+      html += '<form class="hero-nome" data-form-nome>' +
         '<label for="campoNome">Como quer ser chamado?</label>' +
         '<input id="campoNome" type="text" maxlength="40" autocomplete="off" placeholder="Dr. Gustavo">' +
-        '<button type="submit" class="ferr-btn forte">Salvar</button></form>';
+        '<button type="submit">Salvar</button></form>';
     }
     html += '</div>';
 
     /* as funcionalidades, todas à vista */
-    html += '<div class="home-sec"><h3>O guia</h3><div class="fn-grade">' + funcionalidades() + '</div></div>';
+    html += '<div class="fn-lista">' + funcionalidades() + '</div>';
 
     /* todas as queixas de cara: é a porta de entrada mais usada */
     if (temQueixas()) {
