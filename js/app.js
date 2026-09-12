@@ -512,6 +512,16 @@
   function renderSumario(resultados) {
     var emSecao = (!resultados && (modo === 'secao' || modo === 'atb'));
 
+    /* na home o sumário é o do mock: só as áreas, numeradas */
+    if (!resultados && modo === 'home') {
+      toc.innerHTML = '<div class="nav-g sum-home"><span class="nav-t">Sumário</span>' +
+        CATEGORIAS.map(function (c, ci) {
+          if (!listaArea(c.id).length && !modoAutor()) return '';
+          return '<a href="#' + esc(c.id) + '"><span class="n">' + dois(ci + 1) + '</span>' + esc(c.nome) + '</a>';
+        }).join('') + '</div>';
+      return;
+    }
+
     /* 1. acesso rápido */
     var html = '<div class="nav-g"><span class="nav-t">Acesso rápido</span>';
     if (temQueixas()) {
@@ -1048,7 +1058,7 @@
     return '<div class="linha-urg">' +
       '<a class="urg urg-fire" href="#critico"><span class="urg-ico">' + ICO('perigo') + '</span>' +
         '<span class="urg-txt"><b>Sala vermelha</b><i>' + CRITICAS.length + ' condutas que não dão tempo de procurar</i></span></a>' +
-      '<a class="urg" href="#doses"><span class="urg-ico">' + ICO('seringa') + '</span>' +
+      '<a class="urg" href="#doses"><span class="urg-ico">' + ICO('frasco') + '</span>' +
         '<span class="urg-txt"><b>Doses de emergência</b><i>' + DOSES_GRUPOS.length + ' situações por área</i></span></a>' +
       '<a class="urg" href="#eletrolitos"><span class="urg-ico">' + ICO('gota') + '</span>' +
         '<span class="urg-txt"><b>Eletrólitos</b><i>' + (typeof Eletrolitos !== 'undefined' ? Eletrolitos.itens.length : 7) + ' ferramentas de diluição</i></span></a>' +

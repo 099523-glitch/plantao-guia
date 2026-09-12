@@ -2335,3 +2335,22 @@ body.na-home .topo-acoes{margin-left:auto}
   .chip-q{min-height:44px;padding:10px 16px;font-size:14.5px}
   .hero.faixa h1{font-size:21px}
 }
+
+/* ===== topo e sumário como no mock do designer ===== */
+.marca{text-transform:uppercase;font-size:20px;font-weight:800;letter-spacing:-.02em;color:var(--ink)}
+.marca .fire{color:var(--fire)}
+.marca:hover .fire{color:var(--fire)}
+/* na home, o peso encosta na marca, à esquerda; o resto vai para a direita */
+@media(min-width:961px){
+  body.na-home .topo-acoes{display:contents}
+  body.na-home .menu-btn{order:-3}
+  body.na-home .marca{order:-2}
+  body.na-home .topo-acoes .peso-campo{order:-1;margin-left:6px}
+  body.na-home #btnBancTop{margin-left:auto}
+}
+/* sumário da home: numerado, com régua à esquerda */
+.sum-home a{display:flex;align-items:center;gap:10px;padding:8px 12px;margin:0;border-left:2px solid var(--line);border-radius:0;
+  font-weight:700;font-size:15px;color:var(--ink)}
+.sum-home a .n{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12.5px;font-weight:600;color:var(--fire);min-width:20px}
+.sum-home a:hover{border-left-color:var(--fire);background:var(--card);box-shadow:none}
+.sum-home .nav-t{margin-bottom:10px}
