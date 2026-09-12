@@ -2119,6 +2119,11 @@
       lead:'',
       plana: function () { return telaQuadros(); } },
 
+    { id:'eletrolitos', nome:'Eletrólitos', icone:'gota',
+      lead:'',
+      capa: function () { return window.Eletrolitos ? Eletrolitos.capa() : ''; },
+      filhas: function () { return window.Eletrolitos ? Eletrolitos.filhas() : []; } },
+
     { id:'pediatria', nome:'Pediatria', icone:'crianca',
       lead:'',
       plana: function () { return telaPediatria(); } },
@@ -2213,6 +2218,7 @@
 
     if (sec.plana)      html += sec.plana();
     else if (filha)     html += filha.tela();
+    else if (sec.capa)  html += sec.capa();
     else                html += capaSecao(sec);
 
     /* algumas telas filhas ja trazem a propria area de trabalho */
@@ -2447,6 +2453,7 @@
   };
 
   F.copiarClinico = copiarClinico;
+  F.pilha = pilha;
   F.indice = function () {
     if (cacheIx) return cacheIx;
     var out = [];
@@ -2466,6 +2473,8 @@
         texto:[a.quadro, a.sub, a.sitio, (a.tags||[]).join(' '), a.agentes, a.atencao, a.nota,
           (a.escolha||[]).concat(a.alt||[]).map(function(e){return e.atb+' '+e.dose+' '+e.via+' '+e.dur;}).join(' ')].join(' ') });
     });
+
+    if (window.Eletrolitos) Eletrolitos.indice().forEach(function (x) { out.push(x); });
 
     FERR_CALC.forEach(function (c) {
       out.push({ tipo:(c.tipo === 'escore' ? 'score' : 'calculadora'),

@@ -4767,7 +4767,7 @@ const PROTOCOLOS = [
       ]},
       { tipo:'texto', titulo:'Quem recebe salina hipertônica 3%', conteudo:'*Hiponatremia aguda* (instalação < 48 h): Na < 130 mEq/L *com sintomas*. *Hiponatremia crônica* (> 48 h ou tempo desconhecido): Na < 130 mEq/L *com sintomas graves* — convulsão, rebaixamento, coma — *ou* com patologia de SNC (tumor, TCE, hipertensão intracraniana); e também Na < 120 mEq/L ainda que assintomático. Fora dessas situações, a correção é mais lenta e passa por tratar a causa, não por salina hipertônica.' },
       { tipo:'doses', titulo:'Salina hipertônica', itens:[
-        { droga:'NaCl 3% — como preparar', dose:'NaCl 20% 45 mL + SF 0,9% 455 mL = *500 mL de NaCl 3%*', via:'EV', obs:'*Pode ser infundida em acesso venoso periférico.* Não exige central.' },
+        { droga:'NaCl 3% — como preparar', dose:'NaCl 20% 55 mL + SF 0,9% 445 mL = *500 mL de NaCl 3%* (≈ 15 g de NaCl, 513 mEq/L)', via:'EV', obs:'*Pode ser infundida em acesso venoso periférico.* Não exige central.' },
         { droga:'NaCl 3% — bolus no sintoma grave', dose:'100–150 mL em 20 min, repetir até 3 vezes', via:'EV', obs:'Objetivo é elevar o sódio 4–6 mEq/L rapidamente e reverter o sintoma neurológico — não normalizar o sódio.' },
         { droga:'Furosemida', dose:'Conforme volemia', via:'EV', obs:'Associada na hiponatremia hipervolêmica (IC, cirrose, síndrome nefrótica).' }
       ]},

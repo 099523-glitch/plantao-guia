@@ -248,6 +248,7 @@
   /* ---------- estado ---------- */
   var areaAtual    = CATEGORIAS[0].id;
   var condutaAtual = null;     // id da conduta aberta sozinha, ou null
+  var dosesGrupo   = null;     // grupo aberto em #doses/<grupo>
   var termoBusca   = '';
   var modo         = 'home';   // 'home' | 'guia' | 'ferramentas' | 'atb' | 'favoritas'
   var abaFerr      = null;     // sub-aba das ferramentas
@@ -825,66 +826,102 @@
      condutas que ja existem, agrupadas por situacao. Editar a conduta
      atualiza esta pagina sozinho. */
   var DOSES_GRUPOS = [
-    { nome:'Parada e ritmos de parada', icone:'coracao',
+    { id:'parada', nome:'Parada e ritmos de parada', icone:'coracao', cor:'c-fire',
+      sub:'Adrenalina, amiodarona, cargas de choque',
       ids:['pcr-adulto','cardioversao-desfibrilacao'] },
-    { nome:'Arritmias com instabilidade', icone:'coracao',
+    { id:'arritmias', nome:'Arritmias com instabilidade', icone:'coracao', cor:'c-pink',
+      sub:'Adenosina, amiodarona, atropina, cardioversão',
       ids:['taquiarritmia-instavel','taqui-qrs-estreito','taqui-qrs-largo','bradiarritmia'] },
-    { nome:'Anafilaxia e via aérea', icone:'pulmao',
+    { id:'via-aerea', nome:'Anafilaxia e via aérea', icone:'pulmao', cor:'c-blue',
+      sub:'Adrenalina IM, sequência rápida, crise de asma',
       ids:['anafilaxia','sequencia-rapida-intubacao','asma-crise'] },
-    { nome:'Convulsão', icone:'cerebro',
+    { id:'convulsao', nome:'Convulsão', icone:'cerebro', cor:'c-purple',
+      sub:'Benzodiazepínico, fenitoína, estado de mal',
       ids:['status-epilepticus'] },
-    { nome:'Glicemia', icone:'seringa',
+    { id:'glicemia', nome:'Glicemia', icone:'seringa', cor:'c-amber',
+      sub:'Glicose hipertônica, insulina, cetoacidose',
       ids:['hipoglicemia','cetoacidose'] },
-    { nome:'Eletrólitos', icone:'rim',
+    { id:'eletrolitos', nome:'Eletrólitos', icone:'rim', cor:'c-cyan',
+      sub:'Potássio, sódio, cálcio e as diluições',
       ids:['hipercalemia','hipocalemia','hiponatremia','calcio'] },
-    { nome:'Choque e sepse', icone:'gota',
+    { id:'choque', nome:'Choque e sepse', icone:'gota', cor:'c-orange',
+      sub:'Noradrenalina, vasopressina, antibiótico na primeira hora',
       ids:['choque-abordagem','sepse'] },
-    { nome:'Reperfusão e crise hipertensiva', icone:'coracao',
+    { id:'reperfusao', nome:'Reperfusão e crise hipertensiva', icone:'coracao', cor:'c-indigo',
+      sub:'Trombolítico, nitroglicerina, nitroprussiato',
       ids:['sca-com-supra','avc-isquemico','crise-hipertensiva','eap-ic-descompensada'] },
-    { nome:'Sedação e analgesia', icone:'seringa',
+    { id:'sedacao', nome:'Sedação e analgesia', icone:'seringa', cor:'c-teal',
+      sub:'Fentanila, midazolam, cetamina, propofol',
       ids:['sedacao-analgesia','analgesia-ps'] },
-    { nome:'Intoxicações e antídotos', icone:'frasco',
+    { id:'intoxicacoes', nome:'Intoxicações e antídotos', icone:'frasco', cor:'c-green',
+      sub:'Naloxona, flumazenil, N-acetilcisteína, atropina',
       ids:['intoxicado-abordagem','benzo-opioide','paracetamol','organofosforado','triciclicos'] },
-    { nome:'Pediatria', icone:'crianca',
+    { id:'pediatria', nome:'Pediatria', icone:'crianca', cor:'c-slate',
+      sub:'Parada, sepse, asma e desidratação na criança',
       ids:['pcr-pediatrica','sepse-pediatrica','asma-pedia','desidratacao-crianca'] }
   ];
+  function grupoDoses(id) {
+    for (var i = 0; i < DOSES_GRUPOS.length; i++) if (DOSES_GRUPOS[i].id === id) return DOSES_GRUPOS[i];
+    return null;
+  }
+  /* quantas condutas do grupo têm bloco de doses */
+  function contaGrupoDoses(g) {
+    return g.ids.filter(function (id) { var p = acharConduta(id); return p && dosesDe(p).length; }).length;
+  }
 
   function dosesDe(p) {
     return (p.secoes || []).filter(function (s) { return s.tipo === 'doses'; });
   }
 
+  /* a capa: uma grande área por cartão; dentro, as tabelas do grupo */
   function renderDoses() {
+    var g = dosesGrupo && grupoDoses(dosesGrupo);
+    if (!g) { renderDosesCapa(); return; }
+
     var html = '<section class="phase">' +
-      '<div class="phase-head"><h2>Doses de emergência</h2></div>';
-
-    var vazios = 0;
-    DOSES_GRUPOS.forEach(function (g) {
-      var linhas = '';
-      g.ids.forEach(function (id) {
-        var p = acharConduta(id);
-        if (!p) return;
-        var blocos = dosesDe(p);
-        if (!blocos.length) return;
-        linhas += '<div class="dz-quadro">' +
-          '<a class="dz-titulo" href="#' + esc(p.categoria) + '/' + esc(p.id) + '">' +
-            esc(p.titulo) + ICO('setaDir') + '</a>' +
-          blocos.map(function (sec) {
-            return '<table class="dz-tab"><tbody>' + (sec.itens || []).map(function (i) {
-              return '<tr><th>' + rico(i.droga) + '</th>' +
-                '<td class="dz-dose">' + rico(i.dose) + '</td>' +
-                '<td class="dz-via">' + esc(i.via || '') + '</td>' +
-                '<td class="dz-obs">' + rico(i.obs || '') + '</td></tr>';
-            }).join('') + '</tbody></table>';
-          }).join('') +
-        '</div>';
-      });
-      if (!linhas) { vazios++; return; }
-      html += '<div class="dz-grupo"><h3>' + ICO(g.icone) + esc(g.nome) + '</h3>' + linhas + '</div>';
+      '<a class="voltar" href="#doses">' + ICO('setaEsq') + ' Doses de emergência</a>' +
+      '<div class="solo-head"><span class="atb-emoji">' + ICO(g.icone) + '</span><h2>' + esc(g.nome) + '</h2></div>';
+    var linhas = '';
+    g.ids.forEach(function (id) {
+      var p = acharConduta(id);
+      if (!p) return;
+      var blocos = dosesDe(p);
+      if (!blocos.length) return;
+      linhas += '<div class="dz-quadro">' +
+        '<a class="dz-titulo" href="#' + esc(p.categoria) + '/' + esc(p.id) + '">' +
+          esc(p.titulo) + ICO('setaDir') + '</a>' +
+        blocos.map(function (sec) {
+          return (sec.titulo ? '<h4 class="dz-sub">' + esc(sec.titulo) + '</h4>' : '') +
+            '<table class="dz-tab"><tbody>' + (sec.itens || []).map(function (i) {
+            return '<tr><th>' + rico(i.droga) + '</th>' +
+              '<td class="dz-dose">' + rico(i.dose) + '</td>' +
+              '<td class="dz-via">' + esc(i.via || '') + '</td>' +
+              '<td class="dz-obs">' + rico(i.obs || '') + '</td></tr>';
+          }).join('') + '</tbody></table>';
+        }).join('') +
+      '</div>';
     });
-
+    html += linhas || '<div class="pendente">Nenhuma conduta deste grupo tem bloco de doses ainda.</div>';
     html += '<p class="fonte-linha">' + ICO('alerta') +
       ' Conferir a dose na conduta de origem antes de administrar.</p>';
     doc.innerHTML = html + '</section>';
+  }
+
+  function renderDosesCapa() {
+    var html = '<section class="phase">' +
+      '<div class="phase-head"><h2>Doses de emergência</h2></div>' +
+      '<p class="ferr-lead">As drogas que não dão tempo de procurar, agrupadas por situação. Vista derivada das condutas: editar a conduta atualiza aqui.</p>' +
+      '<div class="area-grade">' +
+      DOSES_GRUPOS.map(function (g) {
+        var n = contaGrupoDoses(g);
+        if (!n) return '';
+        return '<a class="area-card ' + esc(g.cor) + '" href="#doses/' + esc(g.id) + '">' +
+          '<span class="area-ico">' + ICO(g.icone) + '</span>' +
+          '<span class="area-corpo"><b>' + esc(g.nome) + '</b><span>' + esc(g.sub) + '</span></span>' +
+          '<span class="area-n">' + n + (n === 1 ? ' conduta' : ' condutas') + '</span>' +
+        '</a>';
+      }).join('') + '</div></section>';
+    doc.innerHTML = html;
   }
 
   /* ---------- busca unificada: condutas + tudo das Ferramentas ---------- */
@@ -1019,6 +1056,9 @@
       { href:'#atb', icone:'micro', nome:'Antibióticos', cor:'c-teal',
         sub:'Esquemas empíricos por sítio de infecção',
         n: tam(typeof FERR_ATB !== 'undefined' ? FERR_ATB : null) + ' esquemas' },
+      { href:'#eletrolitos', icone:'gota', nome:'Eletrólitos', cor:'c-cyan',
+        sub:'Potássio, sódio, bicarbonato, magnésio e cálcio: valor entra, diluição e vazão saem',
+        n: (typeof Eletrolitos !== 'undefined' ? Eletrolitos.itens.length : 0) + ' ferramentas' },
       { href:'#pediatria', icone:'crianca', nome:'Pediatria', cor:'c-pink',
         sub:'Dose por quilo calculada e vetos por idade',
         n: tam(typeof FERR_PEDIA !== 'undefined' ? FERR_PEDIA : null) + ' medicações' },
@@ -1033,11 +1073,12 @@
         n: 'textos prontos' }
     ];
     return lista.map(function (f) {
-      return '<a class="fn-item" href="' + esc(f.href) + '">' +
-        '<span class="fn-ico ' + f.cor + '">' + ICO(f.icone) + '</span>' +
+      return '<a class="fn-item ' + f.cor + '" href="' + esc(f.href) + '">' +
+        '<span class="fn-ico">' + ICO(f.icone) + '</span>' +
         '<span class="fn-corpo"><b>' + esc(f.nome) + '</b>' +
-          '<span>' + esc(f.sub) + '</span>' +
-          '<small>' + esc(f.n) + '</small></span></a>';
+          '<span>' + esc(f.sub) + '</span></span>' +
+        '<span class="fn-n">' + esc(f.n) + '</span>' +
+        '<span class="fn-seta">' + ICO('setaDir') + '</span></a>';
     }).join('');
   }
 
@@ -1053,9 +1094,9 @@
         '<span class="hero-pill"><i></i>' + esc(saudacao()) + ' · ' + esc(dataHoje()) + '</span>' +
         '<h1>' + (nome ? 'Bem-vindo, ' + esc(nome) : 'Bem-vindo ao plantão') + '</h1>' +
         '<p>Condutas, prescrições, doses e escores em um só lugar.</p>' +
-        '<button type="button" class="hero-busca" data-foco="busca">' +
-          ICO('lupa') + '<span>Pesquise por sintoma, conduta, droga ou dose</span>' +
-          '<kbd>/</kbd></button>';
+        '<label class="hero-busca">' + ICO('lupa') +
+          '<input type="search" id="heroBusca" autocomplete="off" placeholder="Pesquise por sintoma, conduta, droga ou dose" aria-label="Buscar em todo o guia">' +
+          '<kbd>/</kbd></label>';
     if (!nome) {
       html += '<form class="hero-nome" data-form-nome>' +
         '<label for="campoNome">Como quer ser chamado?</label>' +
@@ -1230,6 +1271,8 @@
   function render() {
     var res = resultadosBusca();
     side.classList.toggle('buscando', !!res);
+    /* na home a busca do topo some: a do painel é a que vale */
+    document.body.classList.toggle('na-home', modo === 'home' && !res);
     renderSumario(res);
     renderDoc(res);
     renderAtalhos();
@@ -1246,7 +1289,7 @@
     if (LEGADO[h]) { location.replace('#' + LEGADO[h]); return; }
     if (partes[0] === 'favoritas') { modo = 'favoritas'; return; }
     if (partes[0] === 'queixa') { modo = 'queixa'; queixaAtual = partes[1] || null; return; }
-    if (partes[0] === 'doses') { modo = 'doses'; return; }
+    if (partes[0] === 'doses') { modo = 'doses'; dosesGrupo = partes[1] || null; return; }
     if (partes[0] === 'critico') { modo = 'critico'; return; }
     if (partes[0] === 'atb') { modo = 'atb'; sitioAtb = partes[1] || null; return; }
     if (ehSecao(partes[0])) {
@@ -1293,6 +1336,16 @@
   busca.addEventListener('input', function () {
     termoBusca = busca.value;
     render();
+  });
+  doc.addEventListener('input', function (e) {
+    if (e.target.id !== 'heroBusca') return;
+    busca.value = e.target.value;
+    termoBusca = busca.value;
+    render();
+    if (termoBusca) {
+      busca.focus();
+      try { busca.setSelectionRange(busca.value.length, busca.value.length); } catch (x) { /* search */ }
+    }
   });
   busca.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') { busca.value = ''; termoBusca = ''; render(); busca.blur(); }
@@ -1375,8 +1428,10 @@
     var t = e.target.tagName;
     if (t === 'INPUT' || t === 'TEXTAREA' || e.target.isContentEditable) return;
     e.preventDefault();
-    busca.focus();
-    busca.select();
+    var hero = document.getElementById('heroBusca');
+    var alvo = hero || busca;
+    alvo.focus();
+    alvo.select();
   });
 
   /* ---------- filtro de blocos da conduta ---------- */

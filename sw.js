@@ -8,7 +8,7 @@
        a versão do SW muda, e aí o precache é refeito).
    Suba VERSAO a cada alteração de conteúdo ou código.
    ============================================================ */
-const VERSAO = 'plantao-v26';
+const VERSAO = 'plantao-v27';
 const ESSENCIAL = [
   './',
   './index.html',
@@ -24,6 +24,7 @@ const ESSENCIAL = [
   './js/scores-dados.js',
   './js/pediatria-dados.js',
   './js/ferramentas.js',
+  './js/eletrolitos.js',
   './js/app.js',
   './js/ui.js',
   './fontes-web/inter-latin.woff2',

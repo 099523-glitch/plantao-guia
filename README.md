@@ -13,7 +13,8 @@ dependência externa: abre o `index.html` e funciona — inclusive **sem interne
 | Pediatria | **37** medicações com dose por quilo calculada e faixa etária, mais **15** vetos por idade |
 | Antibióticos | **39** esquemas empíricos em 10 sítios, com painel de stewardship |
 | Escores e calculadoras | **41** escores em 11 ramos + 7 contas do plantão |
-| Doses de emergência | 11 situações, 33 quadros, 223 linhas — vista derivada das condutas |
+| Doses de emergência | 11 situações em cartões de área, cada um com as tabelas do grupo — vista derivada das condutas |
+| Eletrólitos | **7** ferramentas (K⁺, Na⁺ Adrogué-Madias, HCO₃⁻, Mg²⁺, Na corrigido, hipocalcemia, Ca corrigido): valor entra, diluição e vazão saem |
 | Sala vermelha | 28 condutas que não dão tempo de procurar |
 | Prontuário | modelos de anamnese, 42 manobras, conduta, evasão e laudos |
 
@@ -34,6 +35,7 @@ js/queixas.js              QUEIXAS — a camada por sintoma
 js/ferramentas-dados.js    quadros, medicações, ATB, manobras, textos
 js/scores-dados.js         escores clínicos (estende FERR_CALC)
 js/pediatria-dados.js      medicações pediátricas e vetos por idade
+js/eletrolitos.js          hub hidroeletrolítico: dados + motor das 7 ferramentas
 js/ferramentas.js          motor das seções (não precisa mexer)
 js/app.js                  render, sumário, busca e rotas (não precisa mexer)
 js/icones.js               ~45 ícones SVG inline
@@ -50,7 +52,8 @@ nada fica escondido).
 #                         início: saudação (nome em Ajustes), busca, funcionalidades, queixas, favoritas, recentes, áreas
 #queixa · #queixa/<id>    queixas — porta de entrada por sintoma
 #critico                  sala vermelha
-#doses                    doses de emergência
+#doses · #doses/<grupo>   doses de emergência: capa por área, depois as tabelas do grupo
+#eletrolitos · #eletrolitos/<id>  hub hidroeletrolítico
 #<area>                   capa da área, com as subpastas
 #<area>/<subpasta>        condutas da subpasta
 #<area>/<sub>/<id>        a conduta (o link curto #<area>/<id> também vale)
