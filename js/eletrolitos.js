@@ -67,11 +67,11 @@
   function rx(o) {
     var txt = textoRx(o);
     return '<div class="el-rx' + (o.cls ? ' ' + o.cls : '') + '" data-el-txt="' + esc(txt) + '">' +
-      '<div class="el-rx-cab"><b>' + esc(o.titulo) + '</b>' +
-        '<span class="el-rx-acoes">' +
-          '<button type="button" class="ferr-btn peq" data-el-acao="copiar">Copiar</button>' +
-          '<button type="button" class="ferr-btn peq" data-el-acao="rascunho">Rascunho</button>' +
-        '</span></div>' +
+      '<div class="el-rx-cab"><b>' + esc(o.titulo) + '</b></div>' +
+      '<span class="el-rx-acoes">' +
+        '<button type="button" class="ferr-btn peq" data-el-acao="copiar">Copiar</button>' +
+        '<button type="button" class="ferr-btn peq" data-el-acao="rascunho">Rascunho</button>' +
+      '</span>' +
       '<code class="el-rx-linha">' + esc(o.linha) + '</code>' +
       (o.tempo ? '<span class="el-rx-tempo">' + ICO('relogio') + esc(o.tempo) + '</span>' : '') +
       (o.nota ? '<p class="el-rx-nota">' + esc(o.nota) + '</p>' : '') +
@@ -102,8 +102,10 @@
      ========================================================= */
   function telaPotassio(id) {
     var s = v(id);
-    var html = grande(id, 'k', 'Potássio sérico', 'mEq/L', 'ex.: 2,8');
-    html += opcoes(id, 'sint', 'Sintomas, ECG alterado ou uso de digoxina?', [['n', 'Não'], ['s', 'Sim']]);
+    var html = '<div class="el-entrada">' +
+      grande(id, 'k', 'Potássio sérico', 'mEq/L', 'ex.: 2,8') +
+      opcoes(id, 'sint', 'Sintoma, ECG alterado ou digoxina', [['n', 'Não'], ['s', 'Sim']]) +
+    '</div>';
     var k = num(s.k);
     if (k === null) return html + vazio();
     var sint = s.sint === 's';
