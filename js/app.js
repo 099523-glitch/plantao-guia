@@ -594,8 +594,6 @@
           ? (subSecao || true) : null;
         html += Ferramentas.sumarioSecao(sec, ativo);
       });
-      html += Ferramentas.sumarioAtb(
-        (!resultados && modo === 'atb') ? (sitioAtb || true) : null);
       html += '</div>';
     }
 
@@ -1184,7 +1182,7 @@
   function funcionalidades() {
     var itens = [
       { href:'#presc',       icone:'receita',  nome:'Prescrições' },
-      { href:'#atb',         icone:'micro',    nome:'Antibióticos' },
+      { href:'#prontuario/atestado', icone:'laudo', nome:'Atestado' },
       { href:'#pediatria',   icone:'crianca',  nome:'Pediatria' },
       { href:'#scores',      icone:'grafico',  nome:'Scores' },
       { href:'#calc',        icone:'calc',     nome:'Calculadoras' },
@@ -1368,7 +1366,11 @@
     if (partes[0] === 'queixa') { modo = 'queixa'; queixaAtual = partes[1] || null; return; }
     if (partes[0] === 'doses') { modo = 'doses'; dosesGrupo = partes[1] || null; return; }
     if (partes[0] === 'critico') { modo = 'critico'; return; }
-    if (partes[0] === 'atb') { modo = 'atb'; sitioAtb = partes[1] || null; return; }
+    if (partes[0] === 'atb') {
+      /* antibióticos moram nas Prescrições */
+      if (temFerramentas() && Ferramentas.irAtb) Ferramentas.irAtb(partes[1] || null);
+      location.replace('#presc'); return;
+    }
     if (ehSecao(partes[0])) {
       modo = 'secao'; secAtual = partes[0]; subSecao = partes[1] || null;
       return;

@@ -3074,7 +3074,7 @@ body:not(.autor) .ferr-barra[data-ctx="quadros"]{display:none}
 }
 
 /* ===== prescrições: Porta · Internados · Casa ===== */
-.rx-ctx{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0 0 14px}
+.rx-ctx{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 0 14px}
 .rx-ctx-b{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:11px 14px;min-height:56px;
   border:1px solid var(--line);border-radius:10px;background:var(--card);cursor:pointer;text-align:left;
   font-family:'Inter',system-ui,sans-serif;color:var(--ink);transition:border-color .14s ease,background .14s ease}
@@ -3086,7 +3086,7 @@ body:not(.autor) .ferr-barra[data-ctx="quadros"]{display:none}
 .pp-cuidados{margin:4px 0 0;padding-left:18px}
 .pp-cuidados li{font-size:13.5px;line-height:1.5;margin:3px 0}
 @media(max-width:720px){
-  .rx-ctx{gap:6px}
+  .rx-ctx{gap:6px;grid-template-columns:repeat(2,minmax(0,1fr))}
   .rx-ctx-b{padding:9px 10px;min-height:0}
   .rx-ctx-b span{display:none}
   .rx-ctx-b b{font-size:13.5px}

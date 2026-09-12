@@ -11,7 +11,7 @@ dependência externa: abre o `index.html` e funciona — inclusive **sem interne
 | Queixas | **16** portas de entrada por sintoma, para quem ainda não tem diagnóstico |
 | Prescrições | **Porta** (na unidade) · **Internados** (17 prescrições de enfermaria, `FERR_INTERNADOS`) · **Casa** (receita + orientações) — o contexto decide o que se copia |
 | Pediatria | **37** medicações com dose por quilo calculada e faixa etária, mais **15** vetos por idade |
-| Antibióticos | **39** esquemas empíricos em 10 sítios, com painel de stewardship |
+| Antibióticos | **39** esquemas empíricos em 10 sítios — agora um contexto dentro de Prescrições (`#atb` redireciona) |
 | Escores e calculadoras | **41** escores em 11 ramos + 7 contas do plantão |
 | Doses de emergência | 11 situações em cartões de área, cada um com as tabelas do grupo — vista derivada das condutas |
 | Eletrólitos | **7** ferramentas (K⁺, Na⁺ Adrogué-Madias, HCO₃⁻, Mg²⁺, Na corrigido, hipocalcemia, Ca corrigido): valor entra, diluição e vazão saem |
@@ -59,7 +59,7 @@ nada fica escondido).
 #<area>/<sub>/<id>        a conduta (o link curto #<area>/<id> também vale)
 #presc                    prescrição por quadro clínico
 #pediatria                doses pediátricas com calculadora
-#atb · #atb/<sitio>       antibióticos
+#atb · #atb/<sitio>       redirecionam para #presc no contexto Antibióticos
 #calc · #scores           contas e escores
 #prontuario/<pasta>       texto de prontuário
 #favoritas

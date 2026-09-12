@@ -356,8 +356,8 @@
   function pintaBarra() {
     var h = decodeURIComponent((location.hash || '').replace(/^#/, ''));
     var atual = 'home';
-    if (h.indexOf('atb') === 0) atual = 'atb';
-    else if (h.indexOf('presc') === 0) atual = 'presc';
+    if (h.indexOf('doses') === 0) atual = 'doses';
+    else if (h.indexOf('presc') === 0 || h.indexOf('atb') === 0) atual = 'presc';
     else if (h) atual = 'guia';
     abas.forEach(function (a) {
       var on = a.dataset.nav === atual;
