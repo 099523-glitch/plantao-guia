@@ -1035,11 +1035,12 @@
   /* um cartão só para tudo na home: azulejo colorido + nome. O resto
      vai no title, para não poluir. */
   var PALETA = ['c-blue','c-fire','c-purple','c-orange','c-green','c-teal','c-pink','c-indigo','c-amber','c-cyan','c-slate'];
-  function tile(href, icone, nome, cor, dica) {
+  function tile(href, icone, nome, cor, dica, sub) {
     return '<a class="tile' + (cor ? ' ' + esc(cor) : '') + '" href="' + esc(href) + '"' +
       (dica ? ' title="' + esc(dica) + '"' : '') + '>' +
       '<span class="tile-ico">' + ICO(icone) + '</span>' +
-      '<span class="tile-nome">' + esc(nome) + '</span></a>';
+      '<span class="tile-txt"><span class="tile-nome">' + esc(nome) + '</span>' +
+        (sub ? '<span class="tile-sub">' + esc(sub) + '</span>' : '') + '</span></a>';
   }
 
   /* a linha de urgência: sala vermelha grande, doses e eletrólitos ao lado */
@@ -1048,9 +1049,9 @@
       '<a class="urg urg-fire" href="#critico"><span class="urg-ico">' + ICO('perigo') + '</span>' +
         '<span class="urg-txt"><b>Sala vermelha</b><i>' + CRITICAS.length + ' condutas que não dão tempo de procurar</i></span></a>' +
       '<a class="urg" href="#doses"><span class="urg-ico">' + ICO('seringa') + '</span>' +
-        '<span class="urg-txt"><b>Doses de emergência</b><i>' + DOSES_GRUPOS.length + ' situações</i></span></a>' +
+        '<span class="urg-txt"><b>Doses de emergência</b><i>' + DOSES_GRUPOS.length + ' situações por área</i></span></a>' +
       '<a class="urg" href="#eletrolitos"><span class="urg-ico">' + ICO('gota') + '</span>' +
-        '<span class="urg-txt"><b>Eletrólitos</b><i>correção e vazão</i></span></a>' +
+        '<span class="urg-txt"><b>Eletrólitos</b><i>' + (typeof Eletrolitos !== 'undefined' ? Eletrolitos.itens.length : 7) + ' ferramentas de diluição</i></span></a>' +
       '</div>';
   }
 
@@ -1092,7 +1093,7 @@
       CATEGORIAS.map(function (c) {
         var l = listaArea(c.id);
         if (!l.length) return '';
-        return tile('#' + c.id, c.icone, c.nome, '', '');
+        return tile('#' + c.id, c.icone, c.nome, '', '', l.length + (l.length === 1 ? ' conduta' : ' condutas'));
       }).join('') + '</div></div>';
 
     /* ferramentas, segundo nível */
