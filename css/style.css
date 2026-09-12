@@ -1954,6 +1954,13 @@ body.banc-cheia #btnBancTop::after{content:"";position:absolute;top:6px;right:6p
 .pp-copiar .ico{width:18px;height:18px}
 .pp-copiar span{font-size:12px;font-weight:600;opacity:.8;
   border-left:1px solid rgba(255,255,255,.4);padding-left:10px;margin-left:2px}
+.pp-imprimir{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-height:50px;padding:0 18px;border:1.5px solid var(--acento);border-radius:9px;
+  background:var(--card);color:var(--acento);cursor:pointer;
+  font-family:inherit;font-size:15px;font-weight:700}
+.pp-imprimir:hover{background:var(--acento-suave)}
+.pp-imprimir .ico{width:18px;height:18px}
+.pp-imprimir[disabled]{opacity:.4;cursor:not-allowed}
 .pp-sec{display:inline-flex;align-items:center;justify-content:center;width:50px;min-height:50px;
   border:1px solid var(--line-forte);border-radius:9px;background:var(--card);
   color:var(--steel);cursor:pointer;text-decoration:none}
@@ -2482,3 +2489,56 @@ a.ga-nome:hover{color:var(--acento)}
   .ga-quando{display:none}
 }
 @media print{ .chips-grupo{display:none} .ga-grade{display:block} }
+
+
+/* ===========================================================
+   PRESCRIÇÕES — copiar e imprimir em um toque
+   =========================================================== */
+
+/* atalhos no cartão fechado: não precisa abrir o quadro para copiar */
+.q-rapido{display:flex;gap:7px;padding:0 14px 12px}
+.ferr-quadro.aberto .q-rapido{display:none}
+.qr-btn{display:inline-flex;align-items:center;gap:7px;min-height:36px;padding:0 13px;
+  border:1px solid var(--line-forte);border-radius:8px;background:var(--card);
+  color:var(--ink-2,var(--ink));cursor:pointer;
+  font-family:'Inter',system-ui,sans-serif;font-size:13px;font-weight:600}
+.qr-btn:hover{border-color:var(--acento);color:var(--acento);background:var(--acento-suave)}
+.qr-btn .ico{width:15px;height:15px}
+
+@media(max-width:520px){
+  .pp-imprimir{padding:0 14px;font-size:14px}
+  .q-rapido{padding:0 12px 11px}
+  .qr-btn{flex:1;justify-content:center}
+}
+
+/* --- folha de receituário --- */
+@media print{
+  #ferrImpressao .fi-topo{display:flex;align-items:flex-end;justify-content:space-between;
+    gap:16pt;padding-bottom:6pt;border-bottom:1pt solid #000;margin-bottom:12pt}
+  #ferrImpressao .fi-topo h1{margin:0;border:0;padding:0;font-size:17pt}
+  #ferrImpressao .fi-sub{margin:2pt 0 0;font-size:10pt;color:#333}
+  #ferrImpressao .fi-meta{display:flex;flex-direction:column;align-items:flex-end;
+    gap:2pt;font-size:9.5pt;color:#333;white-space:nowrap}
+  #ferrImpressao .fi-paciente{display:flex;align-items:flex-end;gap:8pt;
+    margin-bottom:14pt;font-size:9.5pt;color:#333}
+  #ferrImpressao .fi-linha{flex:1;border-bottom:.75pt solid #000;height:12pt}
+  #ferrImpressao .fi-linha.curta{flex:0 0 90pt}
+  #ferrImpressao .fi-assina{margin-top:34pt;display:flex;flex-direction:column;
+    align-items:center;gap:3pt;width:250pt;margin-left:auto;margin-right:auto}
+  #ferrImpressao .fi-assina .fi-linha{width:100%;flex:none}
+  #ferrImpressao .fi-rot{font-size:9pt;color:#333}
+  @page{margin:16mm 14mm}
+}
+
+/* ===== prescrição simples: sem caixas de marcar, chips nem "adicionar";
+   quem quiser ajustar liga "Ajustes na prescrição" nos Ajustes ===== */
+body:not(.rx-ajustes) .pp-item input[type="checkbox"],
+body:not(.rx-ajustes) .pp-todos,
+body:not(.rx-ajustes) .pp-chips,body:not(.rx-ajustes) .pp-chip,
+body:not(.rx-ajustes) .rx-mexido,
+body:not(.rx-ajustes) details.sint,
+body:not(.rx-ajustes) .pp-copiar>span{display:none!important}
+body:not(.rx-ajustes) .pp-item{cursor:default;padding:9px 4px}
+body:not(.rx-ajustes) .pp-item:hover{background:none}
+body:not(.rx-ajustes) .pp-item.fora{opacity:1}
+body:not(.autor) .ferr-barra[data-ctx="quadros"]{display:none}

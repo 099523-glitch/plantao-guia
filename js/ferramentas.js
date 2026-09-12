@@ -1745,9 +1745,9 @@
     h += '<div class="pp-barra">' +
       '<button type="button" class="pp-copiar" data-acao="proto-copiar" data-id="' + esc(q.id) + '"' +
         (n ? '' : ' disabled') + '>' + ICO('copiar') +
-        ' Copiar prescrição<span>' + n + (n === 1 ? ' item' : ' itens') + '</span></button>' +
-      '<button type="button" class="pp-sec" data-acao="proto-imprimir" data-id="' + esc(q.id) + '"' +
-        (n ? '' : ' disabled') + ' title="Imprimir">' + ICO('laudo') + '</button>' +
+        ' Copiar<span>' + n + (n === 1 ? ' item' : ' itens') + '</span></button>' +
+      '<button type="button" class="pp-imprimir" data-acao="proto-imprimir" data-id="' + esc(q.id) + '"' +
+        (n ? '' : ' disabled') + '>' + ICO('laudo') + ' Imprimir</button>' +
       '<button type="button" class="pp-sec" data-acao="proto-rascunho" data-id="' + esc(q.id) + '"' +
         (n ? '' : ' disabled') + ' title="Enviar ao rascunho">' + ICO('empilhar') + '</button>' +
       (q.conduta ? '<a class="pp-sec ver" href="#' + esc(q.conduta) + '" title="Ver a conduta">' +
@@ -1843,9 +1843,15 @@
               '<span class="atb-n">' + n + (n === 1 ? ' item' : ' itens') + '</span>' +
               '<span class="ferr-calc-seta">' + ICO(aberto ? 'setaBai' : 'setaDir') + '</span>' +
             '</button>' +
+            '<div class="q-rapido">' +
+              '<button type="button" class="qr-btn" data-acao="proto-copiar" data-id="' + esc(q.id) + '">' +
+                ICO('copiar') + ' Copiar</button>' +
+              '<button type="button" class="qr-btn" data-acao="proto-imprimir" data-id="' + esc(q.id) + '">' +
+                ICO('laudo') + ' Imprimir</button>' +
+            '</div>' +
             '<div class="ferr-card-acoes">' +
-              '<button type="button" title="Editar" data-acao="quadro-editar" data-id="' + esc(q.id) + '"'+ICO('lapis')+'</button>' +
-              '<button type="button" title="Apagar" data-acao="quadro-apagar" data-id="' + esc(q.id) + '"'+ICO('fechar')+'</button>' +
+              '<button type="button" title="Editar" data-acao="quadro-editar" data-id="' + esc(q.id) + '">'+ICO('lapis')+'</button>' +
+              '<button type="button" title="Apagar" data-acao="quadro-apagar" data-id="' + esc(q.id) + '">'+ICO('fechar')+'</button>' +
             '</div>' +
             (aberto ? corpoProto(q) : '') +
           '</article>';
@@ -2585,14 +2591,35 @@
     if (h === 'atb' || secaoDe(h)) return h;
     return abaAtual;
   }
-  /* imprime só a prescrição, numa folha limpa */
-  function imprimir(titulo, texto) {
+  /* imprime só a prescrição, em folha de receituário */
+  function imprimir(titulo, texto, sub) {
     var velha = document.getElementById('ferrImpressao');
     if (velha) velha.remove();
+    var el = document.getElementById('peso');
+    var kg = el && el.value ? el.value : '';
+    var agora = new Date();
+    var dd = String(agora.getDate()).padStart(2, '0') + '/' +
+      String(agora.getMonth() + 1).padStart(2, '0') + '/' + agora.getFullYear();
+    var hh = String(agora.getHours()).padStart(2, '0') + ':' +
+      String(agora.getMinutes()).padStart(2, '0');
     var d = document.createElement('div');
     d.id = 'ferrImpressao';
-    d.innerHTML = '<h1>' + esc(titulo) + '</h1>' +
+    d.innerHTML =
+      '<header class="fi-topo">' +
+        '<div class="fi-tit"><h1>' + esc(titulo) + '</h1>' +
+          (sub ? '<p class="fi-sub">' + esc(sub) + '</p>' : '') + '</div>' +
+        '<div class="fi-meta"><span>' + dd + ' · ' + hh + '</span>' +
+          (kg ? '<span>Peso: <b>' + esc(kg) + ' kg</b></span>' : '') + '</div>' +
+      '</header>' +
+      '<div class="fi-paciente">' +
+        '<span>Paciente</span><span class="fi-linha"></span>' +
+        '<span>Registro</span><span class="fi-linha curta"></span>' +
+      '</div>' +
       '<pre>' + esc(texto) + '</pre>' +
+      '<div class="fi-assina">' +
+        '<span class="fi-linha"></span>' +
+        '<span class="fi-rot">Assinatura e CRM</span>' +
+      '</div>' +
       '<footer>Conferir peso, alergias, função renal e a padronização do serviço antes de administrar.</footer>';
     document.body.appendChild(d);
     document.body.classList.add('imprimindo');
@@ -2763,7 +2790,7 @@
     }
     if (acao === 'proto-imprimir') {
       var q2p = quadroDe(id);
-      if (q2p) imprimir(q2p.nome + (q2p.sub ? ' — ' + q2p.sub : ''), textoProto(q2p));
+      if (q2p) imprimir(q2p.nome, textoProto(q2p), q2p.sub);
       return;
     }
     if (acao === 'proto-rascunho') {
