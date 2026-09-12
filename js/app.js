@@ -187,13 +187,6 @@
            '\n\n(conferir dose, peso e alergias na diretriz vigente)';
   }
 
-  function ficha(p) {
-    if (!p.ficha || !p.ficha.length) return '';
-    return '<div class="spec"><div class="spec-head">Ficha rápida</div><dl>' +
-      p.ficha.map(function (f) {
-        return '<dt>' + esc(f.rotulo) + '</dt><dd>' + rico(f.valor) + '</dd>';
-      }).join('') + '</dl></div>';
-  }
 
   /* ---------- indice de busca: varre a conduta INTEIRA ----------
      Sem isto, procurar "amiodarona" ou "noradrenalina" nao acha nada,
@@ -378,10 +371,26 @@
       ' aria-label="' + esc(rotuloBloco(sec)) + ' — ' + (d ? 'abrir' : 'fechar') + '">' + html + '</div>';
   }
 
+  /* ordem única de leitura em todo o guia: o que fazer primeiro, depois o
+     fluxograma, depois doses, e só então red flags, não fazer e o resto —
+     na ordem em que foram escritos. Sort estável: empates não trocam. */
+  var POSICAO = { passos:0, ordem:0, fluxo:1, doses:2, alerta:3 };
+  function ordenaSecoes(secoes) {
+    return (secoes || []).map(function (sec, i) { return { sec: sec, i: i }; })
+      .sort(function (a, b) {
+        var pa = POSICAO[a.sec.tipo], pb = POSICAO[b.sec.tipo];
+        if (pa === undefined) pa = 4;
+        if (pb === undefined) pb = 4;
+        return pa - pb || a.i - b.i;
+      })
+      .map(function (x) { return x.sec; });
+  }
+
   function corpoProtocolo(p) {
     var secoes = p.secoes || [];
-    var html = ficha(p);
-    html += secoes.map(dobravel).join('');
+    /* a ficha rápida (p.ficha) não é mais mostrada: a conduta abre direto
+       no que fazer e no fluxograma */
+    var html = ordenaSecoes(secoes).map(dobravel).join('');
     if (!(p.ficha || []).length && !secoes.length) {
       html += '<div class="pendente">Conduta ainda não preenchida.</div>';
     }
@@ -598,8 +607,6 @@
     var lista = d ? listaSub(d.sub) : listaArea(p.categoria);
     if (lista.indexOf(p) === -1) lista = porCategoria(p.categoria);
     var pi    = lista.indexOf(p);
-    var ant   = lista[pi - 1];
-    var prox  = lista[pi + 1];
     var g     = p.gravidade || 'rotina';
 
     var trilha = '<a class="voltar" href="#' + esc(c.id) + '">' + ICO('setaEsq') + ' ' + esc(c.nome) + '</a>';
@@ -633,10 +640,7 @@
       'apresentação e diretriz vigente antes de prescrever.' +
       (p.fonte ? ' <b>Referência:</b> ' + esc(p.fonte) + '.' : '') + '</span></p>';
 
-    html += '<nav class="solo-nav">' +
-      (ant  ? '<a href="' + esc(hrefConduta(ant))  + '"><b>&larr; anterior</b>' + esc(ant.titulo)  + '</a>' : '<span></span>') +
-      (prox ? '<a class="dir" href="' + esc(hrefConduta(prox)) + '"><b>próxima &rarr;</b>' + esc(prox.titulo) + '</a>' : '<span></span>') +
-    '</nav></section>';
+    html += '</section>';
 
     doc.innerHTML = html;
   }
@@ -784,8 +788,8 @@
       (q.agora || []).map(function (x) { return '<li>' + rico(x) + '</li>'; }).join('') +
       '</ol></div>';
 
-    /* 2. o corpo: red flags, fluxograma, exames, não fazer, reavaliar, destino */
-    html += (q.secoes || []).map(dobravel).join('');
+    /* 2. o corpo: fluxograma, red flags, exames, não fazer, reavaliar, destino */
+    html += ordenaSecoes(q.secoes).map(dobravel).join('');
 
     /* 3. ferramentas ligadas */
     if ((q.atalhos || []).length) {
@@ -969,28 +973,98 @@
     doc.innerHTML = html + '</section>';
   }
 
-  /* ---------- tela inicial: a busca e a porta de entrada ---------- */
+  /* ---------- tela inicial ----------
+     Saudação com o nome do médico, busca, as funcionalidades do guia
+     em cartões (com contagem viva), queixas, o que ele estava vendo e
+     as áreas. Nada escondido em acordeão. */
+  function nomeMedico() {
+    var n = ler('pref:nome', '');
+    return typeof n === 'string' ? n.trim() : '';
+  }
+  function saudacao() {
+    var h = new Date().getHours();
+    return h < 5 ? 'Boa madrugada' : h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
+  }
+  function dataHoje() {
+    var d = new Date();
+    var dias = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
+    var meses = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+    var t = dias[d.getDay()] + ', ' + d.getDate() + ' de ' + meses[d.getMonth()];
+    return t.charAt(0).toUpperCase() + t.slice(1);
+  }
+  function contaCalc(tipo) {
+    if (typeof FERR_CALC === 'undefined') return 0;
+    return FERR_CALC.filter(function (c) { return c.tipo === tipo; }).length;
+  }
+  /* os dados são const de escopo global, não propriedades de window */
+  function tam(lista) { return typeof lista !== 'undefined' && lista ? lista.length : 0; }
+
+  function funcionalidades() {
+    var lista = [
+      { href:'#critico', icone:'perigo', nome:'Sala vermelha', classe:'critico',
+        sub:'As condutas em que a primeira decisão vale mais que a leitura',
+        n: CRITICAS.length + ' condutas' },
+      { href:'#queixa', icone:'porta', nome:'Queixas',
+        sub:'Porta de entrada por sintoma, antes do diagnóstico',
+        n: (temQueixas() ? QUEIXAS.length : 0) + ' queixas' },
+      { href:'#' + CATEGORIAS[0].id, icone:'livro', nome:'Guia clínico',
+        sub:'Fluxograma, red flags, doses e destino de cada conduta',
+        n: progresso(PROTOCOLOS) + ' condutas · ' + CATEGORIAS.length + ' áreas' },
+      { href:'#doses', icone:'seringa', nome:'Doses de emergência',
+        sub:'As drogas que não dão tempo de procurar, por situação',
+        n: DOSES_GRUPOS.length + ' situações' },
+      { href:'#presc', icone:'receita', nome:'Prescrições',
+        sub:'Por quadro clínico, prontas para copiar em dois cliques',
+        n: tam(typeof FERR_QUADROS !== 'undefined' ? FERR_QUADROS : null) + ' quadros' },
+      { href:'#atb', icone:'micro', nome:'Antibióticos',
+        sub:'Esquemas empíricos por sítio de infecção',
+        n: tam(typeof FERR_ATB !== 'undefined' ? FERR_ATB : null) + ' esquemas' },
+      { href:'#pediatria', icone:'crianca', nome:'Pediatria',
+        sub:'Dose por quilo calculada e vetos por idade',
+        n: tam(typeof FERR_PEDIA !== 'undefined' ? FERR_PEDIA : null) + ' medicações' },
+      { href:'#scores', icone:'grafico', nome:'Scores',
+        sub:'Escores clínicos com interpretação',
+        n: contaCalc('escore') + ' escores' },
+      { href:'#calc', icone:'calc', nome:'Calculadoras',
+        sub:'As contas do plantão: gotejamento, correções, conversões',
+        n: contaCalc('formula') + ' contas' },
+      { href:'#prontuario', icone:'prontuar', nome:'Prontuário',
+        sub:'Anamnese, manobras, conduta, evasão e laudos',
+        n: 'textos prontos' }
+    ];
+    return lista.map(function (f) {
+      return '<a class="fn-cartao' + (f.classe ? ' ' + f.classe : '') + '" href="' + esc(f.href) + '">' +
+        '<span class="fn-ico">' + ICO(f.icone) + '</span>' +
+        '<span class="fn-corpo"><b>' + esc(f.nome) + '</b><span>' + esc(f.sub) + '</span></span>' +
+        '<span class="fn-n">' + esc(f.n) + '</span>' +
+        '<span class="fn-seta">' + ICO('setaDir') + '</span></a>';
+    }).join('');
+  }
+
   function renderHome() {
     var favs = favoritas.map(acharConduta).filter(Boolean);
     var recs = recentes().map(acharConduta).filter(Boolean)
       .filter(function (p) { return favoritas.indexOf(p.id) === -1; });
+    var nome = nomeMedico();
 
-    /* a busca é o campo do topo; aqui só a chamada */
     var html = '<section class="phase home">' +
       '<div class="home-hero">' +
-        '<h1>O que você precisa agora?</h1>' +
+        '<p class="home-data">' + esc(dataHoje()) + '</p>' +
+        '<h1>' + esc(saudacao()) + (nome ? ', ' + esc(nome) : '') + '</h1>' +
+        '<p class="home-sub">O que você precisa agora?</p>' +
         '<button type="button" class="home-dica" data-foco="busca">' +
-          ICO('lupa') + '<span>Buscar sintoma, conduta ou medicamento</span>' +
-          '<kbd>/</kbd></button>' +
-      '</div>';
+          ICO('lupa') + '<span>Buscar sintoma, conduta, droga ou dose</span>' +
+          '<kbd>/</kbd></button>';
+    if (!nome) {
+      html += '<form class="home-nome" data-form-nome>' +
+        '<label for="campoNome">Como quer ser chamado?</label>' +
+        '<input id="campoNome" type="text" maxlength="40" autocomplete="off" placeholder="Dr. Gustavo">' +
+        '<button type="submit" class="ferr-btn forte">Salvar</button></form>';
+    }
+    html += '</div>';
 
-    /* sala vermelha: cartão, não cápsula */
-    html += '<a class="home-critico" href="#critico">' +
-      '<span class="hc-ico">' + ICO('perigo') + '</span>' +
-      '<span class="hc-corpo"><b>Sala vermelha</b>' +
-        '<span>As condutas em que a primeira decisão vale mais que a leitura</span></span>' +
-      '<span class="hc-n">' + CRITICAS.length + ' condutas</span>' +
-      ICO('setaDir') + '</a>';
+    /* as funcionalidades, todas à vista */
+    html += '<div class="home-sec"><h3>O guia</h3><div class="fn-grade">' + funcionalidades() + '</div></div>';
 
     /* todas as queixas de cara: é a porta de entrada mais usada */
     if (temQueixas()) {
@@ -1023,23 +1097,8 @@
       html += '</div>';
     }
 
-    /* o resto fica acessível, sem disputar espaço com a busca */
-    html += '<details class="home-resto"><summary>' + ICO('menu') +
-      '<span>Ferramentas e áreas do guia</span>' + ICO('setaBai') + '</summary>' +
-      '<div class="home-sec"><h3>Ferramentas</h3><div class="home-grade">' +
-      (temFerramentas() ? Ferramentas.secoes.map(function (sec) {
-        return '<a class="home-cartao destaque" href="#' + sec.id + '">' +
-          '<span class="hc-emoji">' + ICO(sec.icone) + '</span>' +
-          '<span class="hc-nome">' + esc(sec.nome) + '</span></a>';
-      }).join('') : '') +
-      '<a class="home-cartao destaque" href="#doses">' +
-        '<span class="hc-emoji">' + ICO('seringa') + '</span>' +
-        '<span class="hc-nome">Doses de emergência</span></a>' +
-      '<a class="home-cartao destaque" href="#atb">' +
-        '<span class="hc-emoji">' + ICO('micro') + '</span>' +
-        '<span class="hc-nome">Antibióticos</span></a>' +
-      '</div></div>' +
-      '<div class="home-sec"><h3>Áreas do guia</h3><div class="home-grade areas">' +
+    /* as áreas do guia, sempre à vista */
+    html += '<div class="home-sec"><h3>Áreas do guia</h3><div class="home-grade areas">' +
       CATEGORIAS.map(function (c, ci) {
         var l = listaArea(c.id);
         if (!l.length) return '';
@@ -1047,10 +1106,22 @@
           '<span class="hc-num">' + dois(ci + 1) + '</span>' +
           '<span class="hc-nome">' + esc(c.nome) + '</span>' +
           '<span class="hc-sub">' + l.length + ' condutas</span></a>';
-      }).join('') + '</div></div></details>';
+      }).join('') + '</div></div>';
 
     doc.innerHTML = html + '</section>';
   }
+
+  /* o nome salvo pela home */
+  doc.addEventListener('submit', function (e) {
+    var f = e.target.closest('[data-form-nome]');
+    if (!f) return;
+    e.preventDefault();
+    var v = (f.querySelector('input').value || '').trim();
+    if (!v) return;
+    grava('pref:nome', v);
+    if (window.UI && UI.aviso) UI.aviso('Salvo');
+    render();
+  });
 
   /* ---------- favoritas ---------- */
   function renderFavoritas() {

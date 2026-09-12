@@ -47,7 +47,7 @@ Prescrições · Antibióticos · Mais — "Mais" abre a gaveta com o sumário i
 nada fica escondido).
 
 ```
-#                         início: busca, sala vermelha, queixas, favoritas, recentes, seções, áreas
+#                         início: saudação (nome em Ajustes), busca, funcionalidades, queixas, favoritas, recentes, áreas
 #queixa · #queixa/<id>    queixas — porta de entrada por sintoma
 #critico                  sala vermelha
 #doses                    doses de emergência
@@ -68,9 +68,12 @@ Rotas antigas continuam válidas: `#presc/oral|im|ev|especiais` caem em
 
 ## Ordem clínica de uma conduta
 
-Preservada e **sem acordeões**: ficha rápida → **fluxograma** → red flags →
-passo a passo → doses → demais blocos → prescrição mínima (quando existe nos
-dados). Fluxogramas ficam visíveis por padrão, na posição original.
+Igual em todo o guia, condutas e queixas (`ordenaSecoes` em app.js):
+**o que fazer** (Fazer agora / passo a passo / ordem) → **fluxograma** →
+doses → red flags → não fazer → demais blocos, na ordem em que foram escritos
+→ prescrição mínima. A ficha rápida (`p.ficha`) não é mais exibida e a
+navegação anterior/próxima saiu do pé da conduta. Fluxogramas ficam sempre
+visíveis e nunca dobram.
 
 ### Dobrar um bloco
 

@@ -257,6 +257,14 @@
   });
   liga('optConferir', 'conferir', false);
 
+  /* nome do médico: aparece na saudação da home */
+  var campoNome = $('optNome');
+  campoNome.value = pref('nome', '');
+  campoNome.addEventListener('change', function () {
+    grava('pref:nome', campoNome.value.trim());
+    if (window.Guia) Guia.prefMudou();
+  });
+
   /* =========================================================
      BACKUP DAS EDICOES
      ========================================================= */

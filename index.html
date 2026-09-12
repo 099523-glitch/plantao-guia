@@ -115,6 +115,10 @@ try{if(localStorage.getItem('tema')==='escuro'){document.documentElement.dataset
     <button type="button" class="icone" id="btnAjustesX" aria-label="Fechar"></button>
   </div>
   <div class="painel-corpo">
+    <label class="ferr-campo nome-medico">
+      <span>Como quer ser chamado</span>
+      <input type="text" id="optNome" maxlength="40" autocomplete="off" placeholder="Dr. Gustavo">
+    </label>
     <label class="opcao">
       <input type="checkbox" id="optAutor">
       <span><b>Modo autor</b>Mostra as condutas ainda não preenchidas e o contador de progresso. Desligado, o guia só exibe o que já está pronto.</span>
