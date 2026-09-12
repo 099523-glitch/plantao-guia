@@ -2854,3 +2854,67 @@ body:not(.autor) .ferr-barra[data-ctx="quadros"]{display:none}
 .peso-campo{border-color:var(--line-forte)}
 .peso-campo:focus-within{border-color:var(--acento);box-shadow:0 0 0 3px var(--acento-suave)}
 .topo-busca .busca:focus{border-color:var(--acento);box-shadow:0 0 0 3px var(--acento-suave)}
+
+
+/* ===========================================================
+   TABELA DE DOSES — planilha clínica, não página de livro
+   O que dava cara de livro: observação em linha de 900 px,
+   fio contínuo de ponta a ponta em cada linha e a dose com o
+   mesmo peso do texto corrido. Aqui a dose manda, a observação
+   ganha medida de leitura e a grade fica densa.
+   =========================================================== */
+
+.dz-quadro{border-radius:8px;margin-bottom:10px}
+.dz-titulo{padding:8px 12px;font-size:13px;font-weight:700;letter-spacing:-.01em}
+
+.dz-tab{font-size:13px;table-layout:fixed}
+.dz-tab thead th{padding:7px 12px;background:var(--paper);
+  border-bottom:1px solid var(--line-forte);
+  font-family:'Inter',system-ui,sans-serif;font-size:9.5px;font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--steel);
+  width:auto;min-width:0;vertical-align:middle}
+.dz-tab thead th:nth-child(1){width:210px}
+.dz-tab thead th:nth-child(2){width:200px}
+.dz-tab thead th:nth-child(3){width:64px}
+
+/* zebrado no lugar do fio em cada linha */
+.dz-tab tbody tr{border-bottom:0}
+.dz-tab tbody tr:nth-child(even){background:var(--paper)}
+.dz-tab tbody tr:hover{background:var(--acento-suave)}
+
+.dz-tab tbody th{width:210px;min-width:0;padding:9px 12px;vertical-align:baseline;
+  font-size:13px;font-weight:600;letter-spacing:-.005em;color:var(--ink-2,var(--ink))}
+.dz-tab tbody td{padding:9px 12px;vertical-align:baseline}
+
+/* a dose é o que se procura: mono tabular, tinta cheia */
+.dz-dose{width:200px;min-width:0;font-family:'JetBrains Mono',ui-monospace,monospace;
+  font-size:14.5px;font-weight:700;line-height:1.35;color:var(--ink);
+  font-variant-numeric:tabular-nums}
+
+/* via como selo, alinhada em coluna estreita */
+.dz-via{width:64px;min-width:0;padding:9px 0 9px 12px !important}
+.dz-via:not(:empty){font-family:'Inter',system-ui,sans-serif;font-size:10px;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--acento)}
+
+/* observação com medida de leitura — nada de linha de 900 px */
+.dz-obs{font-size:12px;line-height:1.5;color:var(--steel);max-width:52ch;text-wrap:pretty}
+.dz-obs strong{font-weight:700;color:var(--ink-2,var(--ink))}
+
+.dz-sub{margin:14px 0 2px;padding:0 0 0 2px;font-size:10px;letter-spacing:.14em}
+
+@media(max-width:1000px){
+  .dz-tab thead th:nth-child(1),.dz-tab tbody th{width:170px}
+  .dz-tab thead th:nth-child(2),.dz-dose{width:160px}
+}
+@media(max-width:760px){
+  .dz-tab thead{display:none}
+  .dz-tab tbody tr{display:grid;grid-template-columns:minmax(0,1fr) auto;
+    gap:1px 10px;padding:10px 12px;border-bottom:1px solid var(--line)}
+  .dz-tab tbody th{grid-column:1;padding:0;font-size:12px;font-weight:700;
+    letter-spacing:.04em;color:var(--steel)}
+  .dz-tab tbody td{padding:0}
+  .dz-dose{grid-column:1;width:auto;font-size:15.5px}
+  .dz-via{grid-column:2;grid-row:1 / span 2;align-self:center;justify-self:end;
+    width:auto;padding:0 !important}
+  .dz-obs{grid-column:1 / -1;max-width:none;margin-top:3px}
+}

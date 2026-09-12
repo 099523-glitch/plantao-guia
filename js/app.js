@@ -1015,7 +1015,9 @@
           esc(p.titulo) + ICO('setaDir') + '</a>' +
         blocos.map(function (sec) {
           return (sec.titulo ? '<h4 class="dz-sub">' + esc(sec.titulo) + '</h4>' : '') +
-            '<table class="dz-tab"><tbody>' + (sec.itens || []).map(function (i) {
+            '<table class="dz-tab">' +
+            '<thead><tr><th>Droga</th><th>Dose</th><th>Via</th><th>Conferir</th></tr></thead>' +
+            '<tbody>' + (sec.itens || []).map(function (i) {
             return '<tr><th>' + rico(i.droga) + '</th>' +
               '<td class="dz-dose">' + rico(i.dose) + '</td>' +
               '<td class="dz-via">' + esc(i.via || '') + '</td>' +
