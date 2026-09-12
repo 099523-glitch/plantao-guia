@@ -512,15 +512,6 @@
   function renderSumario(resultados) {
     var emSecao = (!resultados && (modo === 'secao' || modo === 'atb'));
 
-    /* na home o sumário é o do mock: só as áreas, numeradas */
-    if (!resultados && modo === 'home') {
-      toc.innerHTML = '<div class="nav-g sum-home"><span class="nav-t">Sumário</span>' +
-        CATEGORIAS.map(function (c, ci) {
-          if (!listaArea(c.id).length && !modoAutor()) return '';
-          return '<a href="#' + esc(c.id) + '"><span class="n">' + dois(ci + 1) + '</span>' + esc(c.nome) + '</a>';
-        }).join('') + '</div>';
-      return;
-    }
 
     /* 1. acesso rápido */
     var html = '<div class="nav-g"><span class="nav-t">Acesso rápido</span>';
@@ -559,7 +550,7 @@
 
     /* 3. guia clínico: recolhido por padrão */
     var noGuia = (!resultados && (modo === 'guia' || condutaAtual));
-    var abreGuia = noGuia || guiaAberto;
+    var abreGuia = noGuia || guiaAberto || (!resultados && modo === 'home');
     html += '<div class="nav-g guia">' +
       '<button type="button" class="nav-t bt" data-abre-guia aria-expanded="' + (abreGuia ? 'true' : 'false') + '">' +
         '<span>Guia clínico</span><i>' + PROTOCOLOS.filter(preenchida).length + '</i>' +
