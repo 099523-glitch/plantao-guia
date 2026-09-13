@@ -250,6 +250,7 @@
   var areaAtual    = CATEGORIAS[0].id;
   var condutaAtual = null;     // id da conduta aberta sozinha, ou null
   var dosesGrupo   = null;     // grupo aberto em #doses/<grupo>
+  var drogaAtual   = null;     // verbete aberto em #droga/<slug>
   var termoBusca   = '';
   var modo         = 'home';   // 'home' | 'guia' | 'ferramentas' | 'atb' | 'favoritas'
   var abaFerr      = null;     // sub-aba das ferramentas
@@ -842,6 +843,14 @@
     cacheIxQ[q.id] = { cru: cruTxt, norm: normaliza(cruTxt) };
     return cacheIxQ[q.id];
   }
+  function buscaDrogas(termos) {
+    if (!termos || !termos.length) return [];
+    return indiceDrogas().filter(function (d) {
+      var ix = normaliza(d.nome + ' ' + Object.keys(d.sin).join(' ') + ' ' + Object.keys(d.apres).join(' ') +
+        ' ' + d.usos.map(function (u) { return u.rotulo; }).join(' '));
+      return termos.every(function (t) { return casaTolerante(ix, t); });
+    });
+  }
   function buscaQueixas(termos) {
     if (!temQueixas() || !termos || !termos.length) return [];
     return QUEIXAS.filter(function (q) {
@@ -994,6 +1003,171 @@
     return (p.secoes || []).filter(function (s) { return s.tipo === 'doses'; });
   }
 
+  /* ---------- índice de drogas ----------
+     Também derivado: varre as seções `doses` de todas as condutas e
+     junta cada droga num verbete só, com um uso por situação. */
+  var cacheDrogas = null;
+
+  /* mesma droga, grafias diferentes: vira um verbete só */
+  var ALIAS_DROGA = {
+    'aas':'acido-acetilsalicilico', 'asa':'acido-acetilsalicilico',
+    'epinefrina':'adrenalina', 'norepinefrina':'noradrenalina',
+    'nora':'noradrenalina', 'noradrenalina-norepinefrina':'noradrenalina',
+    'atc':'acido-tranexamico', 'txa':'acido-tranexamico',
+    'nac':'n-acetilcisteina', 'acetilcisteina':'n-acetilcisteina',
+    'hco3':'bicarbonato-de-sodio', 'bicarbonato':'bicarbonato-de-sodio',
+    'sf':'soro-fisiologico', 'sf-a':'soro-fisiologico', 'salina':'soro-fisiologico',
+    'rl':'ringer-lactato', 'ringer':'ringer-lactato',
+    'sg':'soro-glicosado', 'glicose-hipertonica':'glicose',
+    'kcl':'cloreto-de-potassio', 'nacl':'cloreto-de-sodio',
+    'mgso':'sulfato-de-magnesio', 'sulfato-de-mg':'sulfato-de-magnesio',
+    'hidrocortisona-succinato':'hidrocortisona', 'metilpred':'metilprednisolona',
+    'dva':'droga-vasoativa', 'o':'oxigenio', 'oxigenio-suplementar':'oxigenio'
+  };
+  /* o que não é droga: procedimento, unidade solta, fragmento */
+  var RE_NAO_DROGA = new RegExp('^(acesso|cardiovers|desfibril|intuba|punc|puncao|manobra|massagem|' +
+    'compress|monitoriz|marca-?passo|sonda|dreno|toracocentese|pericardiocentese|' +
+    'lavagem|aquecimento|imobiliza|curativo|sutura|exame|ecg|glasgow|repouso|' +
+    'jejum|hidrata|dieta|elevar|cabeceira|considerar|avaliar|se |quando |apos |ate )', 'i');
+
+  /* "Adrenalina 1:10.000 (epinefrina)" -> chave "adrenalina" */
+  function baseDroga(nome) {
+    var s = String(nome || '').replace(/\*/g, '').replace(/\([^)]*\)/g, ' ');
+    s = s.split(/\s+[—–-]\s+/)[0];
+    s = s.replace(/\b\d[\d.,:/%]*\s*(mg|g|mcg|ui|u|ml|%)?\b/gi, ' ');
+    s = s.replace(/\b(ampola|frasco|comprimido|solu[cç][aã]o|hipert[oô]nica|a\s*\d+%)\b/gi, ' ');
+    s = s.replace(/\s+/g, ' ').trim();
+    /* "Adrenalina em infusão", "Adrenalina IM", "Adrenalina nebulizada"
+       são a MESMA droga: o qualificador vira forma de uso, não verbete */
+    var qual = new RegExp('[\\s,]+(dilu[ií]d[ao]s?|em infus[aã]o|infus[aã]o|cont[ií]nu[ao]|' +
+      'nebulizad[ao]|inalat[oó]ri[ao]|aeross?ol|spray|t[oó]pic[ao]|' +
+      'im|ev|iv|vo|sc|io|sl|ir|in|endovenos[ao]|intramuscular|subcut[aâ]ne[ao]|' +
+      'lent[ao]|r[aá]pid[ao]|em bolus|bolus|de ataque|ataque|manuten[cç][aã]o|' +
+      'de resgate|resgate|profil[aá]tic[ao]|dobro|puro)$', 'i');
+    for (var k = 0; k < 4; k++) {
+      var antes = s;
+      s = s.replace(qual, '').trim();
+      if (s === antes) break;
+    }
+    return s;
+  }
+  function slugDroga(nome) {
+    var s = normaliza(baseDroga(nome)).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    return ALIAS_DROGA[s] || s;
+  }
+  /* serve de verbete? precisa parecer nome de droga */
+  function ehDroga(nome) {
+    var b = baseDroga(nome);
+    if (b.length < 4) return false;
+    if (b.indexOf('/') !== -1 || b.indexOf('%') !== -1) return false;
+    if (!/^[A-ZÁÂÃÀÉÊÍÓÔÕÚÇ]/.test(b)) return false;
+    if (b.split(/\s+/).length > 5) return false;
+    if (b.indexOf(',') !== -1) return false;
+    if (/\s+(e|ou|\+|com)\s+/i.test(b)) return false;
+    return !RE_NAO_DROGA.test(normaliza(b));
+  }
+  /* separa da observação o que é preparo/diluição do que é cuidado */
+  var RE_PREPARO = /(dilu|bic|bomba|seringa|ampola|frasco|mcg\/m|mg\/m|ml\/h|correr|infund|flush|soro|\bsf\b|\bsg\b|sg\s*\d|sf\s*0|\d+\s*ml|bolus lento|em\s*\d+\s*min)/i;
+  function fatiaObs(obs) {
+    var partes = String(obs || '').split(/(?<=\.)\s+|\s*;\s*/).map(function (x) {
+      return x.replace(/\s+/g, ' ').trim();
+    }).filter(Boolean);
+    var prep = [], cuid = [];
+    partes.forEach(function (x) { (RE_PREPARO.test(x) ? prep : cuid).push(x); });
+    return { preparo: prep, cuidado: cuid };
+  }
+
+  function indiceDrogas() {
+    if (cacheDrogas) return cacheDrogas;
+    var mapa = {};
+    PROTOCOLOS.forEach(function (p) {
+      dosesDe(p).forEach(function (sec) {
+        (sec.itens || []).forEach(function (i) {
+          if (!i || !i.droga || !i.dose) return;
+          if (!ehDroga(i.droga)) return;
+          var slug = slugDroga(i.droga);
+          if (!slug) return;
+          var d = mapa[slug] || (mapa[slug] = {
+            slug: slug, nome: baseDroga(i.droga), usos: [], vias: {}, apres: {}, sin: {}
+          });
+          /* entre grafias, vence o nome escrito por extenso */
+          var nb = baseDroga(i.droga);
+          if (nb.length > d.nome.length) { d.sin[d.nome] = 1; d.nome = nb; }
+          else if (nb !== d.nome) d.sin[nb] = 1;
+          var f = fatiaObs(i.obs);
+          var gen = /^(medicac|medicament|doses|drogas|posologia|prescric)/
+            .test(normaliza(sec.titulo || ''));
+          d.usos.push({
+            conduta: p, situacao: p.titulo,
+            detalhe: (!gen && sec.titulo) ? sec.titulo : '',
+            rotulo: String(i.droga).replace(/\*/g, ''),
+            dose: i.dose, via: i.via || '', preparo: f.preparo, cuidado: f.cuidado
+          });
+          if (i.via) d.vias[i.via] = 1;
+          var ap = String(i.droga).replace(/\*/g, '').replace(baseDroga(i.droga), '').trim();
+          if (ap) d.apres[ap] = 1;
+        });
+      });
+    });
+    cacheDrogas = Object.keys(mapa).map(function (k) { return mapa[k]; })
+      .filter(function (d) { return d.nome.length > 2; })
+      .sort(function (a, b) { return normaliza(a.nome) < normaliza(b.nome) ? -1 : 1; });
+    return cacheDrogas;
+  }
+  function acharDroga(slug) {
+    var l = indiceDrogas();
+    for (var i = 0; i < l.length; i++) if (l[i].slug === slug) return l[i];
+    return null;
+  }
+
+  /* o verbete: uma droga, um uso por situação, preparo e cuidados */
+  function renderDroga(slug) {
+    var d = acharDroga(slug);
+    if (!d) { renderDoses(); return; }
+    var vias = Object.keys(d.vias), apres = Object.keys(d.apres), sin = Object.keys(d.sin);
+
+    var html = '<section class="phase">' +
+      '<a class="voltar" href="#doses">' + ICO('setaEsq') + ' Doses de emergência</a>' +
+      '<div class="dg-head">' +
+        '<h2>' + esc(d.nome) + (sin.length ? ' <em>' + sin.map(esc).join(' · ') + '</em>' : '') + '</h2>' +
+        '<div class="dg-meta">' +
+          (vias.length ? '<span class="dg-vias">' + vias.map(function (v) {
+            return '<i>' + esc(v) + '</i>'; }).join('') + '</span>' : '') +
+          '<span class="dg-n">' + d.usos.length +
+            (d.usos.length === 1 ? ' uso' : ' usos') + '</span>' +
+        '</div>' +
+        (apres.length ? '<p class="dg-apres">Apresentações citadas: ' +
+          apres.map(esc).join(' · ') + '</p>' : '') +
+      '</div>';
+
+    html += '<div class="dg-usos">' + d.usos.map(function (u, n) {
+      return '<article class="dg-uso">' +
+        '<header class="dgu-top">' +
+          '<span class="dgu-n">' + (n + 1) + '</span>' +
+          '<span class="dgu-sit">' + esc(u.situacao) +
+            (u.detalhe ? '<em>' + esc(u.detalhe) + '</em>' : '') + '</span>' +
+          '<a class="dgu-fonte" href="' + esc(hrefConduta(u.conduta)) + '">' +
+            'Abrir conduta' + ICO('setaDir') + '</a>' +
+        '</header>' +
+        '<div class="dgu-dose">' +
+          '<span class="dgu-valor">' + rico(u.dose) + '</span>' +
+          (u.via ? '<span class="dgu-via">' + esc(u.via) + '</span>' : '') +
+        '</div>' +
+        (u.rotulo !== d.nome ? '<p class="dgu-forma">' + esc(u.rotulo) + '</p>' : '') +
+        (u.preparo.length ? '<div class="dgu-bloco preparo"><b>Como preparar e correr</b><ul>' +
+          u.preparo.map(function (x) { return '<li>' + rico(x) + '</li>'; }).join('') +
+          '</ul></div>' : '') +
+        (u.cuidado.length ? '<div class="dgu-bloco cuidado"><b>Conferir antes</b><ul>' +
+          u.cuidado.map(function (x) { return '<li>' + rico(x) + '</li>'; }).join('') +
+          '</ul></div>' : '') +
+      '</article>';
+    }).join('') + '</div>';
+
+    html += '<p class="fonte-linha">' + ICO('alerta') +
+      ' Dose derivada da conduta de origem. Conferir peso, alergia e função renal antes de administrar.</p>';
+    doc.innerHTML = html + '</section>';
+  }
+
   /* a capa: uma grande área por cartão; dentro, as tabelas do grupo */
   function renderDoses() {
     var g = dosesGrupo && grupoDoses(dosesGrupo);
@@ -1031,28 +1205,69 @@
   }
 
   function renderDosesCapa() {
+    var drogas = indiceDrogas();
+    var porLetra = {};
+    drogas.forEach(function (d) {
+      var L = normaliza(d.nome).charAt(0).toUpperCase();
+      (porLetra[L] = porLetra[L] || []).push(d);
+    });
+    var letras = Object.keys(porLetra).sort();
+
     var html = '<section class="phase">' +
-      '<div class="phase-head"><h2>Doses de emergência</h2></div>' +
-      '<p class="ferr-lead">As drogas que não dão tempo de procurar, agrupadas por situação. Vista derivada das condutas: editar a conduta atualiza aqui.</p>' +
+      '<div class="phase-head"><h2>Doses de emergência</h2>' +
+        '<span class="phase-conta">' + drogas.length + '</span></div>' +
+      '<div class="barra-area"><span class="conta">cada droga tem seu verbete: dose por situação, como preparar e o que conferir</span></div>' +
+      '<div class="chips-grupo dg-az">' + letras.map(function (L) {
+        return '<a class="cg" href="#" data-ir-letra="' + L + '">' + L + '</a>';
+      }).join('') + '</div>';
+
+    html += letras.map(function (L) {
+      return '<div class="grupo-area" data-letra="' + L + '">' +
+        '<div class="ga-head"><span class="ga-nome">' + L + '</span>' +
+          '<span class="ga-conta">' + porLetra[L].length + '</span></div>' +
+        '<div class="ga-grade dg-grade">' + porLetra[L].map(function (d) {
+          var vias = Object.keys(d.vias).slice(0, 3);
+          return '<a class="lc dg-item" href="#droga/' + esc(d.slug) + '">' +
+            '<span class="lc-barra"></span>' +
+            '<span class="lc-txt"><span class="lc-topo"><b>' + esc(d.nome) + '</b>' +
+              (vias.length ? '<i class="dg-tag">' + vias.map(esc).join(' · ') + '</i>' : '') +
+            '</span>' +
+            '<span class="lc-sub">' + esc(d.usos.map(function (u) { return u.situacao; })
+              .filter(function (x, i, a) { return a.indexOf(x) === i; }).slice(0, 3).join(' · ')) +
+            '</span></span>' +
+            '<span class="lc-seta">' + ICO('setaDir') + '</span></a>';
+        }).join('') + '</div></div>';
+    }).join('');
+
+    html += '<div class="ga-head"><span class="ga-nome">Por situação</span></div>' +
       '<div class="tile-grade areas-home">' +
       DOSES_GRUPOS.map(function (g) {
         var n = contaGrupoDoses(g);
         if (!n) return '';
-        return tile('#doses/' + g.id, g.icone, g.nome, '', g.sub + ' · ' + n + (n === 1 ? ' conduta' : ' condutas'));
+        return tile('#doses/' + g.id, g.icone, g.nome, '', g.sub);
       }).join('') + '</div></section>';
     doc.innerHTML = html;
   }
+
+  doc.addEventListener('click', function (e) {
+    var a = e.target.closest('[data-ir-letra]');
+    if (!a) return;
+    e.preventDefault();
+    var alvo = doc.querySelector('[data-letra="' + a.getAttribute('data-ir-letra') + '"]');
+    if (alvo) window.scrollTo({ top: alvo.getBoundingClientRect().top + window.pageYOffset - 66, behavior:'smooth' });
+  });
 
   /* ---------- busca unificada: condutas + tudo das Ferramentas ---------- */
   var buscaTolerou = false;
 
   var ROTULO_TIPO = {
+    droga:'Drogas e doses',
     queixa:'Queixas',
     conduta:'Condutas', quadro:'Prescrições por quadro', antibiotico:'Antibióticos',
     score:'Scores', calculadora:'Calculadoras', medicacao:'Medicações',
     texto:'Textos prontos', manobra:'Manobras e sinais'
   };
-  var ORDEM_TIPO = ['queixa','conduta','quadro','antibiotico','score','calculadora','medicacao','texto','manobra'];
+  var ORDEM_TIPO = ['droga','queixa','conduta','quadro','antibiotico','score','calculadora','medicacao','texto','manobra'];
 
   function buscaFerramentas(termos) {
     if (!temFerramentas()) return [];
@@ -1081,7 +1296,8 @@
   function renderBusca(condutas) {
     var ferr = buscaFerramentas(ultimosTermos);
     var qxs  = buscaQueixas(ultimosTermos);
-    var total = condutas.length + ferr.length + qxs.length;
+    var drg  = buscaDrogas(ultimosTermos);
+    var total = condutas.length + ferr.length + qxs.length + drg.length;
 
     if (window.UI && UI.anuncia) {
       UI.anuncia(total + (total === 1 ? ' resultado' : ' resultados') +
@@ -1099,7 +1315,14 @@
       return;
     }
 
-    var grupos = { queixa: qxs.map(function (q) {
+    var grupos = { droga: drg.map(function (d) {
+      var vias = Object.keys(d.vias).slice(0, 3);
+      return { tipo:'droga', titulo: d.nome,
+               sub: (vias.length ? vias.join(' · ') + ' · ' : '') +
+                    d.usos.length + (d.usos.length === 1 ? ' uso' : ' usos'),
+               dose: d.usos[0] && d.usos[0].dose,
+               href: '#droga/' + d.slug };
+    }), queixa: qxs.map(function (q) {
       return { tipo:'queixa', titulo: q.nome, sub: q.sub, href: '#queixa/' + q.id };
     }), conduta: condutas.map(function (p) {
       return { tipo:'conduta', titulo:p.titulo, sub:area(p.categoria).nome,
@@ -1113,6 +1336,13 @@
       if (!l || !l.length) return;
       html += '<div class="res-grupo"><h3>' + ROTULO_TIPO[t] + '<i>' + l.length + '</i></h3>';
       html += l.slice(0, 40).map(function (o) {
+        if (t === 'droga') {
+          return '<a class="res-item res-droga" href="' + esc(o.href) + '">' +
+            '<span class="res-nome">' + esc(o.titulo) + '</span>' +
+            '<span class="res-sub">' + esc(o.sub) + '</span>' +
+            (o.dose ? '<span class="res-dose">' + rico(o.dose) + '</span>' : '') +
+            '<span class="res-seta">' + ICO('setaDir') + '</span></a>';
+        }
         if (t !== 'conduta') return itemBusca(o);
         return '<a class="res-item" href="' + esc(o.href) + '">' +
           '<span class="res-nome">' + esc(o.titulo) +
@@ -1262,6 +1492,7 @@
     if (modo === 'home')      { renderHome(); return; }
     if (modo === 'favoritas') { renderFavoritas(); return; }
     if (modo === 'doses') { renderDoses(); return; }
+    if (modo === 'droga') { renderDroga(drogaAtual); return; }
     if (modo === 'critico') { renderCritico(); return; }
     if (modo === 'queixa' && temQueixas()) {
       var q = queixaAtual && acharQueixa(queixaAtual);
@@ -1365,6 +1596,7 @@
     if (partes[0] === 'favoritas') { modo = 'favoritas'; return; }
     if (partes[0] === 'queixa') { modo = 'queixa'; queixaAtual = partes[1] || null; return; }
     if (partes[0] === 'doses') { modo = 'doses'; dosesGrupo = partes[1] || null; return; }
+    if (partes[0] === 'droga') { modo = 'droga'; drogaAtual = partes[1] || null; return; }
     if (partes[0] === 'critico') { modo = 'critico'; return; }
     if (partes[0] === 'atb') {
       /* antibióticos moram nas Prescrições */
