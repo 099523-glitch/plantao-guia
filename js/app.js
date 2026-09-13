@@ -1022,13 +1022,26 @@
     'kcl':'cloreto-de-potassio', 'nacl':'cloreto-de-sodio',
     'mgso':'sulfato-de-magnesio', 'sulfato-de-mg':'sulfato-de-magnesio',
     'hidrocortisona-succinato':'hidrocortisona', 'metilpred':'metilprednisolona',
-    'dva':'droga-vasoativa', 'o':'oxigenio', 'oxigenio-suplementar':'oxigenio'
+    'dva':'droga-vasoativa', 'o':'oxigenio', 'oxigenio-suplementar':'oxigenio',
+    'penicilina':'penicilina-g', 'penicilina-cristalina':'penicilina-g', 'penicilina-g-cristalina':'penicilina-g',
+    'ipratropio':'brometo-de-ipratropio', 'nac-oral':'n-acetilcisteina', 'nac':'n-acetilcisteina'
   };
   /* o que não é droga: procedimento, unidade solta, fragmento */
   var RE_NAO_DROGA = new RegExp('^(acesso|cardiovers|desfibril|intuba|punc|puncao|manobra|massagem|' +
     'compress|monitoriz|marca-?passo|sonda|dreno|toracocentese|pericardiocentese|' +
     'lavagem|aquecimento|imobiliza|curativo|sutura|exame|ecg|glasgow|repouso|' +
-    'jejum|hidrata|dieta|elevar|cabeceira|considerar|avaliar|se |quando |apos |ate )', 'i');
+    'jejum|hidrata|dieta|elevar|cabeceira|considerar|avaliar|se |quando |apos |ate |' +
+    /* material, procedimento, parâmetro, conduta genérica: não são medicação */
+    'agua|agulha|amostra|analgesia|antibiotico|antifungico|antipsicotico|antitussigeno|' +
+    'benzodiazepinico|beta-?$|binivel|bloqueador|bloqueio|botropico|crotalico|elapidico|bougie|burp|' +
+    'canula|carboidrato|cateter|cinta|cistostomia|contraste|controle|corticoide|cpap|cristaloide|' +
+    'derivac|desbrid|descompress|driving|emboliz|empirico|evitar|fascio|fase |fase$|fibrinolitico intra|' +
+    'fio |fio$|fio2|fluxo|foco|frequencia|fundo de olho|gelo|glicemia|glicose ou|gota espessa|hemodialise|' +
+    'infeccao|infusao sob|inquerito|interface|isolamento|janela|linhas b|mascara|meia elastica|meningite|' +
+    'nao prescrever|oxigenio hiperbarico|oxigenio suplementar|peep|plasmaferese|pr normal|pressao|prevencao|profilaxia|' +
+    'profundidade|qrs|reaquecimento|reposicao oral|retirar|reversao|revisao|sedacao|sequencia|sistema|' +
+    'sitio|suporte|suspender|tomografia|torniquete|transdutor|tratamento|tratar|vacina|vigilancia|' +
+    'volume|videolaringo|ventilacao|aspiracao)', 'i');
 
   /* "Adrenalina 1:10.000 (epinefrina)" -> chave "adrenalina" */
   function baseDroga(nome) {
@@ -1043,10 +1056,14 @@
       'nebulizad[ao]|inalat[oó]ri[ao]|aeross?ol|spray|t[oó]pic[ao]|' +
       'im|ev|iv|vo|sc|io|sl|ir|in|endovenos[ao]|intramuscular|subcut[aâ]ne[ao]|' +
       'lent[ao]|r[aá]pid[ao]|em bolus|bolus|de ataque|ataque|manuten[cç][aã]o|' +
-      'de resgate|resgate|profil[aá]tic[ao]|dobro|puro)$', 'i');
-    for (var k = 0; k < 4; k++) {
+      'de resgate|resgate|profil[aá]tic[ao]|dobro|puro|gotas|para nebuliza[cç][aã]o|' +
+      'pedi[aá]tric[ao]|em dose (analg[eé]sica|alta|baixa)|intranasal|oral|intra[oó]ssea|' +
+      'sem vasoconstritor|com vasoconstritor|cristalina|para o balonete)$', 'i');
+    /* conector que sobra quando o número some ("Cefalexina 500 mg a 1 g" → "Cefalexina a") */
+    var solto = /[\s,]+(a|ou|e|de|em|com|por)$/i;
+    for (var k = 0; k < 6; k++) {
       var antes = s;
-      s = s.replace(qual, '').trim();
+      s = s.replace(qual, '').replace(solto, '').trim();
       if (s === antes) break;
     }
     return s;
@@ -1084,6 +1101,7 @@
       dosesDe(p).forEach(function (sec) {
         (sec.itens || []).forEach(function (i) {
           if (!i || !i.droga || !i.dose) return;
+          if (!/\d|ampola|comprimido|gota|jato|frasco|sach[eê]|envelope|c[aá]psula|unidade/i.test(i.dose)) return;
           if (!ehDroga(i.droga)) return;
           var slug = slugDroga(i.droga);
           if (!slug) return;
@@ -1231,9 +1249,6 @@
             '<span class="lc-barra"></span>' +
             '<span class="lc-txt"><span class="lc-topo"><b>' + esc(d.nome) + '</b>' +
               (vias.length ? '<i class="dg-tag">' + vias.map(esc).join(' · ') + '</i>' : '') +
-            '</span>' +
-            '<span class="lc-sub">' + esc(d.usos.map(function (u) { return u.situacao; })
-              .filter(function (x, i, a) { return a.indexOf(x) === i; }).slice(0, 3).join(' · ')) +
             '</span></span>' +
             '<span class="lc-seta">' + ICO('setaDir') + '</span></a>';
         }).join('') + '</div></div>';
