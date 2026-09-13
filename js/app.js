@@ -847,7 +847,8 @@
     if (!termos || !termos.length) return [];
     return indiceDrogas().filter(function (d) {
       var ix = normaliza(d.nome + ' ' + Object.keys(d.sin).join(' ') + ' ' + Object.keys(d.apres).join(' ') +
-        ' ' + d.usos.map(function (u) { return u.rotulo; }).join(' '));
+        ' ' + d.usos.map(function (u) { return u.rotulo; }).join(' ') +
+        (d.bul ? ' ' + d.bul.classe + ' ' + (d.bul.ind || []).map(function (u) { return u.sit; }).join(' ') : ''));
       return termos.every(function (t) { return casaTolerante(ix, t); });
     });
   }
@@ -1024,6 +1025,11 @@
     'hidrocortisona-succinato':'hidrocortisona', 'metilpred':'metilprednisolona',
     'dva':'droga-vasoativa', 'o':'oxigenio', 'oxigenio-suplementar':'oxigenio',
     'penicilina':'penicilina-g', 'penicilina-cristalina':'penicilina-g', 'penicilina-g-cristalina':'penicilina-g',
+    'vitamina-k':'fitomenadiona', 'valproato':'acido-valproico', 'valproato-de-sodio':'acido-valproico',
+    'rtpa':'alteplase', 'tnk':'tenecteplase', 'ccp':'complexo-protrombinico', 'complexo-protrombinico-ccp':'complexo-protrombinico',
+    'heparina':'heparina-nao-fracionada', 'hnf':'heparina-nao-fracionada', 'ketamina':'cetamina',
+    'pantoprazol':'omeprazol', 'gluconato-de-calcio-10':'gluconato-de-calcio', 'ipratropio-brometo':'brometo-de-ipratropio',
+    'azul-de-metileno-1':'azul-de-metileno', 'bicarbonato-de-sodio-8-4':'bicarbonato-de-sodio',
     'ipratropio':'brometo-de-ipratropio', 'nac-oral':'n-acetilcisteina', 'nac':'n-acetilcisteina'
   };
   /* o que não é droga: procedimento, unidade solta, fragmento */
@@ -1127,6 +1133,15 @@
         });
       });
     });
+    /* o bulário curado entra por cima: nome oficial, apresentações, diluição,
+       indicações e ajuste renal; o que veio das condutas fica como "nas condutas" */
+    (typeof FERR_BULARIO !== 'undefined' ? FERR_BULARIO : []).forEach(function (b) {
+      var k = ALIAS_DROGA[b.slug] || b.slug;
+      var d = mapa[k] || (mapa[k] = { slug:k, nome:b.nome, usos:[], vias:{}, apres:{}, sin:{} });
+      if (d.nome !== b.nome) { d.sin[d.nome] = 1; d.nome = b.nome; }
+      d.bul = b;
+      (b.ind || []).forEach(function (u) { if (u.via) d.vias[u.via] = 1; });
+    });
     cacheDrogas = Object.keys(mapa).map(function (k) { return mapa[k]; })
       .filter(function (d) { return d.nome.length > 2; })
       .sort(function (a, b) { return normaliza(a.nome) < normaliza(b.nome) ? -1 : 1; });
@@ -1136,6 +1151,33 @@
     var l = indiceDrogas();
     for (var i = 0; i < l.length; i++) if (l[i].slug === slug) return l[i];
     return null;
+  }
+
+  /* o bloco curado do bulário: classe, apresentação, diluição, indicações, renal, cuidados */
+  function verbeteBulario(b) {
+    var h = '<div class="bul">';
+    h += '<p class="bul-classe">' + esc(b.classe) + '</p>';
+    if ((b.apres || []).length) h += '<div class="bul-bloco"><b>Apresentação</b><ul>' + b.apres.map(function (a) { return '<li>' + esc(a) + '</li>'; }).join('') + '</ul></div>';
+    if (b.dil) h += '<div class="bul-bloco bul-dil"><b>Diluição de bancada</b><p>' + rico(b.dil) + '</p></div>';
+    if ((b.ind || []).length) {
+      h += '<div class="bul-bloco"><b>Indicações e doses</b><div class="bul-ind">' + b.ind.map(function (u) {
+        return '<article class="bul-uso">' +
+          '<div class="bul-sit">' + esc(u.sit) + '</div>' +
+          '<div class="bul-dose"><span class="bul-valor">' + rico(u.dose) + '</span>' + (u.via ? '<span class="dgu-via">' + esc(u.via) + '</span>' : '') + '</div>' +
+          (u.prep ? '<p class="bul-prep">' + rico(u.prep) + '</p>' : '') +
+          (u.obs ? '<p class="bul-obs">' + rico(u.obs) + '</p>' : '') +
+        '</article>';
+      }).join('') + '</div></div>';
+    }
+    var aj = [];
+    if (b.renal) aj.push('<li><b>Função renal:</b> ' + rico(b.renal) + '</li>');
+    if (b.hep) aj.push('<li><b>Fígado:</b> ' + rico(b.hep) + '</li>');
+    if (b.gest) aj.push('<li><b>Gestação:</b> ' + rico(b.gest) + '</li>');
+    if (b.max) aj.push('<li><b>Dose máxima:</b> ' + rico(b.max) + '</li>');
+    if (aj.length) h += '<div class="bul-bloco bul-ajuste"><b>Ajustes</b><ul>' + aj.join('') + '</ul></div>';
+    if (b.contra) h += '<div class="bul-bloco bul-contra"><b>Contraindicações</b><p>' + rico(b.contra) + '</p></div>';
+    if ((b.cuidado || []).length) h += '<div class="bul-bloco bul-cuidado"><b>Conferir antes e vigiar</b><ul>' + b.cuidado.map(function (c) { return '<li>' + rico(c) + '</li>'; }).join('') + '</ul></div>';
+    return h + '</div>';
   }
 
   /* o verbete: uma droga, um uso por situação, preparo e cuidados */
@@ -1151,13 +1193,16 @@
         '<div class="dg-meta">' +
           (vias.length ? '<span class="dg-vias">' + vias.map(function (v) {
             return '<i>' + esc(v) + '</i>'; }).join('') + '</span>' : '') +
-          '<span class="dg-n">' + d.usos.length +
-            (d.usos.length === 1 ? ' uso' : ' usos') + '</span>' +
+          (function () { var n = d.usos.length + (d.bul ? (d.bul.ind || []).length : 0);
+            return '<span class="dg-n">' + n + (n === 1 ? ' indicação' : ' indicações') + '</span>'; })() +
         '</div>' +
         (apres.length ? '<p class="dg-apres">Apresentações citadas: ' +
           apres.map(esc).join(' · ') + '</p>' : '') +
       '</div>';
 
+    if (d.bul) html += verbeteBulario(d.bul);
+
+    if (d.usos.length && d.bul) html += '<div class="ga-head"><span class="ga-nome">Nas condutas do guia</span><span class="ga-conta">' + d.usos.length + '</span></div>';
     html += '<div class="dg-usos">' + d.usos.map(function (u, n) {
       return '<article class="dg-uso">' +
         '<header class="dgu-top">' +
@@ -1250,7 +1295,8 @@
           return '<a class="dg-item" href="#droga/' + esc(d.slug) + '">' +
             '<span class="dg-nome">' + esc(d.nome) + '</span>' +
             (vias ? '<span class="dg-via">' + esc(vias) + '</span>' : '') +
-            (d.usos.length > 1 ? '<span class="dg-usos-n">' + d.usos.length + '</span>' : '') +
+            (function () { var n = d.usos.length + (d.bul ? (d.bul.ind || []).length : 0);
+              return n > 1 ? '<span class="dg-usos-n">' + n + '</span>' : ''; })() +
           '</a>';
         }).join('') + '</div></div>';
     }).join('');

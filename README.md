@@ -13,7 +13,7 @@ dependência externa: abre o `index.html` e funciona — inclusive **sem interne
 | Pediatria | **37** medicações com dose por quilo calculada e faixa etária, mais **15** vetos por idade |
 | Antibióticos | **39** esquemas empíricos, cada doença como uma linha de Prescrições (grupos "Antibióticos · sítio"); `#atb/<sítio>` abre Prescrições já filtrada |
 | Escores e calculadoras | **41** escores em 11 ramos + 7 contas do plantão |
-| Doses de emergência | 11 situações em cartões de área, cada um com as tabelas do grupo — vista derivada das condutas |
+| Doses de emergência | índice A–Z de drogas: **bulário curado** (`js/bulario-dados.js`, ~90 verbetes com apresentação brasileira, diluição de bancada, dose por indicação, ajuste renal/hepático, contraindicações) + usos derivados das condutas; `#droga/<slug>` abre o verbete |
 | Eletrólitos | **7** ferramentas (K⁺, Na⁺ Adrogué-Madias, HCO₃⁻, Mg²⁺, Na corrigido, hipocalcemia, Ca corrigido): valor entra, diluição e vazão saem |
 | Sala vermelha | 28 condutas que não dão tempo de procurar |
 | Prontuário | modelos de anamnese, **atestado** (nome, CPF, CID-10, afastamento ou comparecimento — gera o texto pronto para copiar/imprimir), conduta, evasão e laudos |
@@ -35,6 +35,7 @@ js/queixas.js              QUEIXAS — a camada por sintoma
 js/ferramentas-dados.js    quadros, medicações, ATB, manobras, textos
 js/scores-dados.js         escores clínicos (estende FERR_CALC)
 js/pediatria-dados.js      medicações pediátricas e vetos por idade
+js/bulario-dados.js        bulário de emergência curado (FERR_BULARIO)
 js/eletrolitos.js          hub hidroeletrolítico: dados + motor das 7 ferramentas
 js/ferramentas.js          motor das seções (não precisa mexer)
 js/app.js                  render, sumário, busca e rotas (não precisa mexer)

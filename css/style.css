@@ -3212,3 +3212,27 @@ body:not(.autor) .ferr-barra[data-ctx="quadros"]{display:none}
   .dg-onde{display:none}
 }
 @media print{ .dg-az{display:none} .dg-grade{grid-template-columns:1fr 1fr} }
+
+/* ===== bulário curado no verbete da droga ===== */
+.bul{margin:6px 0 22px}
+.bul-classe{font-size:13.5px;color:var(--steel);margin:0 0 14px}
+.bul-bloco{margin:0 0 14px;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--card)}
+.bul-bloco>b{display:block;font-family:'Inter',system-ui,sans-serif;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--steel);margin-bottom:8px}
+.bul-bloco ul{margin:0;padding-left:18px}
+.bul-bloco li{font-size:13.5px;line-height:1.55;margin:3px 0}
+.bul-bloco p{margin:0;font-size:13.5px;line-height:1.55}
+.bul-dil{border-left:3px solid var(--acento)}
+.bul-dil p{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:13px;line-height:1.6}
+.bul-ind{display:grid;gap:8px}
+.bul-uso{padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--paper)}
+.bul-sit{font-size:13.5px;font-weight:700;margin-bottom:4px}
+.bul-dose{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.bul-valor{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:14.5px;font-weight:700;line-height:1.4}
+.bul-prep{margin-top:5px!important;font-size:12.5px!important;color:var(--ink-2,var(--ink))}
+.bul-obs{margin-top:4px!important;font-size:12.5px!important;color:var(--steel)}
+.bul-ajuste{border-left:3px solid var(--amber)}
+.bul-ajuste li b{font-weight:600}
+.bul-contra{border-left:3px solid var(--fire)}
+.bul-contra>b{color:var(--fire)}
+.bul-cuidado{border-left:3px solid var(--amber)}
+@media(max-width:720px){.bul-bloco{padding:12px 13px}}
