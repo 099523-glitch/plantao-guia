@@ -8,7 +8,7 @@
        a versão do SW muda, e aí o precache é refeito).
    Suba VERSAO a cada alteração de conteúdo ou código.
    ============================================================ */
-const VERSAO = 'plantao-v54';
+const VERSAO = 'plantao-v55';
 const ESSENCIAL = [
   './',
   './index.html',

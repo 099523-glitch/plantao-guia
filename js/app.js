@@ -1243,14 +1243,15 @@
       return '<div class="grupo-area" data-letra="' + L + '">' +
         '<div class="ga-head"><span class="ga-nome">' + L + '</span>' +
           '<span class="ga-conta">' + porLetra[L].length + '</span></div>' +
-        '<div class="ga-grade dg-grade">' + porLetra[L].map(function (d) {
-          var vias = Object.keys(d.vias).slice(0, 3);
-          return '<a class="lc dg-item" href="#droga/' + esc(d.slug) + '">' +
-            '<span class="lc-barra"></span>' +
-            '<span class="lc-txt"><span class="lc-topo"><b>' + esc(d.nome) + '</b>' +
-              (vias.length ? '<i class="dg-tag">' + vias.map(esc).join(' · ') + '</i>' : '') +
-            '</span></span>' +
-            '<span class="lc-seta">' + ICO('setaDir') + '</span></a>';
+        '<div class="dg-grade">' + porLetra[L].map(function (d) {
+          var vias = Object.keys(d.vias).slice(0, 2).join(' · ');
+          var sits = d.usos.map(function (u) { return u.situacao; })
+            .filter(function (x, i, a) { return x && a.indexOf(x) === i; });
+          return '<a class="dg-item" href="#droga/' + esc(d.slug) + '">' +
+            '<span class="dg-nome">' + esc(d.nome) + '</span>' +
+            (vias ? '<span class="dg-via">' + esc(vias) + '</span>' : '') +
+            (d.usos.length > 1 ? '<span class="dg-usos-n">' + d.usos.length + '</span>' : '') +
+          '</a>';
         }).join('') + '</div></div>';
     }).join('');
 
