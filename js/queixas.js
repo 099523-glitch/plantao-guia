@@ -20,7 +20,7 @@ const QUEIXAS = [
   tags:['dispneia','falta de ar','cansaco','sufoco','respiratorio','hipoxemia','saturando mal'],
   fonte:'Suporte avançado de vida e diretrizes brasileiras de asma, DPOC, IC e TEP', revisao:'09/2026',
   agora:['Sentar o paciente, monitorizar (SpO2, PA, FC, FR) e pegar acesso venoso.',
-    'Oxigênio titulado para SpO2 94–98% — ou 88–92% se DPOC/retentor conhecido.',
+    'Oxigênio se SpO2 < 90%, alvo 92–96% — ou 88–92% se DPOC/retentor conhecido. Saturar 100% não ajuda e no retentor piora o CO2.',
     'ECG de 12 derivações e glicemia capilar.',
     'Ausculta em 30 segundos: sibilo, estertor, murmúrio abolido ou tórax silencioso.',
     'Gasometria arterial se SpO2 < 92%, FR > 30 ou rebaixamento.',
@@ -32,6 +32,7 @@ const QUEIXAS = [
     {dx:'Anafilaxia', pista:'Início em minutos, urticária, angioedema, estridor ou hipotensão após exposição.', conduta:'anafilaxia'},
     {dx:'SCA que se apresenta como dispneia', pista:'Diabético, idoso e mulher podem não ter dor. ECG em todo mundo.', conduta:'sca-com-supra'},
     {dx:'Tamponamento cardíaco', pista:'Turgência jugular com pulmão limpo, hipofonese, pulso paradoxal.', conduta:'tamponamento'},
+    {dx:'Asma grave ou quase fatal', pista:'Fala em palavras soltas, tórax silencioso, SpO2 < 92%, PaCO2 normal ou alta numa crise (sinal de cansaço).', conduta:'asma-crise'},
     {dx:'Acidose metabólica compensada', pista:'Taquipneia sem sofrimento respiratório — cetoacidose, sepse, intoxicação. É respiração de Kussmaul, não broncoespasmo.', conduta:'acido-base'}],
   secoes:[
     {tipo:'alerta', titulo:'Red flags', itens:[
@@ -41,36 +42,45 @@ const QUEIXAS = [
       'Hipotensão junto com a dispneia — pense em obstrutivo (TEP, pneumotórax, tamponamento).',
       'Estridor, sialorreia ou voz abafada — via aérea alta, chame ajuda antes de deitar o paciente.']},
     {tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
-      {tipo:'inicio', rotulo:'Entrada', texto:'Adulto com dispneia aguda', nota:'Monitorização, O2 titulado, acesso, ECG e glicemia antes de qualquer raciocínio diagnóstico'},
+      {tipo:'inicio', rotulo:'Entrada', texto:'Adulto com dispneia aguda', nota:'Sentado, monitor, O2 se SpO2 < 90%, acesso, ECG e glicemia antes de qualquer raciocínio'},
       {tipo:'decisao', rotulo:'Primeiro filtro', texto:'Está instável? Rebaixado, hipotenso, SpO2 < 90% apesar do O2 ou exaustão respiratória?', ramos:[
-        {rotulo:'SIM', cor:'perigo', texto:'Prepare a via aérea e chame ajuda', nota:'VNI se colaborativo e sem contraindicação; sequência rápida de intubação se falha ou rebaixamento'},
-        {rotulo:'NÃO', texto:'Siga para a ausculta e o padrão radiológico'}]},
+        {rotulo:'Rebaixado, vomitando, em choque ou exausto', cor:'perigo', texto:'*Intubar* — VNI aqui atrasa e aspira', nota:'Ressuscite antes da indução: volume, noradrenalina, pré-oxigenação', ir:'sequencia-rapida-intubacao'},
+        {rotulo:'Instável mas acordado e colaborativo', cor:'perigo', texto:'*Chamar ajuda e preparar a via aérea*; VNI se houver indicação (ver adiante)', ir:'insuficiencia-respiratoria'},
+        {rotulo:'Estável', cor:'ok', texto:'Seguir para a ausculta'}]},
       {tipo:'decisao', rotulo:'Ausculta', texto:'Qual é o padrão?', ramos:[
-        {rotulo:'Sibilos', texto:'Asma · DPOC · IC ("asma cardíaca")', nota:'Broncodilatador + corticoide; se histórico de IC, reavalie o volume antes de assumir broncoespasmo'},
-        {rotulo:'Estertores', texto:'EAP · pneumonia', nota:'Bilateral e simétrico com ortopneia fala EAP; focal com febre fala pneumonia'},
-        {rotulo:'Abolido', cor:'perigo', texto:'Pneumotórax · derrame', nota:'Hipotensão junto = hipertensivo, punção imediata no 5º EIC linha axilar média'},
-        {rotulo:'Limpo', texto:'TEP · anemia · acidose · SCA · ansiedade', nota:'Pulmão limpo com hipoxemia é TEP até prova em contrário'}]},
+        {rotulo:'Sibilos', texto:'Asma · DPOC · IC ("asma cardíaca")', nota:'Broncodilatador + corticoide; no idoso com IC, pense em congestão antes de assumir broncoespasmo', ir:'asma-crise'},
+        {rotulo:'Estertores', texto:'EAP · pneumonia', nota:'Bilateral e simétrico com ortopneia fala EAP; focal com febre fala pneumonia', ir:'eap-ic-descompensada'},
+        {rotulo:'Abolido', cor:'perigo', texto:'Pneumotórax · derrame', nota:'Com hipotensão é hipertensivo: descompressão imediata no 4º–5º EIC na axilar média, sem raio-X', ir:'pneumotorax'},
+        {rotulo:'Limpo', texto:'TEP · anemia · acidose · SCA · ansiedade', nota:'Pulmão limpo com hipoxemia é TEP até prova em contrário', ir:'tep'}]},
       {tipo:'passo', rotulo:'Sempre', texto:'Gasometria, raio-X de tórax e ECG fecham o triângulo', nota:'POCUS encurta o caminho: linhas B difusas no EAP, deslizamento ausente no pneumotórax, VD dilatado no TEP'},
-      {tipo:'decisao', rotulo:'Reavaliação em 30–60 min', texto:'Melhorou com o tratamento inicial?', ramos:[
+      {tipo:'decisao', rotulo:'Suporte ventilatório', texto:'Precisa de VNI?', ramos:[
+        {rotulo:'DPOC com pH ≤ 7,35 e PaCO2 > 45', texto:'*BiPAP* — indicação forte', nota:'Alvo de SpO2 88–92%', ir:'vni'},
+        {rotulo:'Edema agudo de pulmão', texto:'*CPAP ou BiPAP* — indicação forte, junto com diurético e nitrato', ir:'vni'},
+        {rotulo:'Hipoxemia sem CO2 alto (pneumonia, SDRA)', texto:'O2 ou cateter nasal de alto fluxo; VNI só como teste curto e vigiado', nota:'Sem benefício comprovado: não deixe a VNI atrasar a intubação'},
+        {rotulo:'DPOC sem acidose ou asma leve', cor:'ok', texto:'Não precisa de VNI'}]},
+      {tipo:'decisao', rotulo:'Reavaliação', texto:'Melhorou? (em 1–2 h na VNI; em 30–60 min no resto)', ramos:[
         {rotulo:'SIM', cor:'ok', texto:'Observação e plano de alta', nota:'Alta só com SpO2 estável em ar ambiente, deambulando e com causa esclarecida'},
-        {rotulo:'NÃO', cor:'perigo', texto:'Escalone e interne', nota:'Reveja o diagnóstico: a dispneia que não responde geralmente foi classificada errado'}]},
+        {rotulo:'NÃO', cor:'perigo', texto:'Escalone: intube quem falhou na VNI e interne', nota:'Reveja o diagnóstico: dispneia que não responde geralmente foi classificada errado', ir:'sequencia-rapida-intubacao'}]},
       {tipo:'fim', rotulo:'Disposição', texto:'Alta · observação · enfermaria · UTI', nota:'Necessidade de O2 contínuo, VNI ou instabilidade define leito monitorizado'}]},
     {tipo:'lista', titulo:'O que pedir', itens:[
       '*Sempre:* ECG, glicemia, gasometria arterial, raio-X de tórax.',
       '*Conforme a suspeita:* troponina e BNP/NT-proBNP, D-dímero (só se probabilidade não-alta), hemograma, função renal e eletrólitos, lactato.',
+      'Gasometria não diagnostica nem exclui TEP: serve para ver pH, CO2 e acidose.',
       '*POCUS:* pulmão (linhas B, deslizamento), coração (função, VD, derrame), veia cava.',
       '*Angio-TC de tórax* se TEP é a hipótese principal e o paciente tolera o transporte.']},
     {tipo:'naofazer', titulo:'Não fazer', itens:[
       'Não dar oxigênio em alto fluxo indiscriminadamente ao retentor de CO2 — a meta é 88–92%, não 100%.',
       'Não esperar o raio-X para descomprimir um pneumotórax hipertensivo.',
       'Não tratar como asma todo sibilo do idoso: IC descompensada sibila.',
-      'Não usar VNI em rebaixamento, vômito, instabilidade hemodinâmica ou trauma de face.',
+      'Não usar VNI em rebaixamento, vômito, instabilidade hemodinâmica ou trauma de face — nem no DPOC sem acidose.',
+      'Não insistir na VNI que não melhorou em 1–2 h: atrasar a intubação aumenta a mortalidade.',
       'Não pedir D-dímero em paciente de alta probabilidade para TEP — resultado negativo não exclui e atrasa a angio-TC.',
       'Não rotular como ansiedade antes de ter SpO2, ECG, glicemia e gasometria na mão.']},
     {tipo:'lista', titulo:'Reavaliar', itens:[
       'A cada 15 min enquanto instável; a cada 30–60 min depois.',
       'O que se olha: SpO2, FR, nível de consciência, esforço respiratório e resposta ao que foi feito.',
-      'Gasometria de controle se houve VNI, hipercapnia ou piora clínica.']},
+      'Na VNI: gasometria em 1–2 h — pH e PaCO2 têm de estar melhorando, e a FR caindo.',
+      'Gasometria de controle também se houve hipercapnia ou piora clínica.']},
     {tipo:'lista', titulo:'Internação x alta', itens:[
       '*UTI:* necessidade de intubação ou VNI prolongada, instabilidade, acidose respiratória progressiva.',
       '*Enfermaria:* necessidade de O2 suplementar, causa que exige tratamento venoso, comorbidade descompensada.',
@@ -100,7 +110,10 @@ const QUEIXAS = [
     {dx:'Tromboembolismo pulmonar', pista:'Dor pleurítica, dispneia, taquicardia, fator de risco para trombose.', conduta:'tep'},
     {dx:'Pneumotórax hipertensivo', pista:'Dor súbita, murmúrio abolido, hipotensão, jugular túrgida.', conduta:'pneumotorax'},
     {dx:'Tamponamento cardíaco', pista:'Hipotensão, jugular túrgida, bulhas abafadas, pulso paradoxal.', conduta:'tamponamento'},
-    {dx:'Ruptura de esôfago', pista:'Vômito intenso seguido de dor torácica e enfisema subcutâneo.', conduta:'abdome-agudo'}],
+    {dx:'Ruptura de esôfago', pista:'Vômito intenso seguido de dor torácica e enfisema subcutâneo.', conduta:'ruptura-esofago'},
+    {dx:'Miocardite', pista:'Jovem com virose recente, troponina alta e coronárias improváveis; arritmia ou IC sem explicação.', conduta:'pericardite-miocardite'},
+    {dx:'Síndrome de Takotsubo', pista:'Mulher na pós-menopausa após estresse intenso, quadro de infarto e troponina modesta para a área acinética.', conduta:'takotsubo'},
+    {dx:'Úlcera perfurada', pista:'Dor súbita no tórax e no abdome, abdome em tábua (pode faltar se retroperitoneal), ar sob a cúpula.', conduta:'abdome-agudo'}],
   secoes:[
     {tipo:'alerta', titulo:'Red flags', itens:[
       'Supra de ST, BRE novo ou ritmo de marca-passo com clínica compatível.',
@@ -109,20 +122,12 @@ const QUEIXAS = [
       'Dor que começa no máximo de intensidade — pensa em aorta.',
       'Dor com hipoxemia e pulmão limpo — pensa em TEP.',
       'Idoso, diabético, renal crônico e mulher podem ter apresentação atípica ou silenciosa.']},
-    {tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
-      {tipo:'inicio', rotulo:'Entrada', texto:'Dor torácica não traumática', nota:'ECG em 10 minutos · monitor · acesso · PA nos dois braços'},
-      {tipo:'decisao', rotulo:'ECG', texto:'Há supra de ST, BRE novo ou marca-passo com clínica?', ramos:[
-        {rotulo:'SIM', cor:'perigo', texto:'IAMCSST — reperfusão imediata', nota:'Porta-balão ≤ 90 min; porta-agulha ≤ 30 min se a hemodinâmica não é alcançável em 120 min'},
-        {rotulo:'NÃO', texto:'Siga para a estratificação'}]},
-      {tipo:'decisao', rotulo:'Estratificação', texto:'Aplique HEART e a curva de troponina', ramos:[
-        {rotulo:'Alto risco', cor:'perigo', texto:'Internar, anticoagular, estratificação invasiva', nota:'HEART ≥ 7, troponina em ascensão, instabilidade, angina refratária'},
-        {rotulo:'Intermediário', texto:'Observação com troponina seriada e ECG seriado', nota:'HEART 4–6 — não dê alta sem a segunda troponina'},
-        {rotulo:'Baixo', cor:'ok', texto:'Alta com retorno orientado', nota:'HEART 0–3 com troponinas negativas no intervalo do protocolo'}]},
-      {tipo:'alerta', rotulo:'Antes de assinar a alta', texto:'Você excluiu aorta, TEP e pneumotórax?', nota:'A troponina negativa exclui infarto, não exclui as outras três causas letais'},
-      {tipo:'fim', rotulo:'Disposição', texto:'Hemodinâmica · UTI/unidade coronariana · observação · alta'}]},
+    {tipo:'fluxo', titulo:'Fluxograma da conduta', itens:FLUXO_DOR_TORACICA},
     {tipo:'lista', titulo:'O que pedir', itens:[
       '*Sempre:* ECG (repetir se a dor persiste ou muda), troponina seriada, raio-X de tórax.',
-      '*Conforme a suspeita:* D-dímero (aorta e TEP em baixa probabilidade), angio-TC de tórax, ecocardiograma, gasometria.',
+      '*Conforme a suspeita:* D-dímero (ADD-RS de 1 ponto ou Wells até 6), angio-TC de aorta ou de artérias pulmonares, ecocardiograma, BNP.',
+      '*POCUS* em todo paciente instável: pericárdio, VD, deslizamento pleural, raiz da aorta.',
+      'Gasometria arterial não ajuda a diagnosticar nem a excluir TEP.',
       '*ECG com V7–V9* se a dor é típica e o ECG padrão é normal — infarto de parede posterior se esconde ali.',
       '*V3R–V4R* em todo supra de parede inferior, antes de qualquer nitrato.']},
     {tipo:'naofazer', titulo:'Não fazer', itens:[
@@ -133,19 +138,19 @@ const QUEIXAS = [
       'Não atrasar a reperfusão do IAMCSST esperando resultado de exame.']},
     {tipo:'lista', titulo:'Reavaliar', itens:[
       'ECG a cada 15–30 min enquanto a dor persiste, e sempre que a dor mudar de padrão.',
-      'Troponina no intervalo definido pelo protocolo do serviço.',
+      'Troponina no intervalo do protocolo: 0/1 h ou 0/2 h na alta sensibilidade; 0 e 3–6 h na convencional.',
       'Reavalie o diagnóstico se a dor não cede com o tratamento proposto.']},
     {tipo:'lista', titulo:'Internação x alta', itens:[
       '*Hemodinâmica agora:* IAMCSST, SCA de muito alto risco, instabilidade elétrica ou hemodinâmica.',
       '*Unidade coronariana:* SCA sem supra de alto risco, arritmia, IC associada.',
-      '*Observação:* risco intermediário aguardando a curva.',
-      '*Alta:* baixo risco, exames negativos, dor esclarecida e retorno escrito com sinais de alarme.']},
+      '*Observação:* HEART 4 a 6, para completar a curva e fazer teste funcional ou angio-TC de coronárias.',
+      '*Alta:* HEART 0 a 3 com troponinas negativas, causa grave afastada, consulta em até 72 h e retorno escrito com sinais de alarme.']},
     {tipo:'dica', titulo:'Armadilhas do plantão', itens:[
-      'ECG normal não exclui SCA: até um terço dos infartos abre com ECG inicial inocente.',
+      'ECG normal não exclui SCA: um ECG isolado perde mais da metade dos infartos — repita.',
       'Dor que melhora não é dor benigna — dissecção clássica alivia depois do pico.',
       'Dor reprodutível à palpação não exclui isquemia; a costocondrite é diagnóstico de exclusão.',
       'Peça sempre PA nos dois braços na primeira avaliação: é barato e muda a conduta.']}],
-  condutas:['dor-toracica','sca-com-supra','sca-sem-supra','sindrome-aortica','tep','pneumotorax','tamponamento','pericardite-miocardite','ecg-leitura'],
+  condutas:['dor-toracica','sca-com-supra','sca-sem-supra','sindrome-aortica','tep','pneumotorax','tamponamento','pericardite-miocardite','ruptura-esofago','takotsubo','ecg-leitura'],
   atalhos:[{tipo:'score',id:'heart',rotulo:'Escore HEART'},{tipo:'score',id:'wells-tep',rotulo:'Wells — TEP'},{tipo:'conduta',id:'ecg-leitura',rotulo:'Leitura do ECG'}] },
 
 /* ---------------------------------------------------------- 03 */
@@ -358,7 +363,7 @@ const QUEIXAS = [
   naopode:[
     {dx:'Aneurisma de aorta roto', pista:'Idoso, dor lombar ou abdominal súbita, hipotensão, massa pulsátil. POCUS na hora.', conduta:'sindrome-aortica'},
     {dx:'Isquemia mesentérica', pista:'Dor desproporcional ao exame físico, fibrilação atrial, lactato alto, acidose.', conduta:'isquemia-mesenterica'},
-    {dx:'Gravidez ectópica rota', pista:'Mulher em idade fértil com dor e instabilidade. Beta-HCG sempre.', conduta:'abdome-agudo'},
+    {dx:'Gravidez ectópica rota', pista:'Mulher em idade fértil com dor e instabilidade. Beta-HCG sempre.', conduta:'sangramento-gestacao'},
     {dx:'Perfuração de víscera oca', pista:'Dor súbita, abdome em tábua, pneumoperitônio.', conduta:'abdome-agudo'},
     {dx:'Infarto de parede inferior', pista:'Dor epigástrica com náusea e sudorese. O ECG resolve a dúvida.', conduta:'sca-com-supra'},
     {dx:'Colangite', pista:'Febre + icterícia + dor em hipocôndrio direito. Precisa de drenagem, não só de antibiótico.', conduta:'colecistite-colangite'},
@@ -433,7 +438,8 @@ const QUEIXAS = [
     {dx:'Dissecção de carótida ou vertebral', pista:'Cefaleia ou cervicalgia após trauma ou manipulação cervical, com Horner ou déficit.', conduta:'avc-isquemico'},
     {dx:'Arterite temporal', pista:'Acima de 50 anos, dor temporal, claudicação de mandíbula, alteração visual, VHS alto. Corticoide não espera a biópsia.', conduta:'cefaleia'},
     {dx:'Glaucoma agudo', pista:'Dor ocular, olho vermelho, visão embaçada com halos, pupila média fixa.', conduta:'cefaleia'},
-    {dx:'Intoxicação por monóxido de carbono', pista:'Cefaleia coletiva em várias pessoas da mesma casa, exposição a fogão, aquecedor ou motor.', conduta:'monoxido-carbono'}],
+    {dx:'Intoxicação por monóxido de carbono', pista:'Cefaleia coletiva em várias pessoas da mesma casa, exposição a fogão, aquecedor ou motor.', conduta:'monoxido-carbono'},
+    {dx:'Pré-eclâmpsia grave', pista:'Gestante ≥ 20 semanas ou puérpera até 6 semanas com cefaleia, escotomas ou PA ≥ 160/110.', conduta:'pre-eclampsia'}],
   secoes:[
     {tipo:'alerta', titulo:'Red flags', itens:[
       '*Início súbito* atingindo o pico em menos de 1 minuto.',
@@ -628,7 +634,7 @@ const QUEIXAS = [
   naopode:[
     {dx:'Estado de mal epiléptico', pista:'Crise além de 5 minutos ou crises repetidas sem recuperação entre elas. É emergência com tempo definido.', conduta:'status-epilepticus'},
     {dx:'Hipoglicemia', pista:'Sempre a primeira medida, antes de qualquer anticonvulsivante.', conduta:'hipoglicemia'},
-    {dx:'Eclâmpsia', pista:'Gestante ou puérpera. O tratamento é sulfato de magnésio, não benzodiazepínico isolado.', conduta:'crise-hipertensiva'},
+    {dx:'Eclâmpsia', pista:'Gestante ≥ 20 semanas ou puérpera até 6 semanas. O tratamento é sulfato de magnésio, não benzodiazepínico isolado.', conduta:'pre-eclampsia'},
     {dx:'Meningite / encefalite', pista:'Febre com crise, principalmente primeira crise no adulto.', conduta:'meningite'},
     {dx:'Hemorragia intracraniana', pista:'Cefaleia súbita, déficit focal, uso de anticoagulante, trauma.', conduta:'avc-hemorragico'},
     {dx:'Hiponatremia', pista:'Crise sem causa aparente, sódio baixo. Corrigir devagar, exceto na crise ativa.', conduta:'hiponatremia'},
@@ -764,7 +770,8 @@ const QUEIXAS = [
     {dx:'Choque hemorrágico', pista:'Taquicardia e má perfusão antes da hipotensão. Volume não substitui hemostasia.', conduta:'hda'},
     {dx:'Varizes esofágicas', pista:'Cirrótico com hematêmese. Precisa de droga vasoativa esplâncnica, antibiótico profilático e endoscopia precoce.', conduta:'cirrose-descompensada'},
     {dx:'Sangramento em anticoagulado', pista:'Identifique a droga: a reversão é diferente para cada uma.', conduta:'hda'},
-    {dx:'Gravidez ectópica rota', pista:'Mulher em idade fértil com dor e instabilidade — beta-HCG.', conduta:'abdome-agudo'},
+    {dx:'Gravidez ectópica rota', pista:'Mulher em idade fértil com dor e instabilidade — beta-HCG.', conduta:'sangramento-gestacao'},
+    {dx:'Hemorragia pós-parto', pista:'Puérpera sangrando: índice de choque ≥ 0,9 já prevê transfusão. Ocitocina, massagem e ácido tranexâmico juntos.', conduta:'hemorragia-pos-parto'},
     {dx:'Aneurisma de aorta roto', pista:'Idoso, dor lombar ou abdominal, hipotensão, massa pulsátil.', conduta:'sindrome-aortica'},
     {dx:'Hemorragia intracraniana', pista:'Cefaleia, déficit ou rebaixamento em quem usa anticoagulante, mesmo após trauma leve.', conduta:'avc-hemorragico'},
     {dx:'Hemoptise maciça', pista:'Risco é asfixia, não anemia. Decúbito lateral com o pulmão sangrante para baixo.', conduta:'hemoptise'}],

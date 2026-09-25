@@ -1,4 +1,4 @@
-# Condutas de Plantão
+# MedAtalho
 
 Guia de consulta rápida para o plantão. Site estático, sem build e sem
 dependência externa: abre o `index.html` e funciona — inclusive **sem internet**.

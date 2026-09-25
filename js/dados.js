@@ -70,6 +70,17 @@
    `cor` no ramo: 'perigo' (vermelho) | 'ok' (ambar) | omitir (branco).
    Ver `cetoacidose` como modelo.
 
+   DOSE NO NO: `meds:[...]` em qualquer caixa ou ramo desenha, embaixo do
+   texto, um chip por droga com nome · dose · via, e cada chip abre o
+   verbete #droga/<slug> (diluicao, apresentacao, ajuste). Duas formas:
+     meds:['Diazepam 10 mg/2 mL']             rotulo EXATO de uma linha da
+                                              tabela `doses` desta conduta
+                                              (a dose vem de la, sem repetir)
+     meds:[{droga:'Adenosina', dose:'12 mg', via:'EV'}]   dose escrita ali
+   Quando o rotulo nao bate com nenhuma linha, vale o nome base
+   ('Diazepam' acha 'Diazepam 10 mg/2 mL'). Regra: a droga que o no manda
+   fazer tem que estar em `meds`; nao citar droga em texto sem o chip.
+
    Negrito dentro de qualquer texto: usar *asteriscos*.
 
    ORDEM FIXA DOS BLOCOS  <-- seguir sempre, e o que faz o guia
@@ -119,6 +130,7 @@ const CATEGORIAS = [
   { id:'psiq',      nome:'Psiquiatria',         icone:'mente' },
   { id:'trauma',    nome:'Trauma e Ortopedia',  icone:'osso' },
   { id:'pedia',     nome:'Pediatria',           icone:'crianca' },
+  { id:'obstetricia', nome:'Obstetrícia',       icone:'gestante' },
   { id:'toxico',    nome:'Intoxicações',        icone:'perigo' },
   { id:'proced',    nome:'Procedimentos',       icone:'seringa' }
 ];
@@ -135,449 +147,883 @@ const INTRO_CATEGORIA = {
   psiq:      'Agitação, risco de suicídio e abstinência: segurança do paciente e da equipe primeiro.',
   trauma:    'Atendimento inicial sistematizado ao trauma e as urgências ortopédicas do plantão.',
   pedia:     'Criança não é adulto pequeno: doses por peso, sinais de gravidade e hidratação.',
+  obstetricia: 'Gestante e puérpera no pronto-socorro: duas vidas, fisiologia própria — estabilizar a mãe e chamar o obstetra cedo.',
   toxico:    'Abordagem do intoxicado, antídotos e acidentes por animais peçonhentos.',
   proced:    'O passo a passo dos procedimentos que o plantonista faz: material, técnica e complicações.'
 };
+
+/* ===========================================================
+   DOR TORACICA AGUDA NO PS — fluxograma mestre
+   Um tronco de portoes: cada decisao tira do fluxo quem tem
+   causa grave (ramo com `ir` abre a conduta especifica) e quem
+   nao tem segue para o proximo portao. Usado pela conduta
+   `dor-toracica` e pela queixa `dor-toracica-q` — uma fonte so.
+   `meds` em forma de objeto para a dose aparecer nos dois lugares.
+   =========================================================== */
+const FLUXO_DOR_TORACICA = [
+  { tipo:'inicio', rotulo:'Porta', texto:'Dor ou desconforto torácico não traumático',
+    nota:'Entra aqui também o jovem, a dor "atípica" e a que "parece ansiedade". Causa letal chega andando e com sinais vitais normais' },
+
+  { tipo:'passo', rotulo:'Minuto 0 a 10', texto:'*ECG de 12 derivações lido por médico* · monitor, oxímetro e acesso venoso · *PA nos dois braços* · desfibrilador ao lado',
+    nota:'Colher troponina (de alta sensibilidade, se houver) na mesma punção. Oxigênio só se SpO₂ < 90%: na SCA com saturação normal não ajuda' },
+
+  { tipo:'decisao', texto:'Está instável? (hipotensão, má perfusão, SpO₂ < 90% com O₂, rebaixamento, arritmia)', ramos:[
+    { rotulo:'Instável + murmúrio abolido de um lado', cor:'perigo', texto:'*Pneumotórax hipertensivo:* descompressão já, sem raio-X',
+      nota:'Agulha no 4º–5º espaço intercostal na axilar média (ou 2º na hemiclavicular) e depois dreno', ir:'pneumotorax' },
+    { rotulo:'Instável + jugular túrgida, bulhas abafadas', cor:'perigo', texto:'*Tamponamento:* POCUS e pericardiocentese',
+      nota:'Volume compra tempo. Evite intubar antes de drenar: a pressão positiva derruba o débito', ir:'tamponamento' },
+    { rotulo:'Instável sem pista clara', cor:'perigo', texto:'*Sala vermelha:* ABC, ACLS para a arritmia e *POCUS* atrás da causa',
+      nota:'Derrame com colapso de câmara · sem deslizamento pleural · VD dilatado (TEP) · flap ou raiz da aorta > 35 mm · hipocinesia segmentar (SCA). Trate a causa antes de volume e vasopressor', ir:'choque-abordagem' },
+    { rotulo:'Estável', cor:'ok', texto:'Seguir o fluxo, reavaliando a cada passo' }
+  ]},
+
+  { tipo:'decisao', texto:'O que o ECG mostra?', ramos:[
+    { rotulo:'Supra de ST ou equivalente', cor:'perigo', texto:'*IAM com supra:* reperfusão agora, sem esperar troponina',
+      nota:'Equivalentes: BRE novo com clínica, infra de V1–V4 com R alto (posterior: faça V7–V9), de Winter. ICP se o balão sai em até 120 min do primeiro contato; senão, fibrinólise em até 30 min',
+      meds:[{ droga:'Ácido acetilsalicílico', dose:'300 mg mastigado', via:'VO' }], ir:'sca-com-supra' },
+    { rotulo:'Infra de ST ou T invertida isquêmica', cor:'perigo', texto:'*SCA sem supra provável:* antiagregar, anticoagular, chamar a cardiologia',
+      nota:'Dor refratária, instabilidade, arritmia ventricular ou IC aguda = cateterismo imediato (< 2 h)',
+      meds:[{ droga:'Ácido acetilsalicílico', dose:'300 mg mastigado', via:'VO' }, { droga:'Enoxaparina', dose:'1 mg/kg 12/12 h', via:'SC' }], ir:'sca-sem-supra' },
+    { rotulo:'Normal ou inespecífico', texto:'*Não exclui nada:* repetir a cada 15–30 min enquanto houver dor, e seguir',
+      nota:'Um ECG isolado perde mais da metade dos infartos. T hiperaguda: repetir em minutos. Baixa voltagem ou alternância elétrica: derrame. S1Q3T3 ou BRD novo: pense em TEP. Supra difuso com infra de PR: pericardite' }
+  ]},
+
+  { tipo:'passo', rotulo:'História dirigida', texto:'Como começou, como é, para onde vai, o que precedeu, fatores de risco',
+    nota:'Súbita e máxima já no início: aorta, TEP, pneumotórax. Opressiva, aos esforços, irradia para os dois braços: SCA. Pleurítica ou posicional, melhora sentado: pericardite. Vômito forçado antes da dor: esôfago. Cocaína: SCA em qualquer idade. Stent ou ponte recente: oclusão até prova em contrário' },
+
+  { tipo:'passo', rotulo:'Hipótese coronariana', texto:'*AAS mastigado* se a SCA está entre as hipóteses',
+    nota:'Segure o AAS se a dor é lancinante, se há assimetria de pulso ou se veio depois de vômito: primeiro afaste aorta e perfuração. Nitrato só com dor isquêmica, PAS ≥ 90 e sem IAM de VD ou inibidor de fosfodiesterase',
+    meds:[{ droga:'Ácido acetilsalicílico', dose:'300 mg mastigado', via:'VO' }, { droga:'Dinitrato de isossorbida', dose:'5 mg a cada 5 min, até 3', via:'SL' }] },
+
+  { tipo:'decisao', texto:'Risco de dissecção de aorta: quantos grupos do ADD-RS estão presentes?', ramos:[
+    { rotulo:'2 ou 3 grupos', cor:'perigo', texto:'*Angio-TC de aorta já*, controlando FC e PA antes da imagem',
+      nota:'Alvo: FC < 60 e PAS 100–120. Betabloqueador primeiro, vasodilatador depois. Instável: ETE ou POCUS à beira do leito. Chamar a cirurgia cardiovascular',
+      meds:[{ droga:'Metoprolol', dose:'5 mg a cada 5 min, até 15 mg', via:'EV' }, { droga:'Nitroprussiato de sódio', dose:'0,25–0,5 mcg/kg/min', via:'EV BIC' }, { droga:'Fentanil', dose:'0,5–1 mcg/kg', via:'EV' }],
+      ir:'sindrome-aortica' },
+    { rotulo:'1 grupo', texto:'*D-dímero:* < 500 ng/mL torna dissecção improvável; ≥ 500, angio-TC',
+      nota:'Vale só quando não há explicação melhor para a dor' },
+    { rotulo:'Nenhum', cor:'ok', texto:'Dissecção improvável: seguir',
+      nota:'Mediastino alargado no raio-X reabre a hipótese' }
+  ]},
+
+  { tipo:'decisao', texto:'O raio-X de tórax (PA e perfil) explica a dor?', ramos:[
+    { rotulo:'Pneumotórax', texto:'Tratar conforme o tamanho e os sintomas', ir:'pneumotorax' },
+    { rotulo:'Mediastino alargado', cor:'perigo', texto:'Dissecção até prova em contrário: angio-TC', ir:'sindrome-aortica' },
+    { rotulo:'Pneumomediastino', cor:'perigo', texto:'*Ruptura de esôfago:* jejum, antibiótico amplo, cirurgia torácica',
+      nota:'Derrame à esquerda, enfisema subcutâneo, crepitação de Hamman. TC com contraste oral hidrossolúvel', ir:'ruptura-esofago' },
+    { rotulo:'Ar sob a cúpula', cor:'perigo', texto:'*Úlcera perfurada:* jejum, antibiótico amplo, cirurgia',
+      nota:'A dor pode subir para o tórax; o abdome pode ser pouco rígido na perfuração retroperitoneal', ir:'abdome-agudo' },
+    { rotulo:'Consolidação ou congestão', texto:'Pneumonia ou IC',
+      nota:'Congestão nova pode ser a SCA descompensando o VE: não pare aqui' },
+    { rotulo:'Normal ou inespecífico', cor:'ok', texto:'Seguir: SCA e TEP quase sempre têm raio-X normal' }
+  ]},
+
+  { tipo:'decisao', texto:'TEP é possível? (dispneia, taquicardia, hipoxemia ou dor pleurítica sem outra explicação)', ramos:[
+    { rotulo:'Probabilidade baixa (< 15%) e PERC 8 de 8', cor:'ok', texto:'TEP excluído sem exame' },
+    { rotulo:'Wells ≤ 6 (baixa ou intermediária)', texto:'*D-dímero*, ajustado pela idade após os 50 anos (idade × 10 ng/mL)',
+      nota:'Negativo: TEP excluído. Positivo: angio-TC de tórax' },
+    { rotulo:'Wells > 6 (alta)', cor:'perigo', texto:'*Angio-TC direto* e anticoagular antes do resultado, se não houver contraindicação',
+      nota:'Instável com VD dilatado e sem condição de ir à TC: trombólise com base no eco',
+      meds:[{ droga:'Enoxaparina', dose:'1 mg/kg 12/12 h', via:'SC' }], ir:'tep' }
+  ]},
+
+  { tipo:'decisao', texto:'Pericárdio ou miocárdio? (atrito, dor que melhora sentado, supra difuso com infra de PR, virose recente)', ramos:[
+    { rotulo:'Sim', texto:'*POCUS ou eco:* há derrame? como está o VE?',
+      nota:'Troponina alta com supra difuso é miopericardite: internar e monitorizar. Derrame com colapso de câmara é tamponamento', ir:'pericardite-miocardite' },
+    { rotulo:'Não', cor:'ok', texto:'Seguir para a curva de troponina' }
+  ]},
+
+  { tipo:'decisao', texto:'O que a curva de troponina mostra? (alta sensibilidade 0/1 h ou 0/2 h; convencional 0 e 3–6 h)', ramos:[
+    { rotulo:'Elevada com variação (delta)', cor:'perigo', texto:'*Infarto:* conduzir como SCA sem supra',
+      nota:'Antes, pense nas outras causas de troponina alta: TEP, miocardite, dissecção, sepse, taquiarritmia', ir:'sca-sem-supra' },
+    { rotulo:'Zona cinza', texto:'Nova dosagem (3 h) e ECG seriado, em observação',
+      nota:'Elevada e estável, sem delta: lesão crônica (DRC, IC) é mais provável que infarto' },
+    { rotulo:'Negativa no intervalo do protocolo', cor:'ok', texto:'Infarto excluído: calcular o HEART' }
+  ]},
+
+  { tipo:'decisao', texto:'Qual o HEART? (história, ECG, idade, fatores de risco, troponina)', ramos:[
+    { rotulo:'0 a 3', cor:'ok', texto:'*Alta* com consulta em até 72 h e orientação escrita de retorno' },
+    { rotulo:'4 a 6', texto:'*Observação:* teste funcional ou angio-TC de coronárias antes da alta ou em poucos dias' },
+    { rotulo:'7 a 10', cor:'perigo', texto:'*Internar:* conduzir como SCA sem supra e discutir cateterismo', ir:'sca-sem-supra' }
+  ]},
+
+  { tipo:'alerta', rotulo:'Antes de assinar a alta', texto:'A troponina negativa exclui infarto. Não exclui aorta, TEP, pneumotórax nem esôfago',
+    nota:'A dor ficou explicada? Se não ficou, o paciente não está pronto para ir' },
+
+  { tipo:'fim', rotulo:'Destino', texto:'*UTI* se instável · *hemodinâmica* no IAM com supra e na SCA de muito alto risco · *leito monitorizado* na SCA, na dissecção tipo B e na miocardite · *observação* com HEART 4–6 · *alta* com HEART ≤ 3 e curva negativa' }
+];
 
 const PROTOCOLOS = [
 
   /* ======================= 01 · CARDIOVASCULAR ======================= */
   { id:'pcr-adulto', titulo:'Parada cardiorrespiratória no adulto', categoria:'cardio', gravidade:'emergencia',
-    resumo:'RCP de alta qualidade, ritmos chocáveis e não chocáveis, drogas e cuidados pós-parada.',
-    tags:['pcr','rcp','acls','fv','tv sem pulso','assistolia','aesp','adrenalina','desfibrilacao','5h 5t'],
-    fonte:'SBC — Diretriz de Ressuscitação Cardiopulmonar e Emergências Cardiovasculares / ACLS · prescris (ACLS e ritmo de parada)',
+    resumo:'RCP de alta qualidade, choque precoce no ritmo chocável, adrenalina precoce no não chocável, caça às causas reversíveis e cuidados pós-parada.',
+    tags:['pcr','rcp','acls','sav','parada cardiaca','morte subita','fv','tv sem pulso','assistolia','aesp','adrenalina','amiodarona','desfibrilacao','5h 5t','rce','pos-pcr'],
+    fonte:'AHA 2020 — Diretrizes de RCP e ACE · AHA 2023 — Atualização focada em Suporte Avançado de Vida · ERC 2021 — Diretrizes de Ressuscitação · SBC — Atualização da Diretriz de RCP (2019) · apoio: UpToDate (2026)',
     ficha:[
-      { rotulo:'Quando pensar', valor:'Irresponsivo, sem respiração ou com *gasping*, e sem pulso central em até 10 segundos de checagem.' },
-      { rotulo:'Prioridade',    valor:'*Compressão de alta qualidade e desfibrilação precoce.* Tudo o mais é secundário.' },
-      { rotulo:'Meta',          valor:'Fração de compressão > 60%, interrupções < 10 s, desfibrilação assim que o ritmo for chocável.' }
+      { rotulo:'Quando pensar', valor:'Irresponsivo, sem respiração normal (ou só *gasping*) e sem pulso central em até 10 segundos.' },
+      { rotulo:'Prioridade',    valor:'*Compressão de alta qualidade e choque precoce.* No ritmo chocável, cada minuto sem choque tira cerca de 10% da sobrevida.' },
+      { rotulo:'Meta',          valor:'Pausas < 10 s, ETCO₂ > 20 mmHg durante a RCP, causa reversível tratada e pós-parada sem hipotensão, hipoxemia nem febre.' }
     ],
     secoes:[
-
       { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
-        { tipo:'inicio', rotulo:'Reconhecimento', texto:'Irresponsivo, sem respiração normal e *sem pulso*',
-          nota:'Checagem de no máximo 10 segundos. Gasping é parada. Na dúvida, comprima' },
-        { tipo:'passo', rotulo:'Imediato', texto:'*Compressões 30:2* + chamar ajuda + pedir desfibrilador',
-          nota:'5–6 cm, 100–120/min, retorno completo do tórax, mínimo de interrupção' },
+        { tipo:'inicio', rotulo:'Reconhecimento', texto:'Irresponsivo, sem respiração normal e *sem pulso* em até 10 s',
+          nota:'Gasping é parada. Na dúvida sobre o pulso, comprima' },
+
+        { tipo:'passo', rotulo:'Primeiro minuto', texto:'*Comprimir já* · chamar ajuda · pedir monitor-desfibrilador no mesmo comando',
+          nota:'Centro do tórax, 5–6 cm, 100–120/min, retorno completo. 30:2 com bolsa-máscara e O₂ 100%. Trocar quem comprime a cada 2 min' },
+
         { tipo:'decisao', texto:'Qual o ritmo no monitor?', ramos:[
-          { rotulo:'FV / TV sem pulso', cor:'perigo', texto:'*CHOCAR imediatamente*',
-            nota:'Adrenalina após o 2º choque · amiodarona 300 mg após o 3º' },
-          { rotulo:'AESP / assistolia', texto:'*NÃO se choca.* Adrenalina 1 mg o quanto antes',
-            nota:'Aqui o desfecho depende de achar a causa' }
+          { rotulo:'FV / TV sem pulso', cor:'perigo', texto:'*Chocar já* e voltar a comprimir sem checar pulso',
+            nota:'Bifásico 120–200 J conforme o aparelho (sem saber, use o máximo); monofásico 360 J. Afastar todos e anunciar em voz alta' },
+          { rotulo:'AESP / assistolia', texto:'*Não chocar:* RCP e adrenalina o mais cedo possível',
+            nota:'Assistolia: conferir cabos, ganho e derivação antes de aceitar',
+            meds:[{ droga:'Adrenalina', dose:'1 mg a cada 3–5 min', via:'EV/IO' }] }
         ]},
-        { tipo:'passo', rotulo:'A cada 2 min', texto:'Checar ritmo · trocar quem comprime · adrenalina a cada 3–5 min',
-          nota:'Alguém cronometra em voz alta. Capnografia < 10 mmHg indica compressão ruim' },
-        { tipo:'passo', rotulo:'Causa reversível', texto:'*5H e 5T* — procurar desde o segundo ciclo',
-          nota:'Hipovolemia · Hipóxia · H+ · Hipo/hiperK · Hipotermia · Tensão no tórax · Tamponamento · Toxinas · Trombose coronariana · Trombose pulmonar' },
-        { tipo:'decisao', texto:'Houve retorno de circulação espontânea?', ramos:[
-          { rotulo:'Ainda não', texto:'Manter os ciclos e reavaliar as causas',
-            nota:'Encerrar o esforço é decisão clínica e coletiva — prolongar em hipotermia, intoxicação, gestante e afogamento' },
+
+        { tipo:'passo', rotulo:'Durante cada ciclo de 2 min', texto:'RCP contínua · *acesso EV ou IO* · capnografia · cronometrista em voz alta',
+          nota:'ETCO₂ < 10 mmHg = compressão ruim: corrija a técnica. Alvo > 20. EV e IO dão resultado semelhante — use o que sair primeiro' },
+
+        { tipo:'decisao', texto:'Na checagem (pausa < 10 s), o que o monitor mostra?', ramos:[
+          { rotulo:'Chocável de novo', cor:'perigo', texto:'*Choque* e seguir a sequência de drogas do chocável',
+            nota:'Adrenalina após o 2º choque · amiodarona 300 mg após o 3º · amiodarona 150 mg após o 5º',
+            meds:[{ droga:'Adrenalina', dose:'1 mg a cada 3–5 min', via:'EV/IO' }, { droga:'Amiodarona', dose:'300 mg, depois 150 mg', via:'EV/IO' }] },
+          { rotulo:'Ritmo organizado', texto:'*Checar pulso* em até 10 s: sem pulso é AESP; com pulso é RCE',
+            nota:'ETCO₂ que sobe de repente (muitas vezes > 40) costuma ser o primeiro sinal de RCE' },
+          { rotulo:'AESP ou assistolia', texto:'RCP, adrenalina a cada 3–5 min e *caçar a causa*',
+            nota:'No não chocável, o desfecho depende de achar e tratar o que parou o coração' }
+        ]},
+
+        { tipo:'decisao', texto:'FV que não sai depois de 3 choques?', ramos:[
+          { rotulo:'Torsades (QT longo)', cor:'perigo', texto:'*Magnésio* e corrigir potássio',
+            meds:[{ droga:'Sulfato de magnésio', dose:'2 g em 1–2 min', via:'EV/IO' }], ir:'taqui-qrs-largo' },
+          { rotulo:'FV refratária', texto:'Lidocaína se não houver amiodarona · considerar trocar as pás para *anteroposterior*',
+            nota:'Suspeita de oclusão coronária: em centro com RCP mecânica ou ECMO, discutir hemodinâmica ainda em RCP',
+            meds:[{ droga:'Lidocaína', dose:'1–1,5 mg/kg, depois 0,5–0,75 mg/kg', via:'EV/IO' }] },
+          { rotulo:'Não', cor:'ok', texto:'Seguir os ciclos' }
+        ]},
+
+        { tipo:'passo', rotulo:'Via aérea', texto:'Bolsa-máscara bem feita basta no começo · *supraglótico ou tubo* por quem é experiente, sem parar as compressões',
+          nota:'Com via aérea avançada: compressão contínua e 1 ventilação a cada 6 s. Capnografia confirma o tubo. Nunca hiperventilar',
+          ir:'sequencia-rapida-intubacao' },
+
+        { tipo:'decisao', texto:'Causas reversíveis — os 5 H (procurar desde o primeiro ciclo)', ramos:[
+          { rotulo:'Hipóxia', texto:'O₂ 100%, via aérea pérvia, tubo no lugar',
+            nota:'Obstrução alta, hipoventilação, doença pulmonar' },
+          { rotulo:'Hipovolemia / sangramento', texto:'Cristaloide e *sangue*; controlar o sangramento', ir:'choque-abordagem' },
+          { rotulo:'Hipercalemia (renal, dialítico, rabdomiólise)', cor:'perigo', texto:'*Cálcio, bicarbonato e insulina com glicose* sem esperar o exame',
+            meds:[{ droga:'Gluconato de cálcio 10%', dose:'30 mL (3 g) em bolus', via:'EV/IO' }, { droga:'Bicarbonato de sódio 8,4%', dose:'50 mEq (50 mL)', via:'EV/IO' }],
+            ir:'hipercalemia' },
+          { rotulo:'Hipocalemia / hipomagnesemia', texto:'Repor potássio e magnésio', nota:'Hipocalemia vem quase sempre com hipomagnesemia: trate as duas', ir:'hipocalemia' },
+          { rotulo:'H⁺ (acidose) · hipotermia', texto:'Ventilar bem e tratar a causa; *reaquecer* e prolongar a RCP no hipotérmico',
+            nota:'Bicarbonato só na acidose metabólica grave prévia', ir:'acido-base' }
+        ]},
+
+        { tipo:'decisao', texto:'Causas reversíveis — os 5 T (POCUS só na pausa de checagem)', ramos:[
+          { rotulo:'Tensão no tórax', cor:'perigo', texto:'*Descompressão* com agulha ou toracostomia digital', ir:'pneumotorax' },
+          { rotulo:'Tamponamento', cor:'perigo', texto:'*Pericardiocentese* guiada pelo POCUS', ir:'tamponamento' },
+          { rotulo:'Trombose pulmonar', cor:'perigo', texto:'*Alteplase em bolus* e RCP por 60–90 min',
+            meds:[{ droga:'Alteplase', dose:'50 mg em bolus, repetir em 15 min', via:'EV' }], ir:'tep' },
+          { rotulo:'Trombose coronária', texto:'Buscar o RCE e ir para a *hemodinâmica*', ir:'sca-com-supra' },
+          { rotulo:'Toxinas', texto:'Tricíclico: bicarbonato · opioide: naloxona · bloqueador de cálcio: cálcio',
+            meds:[{ droga:'Bicarbonato de sódio 8,4%', dose:'1–2 mEq/kg', via:'EV/IO' }, { droga:'Naloxona', dose:'0,4–2 mg', via:'EV/IO' }],
+            ir:'intoxicado-abordagem' }
+        ]},
+
+        { tipo:'decisao', texto:'Houve retorno da circulação espontânea (RCE)?', ramos:[
+          { rotulo:'Ainda não', texto:'Manter os ciclos e rever os 5 H e 5 T',
+            nota:'Encerrar é decisão da equipe (ver Destino). Prolongar em hipotermia, intoxicação, afogamento, gestante e TEP trombolisado' },
           { rotulo:'Sim — RCE', cor:'ok', texto:'Entrar nos *cuidados pós-parada*' }
         ]},
-        { tipo:'fim', rotulo:'Pós-RCE', texto:'*UTI* — SpO2 92–98%, normocapnia, PAM ≥ 65',
-          nota:'ECG de 12 derivações imediato · cateterismo se supra · controle direcionado de temperatura' }
+
+        { tipo:'passo', rotulo:'Pós-RCE — primeiros minutos', texto:'*SpO₂ 92–98%* · PaCO₂ 35–45 · *PAS > 90 e PAM ≥ 65* · ECG de 12 derivações · glicemia',
+          nota:'Nada de hiperóxia nem de hiperventilação. Hipotensão: volume e noradrenalina',
+          meds:[{ droga:'Noradrenalina', dose:'0,05–0,5 mcg/kg/min', via:'EV BIC' }] },
+
+        { tipo:'decisao', texto:'O ECG pós-RCE mostra supra de ST?', ramos:[
+          { rotulo:'Supra, equivalente ou choque cardiogênico', cor:'perigo', texto:'*Cateterismo de emergência*', ir:'sca-com-supra' },
+          { rotulo:'Sem supra', texto:'Cateterismo não é emergencial de rotina: *procurar a causa*',
+            nota:'TC de crânio e de tórax conforme a suspeita (hemorragia intracraniana, TEP, dissecção)' }
+        ]},
+
+        { tipo:'decisao', texto:'Obedece a comandos?', ramos:[
+          { rotulo:'Não (comatoso)', cor:'perigo', texto:'*Controle ativo da temperatura:* evitar febre por pelo menos 72 h',
+            nota:'Alvo entre 32 e 37,5 °C; hipotermia e normotermia controladas deram resultado parecido. EEG se houver suspeita de convulsão. Não definir prognóstico antes de 72 h' },
+          { rotulo:'Sim', cor:'ok', texto:'UTI, monitorização e investigação da causa' }
+        ]},
+
+        { tipo:'fim', rotulo:'Destino', texto:'*UTI* · sobrevivente sem causa reversível: investigação cardíaca e, na maioria, *CDI*',
+          nota:'Cardiomiopatia hipertrófica, QT longo congênito ou Brugada: avaliar os parentes de primeiro grau' }
       ]},
+
       { tipo:'alerta', titulo:'Red flags', itens:[
-        '*Não perder tempo checando pulso* — mais de 10 s de checagem já é atraso. Na dúvida, comprima.',
-        'Gasping é sinal de parada, *não* de respiração — trate como PCR.',
-        'Ritmo chocável (FV/TV sem pulso) exige o choque no menor tempo possível: cada minuto de atraso derruba a sobrevida.',
-        'Assistolia na tela: confirmar o *protocolo da linha reta* — checar cabos, ganho e derivação — antes de assumir.',
-        'Parada em paciente jovem, gestante ou com hipotermia muda a conduta e prolonga o esforço de ressuscitação.'
+        '*Checar pulso por mais de 10 s* é atraso: na dúvida, comprima.',
+        '*Gasping* é parada, não respiração.',
+        'Ritmo chocável: cada minuto sem choque tira cerca de 10% da sobrevida.',
+        'Assistolia na tela: confira cabos, ganho e derivação antes de aceitar.',
+        'Hipotermia, intoxicação, afogamento, gestante e TEP trombolisado mudam a conduta e prolongam a RCP.'
       ]},
+
       { tipo:'passos', titulo:'Conduta imediata', itens:[
-        'Checar responsividade, respiração e pulso central em *até 10 segundos*, simultaneamente.',
-        'Chamar ajuda e pedir *carro de parada e desfibrilador* no mesmo comando.',
-        'Iniciar compressões: centro do tórax, *5–6 cm de profundidade, 100–120/min*, retorno completo do tórax, minimizando interrupções.',
-        '*30:2* enquanto a via aérea não é avançada; após via aérea avançada, compressão contínua com 1 ventilação a cada 6 s.',
-        'Assim que o monitor chegar: *checar ritmo* e classificar em chocável ou não chocável.',
-        'Acesso venoso ou intraósseo, sem interromper as compressões.',
-        'Rodar ciclos de *2 minutos*, trocando quem comprime a cada ciclo para não perder qualidade.',
-        'Procurar ativamente as causas reversíveis (5H e 5T) desde o segundo ciclo.'
+        'Confirmar irresponsividade, respiração e pulso central em *até 10 segundos*, ao mesmo tempo.',
+        'Comprimir já e pedir ajuda, *monitor-desfibrilador* e carro de parada no mesmo comando.',
+        'Comprimir *5–6 cm, 100–120/min*, com retorno completo e pausas < 10 s; 30:2 até haver via aérea avançada.',
+        'Acoplar o monitor, ler o ritmo e *chocar se chocável*, retomando a compressão sem checar pulso.',
+        'Acesso EV ou IO sem parar as compressões; adrenalina no tempo certo para o ritmo.',
+        'Ciclos de *2 minutos*: checar ritmo, trocar quem comprime, olhar a capnografia.',
+        'Procurar os *5 H e 5 T* desde o primeiro ciclo e tratar o que achar.'
       ]},
-      { tipo:'ordem', titulo:'Ritmo CHOCÁVEL — FV e TV sem pulso', itens:[
-        '*Choque imediato* — bifásico 200 J (ou máximo do aparelho); monofásico 360 J. Retomar compressão na hora, sem checar pulso.',
-        '2 min de RCP · acesso venoso · preparar adrenalina · checar ritmo.',
-        '2º choque · RCP · *adrenalina 1 mg* com flush de 20 mL e elevação do membro · preparar amiodarona · considerar via aérea avançada.',
-        '3º choque · RCP · *amiodarona 300 mg* (ou lidocaína) · considerar os 5H e 5T.',
-        '4º choque · RCP · *adrenalina 1 mg* (mantendo a cada 3–5 min).',
-        '5º choque · RCP · *amiodarona 150 mg*, a segunda e última dose.'
-      ]},
-      { tipo:'ordem', titulo:'Ritmo NÃO CHOCÁVEL — AESP e assistolia', itens:[
-        '*Não se choca.* Iniciar RCP imediatamente e manter ciclos de 2 minutos.',
-        'Acesso venoso ou intraósseo e *adrenalina 1 mg o quanto antes*, repetindo a cada 3–5 min.',
-        'Via aérea avançada quando houver quem a faça sem parar as compressões.',
-        'Checar ritmo a cada 2 min: se virar chocável, entra no algoritmo do choque.',
-        '*A conduta aqui é caçar a causa* — em AESP e assistolia o desfecho depende de achar e tratar o 5H/5T.'
-      ]},
+
       { tipo:'doses', titulo:'Medicações', itens:[
-        { droga:'Adrenalina', dose:'1 mg a cada 3–5 min', via:'EV/IO', obs:'Ampola 1 mg/mL. Seguir de *flush de 20 mL de SF e elevar o membro*. Em ritmo não chocável, administrar o quanto antes.' },
-        { droga:'Amiodarona', dose:'300 mg na 1ª dose · 150 mg na 2ª', via:'EV/IO', obs:'Diluir em 100–250 mL de SG 5%. Só em FV/TV sem pulso refratária ao choque.' },
-        { droga:'Lidocaína', dose:'1–1,5 mg/kg', via:'EV/IO', obs:'Alternativa à amiodarona quando não disponível.' },
-        { droga:'Sulfato de magnésio', dose:'1–2 g', via:'EV/IO', obs:'*Apenas na torsades de pointes*, não de rotina.' },
-        { droga:'Bicarbonato de sódio', dose:'1 mEq/kg', via:'EV', obs:'Não é rotina. Reservado a hipercalemia, acidose grave prévia e intoxicação por tricíclicos.' },
-        { droga:'Gluconato de cálcio', dose:'1 g', via:'EV', obs:'Hipercalemia, hipocalcemia e intoxicação por bloqueador de canal de cálcio.' }
+        { droga:'Adrenalina 1 mg/mL', dose:'1 mg a cada 3–5 min', via:'EV/IO', obs:'Puro, seguido de *flush de 20 mL de SF* e elevação do membro. Não chocável: o quanto antes. Chocável: após o 2º choque.' },
+        { droga:'Amiodarona 150 mg/3 mL', dose:'300 mg (2 ampolas); 2ª dose 150 mg', via:'EV/IO', obs:'Em bolus, puro ou em 20 mL de SG 5% — não em 100 mL. Após o 3º e o 5º choque.' },
+        { droga:'Lidocaína 2% sem vasoconstritor', dose:'1–1,5 mg/kg; depois 0,5–0,75 mg/kg', via:'EV/IO', obs:'Alternativa à amiodarona. 70 kg: 5 mL (100 mg). Máximo 3 mg/kg.' },
+        { droga:'Sulfato de magnésio 50%', dose:'2 g (4 mL) em 1–2 min', via:'EV/IO', obs:'Só na torsades de pointes — não é rotina.' },
+        { droga:'Bicarbonato de sódio 8,4%', dose:'1 mEq/kg (50–100 mL)', via:'EV/IO', obs:'Não é rotina (sem benefício em ensaio randomizado). Hipercalemia, tricíclico (1–2 mEq/kg) e acidose metabólica grave prévia. Via separada do cálcio.' },
+        { droga:'Gluconato de cálcio 10%', dose:'30 mL (3 g) em bolus', via:'EV/IO', obs:'Hipercalemia, hipocalcemia, intoxicação por bloqueador de canal de cálcio. Cloreto de cálcio 10% 10 mL (1 g) equivale, de preferência em veia central.' },
+        { droga:'Insulina regular + glicose 50%', dose:'10 UI + 50 mL (25 g)', via:'EV', obs:'Hipercalemia, junto com o cálcio.' },
+        { droga:'Alteplase', dose:'50 mg em bolus; repetir 50 mg em 15 min', via:'EV', obs:'TEP provável. Manter a RCP por 60–90 min depois.' },
+        { droga:'Naloxona 0,4 mg/mL', dose:'0,4–2 mg', via:'EV/IO/IM/IN', obs:'Parada associada a opioide. Não atrasa compressão nem via aérea.' },
+        { droga:'Noradrenalina', dose:'0,05–0,5 mcg/kg/min', via:'EV BIC', obs:'Pós-RCE: alvo PAS > 90 e PAM ≥ 65.' }
       ]},
-      { tipo:'lista', titulo:'Causas reversíveis — 5H e 5T', itens:[
-        '*H:* Hipovolemia · Hipóxia · Hidrogênio (acidose) · Hipo/hipercalemia · Hipotermia.',
-        '*T:* Tensão no tórax (pneumotórax hipertensivo) · Tamponamento · Toxinas · Trombose coronariana · Trombose pulmonar.',
-        'O POCUS à beira do leito responde rápido a tamponamento, pneumotórax, hipovolemia e disfunção de VD — use nas pausas de checagem de ritmo.',
-        'Glicemia capilar e gasometria com eletrólitos assim que houver acesso.'
-      ]},
+
       { tipo:'tempo', titulo:'Linha do tempo', itens:[
-        { quando:'0–10 s',   o_que:'Reconhecimento: irresponsivo, sem respiração normal, sem pulso.' },
-        { quando:'≤ 1 min',  o_que:'Compressões iniciadas e ajuda acionada com pedido de desfibrilador.' },
-        { quando:'≤ 3 min',  o_que:'Monitor acoplado, ritmo checado e *choque entregue se chocável*.' },
-        { quando:'A cada 2 min', o_que:'Checagem de ritmo, troca de quem comprime, reavaliação dos 5H/5T.' },
-        { quando:'3–5 min',  o_que:'Adrenalina, repetindo no mesmo intervalo enquanto durar a parada.' },
-        { quando:'Pós-RCE',  o_que:'Cuidados pós-parada: alvo de SpO2 92–98%, normocapnia, PAM ≥ 65, ECG de 12 derivações e controle de temperatura.', fim:true }
+        { quando:'0–10 s', o_que:'Reconhecimento: irresponsivo, sem respiração normal, sem pulso.' },
+        { quando:'< 1 min', o_que:'Compressões iniciadas, ajuda e desfibrilador pedidos.' },
+        { quando:'≤ 3 min', o_que:'Monitor acoplado, ritmo lido e *choque entregue se chocável*.' },
+        { quando:'A cada 2 min', o_que:'Checagem de ritmo (< 10 s), troca de quem comprime, choque se chocável.' },
+        { quando:'A cada 3–5 min', o_que:'Adrenalina — em ciclos alternados.' },
+        { quando:'Pós-RCE', o_que:'SpO₂ 92–98%, PaCO₂ 35–45, PAM ≥ 65, ECG, controle de temperatura.', fim:true }
       ]},
+
+      { tipo:'ordem', titulo:'Ritmo CHOCÁVEL — FV e TV sem pulso', itens:[
+        '*Choque* (bifásico 120–200 J ou o máximo; monofásico 360 J) e RCP na hora, sem checar pulso.',
+        '2 min de RCP · acesso EV/IO · checar ritmo.',
+        '*2º choque* · RCP · *adrenalina 1 mg* (repetir a cada 3–5 min) · considerar via aérea avançada.',
+        '*3º choque* · RCP · *amiodarona 300 mg* (ou lidocaína 1–1,5 mg/kg) · procurar 5 H e 5 T.',
+        '4º choque · RCP · adrenalina.',
+        '*5º choque* · RCP · *amiodarona 150 mg* (ou lidocaína 0,5–0,75 mg/kg).'
+      ]},
+
+      { tipo:'ordem', titulo:'Ritmo NÃO CHOCÁVEL — AESP e assistolia', itens:[
+        '*Não se choca.* RCP imediata em ciclos de 2 minutos.',
+        'Acesso EV/IO e *adrenalina 1 mg o quanto antes*, repetindo a cada 3–5 min.',
+        'Via aérea avançada quando houver quem a faça sem parar as compressões.',
+        'Checar ritmo a cada 2 min: se virar chocável, entrar na sequência do choque.',
+        '*Caçar a causa* — no não chocável o desfecho depende de achar os 5 H e 5 T.'
+      ]},
+
+      { tipo:'lista', titulo:'Causas de morte súbita e o que investigar no sobrevivente', itens:[
+        '*Doença coronária* é a causa mais comum: infarto agudo, isquemia ou cicatriz de infarto antigo (TV monomórfica).',
+        '*Outras cardiopatias estruturais:* cardiomiopatia hipertrófica, displasia arritmogênica do VD, dilatada, miocardite, infiltrativas (sarcoidose, amiloidose), estenose aórtica grave, cardiopatia congênita, tamponamento, ruptura miocárdica.',
+        '*Elétricas primárias:* QT longo congênito ou por droga, Brugada, Wolff-Parkinson-White, TV polimórfica catecolaminérgica, repolarização precoce, QT curto, BAV total, commotio cordis.',
+        '*Não cardíacas:* TEP, hemorragia intracraniana, dissecção de aorta, hipovolemia, afogamento, cocaína e metanfetamina, opioide, obstrução de via aérea, digoxina e antiarrítmicos, pneumotórax hipertensivo.',
+        '*Sobrevivente sem causa reversível:* ECG, eco, RM cardíaca, cateterismo e, conforme o caso, teste genético — a maioria recebe CDI. Em cardiopatia hereditária, rastrear os parentes de primeiro grau.'
+      ]},
+
       { tipo:'naofazer', titulo:'Não fazer', itens:[
-        'Interromper compressão para intubar, puncionar acesso ou discutir caso.',
-        'Chocar assistolia ou AESP — *não são ritmos chocáveis*.',
-        'Checar pulso logo depois do choque: retome a compressão imediatamente e só cheque no fim do ciclo de 2 min.',
-        'Hiperventilar — reduz o retorno venoso e piora a perfusão coronariana.',
-        'Bicarbonato e cálcio de rotina, sem indicação específica.',
-        'Encostar no leito no momento do choque, ou disparar sem o aviso em voz alta.'
+        'Parar a compressão para intubar, puncionar ou discutir o caso.',
+        'Chocar assistolia ou AESP.',
+        'Checar pulso logo depois do choque — volte a comprimir e só cheque no fim do ciclo.',
+        'Hiperventilar: reduz o retorno venoso e a perfusão coronária.',
+        'Bicarbonato e cálcio de rotina, sem hipercalemia, intoxicação ou acidose grave prévia.',
+        'Diluir a amiodarona da parada em 100 mL, ou definir prognóstico neurológico antes de 72 h.'
       ]},
-      { tipo:'texto', titulo:'Destino e término do esforço', conteudo:'Com retorno de circulação espontânea (RCE), o paciente vai para *UTI* sob cuidados pós-parada: evitar hiperóxia (SpO2 92–98%), manter normocapnia, PAM ≥ 65 mmHg com vasopressor se necessário, ECG de 12 derivações imediato e cateterismo se houver supra ou suspeita de causa coronariana, além de controle direcionado de temperatura. A decisão de *encerrar o esforço* é clínica e coletiva — considera ritmo persistentemente não chocável, tempo total de parada, ausência de causa reversível e capnografia persistentemente baixa —, e prolonga-se em hipotermia, intoxicação, gestante e afogamento.' },
+
+      { tipo:'texto', titulo:'Destino e término do esforço', conteudo:'Com RCE, o paciente vai para a *UTI* com SpO₂ 92–98%, PaCO₂ 35–45, PAS > 90 e PAM ≥ 65, ECG de 12 derivações e cateterismo de emergência se houver supra ou choque cardiogênico. O comatoso recebe *controle ativo de temperatura* evitando febre por pelo menos 72 horas, e o prognóstico neurológico não se define antes disso. *Encerrar a RCP* é decisão da equipe, somando fatores: parada não presenciada, sem RCP no início, ritmo não chocável persistente, tempo prolongado sem RCE, nenhuma causa reversível encontrada e ETCO₂ < 10 mmHg após 20 minutos de RCP de boa qualidade com via aérea avançada — nenhum deles isolado. Prolonga-se em hipotermia, intoxicação, afogamento, gestante e depois de trombolítico por TEP. Sobrevivente sem causa reversível tem risco de nova parada: investigação cardíaca e, na maioria, CDI.' },
+
       { tipo:'dica', titulo:'Pega do plantão', itens:[
-        'Alguém precisa *cronometrar em voz alta* os ciclos de 2 min e o intervalo da adrenalina — sem isso o tempo na sala se perde e as drogas atrasam.',
-        'Trocar quem comprime a cada 2 minutos não é cortesia: a qualidade da compressão cai muito antes de a pessoa dizer que cansou.',
-        'Capnografia é o melhor termômetro da RCP: ETCO2 abaixo de 10 mmHg indica compressão ruim; um salto súbito costuma ser o RCE.',
-        'Assistolia na tela sem explicação: cheque cabo, ganho e derivação antes de aceitar o diagnóstico.',
-        'Em ritmo não chocável, a adrenalina é *precoce*; em ritmo chocável, ela vem depois do segundo choque — a ordem é diferente e é onde mais se erra.'
+        'Um cronometrista em voz alta para os ciclos de 2 min e a adrenalina — sem isso as drogas atrasam.',
+        'Trocar quem comprime a cada 2 min: a qualidade cai antes de a pessoa dizer que cansou.',
+        'Capnografia é o termômetro da RCP: < 10 mmHg é compressão ruim; salto súbito costuma ser o RCE.',
+        'Adrenalina *precoce* no não chocável, *depois do 2º choque* no chocável — é onde mais se erra a ordem.',
+        'Anote o horário de cada choque, droga e checagem: é o que a equipe da UTI vai precisar.'
       ]}
     ] },
 
   { id:'sca-com-supra', titulo:'SCA com supra de ST (IAMCSST)', categoria:'cardio', gravidade:'emergencia',
-    resumo:'Diagnóstico no ECG, escolha entre angioplastia primária e trombólise, e o tempo de cada uma.',
-    tags:['iam','infarto','stemi','supra','trombolise','angioplastia','reperfusao'],
-    fonte:'SBC — Diretriz de IAM com Supradesnivelamento do Segmento ST',
+    resumo:'Diagnóstico no ECG, escolha entre angioplastia primária e trombólise, antiagregação e anticoagulação para cada estratégia, e o tempo de cada uma.',
+    tags:['iam','infarto','stemi','supra','trombolise','fibrinolise','angioplastia','icp','reperfusao','tenecteplase','de winter','sgarbossa'],
+    fonte:'SBC — Diretriz de IAM com Supradesnivelamento do Segmento ST (2015) · ESC 2023 — Síndromes Coronarianas Agudas · apoio: UpToDate (2026)',
     ficha:[
-      { rotulo:'Quando pensar', valor:'Dor torácica em aperto >20 min, em repouso, com sudorese, náusea ou irradiação. *No diabético, idoso e na mulher pode ser só dispneia, síncope ou epigastralgia.*' },
-      { rotulo:'Prioridade',    valor:'*Sala vermelha.* O relógio começa no primeiro contato médico, não na chegada.' },
-      { rotulo:'Meta',          valor:'Reperfusão: *porta-balão ≤ 90 min* ou *porta-agulha ≤ 30 min*.' }
+      { rotulo:'Quando pensar', valor:'Dor torácica em aperto > 20 min, em repouso, com sudorese, náusea ou irradiação. *No diabético, no idoso e na mulher pode ser só dispneia, síncope ou epigastralgia.*' },
+      { rotulo:'Prioridade',    valor:'*Sala vermelha.* O relógio começa no primeiro contato médico, não na porta do seu hospital.' },
+      { rotulo:'Meta',          valor:'*ICP primária em ≤ 120 min do primeiro contato* (porta-balão ≤ 90 min); se não der, *porta-agulha ≤ 30 min*.' }
     ],
     secoes:[
 
       { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
-        { tipo:'inicio', rotulo:'Entrada', texto:'*Dor torácica anginosa*',
-          nota:'No diabético, idoso e na mulher pode ser só dispneia, síncope ou epigastralgia' },
-        { tipo:'passo', rotulo:'≤ 10 minutos', texto:'MOV + *ECG de 12 derivações interpretado*',
-          nota:'Acrescentar *V7–V9* (dorsal) e *V3R–V4R* (ventrículo direito). Oxigênio só se SpO2 < 90%' },
-        { tipo:'decisao', texto:'Há supra de ST — ou BRE novo, ou marca-passo?', ramos:[
-          { rotulo:'Não', texto:'*SCASSST* — protocolo de dor torácica, seriar ECG e troponina' },
-          { rotulo:'Sim', cor:'perigo', texto:'*SCACSST — reperfusão imediata*' }
+        { tipo:'inicio', rotulo:'Entrada', texto:'*Dor torácica anginosa* ou equivalente',
+          nota:'No diabético, no idoso e na mulher pode ser só dispneia, síncope, fraqueza ou epigastralgia' },
+        { tipo:'passo', rotulo:'≤ 10 minutos', texto:'*ECG de 12 derivações interpretado* + monitor, oxímetro, acesso venoso e desfibrilador ao lado',
+          nota:'Parede inferior: V3R–V4R. Infra em V1–V4: V7–V9. Oxigênio só se SpO₂ < 90%' },
+        { tipo:'decisao', texto:'O ECG fecha IAM com supra (ou equivalente)?', ramos:[
+          { rotulo:'Supra que preenche critério', cor:'perigo', texto:'*IAMCSST — reperfusão agora*, sem esperar troponina' },
+          { rotulo:'Equivalente de supra', cor:'perigo', texto:'*Tratar como IAMCSST*',
+            nota:'BRE novo com clínica ou Sgarbossa positivo · infra de V1–V4 com R alto e supra em V7–V9 (dorsal) · de Winter (infra ascendente com T alta e simétrica em V2–V6)' },
+          { rotulo:'Suspeito, sem critério', texto:'*Repetir o ECG a cada 15–30 min* e chamar a cardiologia cedo',
+            nota:'T hiperaguda costuma vir antes do supra. Supra difuso com infra de PR: pense em pericardite' },
+          { rotulo:'Sem supra', texto:'Seguir como SCA sem supra', ir:'sca-sem-supra' }
         ]},
-        { tipo:'passo', rotulo:'Agora, na maca', texto:'*AAS 300 mg mastigado* + 2º antiagregante + anticoagulante',
-          nota:'Clopidogrel 600 mg se ICP · 300 mg se trombólise · *75 mg se > 75 anos em trombólise*' },
-        { tipo:'decisao', texto:'A hemodinâmica é alcançável em até 120 minutos?', ramos:[
-          { rotulo:'Sim', cor:'ok', texto:'*ICP primária* — porta-balão ≤ 90 min' },
-          { rotulo:'Não', texto:'*Trombólise* — porta-agulha ≤ 30 min',
-            nota:'Rodar a lista de contraindicações em voz alta com a equipe antes' }
+        { tipo:'alerta', rotulo:'Antes de antiagregar', texto:'*Dor lancinante, pulso assimétrico ou mediastino largo? Afastar dissecção*',
+          nota:'Dissecção que pega a coronária direita dá supra inferior. Antiagregar e trombolisar aqui mata', ir:'sindrome-aortica' },
+        { tipo:'passo', rotulo:'Agora, na maca', texto:'*AAS mastigado* em todo IAMCSST',
+          nota:'Nitrato só com dor, hipertensão ou congestão, PAS ≥ 90, VD descartado e sem inibidor de PDE5. Morfina não é rotina',
+          meds:[{ droga:'Ácido acetilsalicílico', dose:'300 mg mastigado', via:'VO' }] },
+        { tipo:'decisao', texto:'Tem choque, EAP ou arritmia ventricular sustentada?', ramos:[
+          { rotulo:'Choque cardiogênico', cor:'perigo', texto:'*ICP de emergência, em qualquer tempo de evolução* — transferir mesmo que longe',
+            nota:'Noradrenalina se PAS < 90 com má perfusão. Parede inferior hipotensa: pensar em VD e dar volume', ir:'choque-abordagem' },
+          { rotulo:'TV/FV ou bradicardia com BAV', cor:'perigo', texto:'*ACLS e seguir para a reperfusão*',
+            nota:'BAV no IAM inferior costuma ceder com a reperfusão; no anterior é sinal de grande área', ir:'bradiarritmia' },
+          { rotulo:'Estável', cor:'ok', texto:'Seguir para a estratégia de reperfusão' }
         ]},
-        { tipo:'alerta', rotulo:'Pegadinha do supra', texto:'*Parede inferior? V3R e V4R antes do nitrato*',
-          nota:'No IAM de ventrículo direito não se faz nitrato, morfina, betabloqueador nem diurético — é pré-carga-dependente. Se hipotenso, volume em alíquotas de 250 mL' },
-        { tipo:'decisao', texto:'Trombolisou — houve critério de reperfusão em 60–90 min?', ramos:[
-          { rotulo:'Não', cor:'perigo', texto:'*ICP de resgate*' },
-          { rotulo:'Sim', cor:'ok', texto:'Coronariografia entre 3 e 24 h',
-            nota:'Queda do supra > 50%, alívio da dor, ritmo de reperfusão' }
+        { tipo:'decisao', texto:'Há quanto tempo começou a dor?', ramos:[
+          { rotulo:'Até 12 h', cor:'ok', texto:'*Reperfusão indicada* — decidir a via no próximo passo' },
+          { rotulo:'Mais de 12 h', texto:'*Sem fibrinólise.* ICP se ainda há dor, instabilidade ou arritmia',
+            nota:'Assintomático e estável após 48 h: cateterismo eletivo, não emergência' }
         ]},
-        { tipo:'fim', rotulo:'Destino', texto:'*UCO ou UTI*, monitorizado, por 24–48 h',
+        { tipo:'decisao', texto:'A ICP primária acontece em até 120 min do primeiro contato médico?', ramos:[
+          { rotulo:'Sim', cor:'ok', texto:'*ICP primária* — acionar a hemodinâmica ou a transferência agora',
+            nota:'Preferida sempre que possível, e obrigatória no choque, na IC, na apresentação tardia e na contraindicação à fibrinólise',
+            meds:[{ droga:'Ticagrelor', dose:'180 mg', via:'VO' }, { droga:'Heparina não fracionada', dose:'70–100 UI/kg (máx. 10.000)', via:'EV' }] },
+          { rotulo:'Não', cor:'perigo', texto:'*Fibrinólise* — porta-agulha ≤ 30 min, se não houver contraindicação',
+            nota:'Rodar a lista de contraindicações em voz alta. Idade ≥ 75 anos: meia dose de tenecteplase',
+            meds:[{ droga:'Tenecteplase', dose:'30–50 mg conforme o peso', via:'EV' }, { droga:'Clopidogrel', dose:'300 mg (75 mg se > 75 anos)', via:'VO' }, { droga:'Enoxaparina', dose:'30 mg EV + 1 mg/kg SC', via:'EV + SC' }] }
+        ]},
+        { tipo:'alerta', rotulo:'Pegadinha do supra inferior', texto:'*V3R e V4R antes do nitrato*',
+          nota:'IAM de ventrículo direito depende de pré-carga: sem nitrato, morfina, diurético ou betabloqueador. Hipotenso: soro em alíquotas de 250 mL' },
+        { tipo:'decisao', texto:'Trombolisou: em 60–90 min, o supra caiu mais de 50%?', ramos:[
+          { rotulo:'Não', cor:'perigo', texto:'*ICP de resgate* — transferir já',
+            nota:'Também se a dor volta, se o supra reaparece ou se instabiliza' },
+          { rotulo:'Sim', cor:'ok', texto:'*Cateterismo entre 2 e 24 h* (estratégia fármaco-invasiva)',
+            nota:'Transferir para centro com hemodinâmica mesmo com a trombólise eficaz' }
+        ]},
+        { tipo:'fim', rotulo:'Destino', texto:'*Unidade coronariana ou UTI*, monitorizado, por 24–48 h no mínimo',
           nota:'Não existe alta do pronto-socorro. Sem hemodinâmica no serviço: trombolisar *antes* de transferir' }
       ]},
       { tipo:'alerta', titulo:'Red flags', itens:[
-        'Killip III/IV — congestão pulmonar ou choque cardiogênico.',
+        'Killip III/IV — congestão pulmonar ou choque cardiogênico: ICP de emergência em qualquer tempo.',
         'Supra em parede inferior *com hipotensão* — pensar em IAM de ventrículo direito antes de dar nitrato.',
         'Supra em aVR com infra difuso — sugere lesão de tronco ou multiarterial.',
-        'Arritmia ventricular ou bradicardia com bloqueio — desfibrilador ao lado do leito.',
-        'Dor com assimetria de pulsos ou mediastino alargado — descartar dissecção antes de anticoagular.'
+        'Sopro sistólico novo — insuficiência mitral por papilar ou comunicação interventricular.',
+        'Dor com assimetria de pulsos ou mediastino alargado — descartar dissecção antes de antiagregar e anticoagular.'
       ]},
       { tipo:'passos', titulo:'Conduta imediata', itens:[
-        '*ECG de 12 derivações em até 10 minutos* da chegada, interpretado por médico.',
-        '*MOV* — monitor, oximetria, dois acessos venosos calibrosos. Oxigênio *apenas* se SpO2 < 90%.',
-        '*AAS mastigado agora*, ainda na maca, antes de qualquer outra coisa.',
-        'Definir a estratégia de reperfusão *no mesmo momento do diagnóstico* — ICP primária se hemodinâmica alcançável em até 120 min; caso contrário, trombólise.',
-        'Acionar hemodinâmica ou a regulação de transferência antes de completar a prescrição.',
-        'Segundo antiagregante e anticoagulante conforme a estratégia escolhida.',
-        'Nitrato e morfina só se houver dor, hipertensão ou congestão — e nunca antes de checar o VD.'
+        'Fazer o *ECG de 12 derivações em até 10 minutos* do primeiro contato, interpretado por médico.',
+        'Monitorizar, puncionar dois acessos calibrosos e deixar o desfibrilador ao lado. Oxigênio *só* se SpO₂ < 90%.',
+        'Dar o *AAS mastigado* ainda na maca.',
+        'Decidir a reperfusão *no momento do diagnóstico*: ICP primária se acontece em até 120 min do primeiro contato; senão, fibrinólise em até 30 min.',
+        'Acionar a hemodinâmica ou a regulação antes de completar a prescrição.',
+        'Escolher segundo antiagregante e anticoagulante *pela estratégia* — ICP e trombólise têm doses diferentes.',
+        'Tratar dor, congestão e arritmia sem atrasar a reperfusão; nitrato só depois de checar o VD.'
       ]},
-      { tipo:'prescricao', titulo:'Prescrição mínima', nota:'Adulto ~70 kg, sala vermelha, *antes* de a reperfusão acontecer. Conferir peso, função renal e alergias. Os itens em âmbar só entram se a condição for verdadeira.', itens:[
+      { tipo:'prescricao', titulo:'Prescrição mínima', nota:'Adulto ~70 kg, sala vermelha, *antes* de a reperfusão acontecer. Conferir peso, idade, função renal e alergias. Os itens em âmbar só entram se a condição for verdadeira.', itens:[
 
         { grupo:'Suporte — vale para todo IAMCSST' },
         { item:'Dieta zero', obs:'Até a estratégia de reperfusão estar definida.' },
         { item:'Repouso no leito, cabeceira 30°' },
         { item:'Monitorização contínua: cardioscopia, oximetria e PA não invasiva', obs:'*Desfibrilador ao lado do leito* — a arritmia vem nas primeiras horas.' },
         { item:'Dois acessos venosos periféricos calibrosos' },
-        { item:'O2 cateter nasal 2–3 L/min', via:'IN', se:'SpO2 < 90%', obs:'Com SpO2 ≥ 90% o oxigênio *aumenta* a área de infarto.' },
+        { item:'O2 cateter nasal 2–4 L/min', via:'IN', se:'SpO2 < 90%', obs:'Com saturação normal o oxigênio não traz benefício; evitar hiperóxia.' },
 
         { grupo:'Agora, na maca — antes de completar o resto' },
-        { item:'AAS 300 mg', via:'VO', obs:'*Mastigado.* É a primeira coisa a ser dada. Manutenção 100 mg/dia.' },
-        { item:'Clopidogrel 600 mg (ICP) · 300 mg (trombólise)', via:'VO', obs:'*≥ 75 anos em trombólise: 75 mg, sem ataque.* Alternativa na ICP: ticagrelor 180 mg VO — nunca após trombólise nem com AVC hemorrágico prévio.' },
-        { item:'Enoxaparina 30 mg em bolus + 1 mg/kg 12/12 h', via:'EV + SC', obs:'*≥ 75 anos: sem bolus e 0,75 mg/kg.* ClCr < 30: 1 mg/kg 24/24 h. HNF 60 U/kg (máx. 4.000 U) + 12 U/kg/h se preferir na ICP ou na disfunção renal.' },
+        { item:'AAS 300 mg', via:'VO', obs:'*Mastigado*, sem revestimento entérico. Manutenção 100 mg/dia.' },
         { item:'Atorvastatina 80 mg', via:'VO', obs:'Ainda na fase aguda, independente do LDL.' },
 
+        { grupo:'Se ICP primária' },
+        { item:'Ticagrelor 180 mg (2 comprimidos de 90 mg)', via:'VO', se:'ICP primária', obs:'Alternativa: prasugrel 60 mg (6 comprimidos de 10 mg), exceto AVC/AIT prévio, ≥ 75 anos ou < 60 kg. Alto risco de sangramento: clopidogrel 600 mg.' },
+        { item:'Heparina não fracionada 70–100 UI/kg em bolus (máx. 10.000 UI)', via:'EV', se:'ICP primária', obs:'Com inibidor de IIb/IIIa planejado: 50–70 UI/kg (máx. 7.000). O restante é ajustado na sala pelo TCA.' },
+
+        { grupo:'Se fibrinólise' },
+        { item:'Tenecteplase em bolus único conforme o peso', via:'EV', se:'ICP *não* acontece em 120 min, dor < 12 h e sem contraindicação', obs:'< 60 kg 30 mg · 60–69 kg 35 mg · 70–79 kg 40 mg · 80–89 kg 45 mg · ≥ 90 kg 50 mg. *Metade da dose se ≥ 75 anos.*' },
+        { item:'Clopidogrel 300 mg (4 comprimidos de 75 mg)', via:'VO', se:'fibrinólise, até 75 anos', obs:'*Acima de 75 anos: 75 mg, sem ataque.* Ticagrelor e prasugrel não entram com a trombólise.' },
+        { item:'Enoxaparina 30 mg em bolus + 1 mg/kg de 12/12 h', via:'EV + SC', se:'fibrinólise, abaixo de 75 anos', obs:'Máx. 100 mg nas duas primeiras doses SC. *≥ 75 anos: sem bolus, 0,75 mg/kg (máx. 75 mg nas duas primeiras).* ClCr < 30: dose SC a cada 24 h.' },
+
         { grupo:'Sintomáticos — só com indicação' },
-        { item:'Nitroglicerina 5–10 mcg/min em BIC, titular', via:'EV', se:'dor mantida, PAS > 90 mmHg, *VD descartado* e sem inibidor de PDE5 nas últimas 24–48 h', obs:'Parede inferior sem V3R/V4R = não prescrever.' },
-        { item:'Morfina 2–4 mg, repetir se necessário', via:'EV', se:'dor refratária ao nitrato', obs:'Reduz a absorção do antiagregante oral — não usar por conforto.' },
+        { item:'Dinitrato de isossorbida 5 mg, até 3 doses a cada 5 min', via:'SL', se:'dor, PAS ≥ 90, VD descartado e sem inibidor de PDE5 nas últimas 24–48 h' },
+        { item:'Nitroglicerina 5–10 mcg/min em BIC, titular', via:'EV', se:'dor persistente, hipertensão ou congestão, com as mesmas condições', obs:'Parede inferior sem V3R/V4R = não prescrever.' },
+        { item:'Morfina 2–4 mg, repetir 2–8 mg a cada 5–15 min se preciso', via:'EV', se:'dor refratária ao nitrato', obs:'Atrasa a absorção do antiagregante oral — não usar por conforto.' },
         { item:'Ondansetrona 4–8 mg', via:'EV', se:'náusea ou vômito' },
 
         { grupo:'Solicitar na mesma folha' },
-        { item:'ECG de 12 derivações seriado, com V3R–V4R e V7–V9', obs:'A cada 10–15 min enquanto houver dor.' },
-        { item:'Troponina, hemograma, ureia e creatinina, eletrólitos, glicemia e coagulograma', obs:'*Colher, mas não esperar a troponina para reperfundir.*' },
-        { item:'Radiografia de tórax no leito', obs:'Sem atrasar a reperfusão.' },
-
-        { grupo:'Reperfusão — a decisão, não a prescrição' },
-        { item:'ICP primária, porta-balão ≤ 90 min', se:'hemodinâmica alcançável em até 120 min' },
-        { item:'Tenecteplase em bolus único conforme peso, porta-agulha ≤ 30 min', via:'EV', se:'a ICP *não* é alcançável em 120 min', obs:'*Meia dose se ≥ 75 anos.* Rodar a lista de contraindicações em voz alta com a equipe antes.' }
+        { item:'ECG de 12 derivações seriado, com V3R–V4R e V7–V9', obs:'A cada 15–30 min enquanto houver dor, e 60–90 min após a trombólise.' },
+        { item:'Troponina, hemograma, ureia e creatinina, eletrólitos, magnésio, glicemia e coagulograma', obs:'*Colher, mas não esperar a troponina para reperfundir.*' },
+        { item:'Radiografia de tórax no leito', obs:'Sem atrasar a reperfusão.' }
       ]},
       { tipo:'doses', titulo:'Medicações', itens:[
-        { droga:'AAS',            dose:'150–300 mg (ataque)', via:'VO', obs:'Mastigado ou macerado. Manutenção 100 mg/dia.' },
-        { droga:'Clopidogrel',    dose:'600 mg se ICP · 300 mg se trombólise', via:'VO', obs:'*Acima de 75 anos em trombólise: 75 mg, sem ataque.*' },
-        { droga:'Ticagrelor',     dose:'180 mg (ataque)', via:'VO', obs:'Alternativa ao clopidogrel na ICP. Não usar após trombólise nem com histórico de AVC hemorrágico.' },
-        { droga:'Enoxaparina',    dose:'30 mg EV em bolus + 1 mg/kg 12/12 h', via:'EV + SC', obs:'*Acima de 75 anos: sem bolus e 0,75 mg/kg.* Ajustar se clearance < 30.' },
-        { droga:'Heparina não fracionada', dose:'60 U/kg em bolus (máx. 4.000 U) + 12 U/kg/h', via:'EV', obs:'Opção quando a estratégia é ICP primária ou há disfunção renal.' },
-        { droga:'Tenecteplase',   dose:'Bolus único conforme peso', via:'EV', obs:'Meia dose se ≥ 75 anos. Conferir a tabela de peso e a lista de contraindicações antes.' },
-        { droga:'Nitroglicerina', dose:'5–10 mcg/min, titular', via:'EV', obs:'*Contraindicada* em IAM de VD, PAS < 90 e uso de inibidor de PDE5 nas últimas 24–48 h.' },
-        { droga:'Morfina',        dose:'2–4 mg, repetir se necessário', via:'EV', obs:'Só para dor refratária ao nitrato — reduz a absorção do antiagregante oral.' },
-        { droga:'Atorvastatina',  dose:'80 mg', via:'VO', obs:'Dose alta ainda na fase aguda, independente do LDL.' }
+        { droga:'Ácido acetilsalicílico', dose:'150–300 mg (ataque)', via:'VO', obs:'Mastigado, sem revestimento entérico. Manutenção 100 mg/dia. Se não puder engolir, via retal.' },
+        { droga:'Ticagrelor', dose:'180 mg de ataque, depois 90 mg de 12/12 h', via:'VO', obs:'Preferido na *ICP primária*. Não usar com a trombólise nem com AVC hemorrágico prévio. Comprimido de 90 mg.' },
+        { droga:'Prasugrel', dose:'60 mg de ataque, depois 10 mg/dia', via:'VO', obs:'Alternativa na ICP. *Contraindicado* com AVC ou AIT prévio, ≥ 75 anos, < 60 kg ou sangramento ativo.' },
+        { droga:'Clopidogrel', dose:'Trombólise: 300 mg (75 mg se > 75 anos) · ICP: 600 mg', via:'VO', obs:'Único P2Y12 com a fibrinólise. Na ICP, só quando ticagrelor e prasugrel não podem (alto risco de sangramento). Manutenção 75 mg/dia.' },
+        { droga:'Heparina não fracionada', dose:'ICP: 70–100 UI/kg (máx. 10.000) · trombólise: 60 UI/kg (máx. 4.000) + 12 UI/kg/h (máx. 1.000)', via:'EV', obs:'Com IIb/IIIa na ICP: 50–70 UI/kg (máx. 7.000). Sem reperfusão: 50–70 UI/kg (máx. 5.000) + 12 UI/kg/h. Alvo de TTPa 1,5–2 × o controle. Preferida se ClCr < 30.' },
+        { droga:'Enoxaparina', dose:'< 75 anos: 30 mg EV + 1 mg/kg SC de 12/12 h', via:'EV + SC', obs:'Máx. 100 mg nas duas primeiras doses. *≥ 75 anos: sem bolus, 0,75 mg/kg de 12/12 h* (máx. 75 mg nas duas primeiras). ClCr < 30: a cada 24 h. Opção na trombólise e sem reperfusão.' },
+        { droga:'Fondaparinux', dose:'2,5 mg EV, depois 2,5 mg SC 1 vez ao dia', via:'EV + SC', obs:'Alternativa na trombólise ou sem reperfusão quando não vai para ICP. Evitar com ClCr < 30.' },
+        { droga:'Tenecteplase', dose:'< 60 kg 30 mg · 60–69 kg 35 mg · 70–79 kg 40 mg · 80–89 kg 45 mg · ≥ 90 kg 50 mg', via:'EV', obs:'Bolus único em 5–10 s. *Metade da dose se ≥ 75 anos.* Frascos de 40 e 50 mg (5 mg/mL).' },
+        { droga:'Alteplase', dose:'15 mg em bolus + 0,75 mg/kg em 30 min (máx. 50) + 0,5 mg/kg em 60 min (máx. 35)', via:'EV', obs:'Esquema acelerado, total máximo de 100 mg em 90 min. Frasco de 50 mg.' },
+        { droga:'Estreptoquinase', dose:'1.500.000 UI em 30–60 min', via:'EV', obs:'Diluir em 100 mL de SF. Hipotensão na infusão: reduzir a velocidade. *Não repetir* (anticorpos). Não exige heparina em bolus.' },
+        { droga:'Dinitrato de isossorbida 5 mg', dose:'1 comprimido, a cada 5 min, até 3', via:'SL', obs:'Só com dor, PAS ≥ 90 e VD descartado. Não usar com sildenafila ou vardenafila em 24 h, tadalafila em 48 h.' },
+        { droga:'Nitroglicerina', dose:'5–10 mcg/min, subir 5–10 a cada 3–5 min', via:'EV BIC', obs:'Dor persistente, hipertensão ou congestão. Mesmas contraindicações do nitrato sublingual.' },
+        { droga:'Morfina', dose:'2–4 mg, depois 2–8 mg a cada 5–15 min', via:'EV', obs:'Só para dor refratária — atrasa a absorção do antiagregante oral.' },
+        { droga:'Atorvastatina', dose:'80 mg', via:'VO', obs:'Dose alta ainda na fase aguda, independente do LDL.' }
       ]},
       { tipo:'tempo', titulo:'Linha do tempo', itens:[
         { quando:'0–10 min',   o_que:'ECG feito e interpretado, monitorização, acesso venoso e *AAS administrado*.' },
-        { quando:'≤ 10 min',   o_que:'Estratégia de reperfusão decidida e hemodinâmica/transferência acionada.' },
-        { quando:'≤ 30 min',   o_que:'*Porta-agulha* — trombolítico infundido, quando a ICP não é alcançável em 120 min.' },
-        { quando:'≤ 90 min',   o_que:'*Porta-balão* — ICP primária no serviço com hemodinâmica.' },
-        { quando:'60–90 min pós-trombólise', o_que:'Reavaliar critérios de reperfusão: queda do supra > 50%, alívio da dor, ritmo de reperfusão. Sem critérios, *ICP de resgate*.' },
-        { quando:'3–24 h',     o_que:'Coronariografia após trombólise bem-sucedida.', fim:true }
+        { quando:'≤ 10 min',   o_que:'Estratégia de reperfusão decidida e hemodinâmica ou transferência acionada.' },
+        { quando:'≤ 30 min',   o_que:'*Porta-agulha* — fibrinolítico infundido, quando a ICP não acontece em 120 min.' },
+        { quando:'≤ 90 min',   o_que:'*Porta-balão* no serviço com hemodinâmica; ≤ 120 min do primeiro contato quando há transferência.' },
+        { quando:'60–90 min pós-trombólise', o_que:'Reavaliar: queda do supra > 50% e alívio da dor. Sem critérios, *ICP de resgate*.' },
+        { quando:'2–24 h',     o_que:'Cateterismo após trombólise eficaz (estratégia fármaco-invasiva).', fim:true }
       ]},
       { tipo:'lista', titulo:'Critérios de supra no ECG', itens:[
-        'Supra de ST ≥ 1 mm em duas derivações contíguas.',
+        'Supra de ST ≥ 1 mm em duas derivações contíguas, fora de V2–V3.',
         'Em V2–V3: ≥ 2 mm em homens ≥ 40 anos, ≥ 2,5 mm em homens < 40 anos, ≥ 1,5 mm em mulheres.',
-        'Bloqueio de ramo esquerdo *novo ou presumivelmente novo* com quadro clínico compatível.',
-        'Parede inferior: repetir com *V3R e V4R* (ventrículo direito) e *V7–V9* (dorsal).',
-        'Infra de ST em V1–V3 com R alto pode ser supra dorsal — não é isquemia subendocárdica.'
+        '*BRE novo* com quadro compatível; no BRE antigo ou no marca-passo, usar Sgarbossa (supra concordante ≥ 1 mm é o mais específico).',
+        '*Dorsal:* infra horizontal em V1–V4 com R alto em V1–V3 — confirmar com supra ≥ 0,5 mm em V7–V9.',
+        '*De Winter:* infra ascendente do ST com T alta e simétrica em V2–V6, às vezes com supra em aVR — oclusão da descendente anterior.'
+      ]},
+      { tipo:'lista', titulo:'Contraindicações absolutas à fibrinólise', itens:[
+        'Qualquer hemorragia intracraniana prévia, malformação vascular ou neoplasia intracraniana.',
+        'AVC isquêmico nos últimos 3 meses (exceto o das últimas 3 horas, que tem conduta própria).',
+        'Suspeita de dissecção de aorta.',
+        'Sangramento ativo (exceto menstruação) ou diátese hemorrágica.',
+        'Trauma craniano ou facial significativo, ou cirurgia intracraniana ou medular, nos últimos 3 meses.'
       ]},
       { tipo:'lista', titulo:'Exames iniciais', itens:[
-        'ECG seriado a cada 10–15 min enquanto houver dor, e após qualquer mudança clínica.',
+        'ECG seriado a cada 15–30 min enquanto houver dor, e após qualquer mudança clínica.',
         'Troponina — *colher, mas não esperar o resultado para reperfundir.*',
-        'Hemograma, função renal, eletrólitos, glicemia e coagulograma.',
+        'Hemograma, função renal, eletrólitos com potássio e magnésio, glicemia e coagulograma (obrigatório se usa anticoagulante).',
         'Radiografia de tórax, sem atrasar a reperfusão.',
         'Ecocardiograma se houver dúvida diagnóstica, instabilidade ou suspeita de complicação mecânica.'
       ]},
       { tipo:'naofazer', titulo:'Não fazer', itens:[
-        'Oxigênio de rotina com SpO2 ≥ 90% — aumenta a área de infarto.',
-        'Nitrato antes de descartar IAM de ventrículo direito, ou com hipotensão e uso de sildenafil.',
-        'AINE ou corticoide para a dor (o AAS é a exceção).',
+        'Oxigênio de rotina com SpO₂ ≥ 90% — não traz benefício.',
+        'Nitrato antes de descartar IAM de ventrículo direito, com PAS < 90 ou com inibidor de PDE5 recente.',
+        'Ticagrelor ou prasugrel junto com a trombólise — o P2Y12 da fibrinólise é o clopidogrel.',
+        'Fibrinólise com mais de 12 h de dor, ou repetir estreptoquinase.',
         'Esperar a troponina para decidir a reperfusão.',
-        'Betabloqueador endovenoso de rotina em paciente congesto, hipotenso ou bradicárdico.',
-        'Transferir sem trombolisar quando a ICP vai levar mais de 120 minutos.'
+        'AINE para a dor; betabloqueador endovenoso em paciente congesto, hipotenso ou bradicárdico.'
       ]},
-      { tipo:'texto', titulo:'Destino', conteudo:'Todo IAMCSST vai para *unidade coronariana ou UTI*, monitorizado, por no mínimo 24–48 h após a reperfusão. Não existe alta do pronto-socorro. Se o serviço não tem hemodinâmica, o paciente é trombolisado *antes* da transferência e transferido em ambulância com médico, monitor e desfibrilador. Killip III/IV, arritmia ventricular ou complicação mecânica exigem vaga de UTI antes de qualquer transporte eletivo.' },
+      { tipo:'texto', titulo:'Destino', conteudo:'Todo IAMCSST vai para *unidade coronariana ou UTI*, monitorizado, por no mínimo 24–48 h após a reperfusão. Não existe alta do pronto-socorro. Se o serviço não tem hemodinâmica e a ICP não acontece em 120 min, o paciente é trombolisado *antes* da transferência e segue para o centro com hemodinâmica em qualquer caso: resgate se a trombólise falhou, cateterismo em 2–24 h se funcionou. O transporte é em ambulância com médico, monitor e desfibrilador. Choque cardiogênico vai para ICP de emergência em qualquer tempo de evolução.' },
       { tipo:'dica', titulo:'Pega do plantão', itens:[
-        'Todo supra de parede inferior merece V3R/V4R e V7–V9 *antes* de o nitrato ser prescrito — o IAM de VD é pré-carga-dependente e o nitrato derruba a pressão.',
-        'Dor torácica com ECG normal não descarta nada: o ECG inicial é normal em parte dos infartos. Repita.',
-        'O tempo que conta é o do *primeiro contato médico*, não o da porta do seu hospital — inclui o tempo de ambulância e de transferência.',
+        'Todo supra inferior merece V3R/V4R e V7–V9 *antes* de o nitrato ser prescrito.',
+        'ECG normal não descarta nada: repita a cada 15–30 min enquanto houver dor, e procure a T hiperaguda.',
+        'O tempo que conta é o do *primeiro contato médico* — inclui ambulância e transferência.',
+        'P2Y12 segue a estratégia: ticagrelor ou prasugrel na ICP, clopidogrel na trombólise. Trocar é erro frequente.',
         'Antes do trombolítico, rodar a lista de contraindicações em voz alta com a equipe. É o único momento em que dá para voltar atrás.'
       ]}
     ] },
 
   { id:'sca-sem-supra', titulo:'SCA sem supra de ST e angina instável', categoria:'cardio', gravidade:'emergencia',
-    resumo:'Estratificação de risco (GRACE/HEART), antiagregação, anticoagulação e quem vai para cateterismo precoce.',
-    tags:['iamssst','angina instavel','troponina','grace','heart score'],
-    fonte:'SBC — Diretriz de SCA sem Supradesnivelamento do Segmento ST',
-    secoes:[
-      { tipo:'alerta', titulo:'Red flags', itens:[
-        'Instabilidade, insuficiência cardíaca, arritmia ventricular ou angina refratária: *cateterismo em menos de 2 horas*.',
-        'Bloqueio de ramo esquerdo *novo* com clínica de infarto equivale a supra: acione a reperfusão.',
-        'Infra de ST em 6 ou mais derivações com supra em aVR: lesão de tronco ou proximal de descendente anterior.',
-        'ECG normal não exclui: repita a cada 15 a 30 minutos enquanto houver dor.',
-        'Betabloqueador é proibido em insuficiência cardíaca, bloqueio, broncoespasmo e uso de cocaína.'
-      ]},
-      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
-        { tipo:'inicio', rotulo:'Entrada', texto:'Dor torácica anginosa sem supradesnivelamento de ST' },
-        { tipo:'passo', rotulo:'Em 10 minutos', texto:'*ECG de 12 derivações + monitorização + acesso + troponina*',
-          nota:'Repetir o ECG a cada 15 a 30 min se a dor persistir. Curva de troponina' },
-        { tipo:'passo', rotulo:'A-B-C-C-C', texto:'*AAS · Betabloqueador · Captopril · Clopidogrel · Colesterol · Clexane*',
-          nota:'AAS 300 mg mastigado no primeiro momento. Ver as contraindicações de cada um' },
-        { tipo:'passo', rotulo:'Anti-isquêmico', texto:'Nitrato sublingual se a dor persistir e a PAS for maior que 100',
-          nota:'Proibido em infarto de VD, PAS abaixo de 90 e uso de sildenafil nas últimas 24 h' },
-        { tipo:'decisao', texto:'Qual a estratificação de risco?', ramos:[
-          { rotulo:'Muito alto risco', cor:'perigo', texto:'*Cateterismo em menos de 2 horas*',
-            nota:'Instabilidade, insuficiência cardíaca, arritmia ventricular, dor refratária, complicação mecânica' },
-          { rotulo:'Alto risco — GRACE acima de 140 ou troponina em curva', texto:'*Cateterismo em até 24 horas*' },
-          { rotulo:'Intermediário', texto:'Cateterismo em até 72 horas' },
-          { rotulo:'Baixo — HEART baixo, troponina negativa seriada', cor:'ok', texto:'Teste não invasivo antes da alta' }
-        ]},
-        { tipo:'fim', rotulo:'Sempre', texto:'Internar em leito monitorizado; nunca liberar dor torácica sem estratificação' }
-      ]},
-      { tipo:'doses', titulo:'Medicações', itens:[
-        { droga:'Ácido acetilsalicílico', dose:'300 mg (3 comprimidos de 100 mg)', via:'VO', obs:'Mastigado, no primeiro momento. Manutenção de 100 mg/dia.' },
-        { droga:'Clopidogrel', dose:'300 mg de ataque (4 comprimidos)', via:'VO', obs:'Depois 75 mg/dia. Segurar o ataque se houver cateterismo em menos de 24 h e possibilidade cirúrgica.' },
-        { droga:'Ticagrelor', dose:'180 mg de ataque, depois 90 mg de 12/12 h', via:'VO', obs:'Alternativa ao clopidogrel, com maior potência.' },
-        { droga:'Enoxaparina', dose:'1 mg/kg', via:'SC', obs:'De 12/12 h. Não usar em instável, clearance abaixo de 15 ou peso acima de 150 kg.' },
-        { droga:'Atenolol 25 a 100 mg ou metoprolol', dose:'Conforme a PA e a FC', via:'VO', obs:'De 12/12 h. Contraindicado em IC, BAV, broncoespasmo, cocaína, PAS abaixo de 120 ou FC acima de 110.' },
-        { droga:'Captopril 25 mg', dose:'1 comprimido', via:'VO', obs:'Nas primeiras 24 h, se não houver hipotensão.' },
-        { droga:'Atorvastatina', dose:'40 a 80 mg', via:'VO', obs:'Dose alta, independentemente do perfil lipídico inicial.' },
-        { droga:'Mononitrato de isossorbida 5 mg', dose:'1 comprimido', via:'SL', obs:'A cada 5 min, até 3 doses, se a dor persistir. Ver contraindicações.' },
-        { droga:'Morfina', dose:'2 a 4 mg', via:'EV', obs:'A cada 5 min, SOMENTE se dor refratária. Não de rotina.' }
-      ]},
-      { tipo:'naofazer', titulo:'Não fazer', itens:[
-        'Liberar dor torácica sem curva de troponina e sem estratificação de risco.',
-        'Betabloqueador nas contraindicações — sobretudo em insuficiência cardíaca aguda e cocaína.',
-        'Nitrato em infarto de ventrículo direito, hipotensão ou uso recente de sildenafil.',
-        'Morfina de rotina: associa-se a pior desfecho.',
-        'Oxigênio se a saturação for maior que 90%: não ajuda e pode piorar.'
-      ]},
-      { tipo:'texto', titulo:'Internação x alta', conteudo:'Todo SCA sem supra interna em leito monitorizado. A estratificação define o tempo até o cateterismo. Aplicar *GRACE* e *HEART* e registrar. Antes da alta, prevenção secundária completa: dupla antiagregação, estatina de alta potência, betabloqueador, IECA e reabilitação cardíaca, além de cessação do tabagismo.' },
-      { tipo:'dica', titulo:'Pega do plantão', itens:[
-        'ECG seriado é o exame mais barato e mais útil: repita.',
-        'Troponina isolada não fecha nem exclui — o que vale é a curva.',
-        'Registre a hora do início da dor: define tudo daqui para frente.'
-      ]}
-    ] },
-
-  { id:'dor-toracica', titulo:'Dor torácica: triagem e diferenciais', categoria:'cardio', gravidade:'urgencia',
-    resumo:'Como separar as quatro causas que matam das causas benignas nos primeiros 10 minutos.',
-    tags:['dor toracica','precordialgia','ecg','triagem','diferencial'],
-    fonte:'SBC — Diretriz de Dor Torácica na Emergência',
-    secoes:[
-      { tipo:'alerta', titulo:'As cinco causas que matam', itens:[
-        '*Síndrome coronariana aguda* — ECG em 10 minutos.',
-        '*Dissecção de aorta* — dor lancinante, assimetria de pulso ou de PA entre os braços.',
-        '*Tromboembolismo pulmonar* — dispneia, taquicardia, hipoxemia, fator de risco.',
-        '*Pneumotórax hipertensivo* — MV abolido, hipertimpanismo, desvio de traqueia.',
-        '*Ruptura esofágica* — vômito intenso seguido de dor e enfisema subcutâneo.'
-      ]},
-      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
-        { tipo:'inicio', rotulo:'Entrada', texto:'Dor torácica no pronto atendimento' },
-        { tipo:'passo', rotulo:'Em 10 minutos', texto:'*ECG de 12 derivações* + sinais vitais nos dois braços + oximetria',
-          nota:'Monitorização e acesso venoso antes de qualquer coisa' },
-        { tipo:'decisao', texto:'O ECG mostra supra de ST?', ramos:[
-          { rotulo:'Sim', cor:'perigo', texto:'*Acionar a rede de reperfusão* — ver a conduta de IAM com supra' },
-          { rotulo:'Não', texto:'Seguir a investigação das causas graves' }
-        ]},
-        { tipo:'passo', rotulo:'Caracterizar a dor', texto:'Início, qualidade, irradiação, duração, fatores de melhora e piora',
-          nota:'Lancinante que irradia para o dorso: aorta. Ventilatório-dependente: pleura ou pericárdio. Em queimação pós-prandial: esôfago' },
-        { tipo:'decisao', texto:'Qual o padrão predominante?', ramos:[
-          { rotulo:'Anginosa', texto:'*Curva de troponina + HEART* — ver SCA sem supra' },
-          { rotulo:'Lancinante, assimetria de pulso', cor:'perigo', texto:'*Angiotomografia de aorta* — controlar FC e PA' },
-          { rotulo:'Dispneia + taquicardia + fator de risco', cor:'perigo', texto:'*Wells + D-dímero ou angiotomografia*' },
-          { rotulo:'Ventilatório-dependente com atrito', texto:'Pericardite — ECG com supra difuso côncavo e infra de PR' },
-          { rotulo:'Reprodutível à palpação, sem red flag', cor:'ok', texto:'Provável musculoesquelética — sintomático e retorno' }
-        ]},
-        { tipo:'fim', rotulo:'Antes da alta', texto:'Aplicar HEART, documentar troponina seriada e ECG, e garantir seguimento' }
-      ]},
-      { tipo:'doses', titulo:'Medidas iniciais', itens:[
-        { droga:'ECG de 12 derivações', dose:'Em até 10 minutos', via:'—', obs:'Acrescentar V7 a V9 e V3R a V4R conforme a suspeita. Repetir se a dor persistir.' },
-        { droga:'Ácido acetilsalicílico', dose:'300 mg mastigado', via:'VO', obs:'Se a suspeita é coronariana e não há contraindicação.' },
-        { droga:'Dipirona 2 g', dose:'2 ampolas', via:'EV', obs:'Analgesia para dor não isquêmica.' },
-        { droga:'Mononitrato de isossorbida 5 mg', dose:'1 comprimido', via:'SL', obs:'Na suspeita coronariana com PAS acima de 100. Contraindicado em VD e com sildenafil.' },
-        { droga:'Metoprolol', dose:'5 mg', via:'EV', obs:'Na suspeita de dissecção: baixar a FC ANTES do vasodilatador. Alvo de FC abaixo de 60.' },
-        { droga:'Omeprazol 40 mg', dose:'1 frasco', via:'EV', obs:'Se a suspeita for esofágica ou péptica — mas nunca use "teste terapêutico" para excluir isquemia.' }
-      ]},
-      { tipo:'naofazer', titulo:'Não fazer', itens:[
-        'Excluir infarto porque a dor melhorou com antiácido ou com analgésico: não serve como teste diagnóstico.',
-        'Excluir isquemia porque a dor é reprodutível à palpação — pode coexistir.',
-        'Anticoagular antes de afastar dissecção de aorta quando há assimetria de pulso.',
-        'Liberar sem ECG seriado e sem curva de troponina em dor anginosa.',
-        'Esquecer de medir a PA nos dois braços.'
-      ]},
-      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Alta* possível com HEART baixo (0 a 3), duas troponinas negativas com intervalo adequado, ECG seriado normal e ausência de red flag — com seguimento ambulatorial e teste não invasivo programado. *Internar* com HEART moderado ou alto, troponina positiva ou em curva, alteração no ECG, ou qualquer das cinco causas graves suspeitada. Na dúvida, observe: dor torácica liberada indevidamente é a principal causa de processo em emergência.' },
-      { tipo:'dica', titulo:'Pega do plantão', itens:[
-        'Meça a pressão nos dois braços em toda dor torácica: é gratuito e acha dissecção.',
-        'Registre o horário de cada ECG e de cada troponina.',
-        'O HEART é rápido e defensável: use e documente.'
-      ]}
-    ] },
-
-  { id:'eap-ic-descompensada', titulo:'Edema agudo de pulmão e IC descompensada', categoria:'cardio', gravidade:'emergencia',
-    resumo:'Perfis hemodinâmicos, VNI, vasodilatador e diurético — e por que o paciente seco não melhora com furosemida.',
-    tags:['eap','edema agudo','insuficiencia cardiaca','congestao','nitroglicerina','furosemida','vni','icad','perfil'],
-    fonte:'SBC — Diretriz Brasileira de Insuficiência Cardíaca Aguda · Manual de Cardiologia na Prática 3.0, p. 34–35, 43–51 · PS Zerado, p. 13–15',
+    resumo:'Confirmar pela curva de troponina, antiagregar e anticoagular conforme a estratégia, e decidir o tempo do cateterismo pelo risco.',
+    tags:['iamssst','scassst','nstemi','angina instavel','troponina','grace','heart score','heparina','enoxaparina','fondaparinux','ticagrelor','clopidogrel'],
+    fonte:'SBC — Diretriz de Angina Instável e IAM sem Supra de ST (2021) · ESC 2023 — Síndromes Coronarianas Agudas · ACC/AHA 2025 — Síndromes Coronarianas Agudas · apoio: UpToDate (2026)',
     ficha:[
-      { rotulo:'Quando pensar', valor:'Dispneia súbita e intensa, ortopneia, estertores difusos, sudorese, muitas vezes com PA elevada.' },
-      { rotulo:'Prioridade',    valor:'*VNI precoce* — melhora mais rápido que qualquer droga e evita intubação.' },
-      { rotulo:'Meta',          valor:'No EAP hipertensivo: *reduzir a PAS para < 140 mmHg em 1 hora*, com diurese de 1 mL/kg/h.' }
+      { rotulo:'Quando pensar', valor:'Dor ou desconforto em aperto, em repouso ou em esforço cada vez menor, *sem supra de ST*. No idoso, no diabético e na mulher pode ser só dispneia, náusea ou mal-estar.' },
+      { rotulo:'Prioridade',    valor:'*ECG em 10 minutos* e repetido a cada 15–30 min com dor; troponina seriada no algoritmo do laboratório.' },
+      { rotulo:'Meta',          valor:'Classificar o risco e marcar o cateterismo: *< 2 h* no muito alto risco, *< 24 h* no alto risco.' }
     ],
     secoes:[
 
       { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
-        { tipo:'inicio', rotulo:'Entrada', texto:'Dispneia súbita, ortopneia, estertores difusos, sudorese' },
-        { tipo:'passo', rotulo:'Primeira medida', texto:'MOVE com *VNI precoce* + paciente sentado',
-          nota:'A VNI alivia em minutos e evita intubação — não deixe para depois da furosemida' },
-        { tipo:'decisao', texto:'Qual o perfil hemodinâmico? (congestão × perfusão)', ramos:[
-          { rotulo:'B — quente e úmido', texto:'*Diurético + vasodilatador*',
-            nota:'O mais comum: congesto e bem perfundido' },
-          { rotulo:'C — frio e úmido', cor:'perigo', texto:'*Choque cardiogênico* — inotrópico + suporte',
-            nota:'Congesto e mal perfundido. Dobutamina 5 mcg/kg/min' },
-          { rotulo:'L — frio e seco', cor:'perigo', texto:'*HIDRATAR* — não dar furosemida',
-            nota:'Muitas vezes é excesso de diurético. Aqui a furosemida piora tudo' }
+        { tipo:'inicio', rotulo:'Entrada', texto:'*Dor torácica suspeita de isquemia sem supra de ST*',
+          nota:'Supra de ST, BRE novo com clínica, infra de V1–V4 com R alto (posterior) ou de Winter: é IAM com supra, não esta conduta' },
+        { tipo:'passo', rotulo:'≤ 10 minutos', texto:'MOV + *ECG de 12 derivações interpretado* + troponina na chegada',
+          nota:'Oxigênio só se SpO₂ < 90%. Com dor e ECG inicial normal: repetir a cada 15–30 min e fazer V7–V9' },
+        { tipo:'passo', rotulo:'Na maca', texto:'*AAS mastigado* + nitrato se houver dor',
+          nota:'Nitrato só com PAS ≥ 90, sem IAM de VD e sem inibidor de fosfodiesterase (sildenafila/vardenafila 24 h, tadalafila 48 h). Morfina só se a dor não ceder',
+          meds:[{ droga:'Ácido acetilsalicílico', dose:'300 mg mastigado', via:'VO' }, { droga:'Dinitrato de isossorbida', dose:'5 mg a cada 5 min, até 3', via:'SL' }] },
+        { tipo:'decisao', texto:'Há critério de *muito alto risco*?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Cateterismo imediato (< 2 h)* — acionar a hemodinâmica agora',
+            nota:'Instabilidade ou choque · dor refratária ao tratamento · arritmia ventricular sustentada ou PCR recuperada · IC aguda ou EAP · complicação mecânica. Sem hemodinâmica no serviço: transferir já',
+            meds:[{ droga:'Heparina não fracionada', dose:'60 UI/kg (máx. 5.000) + 12 UI/kg/h', via:'EV' }] },
+          { rotulo:'Não', texto:'Seguir a curva de troponina e o ECG seriado' }
         ]},
-        { tipo:'passo', rotulo:'Perfil B e C congestos', texto:'*Furosemida 1–2 mg/kg EV* + vasodilatador',
-          nota:'Nitroglicerina se há SCA · nitroprussiato se é hipertensivo puro. Morfina 2–4 mg só se necessário' },
-        { tipo:'passo', rotulo:'Em paralelo', texto:'*Procurar o gatilho*: SCA, arritmia, má adesão, infecção, anti-inflamatório',
-          nota:'Tratar a arritmia às vezes resolve a congestão sozinho' },
-        { tipo:'decisao', texto:'Alvos alcançados? (PAS < 140 em 1 h · diurese 1 mL/kg/h)', ramos:[
-          { rotulo:'Sim', cor:'ok', texto:'Manter e reavaliar o perfil a cada turno' },
-          { rotulo:'Não', texto:'*Reavaliar o perfil* · dobrar a dose no usuário crônico · infusão contínua · tiazídico associado',
-            nota:'Congestão refratária às vezes é perfil L mal classificado. LRA com congestão: ultrafiltração' }
+        { tipo:'decisao', texto:'O que a troponina e o ECG mostram? (alta sensibilidade 0/1 h ou 0/2 h; convencional 0 e 3–6 h)', ramos:[
+          { rotulo:'Delta positivo ou ST dinâmico', cor:'perigo', texto:'*IAM sem supra — alto risco:* cateterismo em < 24 h',
+            nota:'Também alto risco: supra transitório de ST e GRACE > 140' },
+          { rotulo:'Zona cinza', texto:'Nova troponina em 3 h e ECG seriado, em observação monitorizada',
+            nota:'Troponina elevada e estável, sem delta: lesão crônica (DRC, IC) é mais provável' },
+          { rotulo:'Negativa no intervalo', cor:'ok', texto:'Infarto excluído: *angina instável ou dor não isquêmica* — calcular o HEART',
+            ir:'dor-toracica' }
         ]},
-        { tipo:'fim', rotulo:'Destino', texto:'*Leito monitorizado* · UTI se perfil C, VNI contínua ou intubação',
-          nota:'Alta só com peso seco atingido, medicação otimizada, causa identificada e retorno precoce' }
+        { tipo:'decisao', texto:'Qual a estratégia?', ramos:[
+          { rotulo:'Invasiva (cateterismo < 24–48 h)', cor:'perigo', texto:'*HNF em bomba* · 2º antiagregante *só depois da coronariografia*',
+            nota:'Se o cateterismo vai atrasar 24 h ou mais: ticagrelor 180 mg (ou clopidogrel 300 mg) já na sala de emergência',
+            meds:[{ droga:'Heparina não fracionada', dose:'60 UI/kg (máx. 5.000) + 12 UI/kg/h', via:'EV' }] },
+          { rotulo:'Não invasiva (conservadora)', texto:'*Ticagrelor 180 mg* + enoxaparina, fondaparinux ou HNF',
+            nota:'Sem ticagrelor: clopidogrel 300 mg. Clearance < 30: HNF (enoxaparina 1x/dia se for usá-la; fondaparinux não)',
+            meds:[{ droga:'Ticagrelor', dose:'180 mg de ataque', via:'VO' }, { droga:'Enoxaparina', dose:'1 mg/kg 12/12 h', via:'SC' }, { droga:'Fondaparinux', dose:'2,5 mg 1x/dia', via:'SC' }] }
+        ]},
+        { tipo:'passo', rotulo:'Junto', texto:'*Estatina de alta intensidade* · suspender AINE · corrigir potássio e magnésio',
+          nota:'Betabloqueador oral só sem sinais de IC, baixo débito, BAV, broncoespasmo ou cocaína',
+          meds:[{ droga:'Atorvastatina', dose:'80 mg', via:'VO' }] },
+        { tipo:'alerta', rotulo:'Cocaína ou anfetamina', texto:'*Benzodiazepínico primeiro* e nada de betabloqueador',
+          nota:'AAS, nitrato e anticoagulação seguem valendo',
+          meds:[{ droga:'Diazepam', dose:'5–10 mg a cada 3–5 min', via:'EV' }], ir:'cocaina-estimulantes' },
+        { tipo:'fim', rotulo:'Destino', texto:'*Unidade coronariana ou leito monitorizado* · hemodinâmica conforme o risco',
+          nota:'Angina instável de baixo risco com curva negativa: pode seguir com teste funcional precoce. Não existe alta de IAM sem supra do pronto-socorro' }
       ]},
+
       { tipo:'alerta', titulo:'Red flags', itens:[
-        'Rebaixamento do nível de consciência ou exaustão respiratória — intubar, não insistir em VNI.',
-        '*Hipotensão com congestão* (perfil frio e úmido) — é choque cardiogênico, e furosemida isolada piora.',
-        'Dor torácica associada: SCA como gatilho, e a conduta muda.',
-        'Arritmia como causa da descompensação — tratar o ritmo resolve a congestão.',
-        'Anúria ou lesão renal aguda com congestão refratária: indicação de ultrafiltração/hemodiálise.'
+        'Instabilidade hemodinâmica, IC aguda, arritmia ventricular ou dor refratária: *cateterismo em menos de 2 horas*.',
+        'BRE novo, infra de V1–V4 com R alto ou de Winter com clínica: é *equivalente de supra* — acione a reperfusão.',
+        'Infra de ST em 6 ou mais derivações com supra em aVR: lesão de tronco ou multiarterial.',
+        'Dor típica dias ou semanas após stent ou revascularização: *oclusão até prova em contrário*.',
+        'Dor lancinante com assimetria de pulso: afaste dissecção *antes* de anticoagular.'
       ]},
-      { tipo:'texto', titulo:'Perfis hemodinâmicos — a bússola da conduta', conteudo:'Cruza-se *congestão* (úmido x seco) com *perfusão* (quente x frio). *Perfil B — quente e úmido:* congesto e bem perfundido, é o mais comum; a conduta é diurético e vasodilatador. *Perfil L — frio e seco:* mal perfundido sem congestão, muitas vezes por *excesso de diurético*; a conduta é hidratar, não secar mais. *Perfil C — frio e úmido:* congesto e mal perfundido, é o choque cardiogênico, e exige inotrópico. *Perfil A — quente e seco:* compensado. Errar o perfil é o erro que mais custa nesta conduta: dar furosemida no perfil L piora tudo.' },
-      { tipo:'passos', titulo:'Conduta imediata no EAP', itens:[
-        '*MOVE* com *VNI precoce* — é a primeira medida, e a que mais rápido alivia.',
-        'Paciente sentado, pernas pendentes.',
-        'Investigar e tratar o gatilho no mesmo momento: *SCA ou arritmia*.',
-        '*Vasodilatador* — nitroglicerina se há SCA; nitroprussiato se é hipertensivo puro.',
-        '*Furosemida 1–2 mg/kg* endovenosa.',
-        'Morfina 2–4 mg apenas se necessário — não é rotina.',
-        'Dobutamina 5 mcg/kg/min *só se houver baixo débito*.',
-        'Alvo no EAP hipertensivo: *PAS < 140 mmHg em 1 hora*.'
+
+      { tipo:'passos', titulo:'Conduta imediata', itens:[
+        'Monitorizar, puncionar acesso e deixar o desfibrilador ao lado do leito.',
+        'Dar *AAS 300 mg mastigado* assim que a hipótese for SCA e não houver suspeita de aorta.',
+        'Tratar a dor com nitrato sublingual e, se persistir, nitroglicerina em bomba.',
+        'Classificar o risco (muito alto, alto ou não alto) e definir com a cardiologia o tempo do cateterismo.',
+        'Anticoagular conforme a estratégia: HNF se invasiva; enoxaparina, fondaparinux ou HNF se conservadora.',
+        'Dar o 2º antiagregante conforme a estratégia — não por reflexo na porta.',
+        'Iniciar estatina de alta intensidade e corrigir potássio e magnésio.'
       ]},
+
+      { tipo:'prescricao', titulo:'Prescrição mínima', nota:'Adulto ~70 kg, estratégia invasiva nas próximas 24 h. Conferir peso, clearance de creatinina, alergias e se há anticoagulante em uso. Itens em âmbar só entram se a condição for verdadeira.', itens:[
+        { grupo:'Suporte' },
+        { item:'Dieta zero até definir o horário do cateterismo; depois, dieta leve hipossódica' },
+        { item:'Repouso no leito, cabeceira 30°' },
+        { item:'Monitorização contínua: cardioscopia, oximetria e PA não invasiva', obs:'Desfibrilador ao lado do leito.' },
+        { item:'Acesso venoso periférico salinizado' },
+        { item:'O2 cateter nasal 2–3 L/min', via:'IN', se:'SpO2 < 90%' },
+
+        { grupo:'Antiagregação e anticoagulação' },
+        { item:'AAS 300 mg mastigado, depois 100 mg/dia', via:'VO' },
+        { item:'Heparina não fracionada 60 UI/kg em bolus (máx. 5.000 UI) + 12 UI/kg/h em BIC (máx. 1.000 UI/h)', via:'EV', obs:'TTPa em 6 h, alvo 1,5–2 vezes o controle. Com 70 kg: bolus de 4.200 UI e 840 UI/h.' },
+        { item:'Ticagrelor 180 mg de ataque, depois 90 mg de 12/12 h', via:'VO', se:'estratégia conservadora ou cateterismo previsto para depois de 24 h', obs:'Sem ticagrelor ou com anticoagulante oral: clopidogrel 300 mg, depois 75 mg/dia.' },
+
+        { grupo:'Demais' },
+        { item:'Atorvastatina 80 mg à noite', via:'VO' },
+        { item:'Metoprolol (succinato) 25 mg/dia', via:'VO', se:'sem IC, sem baixo débito, sem BAV, sem broncoespasmo e sem cocaína' },
+        { item:'Omeprazol 20 mg em jejum', via:'VO', obs:'Proteção gástrica com dupla antiagregação e anticoagulação.' },
+        { item:'Suspender AINE em uso' },
+
+        { grupo:'Sintomáticos — só com indicação' },
+        { item:'Dinitrato de isossorbida 5 mg, até 3 doses a cada 5 min', via:'SL', se:'dor, PAS ≥ 90 mmHg e sem inibidor de fosfodiesterase' },
+        { item:'Nitroglicerina 5–10 mcg/min em BIC, subir 5–10 a cada 3–5 min', via:'EV', se:'dor persistente, hipertensão ou congestão' },
+        { item:'Morfina 2–4 mg', via:'EV', se:'dor refratária ao nitrato', obs:'Atrasa a absorção do antiagregante oral.' },
+
+        { grupo:'Solicitar' },
+        { item:'ECG seriado a cada 15–30 min com dor e após cada episódio' },
+        { item:'Troponina seriada no algoritmo do laboratório (0/1 h, 0/2 h ou 0 e 3–6 h)' },
+        { item:'Hemograma, creatinina, potássio, magnésio, glicemia, coagulograma, perfil lipídico e HbA1c' },
+        { item:'Radiografia de tórax e ecocardiograma' }
+      ]},
+
       { tipo:'doses', titulo:'Medicações', itens:[
-        { droga:'Furosemida', dose:'1–2 mg/kg em bolus', via:'EV', obs:'Dobrar a dose habitual do usuário crônico. Alvo de diurese: *1 mL/kg/h*.' },
-        { droga:'Furosemida em infusão', dose:'Após bolus, contínua em bomba', via:'EV BIC', obs:'Opção na congestão refratária ao bolus intermitente.' },
-        { droga:'Nitroglicerina', dose:'Iniciar 5 mL/h, titular', via:'EV BIC', obs:'1 ampola (25 mg/5 mL) em 230 mL de SF. *Preferida quando há SCA associada.*' },
-        { droga:'Nitroprussiato de sódio', dose:'0,3–10 mcg/kg/min, titular', via:'EV BIC', obs:'EAP hipertensivo e IC com FE < 40% descompensada. Fotossensível.' },
-        { droga:'Morfina', dose:'2–4 mg', via:'EV', obs:'*Se necessário*, não de rotina. Cuidado com rebaixamento e depressão respiratória.' },
-        { droga:'Dobutamina', dose:'5 mcg/kg/min, titular', via:'EV BIC', obs:'*Apenas no baixo débito.* Diluir 4 ampolas (80 mL) conforme padronização do serviço.' }
+        { droga:'Ácido acetilsalicílico', dose:'300 mg (3 comprimidos de 100 mg)', via:'VO', obs:'Mastigado. Manutenção 100 mg/dia. Única contraindicação real: anafilaxia ao AAS.' },
+        { droga:'Ticagrelor', dose:'180 mg de ataque, depois 90 mg de 12/12 h', via:'VO', obs:'Estratégia conservadora, ou invasiva com cateterismo depois de 24 h. Não usar com AVC hemorrágico prévio nem com anticoagulante oral.' },
+        { droga:'Clopidogrel', dose:'300 mg de ataque, depois 75 mg/dia', via:'VO', obs:'Quando o ticagrelor não pode ser usado (anticoagulante oral, alto risco de sangramento, indisponível).' },
+        { droga:'Heparina não fracionada', dose:'60 UI/kg em bolus (máx. 5.000) + 12 UI/kg/h (máx. 1.000 UI/h)', via:'EV BIC', obs:'Preferida na estratégia invasiva e no clearance < 30. Frasco de 5.000 UI/mL. TTPa alvo 1,5–2 vezes o controle.' },
+        { droga:'Enoxaparina', dose:'1 mg/kg de 12/12 h', via:'SC', obs:'Estratégia conservadora. Clearance < 30: 1 mg/kg uma vez ao dia. Seringas de 20, 40, 60, 80 e 100 mg.' },
+        { droga:'Fondaparinux', dose:'2,5 mg uma vez ao dia', via:'SC', obs:'Estratégia conservadora; menor sangramento. Não usar com clearance < 30. Se for ao cateterismo, precisa de HNF no procedimento.' },
+        { droga:'Dinitrato de isossorbida 5 mg', dose:'1 comprimido, a cada 5 min, até 3', via:'SL', obs:'PAS ≥ 90, sem IAM de VD e sem sildenafila ou vardenafila em 24 h (tadalafila em 48 h).' },
+        { droga:'Nitroglicerina', dose:'5–10 mcg/min, subir 5–10 a cada 3–5 min', via:'EV BIC', obs:'Dor persistente, hipertensão ou congestão. Mesmas contraindicações do nitrato sublingual.' },
+        { droga:'Morfina', dose:'2–4 mg, repetir 2–8 mg a cada 5–15 min se preciso', via:'EV', obs:'Só na dor refratária. Não é rotina.' },
+        { droga:'Atorvastatina', dose:'80 mg', via:'VO', obs:'Alta intensidade desde o primeiro dia, independente do LDL.' },
+        { droga:'Metoprolol (succinato)', dose:'25 mg/dia, titular', via:'VO', obs:'Só sem IC, baixo débito, BAV, broncoespasmo ou cocaína.' },
+        { droga:'Diazepam', dose:'5–10 mg a cada 3–5 min', via:'EV', obs:'SCA por cocaína ou anfetamina. Alternativa: lorazepam 1–2 mg.' }
       ]},
-      { tipo:'lista', titulo:'Alvos clínicos e reavaliação', itens:[
-        '*Diurese de 1 L em 6 h* (1 mL/kg/h) — a medida objetiva de que o tratamento funciona.',
-        'Melhora da dispneia, da frequência respiratória e da saturação.',
-        'Balanço hídrico e peso diário.',
-        'Função renal e potássio seriados — a diurese intensa espolia potássio.',
-        'Reavaliar perfil hemodinâmico a cada turno: o paciente muda de perfil durante a internação.'
+
+      { tipo:'tempo', titulo:'Linha do tempo', itens:[
+        { quando:'0–10 min', o_que:'ECG interpretado, monitor, acesso, troponina colhida, AAS mastigado.' },
+        { quando:'10–60 min', o_que:'ECG seriado com dor, nitrato, classificação de risco e contato com a cardiologia.' },
+        { quando:'1–3 h', o_que:'Segunda troponina (0/1 h ou 0/2 h) e decisão de estratégia; anticoagulação iniciada.' },
+        { quando:'< 2 h', o_que:'Cateterismo no muito alto risco.' },
+        { quando:'< 24 h', o_que:'Cateterismo no alto risco (IAM sem supra, ST dinâmico, GRACE > 140).' },
+        { quando:'Internação', o_que:'Ecocardiograma, perfil lipídico, HbA1c e início da prevenção secundária.' }
       ]},
-      { tipo:'lista', titulo:'Se refratário à furosemida', itens:[
-        'Usuário crônico de diurético — precisa de dose maior que a habitual.',
-        'Considerar *infusão contínua* em vez de bolus intermitente.',
-        'Associar tiazídico para bloqueio sequencial do néfron.',
-        'Reavaliar se o perfil é mesmo úmido — congestão que não responde às vezes é *perfil L mal classificado*.',
-        'Lesão renal aguda com congestão refratária: *ultrafiltração ou hemodiálise*.'
+
+      { tipo:'lista', titulo:'Estratificação de risco', itens:[
+        '*Muito alto risco — cateterismo < 2 h:* instabilidade ou choque, dor recorrente ou refratária, arritmia ventricular sustentada ou PCR, IC aguda, complicação mecânica, infra difuso com supra em aVR.',
+        '*Alto risco — cateterismo < 24 h:* troponina com curva de infarto, alteração dinâmica ou supra transitório de ST, GRACE > 140.',
+        '*Não alto risco:* troponina negativa e ECG sem alteração dinâmica — estratificação não invasiva ou cateterismo eletivo conforme a clínica.',
+        '*HEART* é para a dor ainda sem diagnóstico (decide alta x observação); *GRACE* é para a SCA já confirmada (decide o tempo do cateterismo).',
+        'Critérios de infra de ST: horizontal ou descendente ≥ 0,5 mm em 2 derivações contíguas, ou T invertida ≥ 1 mm com R proeminente.'
       ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Troponina de alta sensibilidade* no algoritmo 0/1 h ou 0/2 h com os cortes do kit do laboratório; convencional na chegada e em 3–6 h.',
+        'ECG seriado a cada 15–30 min com dor, com V7–V9 se a dor é típica e o ECG padrão normal.',
+        'Hemograma (anemia piora a isquemia e pesa no risco de sangramento), creatinina com clearance, potássio e magnésio.',
+        'Coagulograma se usa anticoagulante; glicemia, perfil lipídico e HbA1c.',
+        'Radiografia de tórax e ecocardiograma (função do VE, alteração segmentar, complicação mecânica).'
+      ]},
+
       { tipo:'naofazer', titulo:'Não fazer', itens:[
-        '*Furosemida no perfil frio e seco (L)* — o paciente precisa de volume, não de diurético.',
-        'Adiar a VNI para tentar só oxigênio por máscara.',
-        'Morfina de rotina em todo EAP.',
-        'Dobutamina no paciente quente e úmido, que não tem baixo débito.',
-        'Tratar a congestão e não procurar o gatilho — SCA, arritmia, má adesão, infecção.',
-        'Insistir em VNI no paciente rebaixado, sem proteção de via aérea.'
+        'Dar o 2º antiagregante por reflexo na porta quando o cateterismo sai em menos de 24 h.',
+        'Trombolisar SCA sem supra: não há benefício, só sangramento.',
+        'Trocar de heparina no meio do caminho (enoxaparina para HNF ou o contrário): aumenta o sangramento.',
+        'Betabloqueador na IC, no baixo débito, no BAV ou na dor por cocaína.',
+        'Dar alta com uma troponina convencional isolada em dor de início recente.',
+        'Anticoagular antes de afastar dissecção de aorta quando a dor é lancinante.'
       ]},
-      { tipo:'texto', titulo:'Destino', conteudo:'EAP vai para *leito monitorizado*; perfil C (choque cardiogênico), necessidade de inotrópico, VNI contínua ou intubação vão para *UTI*. A alta só se cogita após compensação sustentada, com peso seco atingido, medicação otimizada, causa da descompensação identificada e retorno precoce marcado — a maioria das reinternações por IC vem de má adesão e de alta sem ajuste de dose.' },
+
+      { tipo:'texto', titulo:'Destino', conteudo:'*Hemodinâmica agora:* muito alto risco. *Unidade coronariana ou leito monitorizado:* IAM sem supra e angina instável de alto risco, com cateterismo em até 24 h. *Observação:* curva em andamento ou zona cinza. *Alta com teste funcional precoce:* angina instável de baixo risco, com troponinas negativas no intervalo do protocolo, sem dor recorrente e com consulta marcada. *Divergência entre diretrizes:* a SBC 2021 ainda admite o pré-tratamento com P2Y12 no diagnóstico; o UpToDate e a ESC 2023 recomendam dar o 2º antiagregante só depois da coronariografia quando ela sai em menos de 24 h — o guia segue a regra mais recente e deixa o pré-tratamento para quando o cateterismo vai atrasar.' },
+
       { tipo:'dica', titulo:'Pega do plantão', itens:[
-        'A pergunta que organiza tudo: *está congesto? está bem perfundido?* Perfil definido, a conduta se escreve sozinha.',
-        'VNI no EAP é das intervenções mais eficazes da emergência — o paciente melhora em minutos. Não deixe para depois da furosemida.',
-        'Paciente com IC que piorou "sem motivo": procure FA nova, infecção, anti-inflamatório e falta de remédio, nessa ordem.',
-        'Congestão que não responde a diurético pode ser diagnóstico errado de perfil. Reavalie a perfusão antes de aumentar a dose.'
+        'Escreva a hora de cada troponina e de cada ECG: é o que dá valor à curva.',
+        'Troponina alta sem delta é mais lesão crônica do que infarto — olhe a função renal e o ECG antigo.',
+        'Inibidor GP IIb/IIIa é decisão da hemodinâmica, não do plantão.',
+        'Alérgico à heparina (HIT): bivalirudina, argatroban ou fondaparinux, conforme a disponibilidade.',
+        'Calcule e escreva o GRACE: é ele que justifica o horário do cateterismo.'
+      ]}
+    ] },
+
+  { id:'dor-toracica', titulo:'Dor torácica aguda no PS', categoria:'cardio', gravidade:'urgencia',
+    resumo:'Da porta ao destino: estabilizar, ler o ECG, afastar aorta, TEP, pneumotórax e esôfago, fechar a curva de troponina e decidir pelo HEART.',
+    tags:['dor toracica','dor no peito','precordialgia','ecg','triagem','diferencial','troponina','heart','add-rs','perc','wells'],
+    fonte:'SBC — Diretriz de Angina Instável e IAM sem Supra de ST (2021) · ESC 2023 — Síndromes Coronarianas Agudas · AHA/ACC 2021 — Avaliação e Diagnóstico da Dor Torácica · AHA/ACC 2022 — Doenças da Aorta · ESC 2019 — Embolia Pulmonar · apoio: UpToDate, abordagem da dor torácica não traumática no PS (2026)',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Toda dor ou desconforto torácico não traumático — e dispneia, náusea ou mal-estar isolados no idoso, no diabético e na mulher.' },
+      { rotulo:'Prioridade',    valor:'*ECG lido em até 10 minutos* e PA nos dois braços, antes de qualquer outra coisa.' },
+      { rotulo:'Meta',          valor:'Afastar as causas que matam (SCA, aorta, TEP, pneumotórax hipertensivo, tamponamento, esôfago) antes de aceitar uma benigna.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:FLUXO_DOR_TORACICA },
+
+      { tipo:'passos', titulo:'Nos primeiros 10 minutos', itens:[
+        'Obter *ECG de 12 derivações* e entregar na mão de um médico — o relógio conta do primeiro contato.',
+        'Monitorizar, colocar oxímetro e puncionar acesso venoso; colher troponina na mesma punção.',
+        'Medir a *PA nos dois braços* e palpar os pulsos carotídeos, radiais e femorais.',
+        'Deixar desfibrilador e material de via aérea ao lado do leito.',
+        'Dar oxigênio só se SpO₂ < 90% ou se houver desconforto respiratório.',
+        'Repetir o ECG a cada 15–30 min enquanto a dor persistir, e sempre que ela mudar.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        'Dor súbita, *máxima já no início*, lancinante ou migratória — aorta até prova em contrário.',
+        'Diferença de PA *> 20 mmHg entre os braços*, pulso ausente ou déficit neurológico junto com a dor.',
+        'Hipotensão, sudorese fria, síncope ou hipoxemia acompanhando a dor.',
+        'Dor depois de vômito forçado ou de endoscopia, ou com enfisema subcutâneo — esôfago.',
+        'Dor típica dias ou semanas depois de stent ou de revascularização — oclusão até prova em contrário.'
+      ]},
+
+      { tipo:'lista', titulo:'ADD-RS — risco de dissecção de aorta', itens:[
+        '*Condição de alto risco* (1 ponto): Marfan ou outra doença do colágeno, história familiar de doença da aorta, valvopatia aórtica conhecida, aneurisma de aorta torácica conhecido, manipulação recente da aorta.',
+        '*Dor de alto risco* (1 ponto): início abrupto, dor lancinante ou "rasgando", intensidade grave.',
+        '*Exame de alto risco* (1 ponto): déficit de pulso ou diferença de PA entre membros, déficit neurológico focal com a dor, sopro novo de insuficiência aórtica com a dor, hipotensão ou choque.',
+        '*0:* risco baixo · *1:* intermediário — D-dímero < 500 ng/mL torna a dissecção improvável · *2 ou 3:* alto — angio-TC direto, sem D-dímero.',
+        'Pontua-se o *grupo*, não cada achado: dois achados do mesmo grupo continuam valendo 1.'
+      ]},
+
+      { tipo:'lista', titulo:'Troponina: como ler', itens:[
+        '*Alta sensibilidade, algoritmo 0/1 h ou 0/2 h:* use os cortes do kit do seu laboratório — eles mudam de fabricante para fabricante.',
+        '*Exemplo, hs-TnT (Roche), 0/1 h:* < 5 ng/L com dor há mais de 3 h exclui com uma dosagem; < 12 ng/L na chegada e variação < 3 em 1 h exclui; ≥ 52 ng/L na chegada ou variação ≥ 5 em 1 h confirma.',
+        '*Troponina convencional:* colher na chegada e repetir em 3–6 h. Uma dosagem isolada só exclui se a dor é contínua há mais de 6–8 h.',
+        'O que faz o diagnóstico de infarto é a *variação* (delta) com clínica compatível, não o valor isolado.',
+        'Troponina elevada e estável, sem delta, aponta para lesão crônica (DRC, IC, hipertrofia). Elevada com delta sem SCA: TEP, miocardite, dissecção, sepse, taquiarritmia, Takotsubo.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Todos:* ECG seriado, troponina seriada, raio-X de tórax PA e perfil (dispensável no IAM com supra ou no herpes-zóster evidente).',
+        '*ECG estendido:* V7–V9 se a dor é típica e o ECG padrão é normal ou tem infra de V1–V4; V3R–V4R em todo supra inferior, antes do nitrato.',
+        '*Conforme a suspeita:* D-dímero (aorta ou TEP de baixa probabilidade), angio-TC de aorta ou de artérias pulmonares, ecocardiograma, BNP.',
+        '*Antes de contraste ou cateterismo:* creatinina e eletrólitos. Coagulograma se usa anticoagulante. Amilase, lipase e enzimas hepáticas se a dor é epigástrica.',
+        '*POCUS à beira do leito* no paciente instável: pericárdio, VD, pleura, raiz da aorta e contratilidade do VE.',
+        'Gasometria arterial não ajuda a diagnosticar nem a excluir TEP.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Ácido acetilsalicílico', dose:'300 mg (3 comprimidos de 100 mg)', via:'VO', obs:'Mastigado. *Segurar* se há suspeita de dissecção ou de perfuração.' },
+        { droga:'Dinitrato de isossorbida 5 mg', dose:'1 comprimido, a cada 5 min, até 3', via:'SL', obs:'Só dor isquêmica com PAS ≥ 90. Contraindicado no IAM de VD e com sildenafila ou vardenafila em 24 h (tadalafila em 48 h).' },
+        { droga:'Nitroglicerina', dose:'5–10 mcg/min, subir 5–10 a cada 3–5 min', via:'EV BIC', obs:'Dor isquêmica persistente, hipertensão ou congestão. Mesmas contraindicações do nitrato sublingual.' },
+        { droga:'Morfina', dose:'2–4 mg', via:'EV', obs:'Só na dor isquêmica refratária ao nitrato. Não é rotina.' },
+        { droga:'Enoxaparina', dose:'1 mg/kg de 12/12 h', via:'SC', obs:'SCA sem supra e TEP. Sem redução por idade (a de 0,75 mg/kg é do IAM com supra trombolisado). Clearance < 30: 1 mg/kg uma vez ao dia.' },
+        { droga:'Metoprolol', dose:'5 mg lento, a cada 5 min, até 15 mg', via:'EV', obs:'Dissecção: primeiro passo, alvo FC < 60. Não usar na dor por cocaína, em choque ou com BAV.' },
+        { droga:'Esmolol', dose:'500 mcg/kg em 1 min, depois 50–300 mcg/kg/min', via:'EV BIC', obs:'Alternativa titulável ao metoprolol na dissecção. Meia-vida de minutos.' },
+        { droga:'Nitroprussiato de sódio', dose:'0,25–0,5 mcg/kg/min, titular até 10', via:'EV BIC', obs:'Dissecção: só *depois* da FC < 60, se a PAS seguir > 120. Proteger da luz.' },
+        { droga:'Fentanil', dose:'0,5–1 mcg/kg', via:'EV', obs:'Analgesia na dissecção: dor não tratada mantém FC e PA altas.' },
+        { droga:'Diazepam', dose:'5–10 mg, repetir a cada 5 min se preciso', via:'EV', obs:'Dor torácica por cocaína: primeira linha. Betabloqueador contraindicado.' },
+        { droga:'Dipirona', dose:'1–2 g', via:'EV', obs:'Dor não isquêmica já esclarecida (musculoesquelética, pleurítica).' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Usar a melhora com nitrato, antiácido ou analgésico como teste diagnóstico: não separa isquemia de outra causa.',
+        'Excluir isquemia porque a dor é reprodutível à palpação ou porque o paciente é jovem.',
+        'Dar alta com uma única troponina convencional em dor de início recente.',
+        'Anticoagular ou trombolisar antes de considerar dissecção em dor lancinante com assimetria de pulso.',
+        'Iniciar vasodilatador na dissecção antes de baixar a FC com betabloqueador.',
+        'Atrasar a reperfusão do IAM com supra esperando troponina ou raio-X.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*UTI:* instabilidade hemodinâmica ou respiratória, TEP com instabilidade ou hipoxemia grave. *Hemodinâmica agora:* IAM com supra e SCA sem supra de muito alto risco (dor refratária, instabilidade, arritmia ventricular, IC aguda). *Internar com consulta:* SCA, dissecção (tipo A vai para cirurgia, tipo B para leito monitorizado), tamponamento, miocardite, mediastinite e úlcera perfurada; a maioria dos pneumotórax. *Observação:* HEART 4 a 6, para curva completa e teste funcional ou angio-TC de coronárias. *Alta:* HEART 0 a 3 com troponinas negativas no intervalo do protocolo, dor explicada ou sem causa grave e consulta em até 72 h. Menores de 40 anos com ECG normal e sem cardiopatia têm risco de evento em 30 dias abaixo de 1%. Quem teve teste funcional normal nos últimos 12 meses, coronárias sem obstrução em cateterismo nos últimos 5 anos ou angio-TC de coronárias normal nos últimos 2 anos, com troponina negativa, pode seguir no ambulatório.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'PA nos dois braços em toda dor torácica: custa um minuto e é o achado que acha a dissecção.',
+        'Escreva o horário de início da dor, de cada ECG e de cada troponina — é o que valida a curva.',
+        'Idoso com dispneia isolada, diabético com náusea, mulher com mal-estar: pense em SCA mesmo sem dor.',
+        'Dor que melhora não é dor benigna: a dissecção clássica alivia depois do pico.',
+        'HEART calculado e escrito no prontuário é a alta mais defensável que existe.'
+      ]}
+    ] },
+
+  { id:'eap-ic-descompensada', titulo:'Edema agudo de pulmão e IC descompensada', categoria:'cardio', gravidade:'emergencia',
+    resumo:'Perfil hemodinâmico, VNI, furosemida na dose certa para quem já usa diurético, nitroglicerina se a PA deixa — e o que fazer quando a diurese não vem.',
+    tags:['eap','edema agudo','insuficiencia cardiaca','ic descompensada','icad','congestao','furosemida','nitroglicerina','vni','perfil hemodinamico','resistencia a diuretico','bloqueio sequencial','dobutamina'],
+    fonte:'ESC 2021 — Insuficiência Cardíaca (e atualização focada de 2023) · SBC — Diretriz Brasileira de Insuficiência Cardíaca Crônica e Aguda (2018) · apoio: UpToDate (2026)',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Dispneia, ortopneia, dispneia paroxística noturna, edema, estertores, jugular túrgida, B3 — piores que o basal do paciente.' },
+      { rotulo:'Prioridade',    valor:'*VNI precoce* no desconforto respiratório e *furosemida na dose certa*: quem já usa diurético precisa de 2 a 2,5 vezes a dose de casa.' },
+      { rotulo:'Meta',          valor:'Diurese de *100–150 mL/h nas primeiras 6 h*; se não vier em 2 h no EAP, dobrar a dose.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Dispneia com congestão: ortopneia, estertores, jugular túrgida, edema, B3',
+          nota:'BNP ou NT-proBNP altos apoiam, mas não fecham o diagnóstico. POCUS com linhas B difusas ajuda muito' },
+
+        { tipo:'passo', rotulo:'Minuto 0 a 10', texto:'*Sentado* · monitor · oxímetro · acesso · *ECG e troponina* · raio-X · POCUS',
+          nota:'Oxigênio só se SpO₂ < 90%. Colher creatinina, eletrólitos (K, Mg), hemograma e BNP na mesma punção' },
+
+        { tipo:'decisao', texto:'Qual o perfil? (congesto? bem perfundido?)', ramos:[
+          { rotulo:'Frio e úmido (C) — choque', cor:'perigo', texto:'*PAS < 85 ou hipoperfusão:* inotrópico; se a pressão não sobe, noradrenalina',
+            nota:'Extremidades frias, pressão de pulso estreita, oligúria, confusão, lactato alto. IC de FE preservada hipotensa: sem inotrópico, só vasopressor',
+            meds:[{ droga:'Dobutamina', dose:'2,5–10 mcg/kg/min', via:'EV BIC' }, { droga:'Noradrenalina', dose:'0,05–0,3 mcg/kg/min', via:'EV BIC' }], ir:'choque-abordagem' },
+          { rotulo:'Quente e úmido (B) com EAP', cor:'perigo', texto:'*VNI já* + furosemida em dose alta + nitroglicerina se a PA deixar',
+            nota:'O mais comum no PS, muitas vezes hipertensivo', ir:'vni' },
+          { rotulo:'Quente e úmido sem desconforto', texto:'*Furosemida EV* na dose da exposição prévia' },
+          { rotulo:'Frio e seco (L)', texto:'*Não é congestão:* volume em alíquotas pequenas e reavaliar — diurético piora',
+            nota:'Muitas vezes é excesso de diurético' }
+        ]},
+
+        { tipo:'decisao', texto:'Qual o gatilho? (procurar em paralelo, não depois)', ramos:[
+          { rotulo:'Dor torácica, supra ou infra', cor:'perigo', texto:'*SCA:* reperfusão ou estratégia invasiva', ir:'sca-com-supra' },
+          { rotulo:'FA rápida ou outra arritmia', texto:'Controlar a frequência ou o ritmo; instável: cardioversão', ir:'fa-flutter' },
+          { rotulo:'PA muito alta', texto:'*EAP hipertensivo:* vasodilatador é o tratamento principal', ir:'crise-hipertensiva' },
+          { rotulo:'Febre, TEP, anemia', texto:'Tratar junto: pneumonia, sepse, TEP e anemia descompensam a IC', ir:'pneumonia-comunidade' },
+          { rotulo:'Sal, falta de remédio, AINE, álcool, cocaína', texto:'Os gatilhos mais comuns — pergunte um por um' },
+          { rotulo:'Sopro novo, derrame pericárdico', texto:'*Eco:* valva ou pericárdio agudos mudam a conduta', ir:'tamponamento' }
+        ]},
+
+        { tipo:'decisao', texto:'Como está a respiração?', ramos:[
+          { rotulo:'SpO₂ < 90% ou desconforto', cor:'perigo', texto:'*VNI precoce:* CPAP 5–10 ou BiPAP',
+            nota:'Melhora em minutos e evita intubação. BiPAP se há CO₂ alto ou cansaço', ir:'vni' },
+          { rotulo:'Falha da VNI, rebaixado, exausto', cor:'perigo', texto:'*Intubar* — com o choque corrigido antes da indução', ir:'sequencia-rapida-intubacao' },
+          { rotulo:'SpO₂ ≥ 90%, confortável', cor:'ok', texto:'Sem oxigênio: não ajuda e pode piorar' }
+        ]},
+
+        { tipo:'decisao', texto:'Qual a dose inicial de furosemida EV?', ramos:[
+          { rotulo:'EAP, não usa diurético', cor:'perigo', texto:'*40–100 mg EV*',
+            meds:[{ droga:'Furosemida', dose:'40–100 mg', via:'EV' }] },
+          { rotulo:'EAP, já usa diurético', cor:'perigo', texto:'*2 a 2,5 vezes a dose oral diária*, EV',
+            nota:'Ex.: furosemida 40 mg VO 12/12 h (80 mg/dia) → 80–100 mg EV',
+            meds:[{ droga:'Furosemida', dose:'2–2,5× a dose diária', via:'EV' }] },
+          { rotulo:'Sem desconforto, não usa diurético', texto:'*20–40 mg EV*',
+            meds:[{ droga:'Furosemida', dose:'20–40 mg', via:'EV' }] },
+          { rotulo:'Sem desconforto, já usa diurético', texto:'*1,5 a 2 vezes a dose oral diária*, EV',
+            nota:'DRC, síndrome cardiorrenal ou congestão grave: começar no topo da faixa' }
+        ]},
+
+        { tipo:'decisao', texto:'A pressão deixa usar vasodilatador?', ramos:[
+          { rotulo:'PAS > 110 com congestão pulmonar', texto:'*Nitroglicerina EV*, dobrando a cada 3–5 min; nitrato SL enquanto a bomba não chega',
+            nota:'EAP hipertensivo: é o que mais rápido tira o edema. Suspender se PAS < 90–100. Nitroprussiato no hipertensivo grave ou na insuficiência mitral aguda',
+            meds:[{ droga:'Nitroglicerina', dose:'10–20 mcg/min, até 200', via:'EV BIC' }, { droga:'Dinitrato de isossorbida', dose:'5 mg a cada 5 min', via:'SL' }] },
+          { rotulo:'PAS 90–110', texto:'Só diurético; vasodilatador em dose baixa se congestão grave e perfusão boa' },
+          { rotulo:'PAS < 90', cor:'perigo', texto:'*Sem vasodilatador* — pensar em baixo débito', ir:'choque-abordagem' }
+        ]},
+
+        { tipo:'passo', rotulo:'Reavaliar', texto:'*Diurese em 2 h no EAP* (4 h sem desconforto) · meta de 100–150 mL/h nas primeiras 6 h',
+          nota:'Opcional: sódio urinário em amostra 2 h após o bolus — abaixo de 50–70 mEq/L é resposta insuficiente. A diurese começa em 30–120 min' },
+
+        { tipo:'decisao', texto:'O diurético respondeu?', ramos:[
+          { rotulo:'Sim', cor:'ok', texto:'Manter a dose que funcionou e reavaliar peso, balanço e eletrólitos diariamente' },
+          { rotulo:'Não', texto:'*Dobrar a dose* — ou bolus seguido de infusão contínua',
+            nota:'Infusão: começar em 5 mg/h, subir até 40 mg/h',
+            meds:[{ droga:'Furosemida em infusão', dose:'5 mg/h, até 40 mg/h', via:'EV BIC' }] },
+          { rotulo:'Não, mesmo com ≥ 150 mg EV', cor:'perigo', texto:'*Resistência a diurético:* rever o diagnóstico e fazer bloqueio sequencial',
+            nota:'Tiazídico 30–60 min antes do bolus da alça; espironolactona se K baixo; acetazolamida se bicarbonato alto. Sem resposta ao dobrar o segundo diurético: ultrafiltração, diálise ou inotrópico',
+            meds:[{ droga:'Hidroclorotiazida', dose:'25–50 mg', via:'VO' }, { droga:'Espironolactona', dose:'50–100 mg', via:'VO' }] }
+        ]},
+
+        { tipo:'passo', rotulo:'Enquanto descongestiona', texto:'*K e Mg* 1–2 vezes ao dia · peso diário · balanço · manter as drogas crônicas se estável · profilaxia de TEV',
+          nota:'Creatinina subindo ~0,3 com o paciente ainda congesto não é motivo para parar. Betabloqueador: reduzir ou suspender só no choque ou com inotrópico. iSGLT2: manter, salvo jejum prolongado, LRA ou hipotensão',
+          meds:[{ droga:'Enoxaparina', dose:'40 mg 1x/dia', via:'SC' }] },
+
+        { tipo:'fim', rotulo:'Destino', texto:'*UTI:* choque, VNI contínua ou intubação · *enfermaria monitorizada:* o resto do EAP · *alta:* gatilho tratado, quase euvolêmico, diurético oral estável por 24 h',
+          nota:'Passar para diurético oral 1–2 dias antes da alta. Retorno em 7–10 dias, contato em até 3 dias' }
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*PAS < 85 ou hipoperfusão* com congestão: é choque cardiogênico — diurético sozinho não resolve.',
+        'Rebaixamento, exaustão ou pH caindo na VNI: *intubar*, não insistir.',
+        'Dor torácica ou alteração isquêmica no ECG: SCA como gatilho, e a conduta muda.',
+        '*Pré-carga dependentes* (IC de FE preservada, estenose aórtica, IAM de VD, tamponamento, TEP): diurese e nitrato derrubam a pressão.',
+        'Diurese < 100 mL/h depois de dose adequada: *dobrar em 2 h*, não esperar o dia seguinte.'
+      ]},
+
+      { tipo:'passos', titulo:'Conduta imediata', itens:[
+        'Sentar, monitorizar e dar oxigênio só se SpO₂ < 90%; VNI no desconforto respiratório.',
+        'Pedir ECG, troponina, BNP, raio-X, creatinina, K, Mg e fazer POCUS.',
+        'Definir o perfil: congesto? bem perfundido?',
+        'Dar furosemida EV na dose da exposição prévia (quem usa em casa precisa de mais).',
+        'Iniciar nitroglicerina se PAS > 110 com congestão pulmonar.',
+        'Procurar e tratar o gatilho ao mesmo tempo.',
+        'Medir a diurese em 2 h e dobrar a dose se < 100–150 mL/h.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Furosemida 20 mg/2 mL', dose:'EAP: 40–100 mg (sem uso prévio) ou 2–2,5× a dose oral diária', via:'EV', obs:'Sem desconforto: 20–40 mg, ou 1,5–2× a dose diária. Bolus puro; acima de 120 mg, no máximo 4 mg/min (ototoxicidade). 40 mg VO ≈ 20 mg EV.' },
+        { droga:'Furosemida em infusão', dose:'Bolus + 5 mg/h, subir até 40 mg/h', via:'EV BIC', obs:'200 mg (10 ampolas) + SF 0,9% 80 mL = 2 mg/mL. Congestão grave ou melhor resposta prévia à infusão. Pausa > 4 h: novo bolus.' },
+        { droga:'Nitroglicerina', dose:'10–20 mcg/min, dobrar a cada 3–5 min até 200', via:'EV BIC', obs:'25 mg + SG 5% 245 mL = 100 mcg/mL: 10 mcg/min = 6 mL/h. PAS > 110. Suspender se PAS < 90–100. Não usar com inibidor de fosfodiesterase.' },
+        { droga:'Dinitrato de isossorbida 5 mg', dose:'1 comprimido a cada 5 min, até 3', via:'SL', obs:'Ponte enquanto a bomba de nitroglicerina não está pronta.' },
+        { droga:'Nitroprussiato de sódio', dose:'0,25–0,5 mcg/kg/min, titular até 10', via:'EV BIC', obs:'EAP hipertensivo grave ou insuficiência mitral aguda. 50 mg + SG 5% 248 mL = 200 mcg/mL. Proteger da luz; PA invasiva de preferência.' },
+        { droga:'Dobutamina', dose:'2,5–10 mcg/kg/min (até 20)', via:'EV BIC', obs:'Perfil frio e úmido com PAS < 85 ou hipoperfusão. 250 mg + SG 5% 230 mL = 1 mg/mL. Vasodilata: com PAS baixa, associar noradrenalina.' },
+        { droga:'Milrinona', dose:'0,25–0,75 mcg/kg/min, sem ataque', via:'EV BIC', obs:'Alternativa no usuário de betabloqueador. Hipotensão; reduzir na DRC.' },
+        { droga:'Levosimendana', dose:'0,05–0,2 mcg/kg/min por 24 h, sem bolus', via:'EV BIC', obs:'Baixo débito com PAS > 90. 12,5 mg + SG 5% 500 mL = 25 mcg/mL. Custo alto.' },
+        { droga:'Noradrenalina', dose:'0,05–0,3 mcg/kg/min', via:'EV BIC', obs:'Hipotensão que persiste apesar do inotrópico, ou IC de FE preservada hipotensa (nela, sem inotrópico).' },
+        { droga:'Hidroclorotiazida 25 mg', dose:'25–50 mg 1x/dia, 30–60 min antes do bolus da alça', via:'VO', obs:'Bloqueio sequencial na resistência. Metolazona e clorotiazida EV não existem no Brasil; clortalidona 12,5–25 mg é alternativa. Vigiar K e Na.' },
+        { droga:'Espironolactona 25 mg', dose:'50–100 mg 1x/dia', via:'VO', obs:'Segundo diurético quando o K está baixo. Vigiar K e creatinina.' },
+        { droga:'Acetazolamida', dose:'500 mg 1x/dia', via:'EV', obs:'Bicarbonato ≥ 27 (sobretudo > 35) com alcalose do diurético. A forma EV é praticamente indisponível no Brasil; o estudo que mostrou benefício usou EV.' },
+        { droga:'Morfina', dose:'2–4 mg', via:'EV', obs:'Não é rotina. Só com ansiedade extrema que impede a VNI, e com cuidado.' },
+        { droga:'Cloreto de potássio', dose:'20–40 mEq/dia', via:'VO', obs:'Durante a diurese, conforme o K. Magnésio junto se baixo.' },
+        { droga:'Enoxaparina 40 mg', dose:'1 seringa 1x/dia', via:'SC', obs:'Profilaxia de TEV no internado. Clearance < 30: 20 mg/dia.' }
+      ]},
+
+      { tipo:'tempo', titulo:'Linha do tempo', itens:[
+        { quando:'0–10 min', o_que:'Sentar, monitor, VNI se desconforto, ECG, exames, POCUS.' },
+        { quando:'10–30 min', o_que:'Furosemida EV na dose certa; nitroglicerina se PAS > 110.' },
+        { quando:'30–120 min', o_que:'A diurese começa; pico em 1–2 h.' },
+        { quando:'2 h (EAP) · 4 h (sem desconforto)', o_que:'Diurese < 100–150 mL/h ou Na urinário < 50–70: dobrar a dose.' },
+        { quando:'6–8 h', o_que:'Sem resposta ao dobro: bloqueio sequencial; sem resposta ao segundo diurético dobrado: ultrafiltração ou inotrópico.' },
+        { quando:'Diário', o_que:'Peso, balanço, K, Mg e creatinina; ajustar as drogas crônicas.' },
+        { quando:'1–2 dias antes da alta', o_que:'Diurético oral e 24 h de estabilidade sem droga EV.' }
+      ]},
+
+      { tipo:'lista', titulo:'Perfis hemodinâmicos', itens:[
+        '*Congestão (úmido):* ortopneia, estertores, jugular túrgida, refluxo hepatojugular, edema, ascite, B3.',
+        '*Hipoperfusão (frio):* extremidades frias, pressão de pulso estreita, oligúria, confusão, lactato alto.',
+        '*A — quente e seco:* compensado. *B — quente e úmido:* o mais comum; diurético e vasodilatador.',
+        '*C — frio e úmido:* choque cardiogênico; inotrópico, depois vasopressor se preciso.',
+        '*L — frio e seco:* pouco volume; diurético piora — volume com cuidado.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Todos:* ECG, troponina, BNP ou NT-proBNP, creatinina, ureia, Na, K, Mg, hemograma, raio-X de tórax.',
+        '*POCUS:* linhas B, derrame pleural, função do VE, veia cava, derrame pericárdico.',
+        '*Ecocardiograma* na IC nova, na suspeita de mudança da função ou de doença valvar.',
+        'Gasometria se VNI ou suspeita de CO₂ alto; lactato se suspeita de hipoperfusão.',
+        '*Cardiogênico × não cardiogênico:* extremidades frias, jugular alta, B3, cardiomegalia, infiltrado peri-hilar e BNP alto falam de coração.'
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Dar 20 mg de furosemida a quem já toma 80 mg por dia em casa — subdose é a falha mais comum.',
+        'Esperar o dia seguinte para descobrir que a diurese não veio.',
+        'Furosemida no perfil frio e seco.',
+        'Parar a diurese por creatinina que subiu 0,3 com o paciente ainda congesto.',
+        'Morfina de rotina ou oxigênio com saturação normal.',
+        'Restringir sódio abaixo de 1 g/dia — sem benefício e dá sede.'
+      ]},
+
+      { tipo:'texto', titulo:'Destino e alta', conteudo:'*UTI:* choque cardiogênico, necessidade de inotrópico ou vasopressor, VNI contínua ou intubação. *Enfermaria monitorizada:* o restante — IC nova, ganho de peso > 5 kg, ascite ou derrame novos, lesão renal, arritmia, SCA, comorbidade grave ou quem não consegue se cuidar em casa. *Tratamento ambulatorial* só no estável, com IC crônica e pouca sobrecarga (< 5 kg): dobrar o diurético oral por 3 a 5 dias e reavaliar. *Alta:* gatilho tratado, volume perto do ideal, diurético oral estável por 24 h, sem droga EV por 24 h, FE documentada, drogas da IC otimizadas (ou intolerância registrada), orientação escrita (peso diário, sal, remédios, quando voltar) e retorno em 7–10 dias.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'A pergunta que organiza tudo: *está congesto? está bem perfundido?*',
+        'Pergunte a dose de furosemida de casa antes de prescrever: ela define a dose EV.',
+        'Sonda vesical não é obrigatória, mas a diurese de 2 h precisa ser medida — combine com a enfermagem.',
+        'IC que piorou "sem motivo": FA nova, infecção, anti-inflamatório e falta de remédio, nessa ordem.'
       ]}
     ] },
 
@@ -606,7 +1052,8 @@ const PROTOCOLOS = [
             nota:'Volume generoso aqui piora a congestão' },
           { rotulo:'VD dilatado, derrame, PTX', cor:'perigo', texto:'*Obstrutivo* — trombólise, drenagem, descompressão',
             nota:'Pneumotórax hipertensivo não espera radiografia' },
-          { rotulo:'Vasodilatado', texto:'*Distributivo* — séptico (ATB + noradrenalina) ou anafilático (*adrenalina IM*)' }
+          { rotulo:'Vasodilatado', texto:'*Distributivo* — séptico (ATB + noradrenalina) ou anafilático (*adrenalina IM*)',
+            meds:['Noradrenalina', 'Adrenalina'] }
         ]},
         { tipo:'passo', rotulo:'Reavaliar sempre', texto:'TEC, nível de consciência, diurese e lactato',
           nota:'O choque muda de perfil durante o tratamento — reavalie depois de cada intervenção' },
@@ -700,10 +1147,12 @@ const PROTOCOLOS = [
             nota:'FA 200 J · TPSV e flutter 50–100 J · TV monomórfica 100 J (bifásico)' }
         ]},
         { tipo:'passo', rotulo:'OSASCO', texto:'*O*rientar · *S*edar · *A*mbuzar · *S*incronizar · *C*ardioverter · *O*bservar',
-          nota:'Midazolam se há insuficiência cardíaca, propofol se não há; fentanil junto. Bolsa-válvula na mão antes de sedar' },
+          nota:'Midazolam se há insuficiência cardíaca, propofol se não há; fentanil junto. Bolsa-válvula na mão antes de sedar',
+          meds:['Midazolam (com IC)', 'Propofol (sem IC)', 'Fentanil (analgesia)'] },
         { tipo:'decisao', texto:'Reverteu?', ramos:[
           { rotulo:'Não', texto:'*FIASCO* — *FI*os, *A*nálise do ritmo, *S*incroniza de novo, *C*arga maior, *O*bservar' },
-          { rotulo:'Sim', cor:'ok', texto:'Ecocardiograma + amiodarona 900–1200 mg EV em 24 h' }
+          { rotulo:'Sim', cor:'ok', texto:'Ecocardiograma + amiodarona 900–1200 mg EV em 24 h',
+            meds:['Amiodarona (após reversão)'] }
         ]},
         { tipo:'fim', rotulo:'Destino', texto:'*Leito monitorizado ou UCO* + investigar o gatilho',
           nota:'SCA, eletrólitos, tireotoxicose, sepse, droga. Arritmia revertida sem causa tratada volta no mesmo plantão' }
@@ -779,16 +1228,19 @@ const PROTOCOLOS = [
         ]},
         { tipo:'decisao', texto:'O ritmo é regular ou irregular?', ramos:[
           { rotulo:'Regular', texto:'*TRN / TRAV* — tentar reverter',
-            nota:'Manobra vagal modificada, depois adenosina' },
+            nota:'Manobra vagal modificada, depois adenosina',
+            meds:['Adenosina'] },
           { rotulo:'Irregular', texto:'*FA, flutter ou TAM* — controle de frequência',
-            nota:'Metoprolol 5 mg EV · diltiazem · verapamil · deslanosídeo se há IC' }
+            nota:'Metoprolol 5 mg EV · diltiazem · verapamil · deslanosídeo se há IC',
+            meds:['Metoprolol', 'Diltiazem', 'Verapamil', 'Deslanosídeo'] }
         ]},
         { tipo:'passo', rotulo:'1ª tentativa', texto:'*Manobra vagal modificada*',
           nota:'Valsalva por 15 s seguida de elevação das pernas a 45° por 15 s — reverte bem mais que a clássica' },
         { tipo:'decisao', texto:'Reverteu com a manobra?', ramos:[
           { rotulo:'Sim', cor:'ok', texto:'*ECG após a reversão* — tem valor diagnóstico' },
           { rotulo:'Não', texto:'*Adenosina 6 mg* em bolus rápido; se não reverter, *12 mg*',
-            nota:'Fossa cubital, flush de 20 mL de SF e elevar o membro. Avisar o paciente do mal-estar' }
+            nota:'Fossa cubital, flush de 20 mL de SF e elevar o membro. Avisar o paciente do mal-estar',
+            meds:['Adenosina'] }
         ]},
         { tipo:'alerta', rotulo:'Cuidado', texto:'*QRS largo ou pré-excitação (WPW)?*',
           nota:'Não usar adenosina, verapamil, diltiazem nem digital — risco de degenerar em fibrilação ventricular' },
@@ -865,9 +1317,11 @@ const PROTOCOLOS = [
             nota:'Anticoagular por 3 semanas antes e 4 depois, *ou* eco transesofágico para excluir trombo' }
         ]},
         { tipo:'decisao', texto:'O paciente tem insuficiência cardíaca?', ramos:[
-          { rotulo:'Não', texto:'*Metoprolol 5 mg EV* a cada 5 min (máx. 15 mg) ou verapamil 5–10 mg' },
+          { rotulo:'Não', texto:'*Metoprolol 5 mg EV* a cada 5 min (máx. 15 mg) ou verapamil 5–10 mg',
+            meds:['Metoprolol (sem IC)', 'Verapamil (sem IC)'] },
           { rotulo:'Sim', texto:'*Deslanosídeo 0,4 mg EV* ou amiodarona 150 mg em 10 min',
-            nota:'Verapamil e diltiazem são contraindicados na disfunção sistólica' }
+            nota:'Verapamil e diltiazem são contraindicados na disfunção sistólica',
+            meds:['Deslanosídeo (com IC)', 'Amiodarona (com IC)'] }
         ]},
         { tipo:'fim', rotulo:'A · B · C', texto:'*A*nticoagulação · *B*etabloqueador · *C*omorbidades',
           nota:'Cardiopatia estrutural anticoagula independentemente do CHA₂DS₂-VASc. Procurar o gatilho: sepse, tireotoxicose, TEP, isquemia, álcool' }
@@ -939,15 +1393,18 @@ const PROTOCOLOS = [
         { tipo:'decisao', texto:'O paciente está estável?', ramos:[
           { rotulo:'Não — 4 D', cor:'perigo', texto:'*Cardioversão sincronizada*, 100 J bifásico' },
           { rotulo:'Sim', texto:'Baixo risco para sedoanalgesia? *Cardioversão de imediato*',
-            nota:'Optando por droga: amiodarona 150 mg em 10 min' }
+            nota:'Optando por droga: amiodarona 150 mg em 10 min',
+            meds:['Amiodarona (ataque)'] }
         ]},
         { tipo:'decisao', texto:'Monomórfica ou polimórfica?', ramos:[
           { rotulo:'Monomórfica', texto:'*Sincronizar* — 100 J, adicionais 150–200 J' },
           { rotulo:'Polimórfica / torsades', cor:'perigo', texto:'*DESFIBRILAR* + sulfato de magnésio 1–2 g',
-            nota:'Magnésio funciona mesmo com magnésio sérico normal. Suspender droga que alarga o QT' }
+            nota:'Magnésio funciona mesmo com magnésio sérico normal. Suspender droga que alarga o QT',
+            meds:['Sulfato de magnésio'] }
         ]},
         { tipo:'passo', rotulo:'Sempre em paralelo', texto:'*Corrigir potássio e magnésio*',
-          nota:'A arritmia não estabiliza enquanto os eletrólitos estiverem baixos' },
+          nota:'A arritmia não estabiliza enquanto os eletrólitos estiverem baixos',
+          meds:['Sulfato de magnésio'] },
         { tipo:'fim', rotulo:'Destino', texto:'*UCO ou UTI* + ecocardiograma + investigar SCA',
           nota:'TV sustentada em cardiopata: avaliação para CDI ainda na internação' }
       ]},
@@ -1015,17 +1472,20 @@ const PROTOCOLOS = [
           { rotulo:'Nenhum — estável', texto:'*Investigar causas reversíveis*, observar e chamar o especialista',
             nota:'Eletrólitos · betabloqueador · bloq. de canal de cálcio · digoxina · lítio · amiodarona · propafenona' },
           { rotulo:'Um ou mais', cor:'perigo', texto:'*INSTÁVEL — atropina 1 mg em bolus*',
-            nota:'Dispneia · Dor torácica · ↓ PA · ↓ consciência · Desmaio' }
+            nota:'Dispneia · Dor torácica · ↓ PA · ↓ consciência · Desmaio',
+            meds:['Atropina'] }
         ]},
         { tipo:'decisao', texto:'Respondeu à atropina? (máximo 3 mg)', ramos:[
           { rotulo:'Sim', cor:'ok', texto:'Observar monitorizado e tratar a causa' },
           { rotulo:'Não', texto:'*Marca-passo transcutâneo* ou adrenalina 2–10 mcg/min ou dopamina 5–20 mcg/kg/min',
-            nota:'Em Mobitz II e BAVT a atropina costuma não funcionar — não insista até o teto' }
+            nota:'Em Mobitz II e BAVT a atropina costuma não funcionar — não insista até o teto',
+            meds:['Atropina', 'Adrenalina', 'Dopamina'] }
         ]},
         { tipo:'passo', rotulo:'Marca-passo transcutâneo', texto:'Sedar e analgesiar *antes* — o estímulo dói muito',
           nota:'Modo fixo · FC 70 bpm · subir a corrente até capturar e deixar *10 mA acima* · confirmar *pulso femoral*' },
         { tipo:'alerta', rotulo:'Não esquecer', texto:'*Bradicardia com onda T apiculada é hipercalemia*',
-          nota:'O tratamento aí é gluconato de cálcio, não atropina' },
+          nota:'O tratamento aí é gluconato de cálcio, não atropina',
+          meds:['Gluconato de cálcio'] },
         { tipo:'fim', rotulo:'Destino', texto:'*Marca-passo transvenoso* + UCO/UTI',
           nota:'Mobitz II, BAV avançado e BAVT vão para avaliação de marca-passo definitivo' }
       ]},
@@ -1103,13 +1563,15 @@ const PROTOCOLOS = [
           nota:'Tratar dor, ansiedade e bexiga cheia primeiro — a *pseudocrise* é frequente e não precisa de anti-hipertensivo' },
         { tipo:'decisao', texto:'Há lesão AGUDA de órgão-alvo?', ramos:[
           { rotulo:'Não', texto:'*URGÊNCIA hipertensiva* — via oral, controle em 24–48 h',
-            nota:'Captopril 25–50 mg (age em 15–30 min) ou clonidina 0,1–0,2 mg se ansioso' },
+            nota:'Captopril 25–50 mg (age em 15–30 min) ou clonidina 0,1–0,2 mg se ansioso',
+            meds:['Captopril', 'Clonidina'] },
           { rotulo:'Sim', cor:'perigo', texto:'*EMERGÊNCIA hipertensiva* — endovenoso titulável, monitorizado',
             nota:'Neurológico · SCA · EAP · dissecção · lesão renal aguda · eclâmpsia' }
         ]},
         { tipo:'decisao', texto:'Emergência — qual o órgão acometido?', ramos:[
           { rotulo:'SCA ou EAP', texto:'*Nitroglicerina* em bomba',
-            nota:'Vasodilatação coronariana e venosa' },
+            nota:'Vasodilatação coronariana e venosa',
+            meds:['Nitroglicerina'] },
           { rotulo:'Dissecção de aorta', cor:'perigo', texto:'*Betabloqueador ANTES* do vasodilatador',
             nota:'Alvo FC < 60 e só então PAS < 120. Inverter a ordem propaga a dissecção' },
           { rotulo:'Neurológico', texto:'Alvo específico da conduta do *AVC*',
@@ -1164,105 +1626,134 @@ const PROTOCOLOS = [
     ] },
 
   { id:'tep', titulo:'Tromboembolismo pulmonar', categoria:'cardio', gravidade:'emergencia',
-    resumo:'Escores de probabilidade, quando pedir D-dímero, angiotomografia e quem trombolisa.',
-    tags:['tep','embolia pulmonar','wells','d-dimero','angiotc','trombolise','heparina','doac','enoxaparina'],
-    fonte:'SBC/SBPT — Diretriz de Tromboembolismo Pulmonar · Manual de Cardiologia na Prática 3.0, p. 76–79 · PS Zerado, p. 27–28',
+    resumo:'Probabilidade clínica decide o caminho: PERC, D-dímero ou angio-TC direto; depois, o risco decide entre anticoagular, trombolisar ou tirar o trombo.',
+    tags:['tep','embolia pulmonar','wells','perc','years','d-dimero','angiotc','cintilografia','trombolise','alteplase','tenecteplase','heparina','doac','enoxaparina','pesi'],
+    fonte:'ESC/ERS 2019 — Embolia Pulmonar Aguda · SBPT — Recomendações para TEP · apoio: UpToDate (2026)',
     ficha:[
-      { rotulo:'Quando pensar', valor:'Dispneia ou dor torácica *súbitas* sem explicação, principalmente com fator de risco para trombose.' },
-      { rotulo:'Prioridade',    valor:'Estratificar risco *antes* de escolher entre anticoagular e trombolisar.' },
-      { rotulo:'Meta',          valor:'Anticoagulação iniciada cedo; fibrinólise apenas no alto risco.' }
+      { rotulo:'Quando pensar', valor:'Dor torácica ou dispneia *sem diagnóstico alternativo firme* — taquicardia, hipoxemia e síncope sem explicação entram aqui.' },
+      { rotulo:'Prioridade',    valor:'Instável: *POCUS à beira do leito* e trombólise se o VD está dilatado. Estável: probabilidade clínica antes de qualquer exame.' },
+      { rotulo:'Meta',          valor:'Não perder o TEP, não irradiar quem não precisa e anticoagular cedo quem tem probabilidade alta.' }
     ],
     secoes:[
 
       { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
-        { tipo:'inicio', rotulo:'Suspeita', texto:'Dispneia ou dor torácica *súbitas* sem explicação',
-          nota:'Pulmão limpo e radiografia normal com queixa intensa: a discrepância é o achado' },
-        { tipo:'decisao', texto:'O paciente está estável?', ramos:[
-          { rotulo:'Não', cor:'perigo', texto:'*Eco à beira do leito* — VD dilatado autoriza a conduta',
-            nota:'Não há tempo para escore nem tomografia' },
-          { rotulo:'Sim', texto:'Calcular o *Wells modificado*' }
+        { tipo:'inicio', rotulo:'Suspeita', texto:'Dor torácica ou dispneia sem outra explicação firme',
+          nota:'Taquicardia, hipoxemia com pulmão limpo, síncope, dor pleurítica. Gestante: seguir avaliação própria da gestação, não este fluxo' },
+        { tipo:'decisao', texto:'Está instável? (PAS < 90 por mais de 15 min, queda ≥ 40 mmHg, vasopressor, choque ou PCR)', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*TEP de alto risco provável:* POCUS ou eco à beira do leito agora',
+            nota:'VD dilatado, septo retificado, sinal de McConnell ou trombo em trânsito. Se o paciente aguenta a mesa, angio-TC; se não aguenta, a decisão sai do eco',
+            ir:'choque-abordagem' },
+          { rotulo:'Não', cor:'ok', texto:'Estimar a probabilidade clínica (Wells)' }
         ]},
-        { tipo:'decisao', texto:'Escore de Wells?', ramos:[
-          { rotulo:'> 4 — provável', texto:'*Angiotomografia direto*',
-            nota:'D-dímero aqui não ajuda e só atrasa' },
-          { rotulo:'≤ 4 — improvável', texto:'*D-dímero*',
-            nota:'Negativo exclui e encerra · positivo segue para angiotomografia' }
+        { tipo:'decisao', texto:'Instável com VD dilatado: qual o risco de sangramento?', ramos:[
+          { rotulo:'Sangramento aceitável', cor:'perigo', texto:'*Trombólise sistêmica* e depois heparina não fracionada',
+            nota:'Parada ou quase parada: alteplase em bolus. Retomar a heparina ao fim da infusão; DOAC depois de 24–48 h',
+            meds:[{ droga:'Alteplase', dose:'100 mg em 2 h', via:'EV' }, { droga:'Tenecteplase', dose:'30–50 mg conforme o peso, bolus', via:'EV' }, { droga:'Heparina não fracionada', dose:'80 UI/kg + 18 UI/kg/h', via:'EV BIC' }],
+            ir:'pcr-adulto' },
+          { rotulo:'Risco de sangramento alto', cor:'perigo', texto:'*Tirar o trombo:* embolectomia por cateter ou cirúrgica',
+            nota:'Sem serviço no local: transferir já. Se nem anticoagular for possível, filtro de veia cava' },
+          { rotulo:'Estável', texto:'Seguir pela probabilidade clínica' }
         ]},
-        { tipo:'passo', rotulo:'Não esperar', texto:'*Anticoagular já na alta probabilidade*, sem aguardar a confirmação',
-          nota:'Desde que não haja contraindicação' },
-        { tipo:'decisao', texto:'Estratificação de risco', ramos:[
-          { rotulo:'Alto risco', cor:'perigo', texto:'*Fibrinólise* + anticoagulação parenteral — UTI',
-            nota:'Instabilidade ou PCR revertida com TEP confirmado' },
-          { rotulo:'Intermediário', texto:'*Internar* + enoxaparina 1 mg/kg 12/12 h',
-            nota:'Disfunção de VD e/ou biomarcadores elevados. É o grupo que engana e piora' },
-          { rotulo:'Baixo risco', cor:'ok', texto:'*Alta* com DOAC ou varfarina',
-            nota:'Sem disfunção de VD e sem elevação de biomarcadores' }
+        { tipo:'decisao', texto:'Probabilidade clínica pelo Wells', ramos:[
+          { rotulo:'Baixa (< 2)', cor:'ok', texto:'*PERC:* os 8 critérios presentes excluem TEP sem exame',
+            nota:'PERC só vale no PS e só na probabilidade baixa. Faltou um critério: D-dímero' },
+          { rotulo:'Intermediária (2 a 6)', texto:'*D-dímero sensível*',
+            nota:'No topo da faixa (Wells 4–6) ou com pouca reserva cardiopulmonar, muitos vão direto à angio-TC' },
+          { rotulo:'Alta (> 6)', cor:'perigo', texto:'*Angio-TC direto* e anticoagular antes do resultado',
+            nota:'Se o risco de sangramento é baixo. D-dímero nesse grupo só atrasa',
+            meds:[{ droga:'Enoxaparina', dose:'1 mg/kg 12/12 h', via:'SC' }] }
         ]},
-        { tipo:'fim', rotulo:'Não esquecer', texto:'No choque obstrutivo, *volume com cautela*',
-          nota:'O ventrículo direito dilatado não tolera sobrecarga. Associar noradrenalina' }
+        { tipo:'decisao', texto:'D-dímero (FEU)', ramos:[
+          { rotulo:'< 500 ng/mL ou abaixo do corte pela idade', cor:'ok', texto:'*TEP excluído:* procurar outra causa',
+            nota:'Acima de 50 anos o corte é idade × 10 ng/mL. YEARS é alternativa válida para subir o corte' },
+          { rotulo:'Acima do corte', texto:'*Angio-TC de artérias pulmonares*',
+            nota:'TC de tórax com contraste comum não exclui TEP: tem que ser o protocolo de artérias pulmonares' }
+        ]},
+        { tipo:'decisao', texto:'A angio-TC é possível e conclusiva?', ramos:[
+          { rotulo:'Positiva', cor:'perigo', texto:'*TEP confirmado:* estratificar o risco' },
+          { rotulo:'Negativa', cor:'ok', texto:'TEP excluído' },
+          { rotulo:'Contraste contraindicado ou exame inconclusivo', texto:'*Cintilografia V/Q* (exige raio-X limpo e 30 min deitado)',
+            nota:'V/Q normal exclui; alta probabilidade confirma; o resto é indeterminado. Sem V/Q: Doppler venoso de membros inferiores — TVP proximal fecha o diagnóstico',
+            ir:'tvp' }
+        ]},
+        { tipo:'decisao', texto:'TEP confirmado e estável: há disfunção de VD (eco ou TC) ou troponina/BNP elevados?', ramos:[
+          { rotulo:'VD e biomarcador alterados', cor:'perigo', texto:'*Risco intermediário-alto:* anticoagular com heparina não fracionada e monitorizar',
+            nota:'Trombólise não é rotina: só no resgate, se piorar (hipotensão, FC > 120 persistente, lactato subindo, piora da oxigenação). Discutir cateter com especialista',
+            meds:[{ droga:'Heparina não fracionada', dose:'80 UI/kg + 18 UI/kg/h', via:'EV BIC' }] },
+          { rotulo:'Só um dos dois alterado', texto:'*Risco intermediário-baixo:* anticoagular e internar',
+            meds:[{ droga:'Enoxaparina', dose:'1 mg/kg 12/12 h', via:'SC' }] },
+          { rotulo:'Nenhum alterado e sPESI 0', cor:'ok', texto:'*Baixo risco:* DOAC e alta precoce, se houver seguimento',
+            meds:[{ droga:'Rivaroxabana', dose:'15 mg 12/12 h por 21 dias', via:'VO' }, { droga:'Apixabana', dose:'10 mg 12/12 h por 7 dias', via:'VO' }] }
+        ]},
+        { tipo:'fim', rotulo:'Destino', texto:'*UTI* se instável ou com hipoxemia grave · *leito monitorizado* no risco intermediário-alto · *enfermaria* no intermediário-baixo · *alta* no baixo risco com DOAC e retorno garantido',
+          nota:'Anticoagulação por no mínimo 3 meses' }
       ]},
-      { tipo:'ordem', titulo:'Escore de Wells modificado', itens:[
-        '*Outro diagnóstico menos provável que TEP* — 3 pontos.',
-        '*Sinais clínicos de TVP* — 3 pontos.',
-        '*TVP ou TEP prévio* — 1,5 ponto.',
-        '*Imobilização ≥ 3 dias ou cirurgia no último mês* — 1,5 ponto.',
-        '*Taquicardia, FC > 100 bpm* — 1,5 ponto.',
-        '*Hemoptise* — 1 ponto.',
-        '*Câncer ativo (nos últimos 6 meses)* — 1 ponto.'
-      ]},
-      { tipo:'texto', titulo:'Como usar o escore', conteudo:'*TEP provável: > 4 pontos* — vá direto à angiotomografia; D-dímero não ajuda aqui e só atrasa. *TEP improvável: ≤ 4 pontos* — solicite *D-dímero*: se negativo, exclui e encerra a investigação; se positivo, segue para angiotomografia. Em paciente instável, não se calcula escore: *ecocardiograma à beira do leito* mostrando disfunção de VD já autoriza a conduta.' },
+
       { tipo:'alerta', titulo:'Red flags — TEP de alto risco', itens:[
-        '*Instabilidade hemodinâmica* — hipotensão ou choque obstrutivo.',
-        '*PCR revertida na admissão* com TEP evidenciado por ecocardiograma ou angiotomografia.',
-        'Disfunção de ventrículo direito no eco associada a elevação de troponina/BNP.',
-        'Hipoxemia grave e refratária.',
-        'Síncope como apresentação — marcador de gravidade, não de quadro benigno.'
+        '*PAS < 90 mmHg* por mais de 15 min, queda ≥ 40 mmHg do basal ou necessidade de vasopressor.',
+        'Síncope, PCR ou atividade elétrica sem pulso com VD dilatado.',
+        'FC persistente acima de 120, lactato subindo ou piora da oxigenação apesar da anticoagulação.',
+        'Trombo em trânsito nas câmaras direitas no eco.',
+        'Disfunção de VD somada a troponina ou BNP elevados — é o estável que mais piora.'
       ]},
-      { tipo:'lista', titulo:'Exames', itens:[
-        '*Angiotomografia de tórax* — exame de escolha para confirmar.',
-        '*D-dímero* — só quando o TEP é improvável (Wells ≤ 4); alto valor preditivo negativo.',
-        'Ecocardiograma à beira do leito: disfunção e dilatação de VD no instável.',
-        'ECG: taquicardia sinusal é o mais comum; S1Q3T3 é clássico mas pouco frequente.',
-        'Troponina e BNP para estratificar risco intermediário.',
-        'Doppler de membros inferiores quando a angiotomografia não é possível.',
-        'Gasometria arterial e radiografia de tórax para afastar diferenciais.'
-      ]},
-      { tipo:'lista', titulo:'Estratificação de risco', itens:[
-        '*Alto risco:* instabilidade hemodinâmica ou PCR revertida — fibrinólise.',
-        '*Risco intermediário:* estável, mas com disfunção de VD e/ou biomarcadores elevados — *internar* e anticoagular, com vigilância estrita.',
-        '*Baixo risco:* estável, sem disfunção de VD e sem elevação de biomarcadores — pode receber *alta hospitalar* com anticoagulação oral e seguimento.'
-      ]},
-      { tipo:'doses', titulo:'Medicações', itens:[
-        { droga:'Enoxaparina (terapêutica)', dose:'1 mg/kg de 12/12 h', via:'SC', obs:'Anticoagulação de escolha no risco intermediário. Ajustar se clearance < 30; contraindicada se < 15.' },
-        { droga:'Enoxaparina (profilaxia)', dose:'40 mg/dia (ou 0,5 mg/kg)', via:'SC', obs:'Profilaxia em paciente de risco internado.' },
-        { droga:'Heparina não fracionada', dose:'80 U/kg em bolus + 18 U/kg/h', via:'EV BIC', obs:'Preferida no instável e na disfunção renal grave — tem meia-vida curta e é reversível, útil se houver chance de trombólise ou cirurgia. *Dosar TTPA de 6/6 h.*' },
-        { droga:'Alteplase', dose:'100 mg em 2 h', via:'EV', obs:'*Fibrinólise no TEP de alto risco.* Rodar contraindicações antes; associar anticoagulação parenteral.' },
-        { droga:'Rivaroxabana', dose:'15 mg 12/12 h por 21 dias, depois 20 mg/dia', via:'VO', obs:'DOAC para o TEP de baixo risco em alta hospitalar.' },
-        { droga:'Varfarina', dose:'Ajustada pelo INR (alvo 2–3)', via:'VO', obs:'Alternativa ao DOAC; exige ponte com heparina até o INR na faixa.' }
-      ]},
+
       { tipo:'passos', titulo:'Conduta imediata', itens:[
-        '*MOVE* — monitor, oxigênio, acesso venoso, ECG.',
-        'Instável: *ecocardiograma à beira do leito* e considerar fibrinólise sem esperar a angiotomografia.',
-        'Estável: calcular *Wells*, decidir entre D-dímero e angiotomografia.',
-        '*Iniciar anticoagulação já na suspeita de alta probabilidade*, sem aguardar a confirmação, se não houver contraindicação.',
-        'Estratificar em alto, intermediário e baixo risco com eco e biomarcadores.',
-        'No choque obstrutivo: volume com cautela (o VD dilatado não tolera sobrecarga) e noradrenalina.',
-        'Definir o destino conforme a estratificação.'
+        'Monitorizar, dar oxigênio para SpO₂ ≥ 90%, acesso venoso e ECG.',
+        'Fazer *POCUS* no instável: VD dilatado sustenta a trombólise quando a TC não é possível.',
+        'Classificar a probabilidade pelo Wells e seguir PERC, D-dímero ou angio-TC conforme o grupo.',
+        'Anticoagular *antes* da imagem na probabilidade alta, se o risco de sangramento é baixo.',
+        'Preferir heparina não fracionada se há chance de trombólise, instabilidade ou clearance < 30.',
+        'Tratar o choque com noradrenalina e volume pequeno (até 500 mL): o VD dilatado piora com sobrecarga.',
+        'Evitar intubar se possível; se precisar, preparar vasopressor antes — a indução derruba a pressão.'
       ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Heparina não fracionada', dose:'80 UI/kg em bolus + 18 UI/kg/h', via:'EV BIC', obs:'Preferida no instável, se trombólise ou procedimento são possíveis e com clearance < 30. TTPA de 6/6 h, alvo 1,5–2,5 vezes o controle.' },
+        { droga:'Enoxaparina', dose:'1 mg/kg de 12/12 h', via:'SC', obs:'Anticoagulante inicial do paciente estável. Clearance < 30: 1 mg/kg uma vez ao dia. Evitar se < 15.' },
+        { droga:'Fondaparinux', dose:'5 mg (< 50 kg) · 7,5 mg (50–100 kg) · 10 mg (> 100 kg), 1 vez ao dia', via:'SC', obs:'Alternativa à enoxaparina. Contraindicado com clearance < 30.' },
+        { droga:'Alteplase', dose:'100 mg em 2 h', via:'EV', obs:'TEP de alto risco. Parada ou quase parada: *50 mg em bolus de 2 min*, repetir em 15 min se preciso. Heparina suspensa durante a infusão e retomada ao fim, sem bolus.' },
+        { droga:'Tenecteplase', dose:'≤ 60 kg 30 mg · 61–69 kg 35 mg · 70–79 kg 40 mg · 80–89 kg 45 mg · ≥ 90 kg 50 mg', via:'EV', obs:'Bolus único. Alternativa à alteplase no alto risco.' },
+        { droga:'Rivaroxabana', dose:'15 mg 12/12 h por 21 dias, depois 20 mg/dia', via:'VO', obs:'Sem necessidade de heparina antes. Evitar com clearance < 30. Tomar com alimento.' },
+        { droga:'Apixabana', dose:'10 mg 12/12 h por 7 dias, depois 5 mg 12/12 h', via:'VO', obs:'Sem necessidade de heparina antes. Mínimo de 3 meses.' },
+        { droga:'Varfarina', dose:'5 mg/dia, ajustar pelo INR (alvo 2–3)', via:'VO', obs:'Iniciar junto com a heparina e manter a ponte por no mínimo 5 dias e até 2 INR no alvo em 24 h. Escolha na SAF e na DRC avançada.' },
+        { droga:'Noradrenalina', dose:'0,05–0,5 mcg/kg/min, titular', via:'EV BIC', obs:'Vasopressor de escolha no choque obstrutivo.' }
+      ]},
+
+      { tipo:'lista', titulo:'Critérios e escores', itens:[
+        '*Wells:* sinais de TVP 3 · TEP mais provável que outro diagnóstico 3 · FC > 100 1,5 · imobilização ≥ 3 dias ou cirurgia em 4 semanas 1,5 · TVP ou TEP prévio 1,5 · hemoptise 1 · câncer 1. *< 2 baixa · 2–6 intermediária · > 6 alta.* Na versão em dois níveis, > 4 é "provável".',
+        '*PERC (8 critérios, todos têm de estar presentes):* idade < 50 · FC < 100 · SpO₂ ≥ 95% · sem hemoptise · sem estrogênio · sem TVP/TEP prévio · sem edema unilateral de perna · sem cirurgia ou trauma com internação em 4 semanas.',
+        '*D-dímero ajustado pela idade:* acima de 50 anos, corte = idade × 10 ng/mL (FEU).',
+        '*YEARS:* sem nenhum dos três itens (sinais de TVP, hemoptise, TEP como diagnóstico mais provável) o corte do D-dímero sobe para 1.000 ng/mL; com algum, fica em 500.',
+        '*sPESI (1 ponto cada):* idade > 80 · câncer · doença cardiopulmonar crônica · FC ≥ 110 · PAS < 100 · SpO₂ < 90%. Zero é baixo risco.',
+        'As calculadoras de Wells e PERC estão em Scores.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Angio-TC de artérias pulmonares:* exame de confirmação. Pode incluir venografia na mesma injeção.',
+        '*Cintilografia V/Q:* quando o contraste é contraindicado ou a TC foi inconclusiva; precisa de raio-X limpo.',
+        '*Doppler venoso de membros inferiores:* quando nenhuma imagem pulmonar é possível, ou com sinais de TVP.',
+        '*POCUS ou eco:* VD dilatado, septo retificado, McConnell. Sensível em torno de 50% — não exclui TEP.',
+        '*Troponina e BNP:* estratificam o TEP confirmado, não fazem o diagnóstico.',
+        'ECG costuma ser anormal e inespecífico; raio-X quase sempre normal ou com atelectasia. Gasometria não ajuda a confirmar nem a excluir.'
+      ]},
+
       { tipo:'naofazer', titulo:'Não fazer', itens:[
-        '*Pedir D-dímero quando o TEP é provável (Wells > 4)* — só atrasa a angiotomografia.',
-        'Excluir TEP por D-dímero positivo isolado: ele é sensível, não específico.',
-        'Aguardar a angiotomografia para anticoagular quando a probabilidade é alta e não há contraindicação.',
-        'Trombolisar TEP estável de risco intermediário como rotina.',
-        'Expandir volume generosamente no choque obstrutivo — o VD dilatado piora.',
-        'Descartar TEP por radiografia e ECG normais.'
+        'Pedir D-dímero na probabilidade alta — o negativo não exclui e só atrasa a TC.',
+        'Aplicar PERC fora do PS ou em quem não tem probabilidade baixa.',
+        'Aceitar TC de tórax com contraste comum como exclusão de TEP.',
+        'Trombolisar de rotina o paciente estável de risco intermediário — reservar para quem piora.',
+        'Dar volume generoso no choque obstrutivo — o VD dilatado descompensa.',
+        'Trombolisar sem rodar as contraindicações: AVC hemorrágico ou de causa desconhecida, AVC isquêmico em 6 meses, neoplasia ou malformação do SNC, trauma ou cirurgia grande em 3 semanas, sangramento ativo.'
       ]},
-      { tipo:'texto', titulo:'Destino', conteudo:'*Alto risco:* UTI, fibrinólise e anticoagulação parenteral. *Risco intermediário:* internação em leito monitorizado, anticoagulação com enoxaparina e vigilância de deterioração — é o grupo que engana, porque parece estável e piora. *Baixo risco:* alta hospitalar possível, com DOAC ou varfarina, orientação clara de sinais de alarme e seguimento ambulatorial precoce garantido.' },
+
+      { tipo:'texto', titulo:'Destino', conteudo:'*UTI:* TEP de alto risco, hipoxemia grave, trombólise ou procedimento. *Leito monitorizado:* risco intermediário-alto, pela chance de deteriorar nas primeiras 72 h — se piorar, trombólise de resgate ou cateter. *Enfermaria:* risco intermediário-baixo, sem telemetria obrigatória. *Alta:* sPESI 0, sem disfunção de VD, sem hipoxemia, com DOAC em mãos, orientação de sinais de alarme e consulta marcada. A anticoagulação dura no mínimo 3 meses. Sem serviço de hemodinâmica ou de cirurgia para o alto risco com contraindicação à trombólise, *transferir* cedo.' },
+
       { tipo:'dica', titulo:'Pega do plantão', itens:[
-        'Dispneia súbita com pulmão limpo e radiografia sem alteração é TEP até prova em contrário — a discrepância entre a queixa e o exame é o achado.',
-        'Síncope pode ser a única manifestação, e nesse caso indica gravidade.',
-        'No instável não há tempo para escore nem tomografia: *eco à beira do leito com VD dilatado* já sustenta a decisão.',
-        'No DPOC exacerbado que não melhora como esperado, pense em TEP — a prevalência é alta e o diagnóstico costuma sair tarde.'
+        'Dispneia súbita com pulmão limpo e raio-X normal é TEP até prova em contrário.',
+        'Síncope no TEP marca gravidade, não benignidade.',
+        'No instável, o eco com VD dilatado autoriza a trombólise — não leve para a TC quem pode parar na mesa.',
+        'A heparina não fracionada existe para ser desligada: use-a quando trombólise ou procedimento ainda estão na mesa.',
+        'No DPOC exacerbado que não melhora como esperado, pense em TEP.'
       ]}
     ] },
 
@@ -1288,7 +1779,8 @@ const PROTOCOLOS = [
             nota:'Se o exame demora, considerar anticoagulação empírica' }
         ]},
         { tipo:'passo', rotulo:'Confirmada', texto:'*Anticoagulação plena*',
-          nota:'Rivaroxabana ou apixabana por via oral; enoxaparina se preferir parenteral' },
+          nota:'Rivaroxabana ou apixabana por via oral; enoxaparina se preferir parenteral',
+          meds:['Rivaroxabana 15 mg', 'Apixabana 10 mg', 'Enoxaparina'] },
         { tipo:'passo', rotulo:'Sempre', texto:'Avaliar sintoma respiratório e investigar TEP se houver',
           nota:'Metade das TVP proximais cursa com embolia silenciosa' },
         { tipo:'fim', rotulo:'Alta', texto:'Possível em TVP não complicada, estável, com anticoagulante iniciado e retorno garantido' }
@@ -1318,179 +1810,480 @@ const PROTOCOLOS = [
     ] },
 
   { id:'sindrome-aortica', titulo:'Síndrome aórtica aguda e dissecção', categoria:'cardio', gravidade:'emergencia',
-    resumo:'Suspeita clínica, controle de frequência antes do vasodilatador e o cirurgião no telefone.',
-    tags:['dissecçao de aorta','aneurisma','aorta','esmolol','dor toracica','stanford','metoprolol','nitroprussiato'],
-    fonte:'SBC — Diretriz de Doenças da Aorta · Manual de Cardiologia na Prática 3.0, p. 36',
+    resumo:'ADD-RS para decidir a imagem, anti-impulso antes da confirmação — betabloqueador primeiro, vasodilatador depois — e o cirurgião no telefone.',
+    tags:['dissecçao de aorta','dissecção','aneurisma','aorta','hematoma intramural','ulcera penetrante','add-rs','stanford','esmolol','metoprolol','nitroprussiato','anti-impulso'],
+    fonte:'AHA/ACC 2022 — Diagnóstico e Tratamento das Doenças da Aorta · ESC 2024 — Doenças da Aorta e Arteriais Periféricas · SBC — Diretriz de Doenças da Aorta · apoio: UpToDate (2026)',
     ficha:[
-      { rotulo:'Quando pensar', valor:'Dor torácica *súbita, dilacerante, migratória*, muitas vezes irradiando para o dorso, em hipertenso mal controlado.' },
-      { rotulo:'Prioridade',    valor:'*Sala vermelha.* Mortalidade de 1–2% *por hora* nas primeiras 24–48 h na dissecção tipo A.' },
-      { rotulo:'Meta',          valor:'*FC < 60 bpm* e *PAS < 120 mmHg*, nesta ordem, e cirurgião acionado.' }
+      { rotulo:'Quando pensar', valor:'Dor *súbita, máxima já no início*, lancinante ou migratória — ou dor com déficit de pulso, déficit neurológico, síncope ou sopro diastólico novo.' },
+      { rotulo:'Prioridade',    valor:'*Sala vermelha* e anti-impulso *antes* da imagem quando a suspeita é alta. Tipo A mata 1–2% por hora nas primeiras 48 h.' },
+      { rotulo:'Meta',          valor:'*FC < 60* primeiro, depois *PAS 100–120 mmHg* — e cirurgia cardiovascular acionada na suspeita.' }
     ],
     secoes:[
 
       { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
-        { tipo:'inicio', rotulo:'Suspeita', texto:'Dor torácica *súbita, dilacerante e migratória*',
-          nota:'Migra do peito para o dorso ou abdome. Hipertenso mal controlado' },
-        { tipo:'passo', rotulo:'Primeiro minuto', texto:'PA nos *dois braços* + ECG + MOVE',
-          nota:'Assimetria de pulsos, sopro aórtico novo, déficit focal, mediastino alargado' },
-        { tipo:'alerta', rotulo:'Nunca', texto:'*Não antiagregar, não anticoagular, não trombolisar*',
-          nota:'A dissecção pode ocluir o óstio coronariano e simular IAM com supra. Trombolisar esse paciente é fatal' },
-        { tipo:'passo', rotulo:'Ordem obrigatória', texto:'Morfina 2–4 mg → *Metoprolol 5 mg EV* até *FC < 60* → só então *nitroprussiato* até *PAS < 120*',
-          nota:'Vasodilatar antes do betabloqueador causa taquicardia reflexa e propaga a dissecção' },
-        { tipo:'passo', rotulo:'Em paralelo', texto:'*Angiotomografia de aorta* + acionar cirurgia cardiovascular',
-          nota:'Telefonar na suspeita — não esperar o resultado do exame' },
-        { tipo:'decisao', texto:'Classificação de Stanford?', ramos:[
-          { rotulo:'A — ascendente', cor:'perigo', texto:'*Cirurgia de emergência*',
-            nota:'Mortalidade de 1–2% por hora nas primeiras 24–48 h' },
-          { rotulo:'B — poupa a ascendente', texto:'*UTI* — tratamento clínico ou endovascular',
-            nota:'Endovascular se houver má perfusão de órgão, dor refratária ou expansão' }
+        { tipo:'inicio', rotulo:'Suspeita', texto:'Dor torácica, dorsal ou abdominal *súbita, intensa, lancinante ou migratória*',
+          nota:'Uma parte chega sem dor: AVC, síncope, paraplegia, rouquidão, isquemia de membro ou de intestino. Hipertenso, Marfan, valva bicúspide, cirurgia ou cateterismo de aorta recente' },
+        { tipo:'passo', rotulo:'Primeiros minutos', texto:'Monitor, *dois acessos calibrosos*, *PA nos dois braços*, pulsos carotídeos, radiais e femorais, ECG, tipagem',
+          nota:'Procure sopro diastólico (insuficiência aórtica), sinais de tamponamento (jugular túrgida, bulhas abafadas, pulso paradoxal) e déficit neurológico' },
+        { tipo:'decisao', texto:'Quantos grupos do ADD-RS estão presentes? (condição de risco · dor de risco · exame de risco)', ramos:[
+          { rotulo:'2 ou 3 grupos', cor:'perigo', texto:'*Alta probabilidade:* anti-impulso agora e imagem direta, sem D-dímero',
+            nota:'Mediastino alargado no raio-X também põe o paciente aqui' },
+          { rotulo:'1 grupo', texto:'*D-dímero:* < 500 ng/mL sem explicação melhor para a dor torna a dissecção improvável; ≥ 500, imagem',
+            nota:'D-dímero negativo não serve com probabilidade alta nem no hematoma intramural pequeno' },
+          { rotulo:'Nenhum', cor:'ok', texto:'Dissecção improvável: seguir a investigação da dor torácica',
+            nota:'Reabre se aparecer déficit de pulso, sopro novo ou mediastino alargado', ir:'dor-toracica' }
         ]},
-        { tipo:'fim', rotulo:'Sem cirurgia no serviço', texto:'Estabilizar FC e PA e *transferir imediatamente*',
-          nota:'Com médico acompanhando, monitor, desfibrilador e as bombas correndo' }
+        { tipo:'alerta', rotulo:'Até afastar dissecção', texto:'*Não antiagregar, não anticoagular, não trombolisar*',
+          nota:'A tipo A pode ocluir o óstio da coronária direita e dar supra inferior. Trombolisar esse paciente é fatal' },
+        { tipo:'passo', rotulo:'Analgesia', texto:'*Opioide EV* titulado até a dor ceder',
+          nota:'Dor mantém a descarga adrenérgica, que sobe FC e PA e alarga a dissecção',
+          meds:[{ droga:'Fentanil', dose:'0,5–1 mcg/kg a cada 5–10 min', via:'EV' }, { droga:'Morfina', dose:'2–4 mg a cada 5–10 min', via:'EV' }] },
+        { tipo:'passo', rotulo:'Anti-impulso, passo 1', texto:'*Betabloqueador EV até FC < 60*',
+          nota:'Esmolol é o mais fácil de titular e de desligar. Betabloqueador contraindicado (broncoespasmo grave, BAV, IC descompensada): diltiazem ou verapamil. Cocaína: benzodiazepínico primeiro e nada de betabloqueador não seletivo sozinho',
+          meds:[{ droga:'Esmolol', dose:'500 mcg/kg em 1 min + 50–300 mcg/kg/min', via:'EV BIC' }, { droga:'Metoprolol', dose:'5 mg a cada 5 min, até 15 mg', via:'EV' }, { droga:'Diltiazem', dose:'0,25 mg/kg em 2 min + 5–15 mg/h', via:'EV' }] },
+        { tipo:'decisao', texto:'Com a FC < 60, como está a PAS?', ramos:[
+          { rotulo:'PAS > 120', cor:'perigo', texto:'*Anti-impulso, passo 2:* vasodilatador até PAS 100–120',
+            nota:'Nunca antes do betabloqueador: a taquicardia reflexa aumenta o cisalhamento na parede da aorta',
+            meds:[{ droga:'Nitroprussiato de sódio', dose:'0,25–0,5 mcg/kg/min, titular', via:'EV BIC' }] },
+          { rotulo:'PAS 100–120', cor:'ok', texto:'Manter só o betabloqueador e reavaliar a cada 5–10 min' },
+          { rotulo:'PAS < 90 ou choque', cor:'perigo', texto:'*Rotura ou tamponamento até prova em contrário:* POCUS, volume, sangue e centro cirúrgico',
+            nota:'Suspenda betabloqueador e vasodilatador. Antes, confira a PA no outro braço: pulso comprometido dá falsa hipotensão', ir:'choque-abordagem' }
+        ]},
+        { tipo:'decisao', texto:'Qual exame de imagem?', ramos:[
+          { rotulo:'Estável, sem suspeita forte de aorta ascendente', texto:'*Angio-TC de aorta* (tórax, abdome e pelve)',
+            nota:'Angio-RM se o contraste é proibitivo e o paciente aguenta o tempo. Não segure o contraste por creatinina no paciente grave' },
+          { rotulo:'Instável ou suspeita forte de ascendente', cor:'perigo', texto:'*Ecocardiograma transesofágico à beira do leito* — ou já no centro cirúrgico',
+            nota:'Sem ETE disponível, angio-TC. O transtorácico não exclui, mas mostra derrame pericárdico, insuficiência aórtica, flap e raiz > 35 mm' }
+        ]},
+        { tipo:'passo', rotulo:'Em paralelo', texto:'*Acionar a cirurgia cardiovascular* já na suspeita · PA invasiva no braço de maior pressão · sonda vesical',
+          nota:'Não espere o laudo para telefonar. Diurese mede a perfusão renal durante o controle da pressão' },
+        { tipo:'decisao', texto:'O que a imagem mostra? (Stanford)', ramos:[
+          { rotulo:'Tipo A — pega a ascendente', cor:'perigo', texto:'*Cirurgia de emergência*',
+            nota:'Tamponamento na tipo A vai para o centro cirúrgico. Pericardiocentese só como ponte em quem está parando, drenando pouco volume, só para recuperar a pressão', ir:'tamponamento' },
+          { rotulo:'Tipo B complicada', cor:'perigo', texto:'*Endovascular ou cirurgia de urgência*',
+            nota:'Complicada = má perfusão (rim, intestino, membro, medula), rotura ou iminência, dor ou hipertensão refratárias, expansão rápida' },
+          { rotulo:'Tipo B não complicada', texto:'*UTI:* anti-impulso contínuo, analgesia e imagem seriada',
+            nota:'Transição para betabloqueador oral quando estável. Qualquer sinal de má perfusão muda para complicada' }
+        ]},
+        { tipo:'fim', rotulo:'Sem cirurgia cardiovascular no serviço', texto:'Controlar FC e PA e *transferir imediatamente* para centro com cirurgia cardíaca e endovascular',
+          nota:'Com médico acompanhando, PA monitorizada, desfibrilador e as bombas correndo. Mande as imagens junto' }
       ]},
+
       { tipo:'alerta', titulo:'Red flags', itens:[
-        'Assimetria de pulsos ou de pressão entre os membros.',
-        'Sopro de insuficiência aórtica novo.',
-        'Déficit neurológico focal associado à dor torácica.',
-        'Mediastino alargado na radiografia de tórax.',
-        'Dor torácica com *supra de ST* — a dissecção pode ocluir o óstio coronariano e simular IAM; anticoagular nesse caso é catastrófico.',
-        'Tamponamento, hipotensão ou choque — sinaliza rotura, e é emergência cirúrgica absoluta.'
+        '*Hipotensão ou choque* — rotura, tamponamento ou insuficiência aórtica aguda: cirurgia agora.',
+        'Déficit de pulso ou diferença de PAS > 20 mmHg entre os braços.',
+        'Déficit neurológico com a dor: AVC, síncope, paraplegia, Horner, rouquidão.',
+        '*Supra de ST com dor lancinante* — dissecção pegando a coronária; trombolisar é fatal.',
+        'Dor abdominal com lactato subindo, oligúria ou membro frio — má perfusão de órgão.'
       ]},
-      { tipo:'texto', titulo:'Classificação', conteudo:'*Stanford A* — envolve a aorta ascendente: *cirurgia de emergência*, com a alta mortalidade horária que justifica a pressa. *Stanford B* — poupa a ascendente: *tratamento clínico ou endovascular*. Pelo tempo de evolução: hiperaguda < 24 h · aguda 1–14 dias · subaguda 15–90 dias · crônica > 90 dias.' },
+
       { tipo:'passos', titulo:'Conduta imediata', itens:[
-        '*MOVE* — monitor, oxigênio se necessário, dois acessos calibrosos, ECG (para afastar SCA e detectar acometimento coronariano).',
-        'Analgesia com morfina — a dor aumenta a descarga adrenérgica e a força de cisalhamento.',
-        '*Betabloqueador PRIMEIRO*, para atingir FC < 60 bpm.',
-        '*Só depois* vasodilatador, com alvo de PAS < 120 mmHg.',
-        'Angiotomografia de aorta assim que o paciente estiver estável o suficiente para o transporte.',
-        'Acionar *cirurgia cardiovascular imediatamente* na suspeita — não esperar o exame para telefonar.',
-        'Medir a pressão nos dois braços e registrar a diferença.'
+        'Levar para a *sala vermelha*: monitor, dois acessos calibrosos, oxigênio se SpO₂ < 90%.',
+        'Medir a *PA nos dois braços* e palpar todos os pulsos; controlar sempre pelo braço de maior pressão.',
+        'Tratar a *dor com opioide EV* antes e durante o controle da pressão.',
+        'Iniciar *betabloqueador EV* até FC < 60 — antes da imagem quando a suspeita é alta.',
+        'Só com a FC controlada, *vasodilatador* se a PAS seguir > 120.',
+        'Acionar a *cirurgia cardiovascular* na suspeita e pedir a imagem conforme a estabilidade.',
+        'Instalar PA invasiva e sonda vesical; reservar concentrado de hemácias.'
       ]},
+
       { tipo:'doses', titulo:'Medicações', itens:[
-        { droga:'Morfina', dose:'2–4 mg', via:'EV', obs:'Analgesia reduz a descarga adrenérgica; repetir conforme a dor.' },
-        { droga:'Metoprolol', dose:'5 mg a cada 5 min, máx. 15 mg', via:'EV', obs:'*Alvo: FC < 60 bpm.* Entra antes do vasodilatador, sempre.' },
-        { droga:'Nitroprussiato de sódio', dose:'Titular em bomba', via:'EV BIC', obs:'*Alvo: PAS < 120 mmHg.* Só depois do betabloqueador. Proteger da luz.' }
+        { droga:'Esmolol', dose:'500 mcg/kg em 1 min, depois 50–300 mcg/kg/min', via:'EV BIC', obs:'Frasco 2.500 mg/10 mL + SF 0,9% 240 mL = 10 mg/mL. 70 kg: ataque 3,5 mL; 50 mcg/kg/min = 21 mL/h; 300 = 126 mL/h. Repetir o ataque antes de cada aumento. *Primeira escolha:* meia-vida de 9 min.' },
+        { droga:'Metoprolol', dose:'5 mg a cada 5 min, até 15 mg', via:'EV', obs:'Ampola 5 mg/5 mL, pura, em 1–2 min. Opção quando não há esmolol. Depois 5–10 mg EV a cada 4–6 h conforme a FC.' },
+        { droga:'Labetalol', dose:'20 mg, depois 20–80 mg a cada 10 min (máx. 300 mg)', via:'EV', obs:'*Não é comercializado EV no Brasil.* Onde houver, age sozinho em FC e PA. Infusão 0,5–2 mg/min.' },
+        { droga:'Diltiazem', dose:'0,25–0,35 mg/kg em 2 min, depois 5–15 mg/h', via:'EV', obs:'Se o betabloqueador é contraindicado. Ampola 25 mg/5 mL; infusão 125 mg + SF 100 mL = 1 mg/mL (5–15 mL/h). Evitar na IC descompensada.' },
+        { droga:'Verapamil', dose:'5–10 mg em 2 min; repetir em 5–10 min', via:'EV', obs:'Alternativa ao diltiazem se o betabloqueador é contraindicado. Ampola 5 mg/2 mL. Evitar na IC descompensada.' },
+        { droga:'Nitroprussiato de sódio', dose:'0,25–0,5 mcg/kg/min, titular a cada 5 min até 10', via:'EV BIC', obs:'*Só depois da FC < 60.* Frasco 50 mg + SG 5% 248 mL = 200 mcg/mL; 70 kg a 0,5 mcg/kg/min = 10,5 mL/h. Equipo fotoprotegido. Acima de 2 mcg/kg/min, pelo menor tempo possível (cianeto).' },
+        { droga:'Nicardipino', dose:'5 mg/h, subir 2,5 mg/h a cada 5 min (máx. 15 mg/h)', via:'EV BIC', obs:'*Não é comercializado EV no Brasil* (nem clevidipino). Alternativa ao nitroprussiato onde existir, também só depois do betabloqueador.' },
+        { droga:'Nitroglicerina', dose:'5–200 mcg/min', via:'EV BIC', obs:'Segunda linha, útil se há isquemia coronariana ou congestão. 50 mg/10 mL + SG 5% 240 mL = 200 mcg/mL (5 mcg/min = 1,5 mL/h).' },
+        { droga:'Fentanil', dose:'0,5–1 mcg/kg (25–50 mcg) a cada 5–10 min', via:'EV', obs:'Ampola 50 mcg/mL, pura e lenta. Analgesia de escolha: pouca liberação de histamina.' },
+        { droga:'Morfina', dose:'2–4 mg a cada 5–10 min', via:'EV', obs:'Alternativa ao fentanil. Atenção à hipotensão.' }
       ]},
+
+      { tipo:'tempo', titulo:'Linha do tempo', itens:[
+        { quando:'0–10 min', o_que:'Sala vermelha, PA nos dois braços, pulsos, ECG, acessos, tipagem, ADD-RS.' },
+        { quando:'10–20 min', o_que:'Opioide e betabloqueador EV até FC < 60; cirurgia cardiovascular acionada.' },
+        { quando:'Até 20–30 min', o_que:'Vasodilatador se a PAS seguir > 120; alvo PAS 100–120 atingido.' },
+        { quando:'Primeira hora', o_que:'Angio-TC ou ETE conforme a estabilidade; PA invasiva e sonda vesical.' },
+        { quando:'Após a imagem', o_que:'Tipo A ao centro cirúrgico; tipo B complicada a endovascular; tipo B não complicada à UTI — ou transferência.' }
+      ]},
+
+      { tipo:'lista', titulo:'ADD-RS e classificação', itens:[
+        '*Condição de risco:* Marfan ou outra doença do colágeno, história familiar de doença da aorta, valvopatia aórtica conhecida, aneurisma torácico conhecido, manipulação recente da aorta (cirurgia, cateterismo).',
+        '*Dor de risco:* início abrupto, intensidade grave, caráter lancinante ou "rasgando".',
+        '*Exame de risco:* déficit de pulso ou diferença de PAS entre membros, déficit neurológico focal com a dor, sopro novo de insuficiência aórtica com a dor, hipotensão ou choque.',
+        'Conta-se *um ponto por grupo* (0 a 3): 0 baixo · 1 intermediário · 2 ou 3 alto.',
+        '*Stanford A:* pega a aorta ascendente (DeBakey I e II) — cirúrgica. *Stanford B:* poupa a ascendente (DeBakey III) — clínica ou endovascular.',
+        'Hematoma intramural e úlcera penetrante se apresentam igual e seguem a mesma lógica por localização.'
+      ]},
+
       { tipo:'lista', titulo:'Exames', itens:[
-        '*Angiotomografia de aorta* — exame de escolha, define tipo e extensão.',
-        'ECG — afastar SCA e identificar acometimento de óstio coronariano.',
-        'Radiografia de tórax: mediastino alargado (não exclui se normal).',
-        'Ecocardiograma transtorácico e, se disponível, transesofágico à beira do leito no instável.',
-        'Tipagem sanguínea e reserva de hemocomponentes.',
-        'Função renal antes do contraste, sem atrasar o exame no paciente grave.'
+        '*Angio-TC de aorta* no estável; *ETE* no instável ou com suspeita forte de ascendente; angio-RM como alternativa.',
+        '*ECG:* isquemia em cerca de 15%, alterações inespecíficas em cerca de 30% e normal em um terço.',
+        '*Raio-X de tórax:* mediastino alargado ou botão aórtico apagado; derrame pleural à esquerda. Normal em cerca de 10%.',
+        '*Laboratório:* D-dímero, hemograma, eletrólitos, creatinina, LDH, troponina, coagulograma, lactato, tipagem e prova cruzada.',
+        '*POCUS:* derrame pericárdico, insuficiência aórtica, flap na raiz ou raiz > 35 mm.'
       ]},
+
       { tipo:'naofazer', titulo:'Não fazer', itens:[
-        '*Vasodilatador antes do betabloqueador* — a taquicardia reflexa aumenta a força de cisalhamento e propaga a dissecção.',
-        '*Antiagregar ou anticoagular* na suspeita de dissecção, ainda que haja supra de ST.',
-        'Trombolisar dor torácica sem afastar dissecção.',
-        'Esperar o resultado da angiotomografia para acionar o cirurgião.',
-        'Descartar dissecção por radiografia de tórax normal.'
+        '*Vasodilatador antes do betabloqueador* — a taquicardia reflexa propaga a dissecção.',
+        'Antiagregar, anticoagular ou trombolisar antes de afastar dissecção, mesmo com supra de ST.',
+        'Esperar a imagem para começar o anti-impulso quando a suspeita é alta.',
+        'Esperar o laudo para acionar o cirurgião.',
+        'Excluir dissecção por raio-X ou ECG normais.',
+        'Tratar a PA pelo braço de menor pressão, nem dar betabloqueador não seletivo sozinho na cocaína.'
       ]},
-      { tipo:'texto', titulo:'Destino', conteudo:'*Stanford A: centro cirúrgico de emergência* — cada hora de atraso acrescenta 1–2% de mortalidade. *Stanford B:* UTI, controle rigoroso de FC e PA, avaliação de tratamento endovascular se houver complicação (má perfusão de órgão, dor refratária, expansão). Serviço sem cirurgia cardiovascular: estabilizar FC e PA e *transferir imediatamente*, com médico, monitor e as drogas correndo em bomba.' },
+
+      { tipo:'texto', titulo:'Destino', conteudo:'*Tipo A:* centro cirúrgico de emergência — cada hora de atraso soma mortalidade, e o tamponamento associado se resolve na cirurgia, não na punção. *Tipo B complicada* (má perfusão, rotura, dor ou hipertensão refratárias, expansão): endovascular ou cirurgia de urgência. *Tipo B não complicada:* UTI, anti-impulso contínuo, analgesia, diurese e imagem seriada; betabloqueador oral quando estável. *Serviço sem cirurgia cardiovascular e endovascular:* controlar FC e PA e transferir imediatamente, com médico, monitor, desfibrilador, as bombas correndo e as imagens junto.' },
+
       { tipo:'dica', titulo:'Pega do plantão', itens:[
-        'Meça a pressão nos *dois braços* em toda dor torácica intensa. É gratuito, leva um minuto e é o achado que mais levanta a suspeita.',
-        'Dor que *migra* — começa no peito e vai para o dorso ou abdome — é dissecção até prova em contrário.',
-        'Dissecção com supra de ST existe e é armadilha clássica: trombolisar esse paciente é fatal.',
-        'A ordem betabloqueador → vasodilatador não é detalhe acadêmico. Inverter piora a dissecção.'
+        'PA nos *dois braços* em toda dor torácica intensa: custa um minuto e é o achado que acha a dissecção.',
+        'A ordem é *dor → FC → PA*. Opioide, betabloqueador e só então vasodilatador.',
+        'Esmolol primeiro quando houver dúvida: se o paciente não tolerar, desliga e o efeito some em minutos.',
+        'Supra de ST inferior com dor que irradia para as costas: pense em dissecção antes de pensar em trombólise.',
+        'Hipotensão na dissecção é rotura ou tamponamento até prova em contrário — não é hora de betabloqueador.'
       ]}
     ] },
 
   { id:'tamponamento', titulo:'Tamponamento cardíaco', categoria:'cardio', gravidade:'emergencia',
-    resumo:'Tríade de Beck, achados no POCUS e pericardiocentese de urgência.',
-    tags:['tamponamento','derrame pericardico','beck','pericardiocentese','pulso paradoxal'],
-    fonte:'SBC — Diretriz de Doenças Pericárdicas',
+    resumo:'Choque obstrutivo que o POCUS diagnostica em segundos. Drenar tira o paciente do choque; volume só ganha tempo e intubar antes pode matar.',
+    tags:['tamponamento','derrame pericardico','beck','pericardiocentese','pulso paradoxal','pocus','choque obstrutivo','hemopericardio'],
+    fonte:'ESC 2015 — Doenças do Pericárdio · SBC — Diretriz de Miocardites e Pericardites · apoio: UpToDate (2026)',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Hipotensão com taquicardia e jugular túrgida; dispneia com pulmão limpo; derrame conhecido, câncer, uremia, anticoagulação, pós-procedimento ou dor torácica com choque.' },
+      { rotulo:'Prioridade',    valor:'*POCUS subxifoide* em todo paciente com dor torácica e choque.' },
+      { rotulo:'Meta',          valor:'Drenar o pericárdio antes de o paciente parar — tirar 50 a 100 mL já muda a pressão.' }
+    ],
     secoes:[
-      { tipo:'alerta', titulo:'Red flags', itens:[
-        '*Tríade de Beck*: hipotensão, turgência jugular e bulhas abafadas. Aparece completa em menos da metade.',
-        '*Pulso paradoxal* acima de 10 mmHg é o sinal mais sensível.',
-        'Taquicardia com hipotensão que não responde a volume, em paciente com derrame conhecido ou trauma torácico.',
-        'ECG com alternância elétrica e baixa voltagem.',
-        'O que importa é a *velocidade* de acúmulo, não o volume: 150 mL agudos tamponam.'
-      ]},
       { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
-        { tipo:'inicio', rotulo:'Entrada', texto:'Choque com turgência jugular e ausculta cardíaca abafada' },
-        { tipo:'passo', rotulo:'Imediato', texto:'*POCUS / ecocardiograma à beira do leito*',
-          nota:'Derrame com colapso de câmaras direitas na diástole e veia cava dilatada sem variação' },
-        { tipo:'passo', rotulo:'Ponte', texto:'*VOLUME* — cristaloide para aumentar a pré-carga',
-          nota:'Medida temporária que ganha minutos até a drenagem' },
-        { tipo:'decisao', texto:'Qual o contexto?', ramos:[
-          { rotulo:'Trauma penetrante', cor:'perigo', texto:'*Toracotomia de emergência* ou pericardiocentese como ponte',
-            nota:'No trauma, o coágulo não drena bem por agulha — a cirurgia é o tratamento' },
-          { rotulo:'Não traumático', texto:'*Pericardiocentese guiada por ultrassom*',
-            nota:'Via subxifoide ou apical. Guiada por imagem sempre que possível' }
+        { tipo:'inicio', rotulo:'Entrada', texto:'Choque ou dispneia com jugular túrgida, taquicardia e pulmão limpo',
+          nota:'Monitor, oxímetro, dois acessos calibrosos, desfibrilador ao lado' },
+        { tipo:'passo', rotulo:'Minuto 0', texto:'*POCUS à beira do leito:* derrame, colapso de câmaras direitas, veia cava',
+          nota:'Colapso do átrio direito é o sinal mais precoce; colapso do VD na diástole é o mais específico; VCI dilatada que não colaba confirma a pressão alta' },
+        { tipo:'decisao', texto:'Há derrame com repercussão?', ramos:[
+          { rotulo:'Derrame com colapso de câmara e choque', cor:'perigo', texto:'*Tamponamento:* preparar drenagem já' },
+          { rotulo:'Derrame sem colapso, estável', texto:'*Derrame sem tamponamento:* eco formal, monitorização e causa',
+            ir:'pericardite-miocardite' },
+          { rotulo:'Sem derrame', cor:'ok', texto:'Procurar outra causa de choque obstrutivo',
+            nota:'Pneumotórax hipertensivo, TEP maciço, infarto de VD', ir:'choque-abordagem' }
         ]},
-        { tipo:'alerta', rotulo:'Não fazer', texto:'*Ventilação com pressão positiva* antes de drenar',
-          nota:'Reduz o retorno venoso e pode causar parada. Intubar só se inevitável, e drenar antes se der' },
-        { tipo:'fim', rotulo:'Depois', texto:'Deixar cateter pericárdico, investigar a causa e acionar a cirurgia cardíaca' }
+        { tipo:'passo', rotulo:'Ponte', texto:'*Volume em bolus pequeno* enquanto se prepara a punção',
+          nota:'Ajuda sobretudo o paciente desidratado (tamponamento de baixa pressão). Reavaliar a cada bolus. Nada de diurético ou vasodilatador',
+          meds:[{ droga:'Soro fisiológico 0,9%', dose:'250–500 mL em bolus', via:'EV' }] },
+        { tipo:'decisao', texto:'Qual a causa provável?', ramos:[
+          { rotulo:'Dissecção tipo A, trauma ou ruptura pós-infarto', cor:'perigo', texto:'*Cirurgia* — o sangue coagula e a agulha não resolve',
+            nota:'Pericardiocentese só como ponte se a parada é iminente, retirando pouco volume por vez para manter PAS perto de 90',
+            ir:'sindrome-aortica' },
+          { rotulo:'Clínica (neoplasia, pericardite, uremia, anticoagulante, pós-procedimento)', texto:'*Pericardiocentese guiada por eco*',
+            nota:'Via subxifoide ou apical, onde o eco mostrar mais líquido e mais perto da pele. Deixar cateter pigtail' },
+          { rotulo:'Purulento, loculado ou posterior', texto:'*Drenagem cirúrgica* (janela pericárdica)',
+            nota:'Agulha não alcança nem esvazia' }
+        ]},
+        { tipo:'alerta', rotulo:'Via aérea', texto:'Evite intubar antes de drenar',
+          nota:'Pressão positiva derruba o retorno venoso e pode levar à parada. Se inevitável: drenagem pronta, cetamina, volume e vasopressor na mão, ventilação com pressão baixa',
+          ir:'sequencia-rapida-intubacao' },
+        { tipo:'decisao', texto:'Parou?', ramos:[
+          { rotulo:'PCR em atividade elétrica sem pulso', cor:'perigo', texto:'*Drenar durante a reanimação* — é a causa reversível',
+            ir:'pcr-adulto' },
+          { rotulo:'Melhorou com a drenagem', cor:'ok', texto:'Manter o cateter e enviar o líquido' }
+        ]},
+        { tipo:'fim', rotulo:'Destino', texto:'*UTI* com cardiologia e cirurgia cardíaca · cateter até drenar menos de 25–30 mL em 24 h · investigar a causa' }
       ]},
-      { tipo:'doses', titulo:'Medidas', itens:[
-        { droga:'Cristaloide', dose:'500 a 1000 mL rápido', via:'EV', obs:'Aumenta a pré-carga e mantém o enchimento. Medida de ponte, não tratamento.' },
-        { droga:'Pericardiocentese', dose:'—', via:'—', obs:'Subxifoide, agulha em direção ao ombro esquerdo, a 30 a 45 graus, guiada por ultrassom. Retirar 20 a 50 mL já melhora muito.' },
-        { droga:'Noradrenalina', dose:'Titular', via:'EV', obs:'Suporte hemodinâmico enquanto se prepara a drenagem.' },
-        { droga:'Oxigênio', dose:'Alto fluxo', via:'—', obs:'Evitar intubação antes da drenagem sempre que possível.' },
-        { droga:'Reversão de anticoagulação', dose:'Conforme o agente', via:'EV', obs:'Se o derrame for hemorrágico por anticoagulante.' }
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Taquicardia* é o achado mais comum; a tríade de Beck (hipotensão, jugular túrgida, bulhas abafadas) aparece completa na minoria.',
+        '*Pulso paradoxal* acima de 10 mmHg — queda da PAS na inspiração.',
+        'ECG com *baixa voltagem* e *alternância elétrica*.',
+        'Dor torácica lancinante com derrame: dissecção tipo A com hemopericárdio.',
+        'Acúmulo rápido tampona com 150–200 mL; o acúmulo lento pode chegar a litros antes de repercutir.'
       ]},
+
+      { tipo:'passos', titulo:'Conduta imediata', itens:[
+        'Fazer POCUS subxifoide em todo choque com dor torácica ou jugular túrgida.',
+        'Puncionar dois acessos calibrosos e colher tipagem, coagulograma, função renal e troponina.',
+        'Dar volume em bolus de 250–500 mL como ponte, reavaliando.',
+        'Chamar quem drena: cardiologia intervencionista ou cirurgia cardíaca.',
+        'Drenar guiado por eco; na parada, drenar às cegas pela via subxifoide.',
+        'Evitar intubação e pressão positiva até drenar.',
+        'Reverter a anticoagulação se o derrame for hemorrágico.'
+      ]},
+
+      { tipo:'doses', titulo:'Procedimentos e medicações', itens:[
+        { droga:'Soro fisiológico 0,9%', dose:'250–500 mL em bolus', via:'EV', obs:'Ponte, não tratamento. Mais útil no hipovolêmico; no euvolêmico pode piorar. Reavaliar a cada bolus.' },
+        { droga:'Pericardiocentese', dose:'Agulha 16–18G de 8–15 cm; cateter pigtail 6–8 Fr', via:'Subxifoide ou apical', obs:'Guiada por eco. Subxifoide: agulha 15–30° com a pele, rumo ao ombro esquerdo. Paraesternal: longe da mamária interna. Monitor ligado.' },
+        { droga:'Lidocaína 1%', dose:'Até 3 mg/kg', via:'Infiltração', obs:'Pele e trajeto da agulha, se houver tempo.' },
+        { droga:'Noradrenalina', dose:'0,05–0,5 mcg/kg/min', via:'EV BIC', obs:'Sustenta a PA enquanto se prepara a drenagem. Não substitui a drenagem.' },
+        { droga:'Cetamina', dose:'0,5–1 mg/kg (metade da dose)', via:'EV', obs:'Indutor preferido se a intubação for inevitável: mantém o tônus simpático. É choque obstrutivo — dose reduzida, e drenar antes se possível.' },
+        { droga:'Reversão de anticoagulante', dose:'Conforme o agente', via:'EV', obs:'Varfarina: vitamina K + complexo protrombínico. Heparina: protamina. Derrame hemorrágico pós-procedimento.' }
+      ]},
+
+      { tipo:'lista', titulo:'Critérios no eco', itens:[
+        '*Colapso do átrio direito* no fim da diástole e início da sístole: precoce e sensível.',
+        '*Colapso do VD na diástole:* mais específico.',
+        '*Veia cava inferior pletórica*, que colaba menos de 50% na inspiração.',
+        '*Variação respiratória* exagerada do fluxo mitral (mais de 25%) e tricúspide (mais de 40%).',
+        '*Swinging heart* — o coração balança no líquido e gera a alternância elétrica do ECG.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Beira do leito:* POCUS, ECG, pulso paradoxal medido com esfigmomanômetro.',
+        '*Sangue:* hemograma, coagulograma, tipagem, função renal, troponina, TSH se crônico.',
+        '*Líquido pericárdico:* celularidade, proteína, LDH, glicose, Gram e cultura, BAAR e ADA (tuberculose), citologia oncótica.',
+        '*Raio-X:* área cardíaca aumentada só com mais de 200 mL; normal no tamponamento agudo.',
+        '*Angio-TC de aorta* se a dor sugere dissecção — sem atrasar a drenagem do instável.'
+      ]},
+
       { tipo:'naofazer', titulo:'Não fazer', itens:[
-        'Intubar e ventilar com pressão positiva antes de drenar: pode precipitar parada.',
-        'Diurético ou vasodilatador: reduzem a pré-carga e pioram tudo.',
-        'Esperar radiografia ou tomografia com o paciente instável — o ultrassom responde na hora.',
-        'Pericardiocentese às cegas quando há ultrassom disponível.'
+        'Intubar e ventilar com pressão positiva antes de drenar.',
+        'Dar diurético ou vasodilatador: tiram pré-carga e aprofundam o choque.',
+        'Levar o instável para tomografia — o POCUS responde na hora.',
+        'Puncionar às cegas quando há ultrassom e o paciente não está parado.',
+        'Pericardiocentese como tratamento definitivo no hemopericárdio por dissecção ou trauma.'
       ]},
-      { tipo:'texto', titulo:'Internação x alta', conteudo:'Terapia intensiva, com cirurgia cardíaca acionada. Investigar a causa: neoplasia, uremia, tuberculose, pericardite viral, pós-infarto, dissecção de aorta rota, anticoagulação, hipotireoidismo. Enviar o líquido para citologia, bioquímica, cultura e pesquisa de BAAR. Derrame recorrente pode precisar de janela pericárdica.' },
+
+      { tipo:'texto', titulo:'Destino', conteudo:'Todo tamponamento vai para *UTI* com cardiologia e cirurgia cardíaca cientes. Hemopericárdio por dissecção tipo A, trauma ou ruptura de parede pós-infarto vai direto para o *centro cirúrgico*. O cateter pericárdico fica até drenar menos de 25–30 mL em 24 horas. Derrame sem tamponamento e estável pode ser conduzido em enfermaria monitorizada com eco seriado, tratando a causa. Recorrência, purulento ou neoplásico recidivante: *janela pericárdica*. Causas a investigar: neoplasia, pericardite viral ou tuberculosa, uremia, hipotireoidismo, anticoagulação, pós-cirurgia cardíaca, pós-cateterismo, marca-passo ou ablação.' },
+
       { tipo:'dica', titulo:'Pega do plantão', itens:[
-        'Pulso paradoxal: a PAS cai mais de 10 mmHg na inspiração. Dá para medir com esfigmomanômetro comum.',
-        'POCUS subxifoide leva segundos e muda a conduta — aprenda essa janela.',
-        'Turgência jugular com pulmões limpos e hipotensão: tamponamento, pneumotórax hipertensivo ou infarto de VD.'
+        'Pulso paradoxal com manguito: note a PAS em que o som aparece só na expiração e a PAS em que aparece em todo batimento. Diferença acima de 10 mmHg é positiva.',
+        'Tamponamento de baixa pressão: no desidratado ou dialítico, a jugular pode estar plana.',
+        'Jugular túrgida, pulmão limpo e hipotensão: tamponamento, pneumotórax hipertensivo, TEP maciço ou infarto de VD.',
+        'Na PCR em AESP, olhe o pericárdio no POCUS durante a checagem de pulso.'
       ]}
     ] },
 
   { id:'pericardite-miocardite', titulo:'Pericardite e miocardite aguda', categoria:'cardio', gravidade:'urgencia',
-    resumo:'Critérios diagnósticos, AINE + colchicina e os sinais que indicam internação.',
-    tags:['pericardite','miocardite','colchicina','atrito pericardico','supra difuso'],
-    fonte:'SBC — Diretriz de Miocardites e Pericardites',
+    resumo:'Separar pericardite isolada de miocardite, afastar SCA e tamponamento, AINE + colchicina e os preditores que mandam internar.',
+    tags:['pericardite','miocardite','miopericardite','perimiocardite','colchicina','atrito pericardico','supra difuso','infra de pr','derrame pericardico','dor pleuritica'],
+    fonte:'ESC 2015 — Doenças do Pericárdio · SBC — Diretriz de Miocardites (2022) · apoio: UpToDate (2026)',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Dor pleurítica que *melhora sentado e inclinado para a frente*, dias depois de virose; ou troponina alta, IC nova ou arritmia em jovem sem doença coronária.' },
+      { rotulo:'Prioridade',    valor:'*ECG, troponina e eco* — afastar tamponamento e SCA e separar pericardite isolada de miocardite.' },
+      { rotulo:'Meta',          valor:'Pericardite de baixo risco: AINE + colchicina e alta. Miocardite ou qualquer preditor de mau prognóstico: internar.' }
+    ],
     secoes:[
-      { tipo:'alerta', titulo:'Red flags', itens:[
-        'Miocardite pode se apresentar como *choque cardiogênico* ou arritmia maligna em paciente jovem.',
-        'Troponina elevada com coronárias normais em jovem: pense em miocardite.',
-        'Derrame pericárdico com instabilidade: tamponamento.',
-        'Febre alta, leucocitose e derrame volumoso indicam pericardite purulenta — drenagem e antibiótico.',
-        'Insuficiência cardíaca de início recente em jovem previamente hígido: miocardite até prova em contrário.'
-      ]},
       { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
-        { tipo:'inicio', rotulo:'Entrada', texto:'Dor torácica ventilatório-dependente, que melhora sentado e inclinado para a frente' },
-        { tipo:'passo', rotulo:'Diagnóstico', texto:'*ECG + ecocardiograma + troponina + marcadores inflamatórios*',
-          nota:'ECG: supra de ST difuso e côncavo, com infra de PR. Atrito pericárdico à ausculta' },
-        { tipo:'decisao', texto:'Há elevação de troponina ou disfunção ventricular?', ramos:[
-          { rotulo:'Não — pericardite isolada', cor:'ok', texto:'*Anti-inflamatório + colchicina*',
-            nota:'Tratamento ambulatorial na maioria' },
-          { rotulo:'Sim — miopericardite ou miocardite', cor:'perigo', texto:'*Internar e monitorizar*',
-            nota:'Risco de arritmia e disfunção. Restrição de exercício por meses' }
+        { tipo:'inicio', rotulo:'Entrada', texto:'Dor torácica pleurítica ou posicional, ou troponina alta sem SCA evidente',
+          nota:'Muitas vezes 1 a 2 semanas depois de quadro gripal ou gastrointestinal' },
+        { tipo:'passo', rotulo:'Na chegada', texto:'*ECG + troponina + PCR + hemograma + raio-X de tórax + ecocardiograma*',
+          nota:'Se há hipotensão ou jugular túrgida, o POCUS vem antes de tudo: derrame com colapso de câmara é tamponamento' },
+        { tipo:'decisao', texto:'Está instável? (hipotensão, IC aguda, arritmia)', ramos:[
+          { rotulo:'Derrame com colapso de câmara', cor:'perigo', texto:'*Tamponamento:* pericardiocentese', ir:'tamponamento' },
+          { rotulo:'Choque ou IC aguda sem tamponamento', cor:'perigo', texto:'*Miocardite fulminante até prova em contrário:* suporte e transferência para centro com assistência circulatória',
+            nota:'Piora em horas. Acione cedo a equipe de suporte mecânico — não espere falhar o segundo inotrópico', ir:'choque-abordagem' },
+          { rotulo:'TV sustentada ou BAV avançado', cor:'perigo', texto:'*Tratar a arritmia* e pensar em miocardite grave (células gigantes, sarcoidose)',
+            nota:'BAV avançado: marca-passo transcutâneo e depois transvenoso', ir:'taqui-qrs-largo' },
+          { rotulo:'Estável', cor:'ok', texto:'Seguir' }
         ]},
-        { tipo:'passo', rotulo:'Base do tratamento', texto:'*Anti-inflamatório em dose plena + COLCHICINA por 3 meses*',
-          nota:'A colchicina reduz a recorrência pela metade e é o item mais esquecido' },
-        { tipo:'passo', rotulo:'Diferencial', texto:'Afastar síndrome coronariana: o supra da pericardite é difuso e côncavo, sem imagem em espelho' },
-        { tipo:'fim', rotulo:'Orientar', texto:'Restrição de exercício até a resolução; na miocardite, por 3 a 6 meses' }
+        { tipo:'decisao', texto:'Pode ser SCA?', ramos:[
+          { rotulo:'Supra localizado, imagem em espelho, infra de ST ou dor anginosa', cor:'perigo', texto:'*Conduzir como SCA*',
+            nota:'Na dúvida, a coronária decide. Miocardite também eleva troponina e pode ter supra', ir:'sca-com-supra' },
+          { rotulo:'Supra difuso e côncavo + infra de PR, sem espelho', texto:'Pericardite provável: seguir' }
+        ]},
+        { tipo:'decisao', texto:'Quantos critérios de pericardite? (dor típica · atrito · supra difuso ou infra de PR · derrame novo ou maior)', ramos:[
+          { rotulo:'2 ou mais', texto:'*Pericardite confirmada*',
+            nota:'PCR alta e inflamação na imagem reforçam, mas não entram na contagem' },
+          { rotulo:'Menos de 2', texto:'Pericardite improvável: rever o diagnóstico',
+            nota:'Troponina alta sem critério de pericardite: pense em miocardite, SCA, TEP' }
+        ]},
+        { tipo:'decisao', texto:'O miocárdio está envolvido? (troponina e função do VE)', ramos:[
+          { rotulo:'Troponina normal', cor:'ok', texto:'*Pericardite isolada*: seguir para os preditores' },
+          { rotulo:'Troponina alta, VE normal', texto:'*Miopericardite:* internar e monitorizar por 24–48 h',
+            nota:'AINE em dose menor e pelo menor tempo possível. Cateterismo ou angio-TC de coronárias se o risco coronário não é baixo' },
+          { rotulo:'VE com disfunção ou IC', cor:'perigo', texto:'*Miocardite:* internar, sem AINE, tratar IC e pedir RM cardíaca',
+            nota:'Afastar coronária antes de fechar o diagnóstico', ir:'eap-ic-descompensada' }
+        ]},
+        { tipo:'decisao', texto:'Pericardite: há preditor de mau prognóstico?', ramos:[
+          { rotulo:'Maior: febre > 38 °C, início subagudo, derrame volumoso, falha do AINE em 1 semana', cor:'perigo', texto:'*Internar* e procurar causa específica',
+            nota:'Tuberculose, purulenta, neoplasia, autoimune, urêmica' },
+          { rotulo:'Menor: miopericardite, imunossupressão, trauma, anticoagulante oral', texto:'*Internar* para observação e investigação' },
+          { rotulo:'Nenhum', cor:'ok', texto:'*Tratamento ambulatorial* com retorno em 1 semana',
+            meds:[{ droga:'Ibuprofeno', dose:'600 mg 8/8 h', via:'VO' }, { droga:'Colchicina', dose:'0,5 mg 12/12 h por 3 meses', via:'VO' }, { droga:'Omeprazol', dose:'20 mg/dia', via:'VO' }] }
+        ]},
+        { tipo:'passo', rotulo:'Tratamento da pericardite', texto:'*AINE em dose plena por 1–2 semanas + colchicina por 3 meses*, com desmame guiado pela PCR',
+          nota:'AAS no lugar do ibuprofeno se já usa antiagregante ou teve infarto. Corticoide só com contraindicação ao AINE ou causa autoimune',
+          meds:[{ droga:'Ácido acetilsalicílico', dose:'750–1000 mg 8/8 h', via:'VO' }, { droga:'Colchicina', dose:'0,5 mg 12/12 h', via:'VO' }] },
+        { tipo:'decisao', texto:'Miocardite: há sinal de gravidade? (fulminante, BAV, TV, eosinofilia, piora apesar do tratamento)', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Centro terciário:* RM cardíaca e biópsia endomiocárdica',
+            nota:'Células gigantes, eosinofílica e sarcoidose respondem a imunossupressão — só se sabe com biópsia' },
+          { rotulo:'Não', texto:'*Enfermaria monitorizada:* tratar IC e arritmia, RM cardíaca na internação' }
+        ]},
+        { tipo:'fim', rotulo:'Na alta', texto:'*Sem esporte competitivo ou exercício intenso*: pericardite até a resolução (atleta, mínimo 3 meses), miocardite por 3 a 6 meses',
+          nota:'Liberação da miocardite só com ECG, Holter, eco e troponina normais. Retorno se a dor voltar ou houver dispneia, síncope ou palpitação' }
       ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        'Dor em pontada que piora na inspiração e deitado, e alivia sentado e inclinado para a frente.',
+        'Atrito pericárdico — áspero, some e volta: ausculte mais de uma vez, com o paciente inclinado.',
+        'Supra de ST difuso e côncavo com infra de PR (e supra de PR em aVR).',
+        'Troponina alta com coronária normal em jovem, sobretudo depois de virose.',
+        'IC de início recente, arritmia nova ou síncope em paciente previamente hígido.',
+        'Uso de inibidor de checkpoint, clozapina ou antraciclina, vacina de mRNA recente, doença de Chagas.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        'Hipotensão com jugular túrgida: tamponamento até o eco dizer o contrário.',
+        'Miocardite com choque ou IC que piora em horas: fulminante — transferir cedo.',
+        '*BAV avançado ou TV* com miocardite: pense em células gigantes ou sarcoidose.',
+        'Febre alta, toxemia e derrame: pericardite purulenta — drenagem e antibiótico.',
+        'Derrame volumoso sem inflamação evidente: neoplasia ou tuberculose.'
+      ]},
+
+      { tipo:'lista', titulo:'Critérios e classificação', itens:[
+        '*Pericardite:* 2 de 4 — dor típica, atrito, supra difuso ou infra de PR, derrame novo ou maior.',
+        '*Preditores maiores:* febre > 38 °C, início subagudo (dias a semanas), derrame volumoso (> 20 mm) ou tamponamento, falha do AINE após 1 semana.',
+        '*Preditores menores:* miopericardite, imunossupressão, trauma, uso de anticoagulante oral.',
+        '*Miopericardite:* pericardite com troponina alta e VE normal. *Miocardite:* troponina alta com disfunção de VE, IC ou arritmia.',
+        '*Recorrente:* volta após 4–6 semanas sem sintomas. *Incessante:* dura mais de 4–6 semanas sem remissão.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Todos:* ECG, troponina, PCR, hemograma, função renal, raio-X de tórax, ecocardiograma.',
+        '*Troponina alta:* afastar coronária — cateterismo ou angio-TC de coronárias conforme o risco.',
+        '*Suspeita de miocardite:* RM cardíaca (edema e realce tardio não isquêmico); BNP; biópsia endomiocárdica nos graves.',
+        '*Buscar a causa* nos de alto risco: sorologias conforme o contexto, HIV, PPD ou IGRA, FAN, TSH, sorologia para Chagas.',
+        '*Derrame com suspeita de purulenta, tuberculosa ou neoplásica:* análise do líquido pericárdico.',
+        'Repetir a PCR para decidir quando começar o desmame do AINE.'
+      ]},
+
       { tipo:'doses', titulo:'Medicações', itens:[
-        { droga:'Ibuprofeno', dose:'600 a 800 mg', via:'VO', obs:'De 8/8 h por 1 a 2 semanas, com redução gradual.' },
-        { droga:'Ácido acetilsalicílico', dose:'650 a 1000 mg', via:'VO', obs:'De 8/8 h. Escolha se houver infarto associado.' },
-        { droga:'Colchicina', dose:'0,5 mg de 12/12 h (0,5 mg/dia se peso abaixo de 70 kg)', via:'VO', obs:'Por 3 meses. Reduz a recorrência pela metade — não esquecer.' },
-        { droga:'Omeprazol 20 mg', dose:'1 cápsula', via:'VO', obs:'Proteção gástrica enquanto usar o anti-inflamatório.' },
-        { droga:'Prednisona', dose:'0,25 a 0,5 mg/kg/dia', via:'VO', obs:'Por 2 a 4 semanas com desmame. Só em refratários ou contraindicação ao AINE — aumenta recorrência.' },
-        { droga:'Suporte da insuficiência cardíaca', dose:'Conforme o quadro', via:'—', obs:'Na miocardite com disfunção: diurético, IECA, betabloqueador quando estável.' }
+        { droga:'Ibuprofeno', dose:'600 mg de 8/8 h', via:'VO', obs:'1 a 2 semanas; depois reduzir 200–400 mg a cada 1–2 semanas, guiado pela PCR. *Não usar na miocardite com disfunção de VE.*' },
+        { droga:'Ácido acetilsalicílico', dose:'750–1000 mg de 8/8 h', via:'VO', obs:'Comprimido de 500 mg. Preferido se já usa antiagregante ou após infarto. Desmame igual ao do ibuprofeno.' },
+        { droga:'Colchicina', dose:'0,5 mg de 12/12 h (0,5 mg/dia se < 70 kg)', via:'VO', obs:'Por *3 meses* no primeiro episódio. Sem dose de ataque. Reduzir na DRC; cuidado com claritromicina, azólicos e ciclosporina.' },
+        { droga:'Omeprazol', dose:'20 mg uma vez ao dia', via:'VO', obs:'Enquanto usar o AINE ou o AAS em dose anti-inflamatória.' },
+        { droga:'Prednisona', dose:'0,2–0,5 mg/kg/dia', via:'VO', obs:'Só com contraindicação ao AINE, doença autoimune ou gestação. Dose baixa e desmame lento: dose alta aumenta a recorrência.' },
+        { droga:'Furosemida', dose:'20–40 mg sem uso prévio; 1,5–2× a dose oral diária se já usa', via:'EV', obs:'Miocardite com congestão. No EAP, 2–2,5× a dose diária. Seguir a conduta de IC descompensada.' }
       ]},
+
       { tipo:'naofazer', titulo:'Não fazer', itens:[
-        'Esquecer a colchicina — é o que mais reduz recorrência.',
-        'Corticoide como primeira linha: aumenta a taxa de recorrência.',
-        'Liberar exercício físico precocemente, sobretudo na miocardite: risco de arritmia e morte súbita.',
-        'Anticoagular pericardite: risco de transformação hemorrágica do derrame.',
-        'Confundir com infarto e levar a cateterismo sem olhar o padrão do ECG.'
+        'Esquecer a colchicina: é ela que corta a recorrência pela metade.',
+        'Começar por corticoide na pericardite viral ou idiopática — aumenta a recorrência.',
+        'Dar AINE na miocardite com disfunção de VE ou IC.',
+        'Liberar exercício intenso antes do prazo, sobretudo na miocardite: risco de arritmia e morte súbita.',
+        'Fechar pericardite sem olhar o ECG com cuidado: supra localizado com espelho é infarto.',
+        'Manter anticoagulação plena sem reavaliar em pericardite com derrame.'
       ]},
-      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Alta* na pericardite idiopática de baixo risco: sem febre alta, sem derrame volumoso, sem elevação de troponina, sem imunossupressão, sem anticoagulação e sem trauma — com anti-inflamatório, colchicina por 3 meses e retorno. *Internar* na presença de qualquer critério de alto risco, na miocardite, e em toda suspeita de pericardite purulenta ou tuberculosa. Restrição de exercício até normalizar; na miocardite, 3 a 6 meses.' },
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Alta* na pericardite sem nenhum preditor de mau prognóstico: AINE com desmame, colchicina por 3 meses, protetor gástrico, restrição de exercício e retorno em 1 semana para ver resposta e PCR. *Internar* com qualquer preditor maior ou menor, na miopericardite (monitorização) e em toda miocardite. *UTI ou centro terciário* na miocardite com choque, IC grave, TV ou BAV avançado — essas precisam de acesso a suporte circulatório mecânico e biópsia. Tamponamento vai para drenagem.' },
+
       { tipo:'dica', titulo:'Pega do plantão', itens:[
-        'Supra difuso e côncavo com infra de PR é pericardite; supra localizado com imagem em espelho é infarto.',
-        'Peça ao paciente para se inclinar para a frente: a melhora da dor é bem característica.',
-        'Escreva a colchicina na receita antes de qualquer outra coisa — é a que muda o futuro.'
+        'Supra difuso e côncavo com infra de PR é pericardite; supra localizado com espelho é infarto.',
+        'Ausculte o atrito com o paciente sentado e inclinado para a frente, no fim da expiração.',
+        'Escreva a colchicina na receita antes do anti-inflamatório — é a que muda o futuro.',
+        'Troponina alta em pericardite muda tudo: vira miopericardite, e o paciente fica.'
+      ]}
+    ] },
+
+  { id:'takotsubo', titulo:'Síndrome de Takotsubo (cardiomiopatia de estresse)', categoria:'cardio', gravidade:'urgencia',
+    resumo:'Imita o infarto e só se confirma no cateterismo; no PS conduz como SCA e depois vigia choque, obstrução da via de saída, QT longo e trombo de VE.',
+    tags:['takotsubo','cardiomiopatia de estresse','miocardiopatia de estresse','sindrome do coracao partido','coracao partido','balonamento apical','abaulamento apical','discinesia apical','obstrucao da via de saida'],
+    fonte:'Consenso Internacional de Takotsubo (InterTAK, 2018) · ESC — Heart Failure Association, posicionamento sobre Takotsubo (2016) · apoio: UpToDate (2026)',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Dor torácica ou dispneia com ECG e troponina de infarto logo após *estresse emocional ou físico intenso*, sobretudo em mulher na pós-menopausa.' },
+      { rotulo:'Prioridade',    valor:'*Conduzir como SCA* até a coronária: o diagnóstico só existe depois do cateterismo sem lesão culpada.' },
+      { rotulo:'Meta',          valor:'Pegar as complicações das primeiras 72 h: choque (com ou sem obstrução da via de saída), QT longo, trombo de VE.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Dor torácica ou dispneia com ECG ou troponina de SCA',
+          nota:'Gatilho em cerca de dois terços: luto, briga, susto, cirurgia, crise de asma, sepse, AVC. A ausência de gatilho não exclui' },
+        { tipo:'decisao', texto:'O ECG tem supra de ST?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*IAM com supra até prova em contrário:* hemodinâmica',
+            nota:'O supra anterior é o padrão mais comum no Takotsubo — e é indistinguível do infarto. Não se faz esse diagnóstico no PS',
+            meds:[{ droga:'Ácido acetilsalicílico', dose:'300 mg mastigado', via:'VO' }], ir:'sca-com-supra' },
+          { rotulo:'Não', texto:'*SCA sem supra:* curva de troponina, eco e cateterismo',
+            nota:'Inversão de T profunda e difusa e QT longo nos dias seguintes são típicos', ir:'sca-sem-supra' }
+        ]},
+        { tipo:'passo', rotulo:'Cateterismo + ventriculografia ou eco', texto:'Coronárias *sem lesão culpada* e alteração de contração que *ultrapassa um território coronariano*',
+          nota:'Balonamento apical com base hipercontrátil é o clássico; há formas médio-ventricular, basal e focal. Troponina modesta para o tamanho da área acinética e BNP muito alto reforçam. Doença coronária coincidente não exclui' },
+        { tipo:'decisao', texto:'Está em choque ou congesto? Faça o eco antes de escolher a droga', ramos:[
+          { rotulo:'Choque com obstrução da via de saída do VE', cor:'perigo', texto:'*Volume + betabloqueador com cautela; vasopressor alfa puro se preciso*',
+            nota:'Sem inotrópico, sem nitrato, sem diurético: todos pioram o gradiente. Suporte mecânico se refratário',
+            meds:[{ droga:'Cristaloide', dose:'250–500 mL, reavaliar', via:'EV' }, { droga:'Fenilefrina', dose:'iniciar 0,5 mcg/kg/min, titular', via:'EV BIC' }] },
+          { rotulo:'Choque sem obstrução', cor:'perigo', texto:'*Suporte:* catecolamina pode piorar — suporte mecânico precoce',
+            nota:'Levosimendana é a opção inotrópica preferida pelo consenso quando há baixo débito', ir:'choque-abordagem' },
+          { rotulo:'Congestão, sem obstrução', texto:'*Diurético e vasodilatador* como na IC aguda', ir:'eap-ic-descompensada' },
+          { rotulo:'Estável', cor:'ok', texto:'Monitorizar por pelo menos 48–72 h' }
+        ]},
+        { tipo:'decisao', texto:'Como está o QTc?', ramos:[
+          { rotulo:'> 500 ms ou torsades', cor:'perigo', texto:'*Monitor contínuo*, K acima de 4 e Mg acima de 2, suspender drogas que alongam o QT',
+            nota:'Torsades: magnésio EV; bradicardia facilita — pode precisar de marca-passo',
+            meds:[{ droga:'Sulfato de magnésio', dose:'2 g em 10–15 min', via:'EV' }], ir:'taqui-qrs-largo' },
+          { rotulo:'Normal', cor:'ok', texto:'Repetir o ECG diariamente: o QT alonga nos primeiros dias' }
+        ]},
+        { tipo:'decisao', texto:'Há trombo no VE ou acinesia apical extensa?', ramos:[
+          { rotulo:'Trombo', cor:'perigo', texto:'*Anticoagular* por cerca de 3 meses ou até a recuperação',
+            meds:[{ droga:'Enoxaparina', dose:'1 mg/kg 12/12 h', via:'SC' }] },
+          { rotulo:'Acinesia extensa sem trombo', texto:'Considerar anticoagulação até a contração voltar',
+            nota:'Decisão individual, pesando sangramento' },
+          { rotulo:'Não', cor:'ok', texto:'Sem anticoagulação' }
+        ]},
+        { tipo:'passo', rotulo:'Tratamento de base', texto:'*IECA* se a função está reduzida; betabloqueador quando estável e sem obstrução, bradicardia ou QT longo',
+          nota:'AAS e estatina só se houver aterosclerose associada. Identificar e tratar o gatilho — físico ou emocional',
+          meds:[{ droga:'Enalapril', dose:'2,5–5 mg 12/12 h', via:'VO' }] },
+        { tipo:'fim', rotulo:'Alta e seguimento', texto:'*Eco em 1 a 4 semanas* para documentar a recuperação — sem recuperação, o diagnóstico está errado',
+          nota:'A mortalidade intra-hospitalar é semelhante à do infarto. Recorrência de cerca de 1–2% ao ano' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        'Quadro de infarto logo após estresse emocional ou físico intenso.',
+        'Mulher na pós-menopausa — cerca de 9 em cada 10 casos.',
+        'Troponina pouco elevada para a extensão da área que não contrai.',
+        'Eco com ápice parado e base hipercontrátil ("balonamento apical").',
+        'Paciente crítico (sepse, AVC, hemorragia subaracnoide, feocromocitoma) com disfunção de VE nova.',
+        'Inversão de T profunda e QT longo evoluindo nos dias seguintes ao evento.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Choque com sopro sistólico novo*: obstrução da via de saída do VE ou insuficiência mitral — eco antes da dobutamina.',
+        'QTc acima de 500 ms: risco de torsades.',
+        'Idade avançada, gatilho físico, FE muito baixa, BNP muito alto: maior risco de complicação.',
+        'Trombo apical: risco de AVC e embolia periférica.',
+        'Ruptura de parede livre, septo ou músculo papilar — rara, mas descrita.'
+      ]},
+
+      { tipo:'lista', titulo:'Critérios diagnósticos (InterTAK)', itens:[
+        'Disfunção transitória do VE (apical, médio-ventricular, basal ou focal), em geral além de um território coronariano.',
+        'Gatilho emocional, físico ou combinado frequente, mas não obrigatório.',
+        'Alterações novas de ECG (supra, infra, inversão de T, QT longo); troponina em geral modestamente elevada, BNP alto.',
+        'Doença coronária significativa não exclui — mas a lesão não explica a alteração de contração.',
+        'Recuperação da função em semanas a poucos meses. Sem evidência de miocardite infecciosa (a RM ajuda a separar).',
+        'Feocromocitoma pode causar quadro idêntico e precisa ser lembrado.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*No PS:* ECG seriado, troponina seriada, BNP, eletrólitos com magnésio, raio-X.',
+        '*Cateterismo com ventriculografia* — ou angio-TC de coronárias em casos selecionados de baixo risco.',
+        '*Ecocardiograma:* padrão de contração, gradiente na via de saída do VE, movimento anterior sistólico da mitral, insuficiência mitral, trombo apical.',
+        '*RM cardíaca:* edema sem realce tardio isquêmico; separa de infarto e de miocardite.',
+        'ECG diário na internação para acompanhar o QTc.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Ácido acetilsalicílico', dose:'300 mg mastigado', via:'VO', obs:'Enquanto é SCA. Após o cateterismo, só se houver aterosclerose.' },
+        { droga:'Cristaloide', dose:'250–500 mL, reavaliar', via:'EV', obs:'Choque com obstrução da via de saída: pré-carga reduz o gradiente.' },
+        { droga:'Fenilefrina', dose:'Iniciar 0,5 mcg/kg/min, titular', via:'EV BIC', obs:'Vasopressor alfa puro na obstrução da via de saída com hipotensão.' },
+        { droga:'Metoprolol', dose:'25 mg de 12/12 h', via:'VO', obs:'Na obstrução, com hemodinâmica que permita. Evitar com bradicardia ou QT longo.' },
+        { droga:'Levosimendana', dose:'0,05–0,2 mcg/kg/min, sem ataque', via:'EV BIC', obs:'Baixo débito *sem* obstrução. Catecolaminas podem piorar o quadro.' },
+        { droga:'Sulfato de magnésio', dose:'2 g em 10–15 min', via:'EV', obs:'Torsades ou QTc longo com hipomagnesemia.' },
+        { droga:'Enoxaparina', dose:'1 mg/kg de 12/12 h', via:'SC', obs:'Trombo no VE — depois varfarina (INR 2–3) por cerca de 3 meses.' },
+        { droga:'Enalapril', dose:'2,5–5 mg de 12/12 h', via:'VO', obs:'Disfunção de VE, quando a PA permitir.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Diagnosticar Takotsubo no PS e dispensar a coronária: é diagnóstico de cateterismo.',
+        'Dobutamina, nitrato ou diurético no choque com obstrução da via de saída.',
+        'Prescrever drogas que alongam o QT (ondansetrona, haloperidol, macrolídeo, quinolona) sem olhar o QTc.',
+        'Dar alta sem eco de controle marcado.',
+        'Chamar de "benigna" — a mortalidade na internação é comparável à do infarto.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Todo paciente interna* em leito monitorizado — no mínimo 48 a 72 h de monitor, pelo risco de arritmia e QT longo nos primeiros dias. *UTI* no choque, na IC grave, com QTc acima de 500 ms ou arritmia ventricular. A *alta* vem com hemodinâmica estável, QTc em queda, sem arritmia, trombo abordado, eco de controle em 1 a 4 semanas e acompanhamento cardiológico. Se a função não se recupera, o diagnóstico precisa ser revisto (infarto, miocardite, cardiomiopatia).' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Choque em Takotsubo: eco antes da droga — a obstrução da via de saída inverte o tratamento.',
+        'Ondansetrona e haloperidol são os alongadores de QT mais prescritos no plantão: evite.',
+        'Pergunte pelo gatilho, mas não dependa dele: um terço não tem.',
+        'Escreva no resumo de alta que o eco de controle é obrigatório.'
       ]}
     ] },
 
@@ -1573,7 +2366,8 @@ const PROTOCOLOS = [
       { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
         { tipo:'inicio', rotulo:'Entrada', texto:'Dispneia com hipoxemia, hipercapnia ou trabalho respiratório aumentado' },
         { tipo:'passo', rotulo:'Primeiro', texto:'*Oxigênio titulado* + monitorização + acesso + gasometria',
-          nota:'Alvo de SatO2 de 94 a 98%; de 88 a 92% no retentor crônico de CO2' },
+          nota:'Alvo de SatO2 de 92 a 96%; de 88 a 92% no retentor crônico de CO2',
+          meds:['Oxigênio — cateter nasal'] },
         { tipo:'decisao', texto:'Qual o tipo?', ramos:[
           { rotulo:'Tipo 1 — hipoxêmica', texto:'PaO2 baixa com PaCO2 normal ou baixa',
             nota:'Pneumonia, edema agudo, TEP, SDRA, atelectasia' },
@@ -1592,7 +2386,7 @@ const PROTOCOLOS = [
       ]},
       { tipo:'doses', titulo:'Suporte', itens:[
         { droga:'Oxigênio — cateter nasal', dose:'1 a 6 L/min', via:'—', obs:'Cada litro sobe cerca de 4% na FiO2.' },
-        { droga:'Máscara com reservatório', dose:'10 a 15 L/min', via:'—', obs:'FiO2 próxima de 100%. Não deixar o reservatório colabar.' },
+        { droga:'Máscara com reservatório', dose:'10 a 15 L/min', via:'—', obs:'A 15 L/min o vazamento limita a FiO2 a cerca de 65%. Para pré-oxigenar, fluxômetro aberto até o fim ou VNI. Não deixar o reservatório colabar.' },
         { droga:'Cânula nasal de alto fluxo', dose:'30 a 60 L/min, FiO2 titulada', via:'—', obs:'Boa na insuficiência hipoxêmica; mais confortável que a VNI.' },
         { droga:'Ventilação não invasiva', dose:'CPAP 8 a 10 ou binível', via:'—', obs:'Melhor evidência em DPOC e edema agudo. Reavaliar em 1 a 2 horas.' },
         { droga:'Sequência rápida de intubação', dose:'Ver a conduta específica', via:'—', obs:'Pré-oxigenar bem: o paciente hipoxêmico dessatura em segundos.' },
@@ -1613,56 +2407,158 @@ const PROTOCOLOS = [
       ]}
     ] },
 
-  { id:'vni', titulo:'Ventilação não invasiva: quando indicar', categoria:'resp', gravidade:'urgencia',
-    resumo:'Indicações claras (EAP e DPOC), contraindicações e os critérios de falha que mandam intubar.',
-    tags:['vni','bipap','cpap','ventilacao nao invasiva','falha de vni'],
-    fonte:'AMIB/SBPT — Diretrizes brasileiras de ventilação mecânica',
+  { id:'vni', titulo:'Ventilação não invasiva (VNI): quando e como usar', categoria:'resp', gravidade:'urgencia',
+    resumo:'Do zero: o que é CPAP e BiPAP, em quem usar, como ligar na prática, os números iniciais e a hora certa de desistir e intubar.',
+    tags:['vni','bipap','bpap','cpap','ventilacao nao invasiva','mascara','ipap','epap','peep','pressao de suporte','dpoc','eap','falha de vni','desmame'],
+    fonte:'ERS/ATS 2017 — Ventilação Não Invasiva na Insuficiência Respiratória Aguda · AMIB/SBPT — Recomendações Brasileiras de Ventilação Mecânica (2013) · apoio: UpToDate (2026)',
+    ficha:[
+      { rotulo:'O que é',    valor:'Ar com pressão entregue por uma *máscara bem vedada*, sem tubo na traqueia: o aparelho ajuda o paciente a respirar.' },
+      { rotulo:'Quando',     valor:'*DPOC com acidose respiratória* e *edema agudo de pulmão* são as indicações de ouro; paciente acordado, que protege a via aérea.' },
+      { rotulo:'Meta',       valor:'Melhora clara em *1 a 2 horas* (respiração, gasometria, conforto). Sem melhora, intubar — não insistir.' }
+    ],
     secoes:[
-      { tipo:'alerta', titulo:'Contraindicações absolutas', itens:[
-        'Parada cardiorrespiratória ou necessidade imediata de intubação.',
-        'Rebaixamento do nível de consciência com incapacidade de proteger a via aérea (exceto narcose por CO2 na DPOC).',
-        'Vômito ativo ou alto risco de aspiração.',
-        'Obstrução de via aérea superior, trauma ou cirurgia recente de face.',
-        'Instabilidade hemodinâmica grave ou arritmia maligna.',
-        'Pneumotórax não drenado.'
-      ]},
-      { tipo:'fluxo', titulo:'Como conduzir', itens:[
-        { tipo:'inicio', rotulo:'Indicação', texto:'Insuficiência respiratória com paciente desperto e colaborativo' },
-        { tipo:'decisao', texto:'Qual o cenário?', ramos:[
-          { rotulo:'Exacerbação de DPOC com acidose', cor:'ok',
-            texto:'*Melhor evidência* — binível reduz intubação e mortalidade',
-            nota:'pH abaixo de 7,35 com PaCO2 acima de 45' },
-          { rotulo:'Edema agudo de pulmão', cor:'ok', texto:'*CPAP ou binível* — reduz intubação e mortalidade' },
-          { rotulo:'Hipoxemia por pneumonia ou SDRA', texto:'Uso cauteloso; considerar cânula de alto fluxo',
-            nota:'Risco de atraso na intubação. Reavaliar rigorosamente' }
+      { tipo:'texto', topo:true, titulo:'O que é, em 1 minuto', conteudo:'VNI é ajudar o paciente a respirar com *pressão positiva por uma máscara bem vedada*, sem tubo na traqueia. Existem dois jeitos de fazer. *CPAP* é uma pressão só, igual o tempo todo — como soprar de leve dentro de um balão para ele não murchar: mantém os alvéolos abertos e melhora o oxigênio, mas quase não ajuda a tirar CO₂. *BiPAP* (ou binível) tem duas pressões: uma mais alta quando o paciente puxa o ar (*IPAP*, que empurra volume para dentro e lava o CO₂) e uma mais baixa quando ele solta (*EPAP*, que é a PEEP e segura o pulmão aberto). A diferença entre as duas é o empurrão que vira volume corrente. *Regra de bolso:* CO₂ alto, mexa no IPAP; oxigênio baixo, mexa no EPAP e na FiO₂. *No PS brasileiro*, quase sempre a VNI é feita no ventilador mecânico comum em modo VNI (pressão de suporte + PEEP): a PEEP é o EPAP e a pressão de suporte é o quanto se soma por cima — então IPAP 12 com EPAP 5 é PEEP 5 com PS 7. O modo *S/T* do BiPAP acrescenta uma frequência de segurança: se o paciente parar de respirar, a máquina dispara sozinha.' },
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Falta de ar com insuficiência respiratória: FR alta, musculatura acessória, SpO₂ baixa ou CO₂ alto',
+          nota:'Colha gasometria arterial antes de ligar, se não atrasar o início — VNI tardia falha mais' },
+
+        { tipo:'decisao', texto:'Tem motivo para NÃO usar VNI?', ramos:[
+          { rotulo:'Parada, rebaixado sem proteger a via aérea, vômito ou sangramento digestivo, choque', cor:'perigo',
+            texto:'*Não é VNI: intubar*', nota:'Exceção: DPOC sonolento só por CO₂ alto pode tentar, com o médico ao lado', ir:'sequencia-rapida-intubacao' },
+          { rotulo:'Não', cor:'ok', texto:'Seguir: qual é o problema?' }
         ]},
-        { tipo:'passo', rotulo:'Iniciar', texto:'Explicar ao paciente, ajustar a máscara sem vazamento e começar com pressões baixas',
-          nota:'IPAP 8 a 12, EPAP 4 a 6, subindo conforme a tolerância e a resposta' },
-        { tipo:'passo', rotulo:'Reavaliar em 1 a 2 horas', texto:'*Gasometria, frequência respiratória, conforto e nível de consciência*',
-          nota:'Sem melhora clara nesse prazo é falha: intube' },
-        { tipo:'alerta', rotulo:'Armadilha', texto:'*Insistir na VNI atrasa a intubação e piora o desfecho*' },
-        { tipo:'fim', rotulo:'Sucesso', texto:'Desmame progressivo com períodos livres crescentes' }
+
+        { tipo:'decisao', texto:'Qual é o problema? (define se vale a pena e qual modo usar)', ramos:[
+          { rotulo:'DPOC com pH < 7,35 e PaCO₂ > 45', cor:'ok', texto:'*BiPAP* — a melhor indicação que existe',
+            nota:'Evita intubação e morte. DPOC sem acidose não se beneficia', ir:'dpoc-exacerbacao' },
+          { rotulo:'Edema agudo de pulmão', cor:'ok', texto:'*CPAP* (ou BiPAP se o CO₂ estiver alto)',
+            nota:'Junto com vasodilatador e diurético', ir:'eap-ic-descompensada' },
+          { rotulo:'Imunossuprimido com hipoxemia inicial', texto:'*VNI precoce*, em sala monitorizada',
+            nota:'Evita intubação quando começa cedo' },
+          { rotulo:'Pneumonia, SDRA, hipoxemia sem CO₂ alto', texto:'*Teste curto e vigiado* — cateter nasal de alto fluxo é alternativa',
+            nota:'Falha é comum aqui, e intubar tarde piora o desfecho', ir:'pneumonia-comunidade' },
+          { rotulo:'Asma', texto:'Sem evidência de benefício: só com vigilância de sala vermelha',
+            nota:'Não pode atrasar a intubação', ir:'asma-crise' },
+          { rotulo:'Vai intubar e está hipoxêmico', cor:'ok', texto:'*VNI com PEEP para pré-oxigenar* por 3 minutos',
+            ir:'sequencia-rapida-intubacao' }
+        ]},
+
+        { tipo:'passo', rotulo:'Montar', texto:'Ventilador em *modo VNI* (ou aparelho de BiPAP) · *máscara oronasal* do tamanho certo · curativo na ponte do nariz · cabeceira acima de 30°',
+          nota:'Tamanho: da ponte do nariz até logo abaixo do lábio inferior. Monitor, oxímetro e material de intubação por perto' },
+
+        { tipo:'passo', rotulo:'Explicar e segurar', texto:'Explique em uma frase e *segure a máscara com a mão* por 1–2 minutos antes de prender as tiras',
+          nota:'"Vai sentir um vento forte; respire junto com ele." Tiras frouxas: passam 1 a 2 dedos por baixo' },
+
+        { tipo:'decisao', texto:'Quais parâmetros iniciais?', ramos:[
+          { rotulo:'CO₂ alto (DPOC, hipoventilação)', texto:'*BiPAP S/T:* IPAP 10–12 · EPAP 4–5 · frequência de segurança 8–12',
+            nota:'No ventilador comum: PEEP 5 + pressão de suporte 5–7. Suba o IPAP de 2 em 2 até ~20' },
+          { rotulo:'Edema agudo de pulmão', texto:'*CPAP 5–8*, subindo de 2 em 2 até 10–15',
+            nota:'EAP com CO₂ alto ou cansado: BiPAP' },
+          { rotulo:'Hipoxemia (pneumonia, imunossuprimido)', texto:'*BiPAP:* IPAP 10–12 · EPAP 5–8 · FiO₂ alta',
+            nota:'EPAP pode ir até 10 se a saturação não sobe' }
+        ]},
+
+        { tipo:'passo', rotulo:'Primeiros 15 minutos', texto:'*Fique ao lado* e ajuste até o paciente ficar confortável e a FR começar a cair',
+          nota:'FiO₂ no mínimo para SpO₂ > 90% (88–92% no DPOC). Olhe vazamento, sincronia e volume corrente de 6–10 mL/kg de peso ideal' },
+
+        { tipo:'decisao', texto:'O que está errado? (ajuste um botão por vez)', ramos:[
+          { rotulo:'CO₂ alto, pH baixo, FR alta', texto:'*Subir o IPAP* 2 cmH₂O por vez',
+            nota:'É a diferença IPAP − EPAP que vira volume e tira CO₂. Mais oxigênio não resolve CO₂' },
+          { rotulo:'Saturação baixa', texto:'*Subir FiO₂ e EPAP* (até 8–10)',
+            nota:'Ao subir o EPAP, suba o IPAP junto — senão o volume cai' },
+          { rotulo:'Vazamento grande', texto:'Reposicionar, *trocar o tamanho* da máscara, faixa de queixo',
+            nota:'Apertar demais machuca e não veda melhor' },
+          { rotulo:'Briga com a máquina, ansioso', texto:'Checar vazamento, conversar, baixar a pressão ou trocar a máscara',
+            nota:'Sedação raramente é necessária. Se for: dexmedetomidina em dose baixa, nunca opioide + benzodiazepínico juntos',
+            meds:[{ droga:'Dexmedetomidina', dose:'0,2–0,7 mcg/kg/h, sem bolus', via:'EV BIC' }] }
+        ]},
+
+        { tipo:'decisao', texto:'Reavaliação em 1 a 2 horas: clínica e gasometria', ramos:[
+          { rotulo:'Melhorou', cor:'ok', texto:'*Manter* e reavaliar a cada 2 horas',
+            nota:'FR caindo, menos esforço, pH e PaCO₂ melhorando, confortável' },
+          { rotulo:'Melhora parcial', texto:'Ajustar e reavaliar em mais 1–2 horas',
+            nota:'Só se o tratamento da causa ainda está fazendo efeito (diurético, broncodilatador)' },
+          { rotulo:'Não melhorou ou piorou', cor:'perigo', texto:'*Intubar agora*',
+            nota:'Paciente que não quer ser intubado: otimizar a VNI e reavaliar', ir:'sequencia-rapida-intubacao' }
+        ]},
+
+        { tipo:'alerta', rotulo:'A qualquer momento', texto:'Rebaixou, vomitou, não tolera, instabilizou ou não elimina secreção: *tire a máscara e intube*' },
+
+        { tipo:'fim', rotulo:'Desmame', texto:'Quando a causa melhorou: *FR 12–22, SpO₂ ≥ 90% com FiO₂ ≤ 60%, pH > 7,25, desperto e parâmetros baixos* (BiPAP 10/5 ou CPAP ≤ 10)',
+          nota:'Diminua a pressão aos poucos ou deixe períodos cada vez maiores sem máscara' }
       ]},
-      { tipo:'doses', titulo:'Parâmetros iniciais', itens:[
-        { droga:'CPAP', dose:'8 a 10 cmH2O', via:'—', obs:'Edema agudo de pulmão. Pressão única, contínua.' },
-        { droga:'Binível — IPAP', dose:'Iniciar em 8 a 12, subir até 20 a 25', via:'—', obs:'Determina o volume corrente e a ventilação. Sobe se a PaCO2 estiver alta.' },
-        { droga:'Binível — EPAP', dose:'4 a 6 cmH2O', via:'—', obs:'Determina a oxigenação e evita reinalação. Sobe se a hipoxemia persistir.' },
-        { droga:'FiO2', dose:'Titular', via:'—', obs:'Alvo de SatO2 de 94 a 98%; de 88 a 92% no retentor de CO2.' },
-        { droga:'Interface', dose:'Máscara oronasal na fase aguda', via:'—', obs:'Ajustar sem vazamento e sem apertar demais: úlcera de pressão no nariz é frequente.' },
-        { droga:'Cânula nasal de alto fluxo', dose:'30 a 60 L/min', via:'—', obs:'Alternativa mais confortável na insuficiência hipoxêmica pura.' }
+
+      { tipo:'passos', titulo:'Como ligar, passo a passo', itens:[
+        'Sentar o paciente com a *cabeceira acima de 30°*, com monitor e oxímetro.',
+        'Escolher a *máscara oronasal* (nariz e boca) do tamanho certo: da ponte do nariz até logo abaixo do lábio inferior.',
+        'Proteger a ponte do nariz com curativo *antes* de encostar a máscara.',
+        'Ligar o aparelho nos parâmetros iniciais e *explicar*: "vai sentir um vento forte, respire junto com ele".',
+        '*Segurar a máscara com a mão* por 1–2 minutos e só então prender as tiras, sem apertar demais.',
+        'Ficar ao lado nos primeiros 15 minutos, ajustando vazamento, pressão e FiO₂.',
+        'Marcar no prontuário a hora de início e a *gasometria de 1 a 2 horas*.'
       ]},
+
+      { tipo:'alerta', titulo:'Quando NÃO usar', itens:[
+        'Parada cardiorrespiratória ou necessidade de intubar agora.',
+        'Não protege a via aérea: rebaixado (exceto DPOC sonolento por CO₂, com médico ao lado), sem tosse, secreção abundante que não consegue eliminar.',
+        'Vômito, hemorragia digestiva alta, íleo ou abdome agudo — risco de aspirar dentro da máscara.',
+        'Trauma, queimadura ou cirurgia recente de face; obstrução da via aérea alta.',
+        'Choque ou arritmia instável; pneumotórax não drenado; agitação que não cede com explicação.'
+      ]},
+
+      { tipo:'lista', topo:true, titulo:'Quando usar', itens:[
+        '*Indicação forte:* DPOC exacerbado com acidose respiratória (pH ≤ 7,35 e PaCO₂ > 45) — BiPAP.',
+        '*Indicação forte:* edema agudo de pulmão cardiogênico — CPAP ou BiPAP.',
+        '*Recomendada:* imunossuprimido com hipoxemia inicial; pós-operatório de tórax ou abdome com insuficiência respiratória; trauma de tórax com hipoxemia; pré-oxigenação antes de intubar; prevenção de nova falha logo após extubar o paciente de alto risco (DPOC, hipercápnico); falta de ar no paciente em cuidados paliativos.',
+        '*Individualizar, com teste curto:* pneumonia e SDRA leve, asma — sem benefício comprovado. Hipoventilação por obesidade, doença neuromuscular ou intoxicação: BiPAP com frequência de segurança mais alta.',
+        '*Não usar:* DPOC sem acidose; insuficiência respiratória já instalada depois da extubação — aí a VNI só atrasa a reintubação.'
+      ]},
+
+      { tipo:'lista', titulo:'Checklist da reavaliação (1 a 2 horas)', itens:[
+        '*Respiração:* FR caindo (idealmente < 25), menos uso de musculatura acessória, sem respiração paradoxal.',
+        '*Gasometria:* pH subindo e PaCO₂ caindo no hipercápnico; PaO₂/SpO₂ no alvo com FiO₂ caindo no hipoxêmico.',
+        '*Cabeça:* consciência igual ou melhor; agitação e delirium são sinal de falha.',
+        '*Máquina:* vazamento pequeno, paciente sincronizado, volume corrente de 6–10 mL/kg de peso ideal.',
+        '*Corpo:* PA estável, sem vômito nem distensão abdominal importante, pele do nariz íntegra.'
+      ]},
+
+      { tipo:'lista', titulo:'Falha: quando parar e intubar', itens:[
+        'Gasometria pior ou igual depois de 1 a 2 horas.',
+        'FR subindo, exaustão, respiração paradoxal.',
+        'Rebaixamento ou agitação que piora.',
+        'Vômito, secreção que não consegue eliminar ou intolerância a todas as máscaras.',
+        'Instabilidade hemodinâmica ou arritmia. Cerca de *1 em cada 3* pacientes falha — intubar tarde é o que mata.'
+      ]},
+
+      { tipo:'doses', titulo:'Parâmetros iniciais — o que cada botão faz', itens:[
+        { droga:'CPAP', dose:'5–8 cmH₂O, subir de 2 em 2 até 10–15', via:'Máscara oronasal', obs:'*Uma pressão só, o tempo todo* — segura os alvéolos abertos. Melhora o oxigênio; tira pouco CO₂. Escolha no EAP.' },
+        { droga:'IPAP (BiPAP)', dose:'8–12 cmH₂O, subir de 2 em 2 até ~20', via:'Máscara oronasal', obs:'*Pressão na hora de puxar o ar* — empurra volume e *lava o CO₂*. Máximo tolerado raramente passa de 20–25.' },
+        { droga:'EPAP (BiPAP)', dose:'3–5 cmH₂O (até 8–10 no hipoxêmico)', via:'Máscara oronasal', obs:'*Pressão na hora de soltar o ar* — é a PEEP: segura o pulmão aberto e *melhora o oxigênio*.' },
+        { droga:'Frequência de segurança (modo S/T)', dose:'8–12 por minuto', via:'—', obs:'A máquina dispara sozinha se o paciente parar de respirar. Mais alta na intoxicação que deprime o drive.' },
+        { droga:'FiO₂', dose:'A menor que mantém SpO₂ > 90%', via:'—', obs:'DPOC e retentor de CO₂: alvo 88–92%. No retentor, quem tira CO₂ é o IPAP, não o oxigênio.' },
+        { droga:'No ventilador comum (modo VNI / PSV)', dose:'PEEP = EPAP · pressão de suporte = IPAP − EPAP', via:'—', obs:'Exemplo: IPAP 12 / EPAP 5 = *PEEP 5 + PS 7*. Ligue a compensação de vazamento (modo VNI).' },
+        { droga:'Volume corrente', dose:'6–10 mL/kg de peso ideal', via:'—', obs:'Leia no monitor. Baixo: suba o IPAP ou corrija o vazamento.' },
+        { droga:'Dexmedetomidina', dose:'0,2–0,7 mcg/kg/h, sem bolus', via:'EV BIC', obs:'Só se a ansiedade impede a VNI. Não deprime a respiração; causa bradicardia e hipotensão.' }
+      ]},
+
+
       { tipo:'naofazer', titulo:'Não fazer', itens:[
-        'Usar VNI em paciente rebaixado que não protege a via aérea.',
-        'Sedar para o paciente "tolerar" a máscara.',
-        'Manter por horas sem reavaliação objetiva.',
-        'VNI em pneumotórax não drenado.',
-        'Usar como substituto da intubação em quem já está exausto.'
+        'Usar a VNI para "ganhar tempo" em quem já precisa de tubo.',
+        'Deixar horas sem gasometria e sem reavaliação com hora marcada.',
+        'Subir o oxigênio no DPOC em vez de subir o IPAP.',
+        'Apertar as tiras para resolver vazamento — troque o tamanho da máscara.',
+        'Sedar com benzodiazepínico e opioide juntos para o paciente "aceitar" a máscara.',
+        'Dar dieta pela boca ou por sonda de rotina com máscara oronasal.'
       ]},
-      { tipo:'texto', titulo:'Internação x alta', conteudo:'Todo paciente em ventilação não invasiva fica em leito monitorizado, com equipe treinada e material de intubação à mão. Definir de antemão os *critérios de falha*: piora da gasometria, do nível de consciência ou do conforto em 1 a 2 horas. Registrar os parâmetros, os horários e as reavaliações.' },
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'Todo paciente em VNI por insuficiência respiratória aguda fica em *leito monitorizado* (sala vermelha, semi-intensiva ou UTI), com equipe que conhece o aparelho e material de intubação à mão. Prefira aparelho com alarme de vazamento, de desconexão e de volume. Antes de ligar, defina e escreva os *critérios de falha* e a hora da reavaliação. Transporte (tomografia, transferência) só se indispensável, com ventilador portátil e equipe junto.' },
+
       { tipo:'dica', titulo:'Pega do plantão', itens:[
-        'Fique ao lado do paciente nos primeiros 15 minutos: a adaptação inicial define o sucesso.',
-        'Proteja o dorso do nariz com curativo desde o começo.',
-        'Escreva no prontuário a hora de início e o horário previsto da reavaliação.'
+        'Os primeiros 15 minutos à beira do leito decidem se a VNI vai dar certo.',
+        'Máscara com vazamento grande não entrega a pressão programada: olhe o volume corrente.',
+        'Nebulização: pela porta do circuito, ou alguns minutos fora da máscara se o paciente tolera.',
+        'Para aspirar ou tossir, tire a máscara por pouco tempo e recoloque; umidificação aquecida evita ressecamento.',
+        'Distensão gástrica leve é comum; sonda nasogástrica de rotina não — ela atrapalha a vedação.'
       ]}
     ] },
 
@@ -1682,12 +2578,15 @@ const PROTOCOLOS = [
         { tipo:'alerta', rotulo:'Crise quase fatal', texto:'*Tórax silencioso · fala em palavras · sonolência · bradicardia*',
           nota:'Ausência de sibilo é obstrução tão grave que não gera fluxo — é pior, não melhor' },
         { tipo:'passo', rotulo:'Primeira hora', texto:'O2 com alvo *93–95%* + *beta-2 de 20/20 min* + ipratrópio se moderada/grave',
-          nota:'Spray com espaçador funciona tão bem quanto nebulização na crise leve e moderada' },
+          nota:'Spray com espaçador funciona tão bem quanto nebulização na crise leve e moderada',
+          meds:['Ipratrópio spray'] },
         { tipo:'passo', rotulo:'Ainda na 1ª hora', texto:'*CORTICOIDE SISTÊMICO — sempre*',
-          nota:'Prednisolona 40–60 mg VO, ou hidrocortisona 200–500 mg EV se não engole. Leva horas para agir, por isso entra cedo' },
+          nota:'Prednisolona 40–60 mg VO, ou hidrocortisona 200–500 mg EV se não engole. Leva horas para agir, por isso entra cedo',
+          meds:['Prednisolona', 'Hidrocortisona'] },
         { tipo:'decisao', texto:'Reavaliação formal aos 60 minutos', ramos:[
           { rotulo:'Boa resposta', cor:'ok', texto:'Observar 1 h após a última dose e considerar *alta*' },
-          { rotulo:'Parcial ou ausente', texto:'*Sulfato de magnésio 1–2 g EV* + internar' },
+          { rotulo:'Parcial ou ausente', texto:'*Sulfato de magnésio 1–2 g EV* + internar',
+            meds:['Sulfato de magnésio'] },
           { rotulo:'Exaustão', cor:'perigo', texto:'*Preparar via aérea* — UTI',
             nota:'pCO2 normal ou alta na crise grave é fadiga, não melhora' }
         ]},
@@ -1760,10 +2659,12 @@ const PROTOCOLOS = [
         { tipo:'inicio', rotulo:'Entrada', texto:'Piora aguda da dispneia basal + secreção, em portador de DPOC' },
         { tipo:'alerta', rotulo:'Regra de ouro', texto:'*Alvo de SpO2 88–92%*',
           nota:'Oxigênio em alto fluxo buscando 100% precipita narcose por CO2. É o erro clássico desta conduta' },
-        { tipo:'passo', rotulo:'Base do tratamento', texto:'Beta-2 + ipratrópio + *prednisolona 40 mg* por 5–7 dias' },
+        { tipo:'passo', rotulo:'Base do tratamento', texto:'Beta-2 + ipratrópio + *prednisolona 40 mg* por 5–7 dias',
+          meds:['Ipratrópio spray', 'Prednisolona'] },
         { tipo:'decisao', texto:'Critérios de Anthonisen? (dispneia · volume · purulência)', ramos:[
           { rotulo:'3, ou 2 com purulência', texto:'*Antibiótico* — amoxicilina-clavulanato 7 dias',
-            nota:'Risco de pseudomonas: levofloxacino 750 mg/dia' },
+            nota:'Risco de pseudomonas: levofloxacino 750 mg/dia',
+            meds:['Amoxicilina-clavulanato', 'Levofloxacino'] },
           { rotulo:'Menos que isso', texto:'*Sem antibiótico* — não é rotina em toda exacerbação' }
         ]},
         { tipo:'decisao', texto:'Gasometria — pH < 7,35 com hipercapnia?', ramos:[
@@ -1849,7 +2750,8 @@ const PROTOCOLOS = [
           nota:'*C*onfusão · *U*reia > 50 · *R*espiração ≥ 30 · *B*P < 90/≤60 · idade ≥ *65*' },
         { tipo:'decisao', texto:'CURB-65?', ramos:[
           { rotulo:'0 – 1', cor:'ok', texto:'*Ambulatorial*',
-            nota:'Amoxicilina-clavulanato, ou associado a macrolídeo se há comorbidade' },
+            nota:'Amoxicilina-clavulanato, ou associado a macrolídeo se há comorbidade',
+            meds:['Amoxicilina-clavulanato'] },
           { rotulo:'2', texto:'*Enfermaria* ou observação prolongada',
             nota:'Conforme suporte social e comorbidade' },
           { rotulo:'≥ 3', cor:'perigo', texto:'*Internar* + avaliar UTI' }
@@ -1929,13 +2831,17 @@ const PROTOCOLOS = [
         { tipo:'inicio', rotulo:'Reconhecimento', texto:'Início *agudo* + pele/mucosa + respiratório *ou* queda de PA',
           nota:'Ou hipotensão após exposição a alérgeno conhecido. *Não precisa de urticária para ser anafilaxia*' },
         { tipo:'alerta', rotulo:'Agora', texto:'*ADRENALINA IM NO VASTO LATERAL* — 0,5 mg se > 50 kg',
-          nota:'Nada vem antes. Anti-histamínico e corticoide são adjuvantes e não salvam. Nunca subcutânea, nunca deltoide' },
+          nota:'Nada vem antes. Anti-histamínico e corticoide são adjuvantes e não salvam. Nunca subcutânea, nunca deltoide',
+          meds:['Adrenalina IM'] },
         { tipo:'passo', rotulo:'Em seguida', texto:'Remover o agente · deitar com *pernas elevadas* · O2 · 2 acessos · volume',
-          nota:'Não sentar nem deixar levantar de repente. Cristaloide 20 mL/kg se hipotenso' },
+          nota:'Não sentar nem deixar levantar de repente. Cristaloide 20 mL/kg se hipotenso',
+          meds:['Cristaloide'] },
         { tipo:'decisao', texto:'Melhorou em 5–15 minutos?', ramos:[
           { rotulo:'Não', cor:'perigo', texto:'*Repetir adrenalina IM*; se refratária, adrenalina em bomba',
-            nota:'Paciente em betabloqueador que não responde: *glucagon* 1–5 mg' },
-          { rotulo:'Sim', cor:'ok', texto:'Adjuvantes: hidrocortisona, anti-histamínico, salbutamol' }
+            nota:'Paciente em betabloqueador que não responde: *glucagon* 1–5 mg',
+            meds:['Adrenalina IM', 'Adrenalina em infusão', 'Glucagon'] },
+          { rotulo:'Sim', cor:'ok', texto:'Adjuvantes: hidrocortisona, anti-histamínico, salbutamol',
+            meds:['Hidrocortisona', 'Salbutamol'] }
         ]},
         { tipo:'passo', rotulo:'Vigiar a via aérea', texto:'Estridor, rouquidão, disfagia, edema de língua e úvula',
           nota:'Intubar *cedo*, antes de piorar — depois a via aérea fecha e não há resgate' },
@@ -1944,7 +2850,8 @@ const PROTOCOLOS = [
           { rotulo:'Grave, > 1 dose, hipotensão', texto:'*Observar 12–24 h* ou internar' }
         ]},
         { tipo:'fim', rotulo:'Alta', texto:'*Adrenalina de resgate prescrita* + agente anotado + alergista',
-          nota:'Muita reação grave é a segunda exposição de quem nunca soube da primeira' }
+          nota:'Muita reação grave é a segunda exposição de quem nunca soube da primeira',
+          meds:['Adrenalina IM'] }
       ]},
       { tipo:'alerta', titulo:'Red flags', itens:[
         'Estridor, rouquidão, disfagia ou edema de língua e úvula — *via aérea fechando*; intubar cedo, antes de piorar.',
@@ -1997,55 +2904,121 @@ const PROTOCOLOS = [
     ] },
 
   { id:'pneumotorax', titulo:'Pneumotórax espontâneo e hipertensivo', categoria:'resp', gravidade:'emergencia',
-    resumo:'Diagnóstico clínico do hipertensivo (não espere o raio-X) e critérios de drenagem.',
-    tags:['pneumotorax','hipertensivo','descompressao','drenagem de torax','agulha'],
-    fonte:'SBPT — Recomendações sobre doenças pleurais',
+    resumo:'Hipertensivo se descomprime pela clínica, sem raio-X. No espontâneo, quem decide é o sintoma e o pulmão de base, mais que o tamanho.',
+    tags:['pneumotorax','hipertensivo','descompressao','agulha','drenagem de torax','pigtail','aspiracao','primario','secundario','dpoc'],
+    fonte:'BTS 2023 — Doença Pleural · SBPT — Recomendações sobre Doenças Pleurais · ATLS 10ª ed. · apoio: UpToDate (2026)',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Dor torácica súbita e ipsilateral com dispneia, muitas vezes em repouso. Jovem alto, magro e fumante; ou DPOC que piora de repente.' },
+      { rotulo:'Prioridade',    valor:'Instável com murmúrio abolido de um lado: *descomprimir já*, sem esperar imagem.' },
+      { rotulo:'Meta',          valor:'Aliviar o sintoma com o menor procedimento que resolve: observar, aspirar ou dreno fino — o dreno calibroso é exceção.' }
+    ],
     secoes:[
-      { tipo:'alerta', titulo:'Red flags', itens:[
-        '*Hipertensivo* é diagnóstico clínico e tratamento imediato: hipotensão, turgência jugular, desvio de traqueia, MV abolido com hipertimpanismo.',
-        'Não espere radiografia para descomprimir o hipertensivo.',
-        'Pneumotórax em ventilação mecânica evolui para hipertensivo rapidamente.',
-        'Enfisema subcutâneo extenso após trauma sugere lesão de via aérea.',
-        'Radiografia em decúbito perde pneumotórax: o ultrassom é mais sensível.'
-      ]},
       { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
-        { tipo:'inicio', rotulo:'Entrada', texto:'Dor torácica súbita com dispneia; ou achado em trauma' },
-        { tipo:'decisao', texto:'Há instabilidade com sinais clássicos?', ramos:[
-          { rotulo:'Sim — hipertensivo', cor:'perigo', texto:'*DESCOMPRIMIR AGORA com agulha, depois drenar*',
-            nota:'5º espaço intercostal na linha axilar média, ou 2º espaço na linha hemiclavicular' },
-          { rotulo:'Não', texto:'Radiografia de tórax ou ultrassom' }
+        { tipo:'inicio', rotulo:'Entrada', texto:'Dor torácica súbita com dispneia, ou piora respiratória em ventilação mecânica',
+          nota:'Monitor, oxímetro, acesso venoso. Oxigênio já — no DPOC, alvo de SpO₂ 88–92%' },
+        { tipo:'decisao', texto:'Há sinais de pneumotórax hipertensivo? (hipotensão, hipoxemia grave, jugular túrgida, murmúrio abolido e hipertimpanismo de um lado)', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Descomprimir agora*, sem raio-X',
+            nota:'Cateter 14G de 5 cm ou mais no 4º–5º espaço intercostal, à frente da axilar média (ou 2º espaço na hemiclavicular). Alternativa: toracostomia digital. Em seguida, dreno',
+            meds:[{ droga:'Descompressão por agulha', dose:'Cateter 14G ≥ 5 cm', via:'4º–5º EIC' }], ir:'drenagem-torax' },
+          { rotulo:'Não', texto:'Confirmar com raio-X de tórax ou ultrassom',
+            nota:'Ultrassom: sem deslizamento pleural e com ponto pulmonar. Raio-X: linha pleural visceral sem trama periférica. Paciente deitado esconde o ar no raio-X' }
         ]},
-        { tipo:'decisao', texto:'Qual o tipo e o tamanho?', ramos:[
-          { rotulo:'Espontâneo primário pequeno (menos de 2 a 3 cm), assintomático', cor:'ok',
-            texto:'*Observação + oxigênio*', nota:'Oxigênio acelera a reabsorção. Radiografia de controle em 4 a 6 h' },
-          { rotulo:'Espontâneo grande ou sintomático', texto:'*Aspiração ou dreno* de pequeno calibre' },
-          { rotulo:'Secundário (DPOC, pneumopatia)', texto:'*Drenar* — o pulmão doente não tolera',
-            nota:'Sempre internar' },
-          { rotulo:'Traumático ou hemopneumotórax', cor:'perigo', texto:'*Dreno de tórax calibroso*' }
+        { tipo:'decisao', texto:'Qual o contexto?', ramos:[
+          { rotulo:'Trauma ou hemopneumotórax', cor:'perigo', texto:'*Dreno de tórax* e protocolo de trauma',
+            nota:'Sangue na pleura pede dreno calibroso', ir:'trauma-toracico' },
+          { rotulo:'Ventilação mecânica', cor:'perigo', texto:'*Drenar sempre* — a pressão positiva transforma em hipertensivo',
+            ir:'drenagem-torax' },
+          { rotulo:'Espontâneo secundário', texto:'Pulmão doente: DPOC, fibrose cística, asma, HIV com pneumocistose, câncer',
+            nota:'Pouca reserva. Quase todo secundário interna' },
+          { rotulo:'Espontâneo primário', cor:'ok', texto:'Sem doença pulmonar conhecida',
+            nota:'Tabagismo (inclusive cigarro eletrônico), mergulho, menstruação (catamenial) e voo com pneumotórax não resolvido são gatilhos' }
         ]},
-        { tipo:'passo', rotulo:'Após drenar', texto:'Radiografia de controle, selo d\'água, e vigiar borbulhamento e oscilação' },
-        { tipo:'fim', rotulo:'Retirar', texto:'Sem borbulhamento, com pulmão expandido e débito baixo por 24 h' }
+        { tipo:'decisao', texto:'Primário: como está o paciente?', ramos:[
+          { rotulo:'Pouco ou nenhum sintoma', cor:'ok', texto:'*Observação*, mesmo se o pneumotórax for grande',
+            nota:'Raio-X de controle em 4–6 h; se não cresceu e o paciente está bem, alta com retorno' },
+          { rotulo:'Sintomático, sem sinal de alto risco', texto:'*Aspiração por agulha* ou *dreno fino (pigtail 8–14 Fr)*',
+            nota:'A aspiração evita dreno em boa parte dos casos. Falhou: dreno fino',
+            meds:[{ droga:'Aspiração por agulha', dose:'Cateter 16–18G, até 2,5 L', via:'2º EIC ou axilar' }] },
+          { rotulo:'Alto risco', cor:'perigo', texto:'*Dreno* e internação',
+            nota:'Instabilidade, hipoxemia importante, bilateral, hemopneumotórax, 50 anos ou mais com tabagismo pesado (tratar como secundário)',
+            ir:'drenagem-torax' }
+        ]},
+        { tipo:'decisao', texto:'Secundário: qual o tamanho e o sintoma?', ramos:[
+          { rotulo:'Sintomático ou maior que 2 cm', cor:'perigo', texto:'*Dreno fino e internação*',
+            nota:'Aspiração só como tentativa em quem é pouco sintomático e tem pneumotórax pequeno', ir:'drenagem-torax' },
+          { rotulo:'Menor que 1 cm, pouco sintomático', texto:'*Internar* com oxigênio e raio-X seriado',
+            nota:'Mesmo pequeno, o secundário descompensa' }
+        ]},
+        { tipo:'passo', rotulo:'Depois de drenar', texto:'*Selo d\'água* sem aspiração de rotina · raio-X de controle · anotar borbulhamento e oscilação a cada plantão',
+          nota:'Nunca clampear dreno que borbulha. Pulmão colabado há mais de 72 h: expandir devagar — risco de edema de reexpansão' },
+        { tipo:'decisao', texto:'O pulmão expandiu e o vazamento parou?', ramos:[
+          { rotulo:'Sim', cor:'ok', texto:'Retirar o dreno', nota:'Na expiração ou em Valsalva; raio-X após a retirada' },
+          { rotulo:'Vazamento persistente (mais de 3–5 dias)', texto:'*Cirurgia torácica*: videotoracoscopia e pleurodese' }
+        ]},
+        { tipo:'fim', rotulo:'Destino', texto:'*Alta:* primário estável após observação ou aspiração, sem crescer · *internação:* secundário, dreno, hipoxemia · *UTI:* hipertensivo ou ventilação mecânica' }
       ]},
-      { tipo:'doses', titulo:'Procedimentos', itens:[
-        { droga:'Descompressão por agulha', dose:'Cateter 14G, 5 cm ou mais', via:'—', obs:'5º espaço intercostal na linha axilar média é hoje o local preferido no adulto.' },
-        { droga:'Dreno de tórax', dose:'Traumático 28 a 32 Fr; espontâneo 14 a 20 Fr', via:'—', obs:'5º espaço, linha axilar média, borda superior da costela inferior, dissecção romba.' },
-        { droga:'Aspiração simples', dose:'Cateter 16 a 18G, seringa e torneira', via:'—', obs:'Opção no espontâneo primário: evita o dreno em boa parte dos casos.' },
-        { droga:'Oxigênio', dose:'Alto fluxo', via:'—', obs:'Acelera a reabsorção do ar em até 4 vezes na conduta expectante.' },
-        { droga:'Lidocaína 1 a 2%', dose:'10 a 20 mL', via:'INFILTRAÇÃO', obs:'Anestesia da pele, do subcutâneo, do periósteo e da pleura antes da drenagem.' },
-        { droga:'Analgesia', dose:'Dipirona 2 g + morfina titulada', via:'EV', obs:'A drenagem dói; a dor mal controlada gera atelectasia.' }
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Hipertensivo* é diagnóstico clínico: hipotensão, jugular túrgida, hipoxemia, murmúrio abolido com hipertimpanismo. Desvio de traqueia é tardio.',
+        'Paciente em *ventilação mecânica* que piora de repente: pneumotórax até prova em contrário.',
+        'Pneumotórax *bilateral* ou em pulmão único.',
+        'Secundário (DPOC, fibrose, HIV): pequeno no raio-X e grave na clínica.',
+        'Enfisema subcutâneo extenso após trauma ou intubação: pensar em lesão de via aérea ou de esôfago.'
       ]},
+
+      { tipo:'passos', titulo:'Conduta imediata', itens:[
+        'Oferecer oxigênio (alvo de SpO₂ 88–92% em quem retém CO₂).',
+        'Descomprimir o hipertensivo com agulha ou dedo, antes de qualquer imagem.',
+        'Confirmar o diagnóstico no estável com raio-X PA ou ultrassom à beira do leito.',
+        'Classificar: primário, secundário, traumático, iatrogênico.',
+        'Escolher o menor procedimento eficaz: observar, aspirar ou dreno fino.',
+        'Analgesiar antes e depois do procedimento.',
+        'Orientar parar de fumar já no pronto-socorro.'
+      ]},
+
+      { tipo:'doses', titulo:'Procedimentos e medicações', itens:[
+        { droga:'Descompressão por agulha', dose:'Cateter 14G (Jelco/Abocath), 5 cm ou mais', via:'4º–5º EIC', obs:'À frente da linha axilar média no adulto; 2º espaço na hemiclavicular é alternativa. Obeso: cateter de 8 cm. É ponte: sempre seguida de dreno.' },
+        { droga:'Toracostomia digital', dose:'Incisão de 2–3 cm e dedo na pleura', via:'5º EIC', obs:'No triângulo de segurança. Alternativa à agulha no hipertensivo e no paciente intubado.' },
+        { droga:'Aspiração por agulha', dose:'Cateter 16–18G, torneira e seringa de 50 mL', via:'2º EIC ou axilar', obs:'Parar em 2,5 L aspirados: se continua saindo ar, há vazamento e a conduta é dreno.' },
+        { droga:'Dreno fino (pigtail)', dose:'8–14 Fr, técnica de Seldinger', via:'Triângulo de segurança', obs:'Primeira escolha no espontâneo que precisa de dreno. Menos dor, mesma eficácia.' },
+        { droga:'Dreno de tórax tubular', dose:'20–28 Fr; trauma instável ou hemotórax 24–28 Fr', via:'5º EIC, axilar média', obs:'Trauma, hemopneumotórax, falha do dreno fino, ventilação com vazamento grande.' },
+        { droga:'Lidocaína 1%', dose:'Até 3 mg/kg (20 mL = 200 mg)', via:'Infiltração', obs:'Pele, subcutâneo, periósteo e pleura parietal. Aspirar ar confirma o espaço.' },
+        { droga:'Dipirona', dose:'1–2 g', via:'EV', obs:'Analgesia de base.' },
+        { droga:'Morfina', dose:'2–4 mg', via:'EV', obs:'Titular antes da drenagem. Cuidado no DPOC retentor.' }
+      ]},
+
+      { tipo:'lista', titulo:'Tamanho e classificação', itens:[
+        '*Grande pela BTS:* distância de 2 cm ou mais entre o pulmão e a parede torácica na altura do hilo.',
+        '*Grande pela ACCP:* 3 cm ou mais do ápice pulmonar à cúpula.',
+        'O tamanho no raio-X subestima o volume e *não decide sozinho*: sintoma, pulmão de base e estabilidade pesam mais.',
+        '*Primário:* sem doença pulmonar conhecida. *Secundário:* com doença de base. *50 anos ou mais com tabagismo importante:* conduzir como secundário.',
+        'TC de tórax só quando o raio-X não define (bolha grande x pneumotórax, enfisema extenso) ou para planejar cirurgia.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Raio-X de tórax PA* em pé; em decúbito o ar sobe para a frente e some.',
+        '*Ultrassom pleural:* ausência de deslizamento e de linhas B; o ponto pulmonar confirma.',
+        '*Gasometria* no secundário e em quem está hipoxêmico.',
+        '*Raio-X de controle* após observação, aspiração, drenagem e retirada do dreno.'
+      ]},
+
       { tipo:'naofazer', titulo:'Não fazer', itens:[
-        'Esperar radiografia no pneumotórax hipertensivo.',
-        'Clampear o dreno para transportar o paciente.',
-        'Ventilação com pressão positiva em pneumotórax não drenado.',
-        'Drenar acima do 4º espaço na linha axilar, ou abaixo do 5º — risco de lesão de fígado e baço.',
-        'Retirar o dreno com borbulhamento ativo.'
+        'Esperar raio-X para descomprimir o hipertensivo.',
+        'Ventilar com pressão positiva um pneumotórax não drenado.',
+        'Clampear dreno que borbulha, inclusive para transporte.',
+        'Drenar fora do triângulo de segurança ou abaixo do 5º espaço — fígado e baço estão ali.',
+        'Liberar o secundário porque "é pequeno".',
+        'Liberar para voar ou mergulhar antes da resolução confirmada.'
       ]},
-      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Alta* possível no pneumotórax espontâneo primário pequeno e assintomático, com radiografia de controle estável em 4 a 6 horas, retorno garantido e orientação para não viajar de avião nem mergulhar. Todo o resto interna. Orientar cessação do tabagismo — é o principal fator de recorrência. Recorrência ou vazamento persistente indica pleurodese ou cirurgia.' },
+
+      { tipo:'texto', titulo:'Destino', conteudo:'*Alta* no primário com pouco sintoma, raio-X de controle sem crescimento em 4–6 h, ou após aspiração bem-sucedida ou com válvula unidirecional ambulatorial, desde que more perto, tenha acompanhante e retorno em 2–4 semanas com raio-X. *Internar* todo secundário, todo paciente com dreno tubular, hipoxemia, bilateral ou hemopneumotórax. *UTI* no hipertensivo e em ventilação mecânica. *Encaminhar à cirurgia torácica:* segundo episódio do mesmo lado, primeiro episódio contralateral, bilateral simultâneo, vazamento persistente por mais de 3–5 dias e profissões de risco (piloto, mergulhador). Voo comercial só com resolução confirmada no raio-X — muitas companhias pedem 1–2 semanas depois. Mergulho com cilindro está proibido para sempre, a menos que haja cirurgia definitiva bilateral.' },
+
       { tipo:'dica', titulo:'Pega do plantão', itens:[
-        'Ausência de deslizamento pleural ao ultrassom afasta pneumotórax naquele ponto — mais sensível que a radiografia em decúbito.',
-        'Homem jovem, alto, magro e fumante é o perfil clássico do espontâneo primário.',
-        'Registre o débito e o borbulhamento do dreno a cada plantão.'
+        'Piora súbita no paciente intubado: olhe o deslizamento pleural antes de pedir raio-X.',
+        'Homem jovem, alto, magro e fumante é o perfil do primário; parar de fumar é o que mais reduz a recorrência.',
+        'Pneumotórax no HIV com dispneia e LDH alto: pense em pneumocistose.',
+        'Dor torácica que volta a cada menstruação com pneumotórax à direita: catamenial.',
+        'Anote borbulhamento e oscilação do dreno a cada plantão — é o que decide a retirada.'
       ]}
     ] },
 
@@ -2182,10 +3155,12 @@ const PROTOCOLOS = [
           { rotulo:'Não — síndrome gripal', cor:'ok', texto:'*Sintomático + isolamento domiciliar*',
             nota:'Oseltamivir se pertencer a grupo de risco' },
           { rotulo:'Sim — SRAG', cor:'perigo', texto:'*Internar + oseltamivir + suporte*',
-            nota:'Notificação imediata. Coletar swab de nasofaringe' }
+            nota:'Notificação imediata. Coletar swab de nasofaringe',
+            meds:['Oseltamivir 75 mg'] }
         ]},
         { tipo:'passo', rotulo:'Grupo de risco', texto:'*Oseltamivir em até 48 horas do início* — mas iniciar mesmo depois se houver gravidade',
-          nota:'Gestante e puérpera até 2 semanas, menor de 5 anos, maior de 60, imunossuprimido, obeso, doença crônica, indígena' },
+          nota:'Gestante e puérpera até 2 semanas, menor de 5 anos, maior de 60, imunossuprimido, obeso, doença crônica, indígena',
+          meds:['Oseltamivir 75 mg'] },
         { tipo:'passo', rotulo:'Sempre', texto:'Hidratação, antitérmico e orientação sobre etiqueta respiratória' },
         { tipo:'fim', rotulo:'Antes da alta', texto:'Sinais de alarme por escrito e verificação da situação vacinal' }
       ]},
@@ -2195,7 +3170,7 @@ const PROTOCOLOS = [
         { droga:'Dipirona', dose:'1 g no adulto; 10 a 15 mg/kg na criança', via:'VO ou EV', obs:'De 6/6 h, se dor ou febre.' },
         { droga:'Paracetamol', dose:'500 a 750 mg', via:'VO', obs:'De 6/6 h. Máximo de 3 g/dia.' },
         { droga:'Solução nasal de cloreto de sódio 0,9%', dose:'5 a 10 mL por narina', via:'NASAL', obs:'De 6/6 h.' },
-        { droga:'Oxigênio', dose:'Titular', via:'—', obs:'Se saturação abaixo de 94%. Alvo de 94 a 98%.' },
+        { droga:'Oxigênio', dose:'Titular', via:'—', obs:'Se saturação abaixo de 92%. Alvo de 92 a 96% (88 a 92% no retentor de CO2).' },
         { droga:'Cristaloide', dose:'Conforme a volemia', via:'EV', obs:'Se desidratação ou aceitação oral ruim.' }
       ]},
       { tipo:'naofazer', titulo:'Não fazer', itens:[
@@ -2237,7 +3212,8 @@ const PROTOCOLOS = [
         ]},
         { tipo:'decisao', texto:'Está dentro de 4,5 horas e sem contraindicação?', ramos:[
           { rotulo:'Sim', cor:'ok', texto:'*ALTEPLASE 0,9 mg/kg* (máximo de 90 mg)',
-            nota:'10% em bolus, 90% em 60 minutos. PA abaixo de 185 x 110 antes de iniciar' },
+            nota:'10% em bolus, 90% em 60 minutos. PA abaixo de 185 x 110 antes de iniciar',
+            meds:['Alteplase (rTPA)'] },
           { rotulo:'Não', texto:'*AAS 200 a 300 mg* + medidas gerais',
             nota:'Se houve trombólise, o AAS só entra após 24 horas' }
         ]},
@@ -2301,12 +3277,15 @@ const PROTOCOLOS = [
         { tipo:'passo', rotulo:'Via aérea', texto:'Intubar se Glasgow ≤ 8 ou se não protege a via aérea',
           nota:'Sequência rápida com estabilidade hemodinâmica; evitar picos pressóricos' },
         { tipo:'passo', rotulo:'Pressão', texto:'*Reduzir de forma controlada para PAS de 130 a 140 mmHg*',
-          nota:'Nitroprussiato, nicardipina ou metoprolol em bomba. Evitar queda abrupta' },
+          nota:'Nitroprussiato, nicardipina ou metoprolol em bomba. Evitar queda abrupta',
+          meds:['Nitroprussiato de sódio 50 mg/2 mL', 'Metoprolol 1 mg/mL'] },
         { tipo:'passo', rotulo:'Coagulação', texto:'*Reverter anticoagulante ou antiagregante*',
-          nota:'Varfarina: complexo protrombínico e vitamina K. Anticoagulante direto: antídoto específico se houver' },
+          nota:'Varfarina: complexo protrombínico e vitamina K. Anticoagulante direto: antídoto específico se houver',
+          meds:['Complexo protrombínico + vitamina K'] },
         { tipo:'decisao', texto:'É subaracnóidea?', ramos:[
           { rotulo:'Sim', cor:'perigo', texto:'*Nimodipina 60 mg de 4/4 h por 14 a 21 dias*',
-            nota:'Previne vasoespasmo. Angiotomografia para achar o aneurisma' },
+            nota:'Previne vasoespasmo. Angiotomografia para achar o aneurisma',
+            meds:['Nimodipina 60 mg'] },
           { rotulo:'Não — hematoma intraparenquimatoso', texto:'Medidas antiedema e avaliação neurocirúrgica' }
         ]},
         { tipo:'fim', rotulo:'Destino', texto:'Terapia intensiva; neurocirurgia acionada desde a admissão' }
@@ -2352,17 +3331,21 @@ const PROTOCOLOS = [
         { tipo:'inicio', rotulo:'0 a 5 min', texto:'Proteger, decúbito lateral, oxigênio, acesso, *glicemia capilar* e cronometrar',
           nota:'Não conter à força nem colocar objeto na boca' },
         { tipo:'passo', rotulo:'5 a 10 min', texto:'*BENZODIAZEPÍNICO* — primeira linha',
-          nota:'Diazepam 10 mg EV lento, ou midazolam 10 mg IM se não houver acesso' },
+          nota:'Diazepam 10 mg EV lento, ou midazolam 10 mg IM se não houver acesso',
+          meds:['Diazepam 10 mg/2 mL', 'Midazolam 10 mg'] },
         { tipo:'decisao', texto:'Cedeu após 5 minutos?', ramos:[
           { rotulo:'Não', texto:'*Repetir o benzodiazepínico uma vez*' },
           { rotulo:'Sim', cor:'ok', texto:'Investigar a causa e observar' }
         ]},
         { tipo:'passo', rotulo:'10 a 20 min', texto:'*Antiepiléptico de segunda linha*',
-          nota:'Fenitoína 20 mg/kg EV somente em SF 0,9%, no máximo 50 mg/min, com monitor cardíaco' },
+          nota:'Fenitoína 20 mg/kg EV somente em SF 0,9%, no máximo 50 mg/min, com monitor cardíaco',
+          meds:['Fenitoína 250 mg/5 mL'] },
         { tipo:'passo', rotulo:'20 a 40 min', texto:'*Fenobarbital* 20 mg/kg, ou ácido valproico, ou levetiracetam',
-          nota:'Prepare-se para intubar: depressão respiratória é esperada' },
+          nota:'Prepare-se para intubar: depressão respiratória é esperada',
+          meds:['Fenobarbital 200 mg/2 mL'] },
         { tipo:'alerta', rotulo:'Refratário', texto:'*INTUBAR e iniciar anestesia contínua*',
-          nota:'Midazolam, propofol ou tiopental em bomba, em terapia intensiva, com EEG contínuo' },
+          nota:'Midazolam, propofol ou tiopental em bomba, em terapia intensiva, com EEG contínuo',
+          meds:['Midazolam 50 mg/10 mL'] },
         { tipo:'fim', rotulo:'Depois', texto:'Investigar a causa: tomografia, eletrólitos, tóxicos, infecção, adesão à medicação' }
       ]},
       { tipo:'doses', titulo:'Medicações', itens:[
@@ -2407,7 +3390,8 @@ const PROTOCOLOS = [
         { tipo:'passo', rotulo:'ABCDE', texto:'Via aérea, ventilação, circulação e *glicemia capilar*',
           nota:'Oxigênio, monitorização, dois acessos, ECG e temperatura' },
         { tipo:'passo', rotulo:'Coquetel do coma', texto:'*Glicose + tiamina + naloxona* conforme a suspeita',
-          nota:'Tiamina antes da glicose no etilista. Naloxona se houver miose e bradipneia' },
+          nota:'Tiamina antes da glicose no etilista. Naloxona se houver miose e bradipneia',
+          meds:['Glicose 50%', 'Tiamina', 'Naloxona'] },
         { tipo:'passo', rotulo:'Procurar a causa', texto:'Mnemônico *AEIOU TIPS*',
           nota:'Álcool · Epilepsia e eletrólitos · Insulina (glicemia) · Opiáceos · Uremia · Trauma e temperatura · Infecção · Psiquiátrico e envenenamento · AVC e choque' },
         { tipo:'decisao', texto:'Há sinal focal ou trauma?', ramos:[
@@ -2462,13 +3446,16 @@ const PROTOCOLOS = [
           { rotulo:'Não', cor:'ok', texto:'Cefaleia primária — tratar a crise' }
         ]},
         { tipo:'passo', rotulo:'Tratar', texto:'*Analgesia venosa + hidratação + antiemético*',
-          nota:'Ambiente escuro e silencioso. Dipirona 2 g EV + metoclopramida 10 mg EV' },
+          nota:'Ambiente escuro e silencioso. Dipirona 2 g EV + metoclopramida 10 mg EV',
+          meds:['Dipirona 500 mg/mL', 'Metoclopramida 5 mg/mL'] },
         { tipo:'decisao', texto:'Qual o padrão?', ramos:[
           { rotulo:'Tensional', texto:'Analgésico simples ou anti-inflamatório' },
           { rotulo:'Enxaqueca', texto:'*Metoclopramida + dipirona*; dexametasona reduz recorrência',
-            nota:'Triptano se disponível e sem contraindicação cardiovascular' },
+            nota:'Triptano se disponível e sem contraindicação cardiovascular',
+            meds:['Dipirona 500 mg/mL', 'Metoclopramida 5 mg/mL', 'Dexametasona 4 mg/mL'] },
           { rotulo:'Em salvas', texto:'*Oxigênio a 100% em máscara com reservatório* + triptano subcutâneo',
-            nota:'Dor unilateral periorbitária, em facada, de 15 a 180 minutos, com lacrimejamento' }
+            nota:'Dor unilateral periorbitária, em facada, de 15 a 180 minutos, com lacrimejamento',
+            meds:['Oxigênio 100%'] }
         ]},
         { tipo:'fim', rotulo:'Alta', texto:'Dor controlada, sem red flag, com receita e orientação sobre abuso de analgésico' }
       ]},
@@ -2575,7 +3562,8 @@ const PROTOCOLOS = [
           nota:'Retirar sonda e acesso desnecessários; presença de familiar' },
         { tipo:'decisao', texto:'Agitação com risco para si ou para a equipe?', ramos:[
           { rotulo:'Não', cor:'ok', texto:'*Sem antipsicótico* — só medidas ambientais' },
-          { rotulo:'Sim', texto:'*Haloperidol em dose baixa*', nota:'0,5 a 1 mg; ECG antes, evitar se QTc acima de 500 ms' }
+          { rotulo:'Sim', texto:'*Haloperidol em dose baixa*', nota:'0,5 a 1 mg; ECG antes, evitar se QTc acima de 500 ms',
+            meds:['Haloperidol 0,5 a 5 mg'] }
         ]},
         { tipo:'fim', rotulo:'Depois', texto:'A resolução acompanha o tratamento da causa; pode levar dias a semanas no idoso' }
       ]},
@@ -2621,7 +3609,8 @@ const PROTOCOLOS = [
         { tipo:'passo', rotulo:'Via aérea', texto:'*Intubar com sedação e analgesia adequadas* — evitar tosse e picos pressóricos',
           nota:'Manter normocapnia: PaCO2 entre 35 e 40 mmHg' },
         { tipo:'passo', rotulo:'Osmoterapia', texto:'*Manitol 0,25 a 1 g/kg* ou *salina hipertônica*',
-          nota:'Salina hipertônica é preferível se houver hipotensão ou hipovolemia' },
+          nota:'Salina hipertônica é preferível se houver hipotensão ou hipovolemia',
+          meds:['Manitol 20%', 'Salina hipertônica 3%'] },
         { tipo:'passo', rotulo:'Otimizar', texto:'Normotermia, normoglicemia, normonatremia e sedação adequada',
           nota:'Febre, hiperglicemia e hiponatremia pioram o edema' },
         { tipo:'decisao', texto:'Herniação iminente?', ramos:[
@@ -2670,7 +3659,8 @@ const PROTOCOLOS = [
       { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
         { tipo:'inicio', rotulo:'Suspeita', texto:'Dor nas costas com déficit neurológico, ou dor progressiva em paciente oncológico' },
         { tipo:'passo', rotulo:'Imediato', texto:'*CORTICOIDE em dose alta* — não esperar a imagem',
-          nota:'Dexametasona 10 mg EV em bolus, depois 4 mg de 6/6 h' },
+          nota:'Dexametasona 10 mg EV em bolus, depois 4 mg de 6/6 h',
+          meds:['Dexametasona'] },
         { tipo:'passo', rotulo:'Imagem', texto:'*Ressonância magnética de toda a coluna, com urgência*',
           nota:'Toda a coluna: lesões múltiplas em níveis diferentes são comuns na doença metastática' },
         { tipo:'passo', rotulo:'Exame', texto:'Documentar nível sensitivo, força por grupo muscular, reflexos e *toque retal*',
@@ -2728,7 +3718,8 @@ const PROTOCOLOS = [
           nota:'Central: hiper-reflexia e Babinski. Periférica: hiporreflexia e atrofia' },
         { tipo:'decisao', texto:'Qual o padrão?', ramos:[
           { rotulo:'Ascendente, simétrica, arreflexia', texto:'*Guillain-Barré* — líquor com dissociação proteíno-citológica',
-            nota:'Imunoglobulina ou plasmaférese. Vigiar disautonomia e respiração' },
+            nota:'Imunoglobulina ou plasmaférese. Vigiar disautonomia e respiração',
+            meds:['Imunoglobulina humana'] },
           { rotulo:'Fatigável, ptose, diplopia', texto:'*Miastenia gravis* — teste do gelo, anticorpos, eletroneuromiografia' },
           { rotulo:'Nível sensitivo', cor:'perigo', texto:'*Lesão medular* — ressonância urgente' },
           { rotulo:'Fraqueza focal súbita', cor:'perigo', texto:'*AVC* — protocolo de AVC' },
@@ -2785,7 +3776,9 @@ const PROTOCOLOS = [
         { tipo:'decisao', texto:'Qual a síndrome predominante?', ramos:[
           { rotulo:'Inflamatória', texto:'Apendicite, colecistite, diverticulite, pancreatite' },
           { rotulo:'Obstrutiva', texto:'Bridas, hérnia, neoplasia, volvo, fecaloma' },
-          { rotulo:'Perfurativa', cor:'perigo', texto:'Pneumoperitônio — úlcera perfurada, divertículo' },
+          { rotulo:'Perfurativa', cor:'perigo', texto:'*Pneumoperitônio:* úlcera perfurada, divertículo — jejum, antibiótico amplo, IBP e cirurgia imediata',
+            nota:'Raio-X de tórax em pé procura ar sob a cúpula; a TC acha o que o raio-X não mostra. A úlcera pode doer no tórax, e a perfuração retroperitoneal dá abdome pouco rígido (lipase alta se perfurou para o pâncreas)',
+            meds:[{ droga:'Ceftriaxona + metronidazol', dose:'2 g + 500 mg', via:'EV' }, { droga:'Omeprazol', dose:'40 mg', via:'EV' }] },
           { rotulo:'Vascular', cor:'perigo', texto:'Isquemia mesentérica, aneurisma roto' },
           { rotulo:'Hemorrágica', cor:'perigo', texto:'Ectópica rota, cisto hemorrágico, trauma' }
         ]},
@@ -2800,6 +3793,7 @@ const PROTOCOLOS = [
         { droga:'Escopolamina + dipirona', dose:'1 ampola em 100 mL de SF 0,9%', via:'EV', obs:'Se o padrão for cólica.' },
         { droga:'Ondansetrona 8 mg', dose:'2 ampolas', via:'EV', obs:'De 8/8 h, se vômito.' },
         { droga:'Ceftriaxona + metronidazol', dose:'2 g + 500 mg', via:'EV', obs:'Se houver suspeita de perfuração, peritonite ou sepse de foco abdominal.' },
+        { droga:'Omeprazol 40 mg', dose:'1 frasco de 12/12 h', via:'EV', obs:'Úlcera perfurada ou sangrante, até a cirurgia e a endoscopia.' },
         { droga:'Sonda nasogástrica', dose:'—', via:'—', obs:'Se houver vômito incoercível ou suspeita de obstrução.' }
       ]},
       { tipo:'naofazer', titulo:'Não fazer', itens:[
@@ -2813,7 +3807,126 @@ const PROTOCOLOS = [
       { tipo:'dica', titulo:'Pega do plantão', itens:[
         'A reavaliação em 4 a 6 horas é o exame mais barato e mais informativo do abdome agudo.',
         'Localização inicial e migração da dor: apendicite migra de periumbilical para FID.',
-        'Registre o exame abdominal com detalhe — o cirurgião vai comparar com o dele.'
+        'Registre o exame abdominal com detalhe — o cirurgião vai comparar com o dele.',
+        'Dor súbita no tórax e no abdome ao mesmo tempo: raio-X de tórax em pé antes de rotular como coração — pode ser úlcera perfurada.'
+      ]}
+    ] },
+
+  { id:'ruptura-esofago', titulo:'Ruptura de esôfago e mediastinite', categoria:'gastro', gravidade:'emergencia',
+    resumo:'Dor torácica depois de vômito ou de endoscopia, com ar onde não devia: jejum, antibiótico amplo e cirurgia torácica antes que a mediastinite se instale.',
+    tags:['ruptura de esofago','perfuracao esofagica','boerhaave','mediastinite','pneumomediastino','enfisema subcutaneo','hamman','mackler','vomito','endoscopia','dor toracica'],
+    fonte:'WSES 2019 — Emergências Esofágicas · ESGE 2020 — Perfuração Endoscópica Iatrogênica · apoio: UpToDate, abordagem da dor torácica não traumática no PS (2026)',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Dor torácica, epigástrica ou cervical depois de *vômito forçado*, endoscopia, dilatação, ETE ou corpo estranho — ainda mais com febre ou enfisema.' },
+      { rotulo:'Prioridade',    valor:'*Jejum absoluto, antibiótico amplo e cirurgia torácica* no mesmo momento em que se pede a imagem.' },
+      { rotulo:'Meta',          valor:'Diagnóstico e tratamento nas primeiras 24 h: a mortalidade sobe a cada hora de atraso.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Suspeita', texto:'Dor torácica, epigástrica ou cervical depois de vômito, endoscopia ou corpo estranho',
+          nota:'Boerhaave clássico: homem de meia-idade, excesso de álcool ou comida, vômito forçado e dor súbita. A maior parte das perfurações hoje é iatrogênica' },
+        { tipo:'decisao', texto:'Está em choque ou com insuficiência respiratória?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Sala vermelha:* via aérea, volume, vasopressor e antibiótico na primeira hora',
+            nota:'Mediastinite com choque é sepse de foco torácico. Hidropneumotórax com instabilidade: drenar já',
+            meds:[{ droga:'Cristaloide', dose:'30 mL/kg nas primeiras 3 h', via:'EV' }], ir:'sepse' },
+          { rotulo:'Não', cor:'ok', texto:'Seguir, com monitor e dois acessos' }
+        ]},
+        { tipo:'passo', rotulo:'Na chegada', texto:'*Jejum absoluto* · nada por via oral, nem medicação · cabeceira elevada · antiemético',
+          nota:'Cada novo vômito alarga a ruptura e joga mais conteúdo no mediastino. Sonda nasogástrica só por especialista ou sob visão endoscópica',
+          meds:[{ droga:'Ondansetrona', dose:'4–8 mg', via:'EV' }] },
+        { tipo:'passo', rotulo:'Raio-X de tórax', texto:'Procurar *ar no mediastino*, enfisema no pescoço, derrame ou hidropneumotórax à esquerda',
+          nota:'Na mediastinite por ruptura o raio-X quase sempre tem alguma alteração, mas pode ser normal nas primeiras horas: raio-X normal não encerra a suspeita' },
+        { tipo:'decisao', texto:'A suspeita se mantém?', ramos:[
+          { rotulo:'Sim, ou raio-X alterado', cor:'perigo', texto:'*TC de tórax com contraste oral hidrossolúvel* (e EV)',
+            nota:'Mostra ar extraluminal, líquido periesofágico, alargamento do mediastino e coleções. Esofagograma com contraste hidrossolúvel é a alternativa — nunca bário primeiro' },
+          { rotulo:'Não, e há causa melhor', texto:'Voltar ao fluxo da dor torácica', ir:'dor-toracica' }
+        ]},
+        { tipo:'passo', rotulo:'Sem esperar o laudo', texto:'*Antibiótico de amplo espectro* cobrindo gram-negativos, anaeróbios e flora oral',
+          nota:'Grave, imunossuprimido, internado há dias ou em uso de antibiótico: acrescentar antifúngico. Suspeita de MRSA: acrescentar vancomicina',
+          meds:[{ droga:'Piperacilina-tazobactam', dose:'4,5 g 6/6 h', via:'EV' }, { droga:'Fluconazol', dose:'800 mg, depois 400 mg/dia', via:'EV' }, { droga:'Omeprazol', dose:'40 mg 12/12 h', via:'EV' }] },
+        { tipo:'decisao', texto:'A imagem confirma perfuração?', ramos:[
+          { rotulo:'Perfuração com mediastinite ou empiema', cor:'perigo', texto:'*Cirurgia torácica agora:* reparo, desbridamento e drenagem',
+            nota:'Reparo primário tem melhor resultado quando feito nas primeiras 24 h. Derrame associado: dreno de tórax',
+            ir:'drenagem-torax' },
+          { rotulo:'Pequena, contida, paciente estável', texto:'*Decisão do cirurgião:* tratamento conservador ou endoscópico',
+            nota:'Iatrogênica reconhecida durante o exame pode ser fechada por via endoscópica (clipe, stent). Jejum, antibiótico e TC de controle' },
+          { rotulo:'Sem perfuração', cor:'ok', texto:'Rever o diagnóstico da dor',
+            nota:'Pneumomediastino espontâneo sem extravasamento de contraste costuma ser benigno' }
+        ]},
+        { tipo:'fim', rotulo:'Destino', texto:'*UTI ou centro cirúrgico.* Sem cirurgia torácica no hospital: transferência imediata',
+          nota:'Nada por via oral até o cirurgião liberar' }
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Choque, febre alta ou taquipneia* — mediastinite instalada.',
+        '*Enfisema subcutâneo* no pescoço ou no tórax depois de vômito ou endoscopia.',
+        'Hidropneumotórax ou derrame pleural à esquerda com dor torácica.',
+        '*Crepitação de Hamman* — estalido síncrono com o batimento, sobre o coração.',
+        'Dor cervical, trismo ou abscesso dentário com dor torácica — mediastinite descendente.'
+      ]},
+
+      { tipo:'passos', titulo:'Conduta imediata', itens:[
+        'Suspender tudo por via oral, inclusive água e comprimidos.',
+        'Monitorizar e puncionar dois acessos venosos calibrosos.',
+        'Colher hemograma, função renal, eletrólitos, lactato, coagulograma, tipagem e hemoculturas.',
+        'Iniciar *antibiótico de amplo espectro* sem esperar a imagem.',
+        'Pedir *TC de tórax com contraste oral hidrossolúvel*.',
+        'Acionar a *cirurgia torácica* já na suspeita.',
+        'Drenar derrame ou hidropneumotórax que comprometa a ventilação.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Piperacilina-tazobactam', dose:'4,5 g de 6/6 h', via:'EV', obs:'Primeira escolha: cobre gram-negativos, anaeróbios e flora oral. Ajustar pela função renal.' },
+        { droga:'Meropenem', dose:'1 g de 8/8 h', via:'EV', obs:'Alternativa no choque séptico, no paciente internado ou com uso recente de antibiótico.' },
+        { droga:'Vancomicina', dose:'15–20 mg/kg de 12/12 h', via:'EV', obs:'Acrescentar se houver risco de MRSA. Ataque de 20–35 mg/kg no paciente grave. Ajustar pelo nível sérico.' },
+        { droga:'Fluconazol', dose:'800 mg de ataque, depois 400 mg/dia', via:'EV', obs:'Paciente grave, imunossuprimido, internado ou com uso prévio de antibiótico: a cândida da boca contamina o mediastino.' },
+        { droga:'Omeprazol', dose:'40 mg de 12/12 h', via:'EV', obs:'Reduz a agressão ácida ao mediastino.' },
+        { droga:'Ondansetrona', dose:'4–8 mg', via:'EV', obs:'Evitar novo vômito. Cuidado com QT longo.' },
+        { droga:'Morfina', dose:'2–4 mg, repetir se preciso', via:'EV', obs:'Analgesia titulada. Não usar anti-inflamatório.' },
+        { droga:'Cristaloide', dose:'30 mL/kg nas primeiras 3 h', via:'EV', obs:'Se houver hipotensão ou lactato ≥ 4 mmol/L, como na sepse.' }
+      ]},
+
+      { tipo:'tempo', titulo:'Linha do tempo', itens:[
+        { quando:'0–10 min', o_que:'Jejum absoluto, monitor, dois acessos, ECG (para não perder uma SCA).' },
+        { quando:'Primeira hora', o_que:'Hemoculturas, antibiótico amplo, IBP EV, analgesia, raio-X de tórax.' },
+        { quando:'Até 2 h', o_que:'TC de tórax com contraste oral hidrossolúvel e cirurgia torácica avaliando.' },
+        { quando:'Até 24 h', o_que:'Reparo cirúrgico ou endoscópico definido — depois disso a mortalidade aumenta.' }
+      ]},
+
+      { tipo:'lista', titulo:'Causas e pistas', itens:[
+        '*Iatrogênica* — a mais comum: endoscopia, dilatação, ETE, sonda, intubação difícil. Dor ou enfisema logo após o procedimento.',
+        '*Boerhaave* — vômito forçado após excesso de álcool ou comida; a ruptura costuma ser na parede posterolateral esquerda do esôfago distal.',
+        '*Corpo estranho ou cáustico* — espinha, osso, bateria, prótese dentária, ingestão de ácido ou álcali.',
+        '*Descendente* — infecção dentária ou cervical que desce pelos planos do pescoço.',
+        '*Pós-esternotomia* — mediastinite depois de cirurgia cardíaca, com febre e secreção na ferida.',
+        '*Tríade de Mackler* (vômito, dor torácica, enfisema subcutâneo): clássica, mas presente em poucos casos — a ausência não exclui.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Raio-X de tórax:* pneumomediastino, enfisema cervical, alargamento do mediastino, derrame ou hidropneumotórax à esquerda, ar sob a cúpula.',
+        '*TC de tórax com contraste oral hidrossolúvel e EV:* exame de escolha no PS — mostra ar e líquido periesofágico e as coleções.',
+        '*Esofagograma com contraste hidrossolúvel:* localiza a lesão; bário só se o hidrossolúvel vier negativo e a suspeita persistir.',
+        '*Líquido pleural:* pH muito baixo, amilase alta (salivar) ou restos alimentares confirmam comunicação com o esôfago.',
+        '*Laboratório:* hemograma, lactato, função renal, eletrólitos, coagulograma, tipagem e hemoculturas.',
+        '*Endoscopia:* só pelo especialista, geralmente no centro cirúrgico — pode ampliar a lesão.'
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Esofagograma com bário como primeiro exame: extravasado, causa mediastinite química.',
+        'Dar dieta, água ou medicação por via oral antes de afastar a perfuração.',
+        'Passar sonda nasogástrica às cegas.',
+        'Liberar dor torácica depois de vômito intenso sem imagem.',
+        'Esperar o laudo da TC para iniciar antibiótico e chamar a cirurgia.',
+        'Usar anti-inflamatório para a dor.'
+      ]},
+
+      { tipo:'texto', titulo:'Destino', conteudo:'Toda perfuração confirmada vai para *UTI ou centro cirúrgico*, com cirurgia torácica responsável. Perfuração pequena, contida e sem sinais sistêmicos pode ter tratamento conservador ou endoscópico — mas a decisão é do cirurgião, com jejum, antibiótico, nutrição por outra via e imagem de controle. Hospital sem cirurgia torácica transfere na suspeita, sem esperar confirmação. A mortalidade da mediastinite continua alta mesmo com desbridamento e antibiótico, e sobe com cada hora de atraso no diagnóstico.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Vômito forte seguido de dor no peito: pense em esôfago antes de pensar em gastrite.',
+        'Paciente que volta com dor ou febre horas depois de endoscopia ou dilatação: perfuração até prova em contrário.',
+        'Apalpe o pescoço e a fúrcula: o enfisema subcutâneo está ali antes de aparecer no raio-X.',
+        'Derrame pleural à esquerda com dor torácica e vômito: puncione e peça pH e amilase.'
       ]}
     ] },
 
@@ -2837,7 +3950,8 @@ const PROTOCOLOS = [
             texto:'*Terlipressina + ceftriaxona + omeprazol*',
             nota:'O antibiótico reduz mortalidade por conta própria. Endoscopia em 12 h' },
           { rotulo:'Não — provável não varicosa', texto:'*Omeprazol em dose alta*',
-            nota:'Úlcera péptica é a causa mais comum. Endoscopia em 24 h' }
+            nota:'Úlcera péptica é a causa mais comum. Endoscopia em 24 h',
+            meds:['Omeprazol 40 mg/10 mL'] }
         ]},
         { tipo:'passo', rotulo:'Sempre', texto:'Suspender dieta, antiagregante e anticoagulante; corrigir coagulopatia' },
         { tipo:'passo', rotulo:'Definitivo', texto:'*ENDOSCOPIA DIGESTIVA ALTA* quando a estabilidade permitir',
@@ -2927,9 +4041,11 @@ const PROTOCOLOS = [
         { tipo:'inicio', rotulo:'Entrada', texto:'Dor epigástrica em faixa, irradiando para o dorso, com náusea e vômito',
           nota:'Diagnóstico: 2 de 3 — clínica típica, amilase ou lipase 3 vezes o normal, imagem compatível' },
         { tipo:'passo', rotulo:'O que salva', texto:'*HIDRATAÇÃO PRECOCE E VIGOROSA*',
-          nota:'Ringer lactato é superior ao soro fisiológico. A hidratação das primeiras 24 h é o que muda desfecho' },
+          nota:'Ringer lactato é superior ao soro fisiológico. A hidratação das primeiras 24 h é o que muda desfecho',
+          meds:['Ringer lactato'] },
         { tipo:'passo', rotulo:'Junto', texto:'Analgesia generosa, antiemético e dieta zero nas primeiras 48 h',
-          nota:'Opioide é permitido e necessário; a antiga proibição da morfina não se sustenta' },
+          nota:'Opioide é permitido e necessário; a antiga proibição da morfina não se sustenta',
+          meds:['Morfina 10 mg/mL'] },
         { tipo:'passo', rotulo:'Causa', texto:'Ultrassom de abdome para *litíase biliar*, e dosar triglicerídeos e cálcio',
           nota:'Biliar e alcoólica são 80% dos casos' },
         { tipo:'decisao', texto:'Qual a gravidade?', ramos:[
@@ -2982,7 +4098,8 @@ const PROTOCOLOS = [
           nota:'Ultrassom de abdome; hemoculturas antes do antibiótico' },
         { tipo:'decisao', texto:'Há icterícia com febre?', ramos:[
           { rotulo:'Sim — colangite', cor:'perigo', texto:'*Antibiótico + CPRE de urgência*',
-            nota:'Piperacilina-tazobactam ou cefepima + metronidazol. A drenagem é o que resolve' },
+            nota:'Piperacilina-tazobactam ou cefepima + metronidazol. A drenagem é o que resolve',
+            meds:['Piperacilina + tazobactam 4 g/500 mg', 'Cefepima 1 g', 'Metronidazol 5 mg/mL'] },
           { rotulo:'Não — colecistite', texto:'*Antibiótico + colecistectomia precoce*',
             nota:'Operar em até 72 horas tem melhor desfecho que esperar esfriar' }
         ]},
@@ -3144,7 +4261,8 @@ const PROTOCOLOS = [
           nota:'A tomografia estadia (Hinchey) e define a conduta' },
         { tipo:'decisao', texto:'Qual a classificação?', ramos:[
           { rotulo:'Não complicada — Hinchey 0/Ia', cor:'ok', texto:'*Antibiótico oral e dieta líquida, ambulatorial*',
-            nota:'Ciprofloxacino + metronidazol por 7 a 10 dias. Reavaliar em 48 a 72 h' },
+            nota:'Ciprofloxacino + metronidazol por 7 a 10 dias. Reavaliar em 48 a 72 h',
+            meds:['Ciprofloxacino 500 mg', 'Metronidazol 400 mg'] },
           { rotulo:'Sintomas exuberantes', texto:'*Internar*: dieta zero e antibiótico endovenoso' },
           { rotulo:'Abscesso maior que 4 cm — Hinchey Ib/II', texto:'*Drenagem percutânea* + antibiótico' },
           { rotulo:'Peritonite purulenta ou fecal — Hinchey III/IV', cor:'perigo',
@@ -3250,11 +4368,14 @@ const PROTOCOLOS = [
           nota:'PMN acima de 250/mm³ no líquido ascítico fecha PBE' },
         { tipo:'decisao', texto:'Qual a descompensação?', ramos:[
           { rotulo:'Encefalopatia', texto:'*Lactulose* + tratar o gatilho',
-            nota:'Alvo de 2 a 3 evacuações pastosas por dia. Rifaximina se recorrente' },
+            nota:'Alvo de 2 a 3 evacuações pastosas por dia. Rifaximina se recorrente',
+            meds:['Lactulose 667 mg/mL', 'Rifaximina 550 mg'] },
           { rotulo:'PBE', cor:'perigo', texto:'*Ceftriaxona + albumina*',
-            nota:'Albumina 1,5 g/kg no 1º dia e 1 g/kg no 3º: reduz síndrome hepatorrenal e mortalidade' },
+            nota:'Albumina 1,5 g/kg no 1º dia e 1 g/kg no 3º: reduz síndrome hepatorrenal e mortalidade',
+            meds:['Ceftriaxona 1 g', 'Albumina humana 20%'] },
           { rotulo:'Ascite tensa', texto:'*Paracentese de alívio* + albumina se retirar mais de 5 L',
-            nota:'6 a 8 g de albumina por litro drenado' },
+            nota:'6 a 8 g de albumina por litro drenado',
+            meds:['Albumina humana 20%'] },
           { rotulo:'Hemorragia varicosa', cor:'perigo', texto:'Ver a conduta de HDA',
             nota:'Terlipressina + ceftriaxona + endoscopia' }
         ]},
@@ -3301,14 +4422,18 @@ const PROTOCOLOS = [
       { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
         { tipo:'inicio', rotulo:'Entrada', texto:'Três ou mais evacuações amolecidas em 24 horas, há menos de 14 dias' },
         { tipo:'passo', rotulo:'Primeiro', texto:'*Avaliar o grau de desidratação* e repor',
-          nota:'Reidratação oral resolve a maioria. Via venosa se houver vômito incoercível ou desidratação grave' },
+          nota:'Reidratação oral resolve a maioria. Via venosa se houver vômito incoercível ou desidratação grave',
+          meds:['Sais de reidratação oral'] },
         { tipo:'decisao', texto:'Há sangue nas fezes ou comprometimento do estado geral?', ramos:[
           { rotulo:'Não', cor:'ok', texto:'*Sintomático apenas* — sem antibiótico',
-            nota:'Reidratação, antiemético e racecadotrila. A maioria é viral' },
+            nota:'Reidratação, antiemético e racecadotrila. A maioria é viral',
+            meds:['Sais de reidratação oral', 'Racecadotrila 100 mg'] },
           { rotulo:'Sim — disenteria febril', texto:'*Ciprofloxacino 500 mg VO de 12/12 h por 3 dias*',
-            nota:'Reavaliar em 48 h; se mantiver sangue ou melena, ceftriaxona e internação' },
+            nota:'Reavaliar em 48 h; se mantiver sangue ou melena, ceftriaxona e internação',
+            meds:['Ciprofloxacino 500 mg', 'Ceftriaxona 2 g'] },
           { rotulo:'Após antibiótico recente', cor:'perigo', texto:'*C. difficile* — vancomicina ORAL',
-            nota:'125 mg VO de 6/6 h por 10 dias. Nada de antidiarreico de motilidade' }
+            nota:'125 mg VO de 6/6 h por 10 dias. Nada de antidiarreico de motilidade',
+            meds:['Vancomicina 125 mg'] }
         ]},
         { tipo:'passo', rotulo:'Persistente acima de 7 dias', texto:'Pesquisar protozoários: Giardia, Cryptosporidium, Isospora, Cyclospora',
           nota:'No paciente com HIV, também microsporídio e complexo M. avium' },
@@ -3365,14 +4490,17 @@ const PROTOCOLOS = [
           { tipo:'alerta', rotulo:'Na 1ª hora', texto:'*ANTIBIÓTICO*', nota:'É o que mais pesa no desfecho. Anote a hora exata' }
         ]},
         { tipo:'passo', rotulo:'Volume', texto:'*30 mL/kg de cristaloide* nas primeiras 3 h',
-          nota:'Em alíquotas, reavaliando perfusão a cada etapa' },
+          nota:'Em alíquotas, reavaliando perfusão a cada etapa',
+          meds:['Cristaloide'] },
         { tipo:'decisao', texto:'PAM ≥ 65 mmHg após o volume?', ramos:[
           { rotulo:'Sim', cor:'ok', texto:'Manter e colher o *lactato de controle*' },
           { rotulo:'Não', cor:'perigo', texto:'*CHOQUE SÉPTICO — noradrenalina* 0,1–1 mcg/kg/min',
-            nota:'Pode correr em veia periférica calibrosa enquanto o central não sai' }
+            nota:'Pode correr em veia periférica calibrosa enquanto o central não sai',
+            meds:['Noradrenalina'] }
         ]},
         { tipo:'decisao', texto:'Noradrenalina acima de 0,5 mcg/kg/min?', ramos:[
-          { rotulo:'Sim', texto:'*Refratário* — vasopressina 0,01–0,04 U/min + hidrocortisona 200 mg/dia' },
+          { rotulo:'Sim', texto:'*Refratário* — vasopressina 0,01–0,04 U/min + hidrocortisona 200 mg/dia',
+            meds:['Vasopressina', 'Hidrocortisona'] },
           { rotulo:'Não', texto:'Manter e reavaliar perfusão' }
         ]},
         { tipo:'alerta', rotulo:'Em 6–12 h', texto:'*CONTROLE DO FOCO*',
@@ -3444,6 +4572,35 @@ const PROTOCOLOS = [
 
   { id:'meningite', titulo:'Meningite bacteriana aguda', categoria:'infecto', gravidade:'emergencia',
     resumo:'Antibiótico e dexametasona antes da punção quando houver atraso; quem precisa de TC antes.',
+    /* perfil → esquema: as mesmas drogas da seção Medicações,
+       separadas por quem é o paciente. {n} multiplica pelo peso. */
+    esquemas:{ titulo:'Qual antibiótico · escolha o perfil', sub:'o esquema é só isto: idade e imunidade', opcoes:[
+      { id:'adulto', nome:'3 meses – 55 anos', sub:'sem imunossupressão',
+        doses:[
+          { droga:'Dexametasona', dose:'0,15 mg/kg', via:'EV', obs:'De 6/6 h por 4 dias. *20 min ANTES* do antibiótico — depois não adianta.' },
+          { droga:'Ceftriaxona', dose:'2 g de 12/12 h', via:'EV', obs:'Duração: 7 dias no meningococo, 10 a 14 no pneumococo.' }
+        ],
+        extra:'Acrescentar vancomicina 15 a 20 mg/kg de 12/12 h só se houver pneumococo resistente na região.' },
+      { id:'listeria', nome:'> 55 anos · gestante · imunodeprimido', sub:'precisa cobrir Listeria',
+        doses:[
+          { droga:'Dexametasona', dose:'0,15 mg/kg', via:'EV', obs:'*20 min ANTES* do antibiótico, 6/6 h por 4 dias.' },
+          { droga:'Ceftriaxona', dose:'2 g de 12/12 h', via:'EV', obs:'Mantém a cobertura habitual.' },
+          { droga:'Ampicilina', dose:'2 g de 4/4 h', via:'EV', obs:'É o que cobre Listeria. 21 dias se confirmada.' }
+        ],
+        extra:'Acrescentar vancomicina 15 a 20 mg/kg de 12/12 h se houver pneumococo resistente na região.' },
+      { id:'rn', nome:'Recém-nascido até 3 meses', sub:'outro esquema',
+        doses:[
+          { droga:'Cefotaxima', dose:'conforme o peso', via:'EV', obs:'Ceftriaxona não é a escolha neste grupo.' },
+          { droga:'Ampicilina', dose:'conforme o peso', via:'EV', obs:'Cobre Listeria e estreptococo do grupo B.' }
+        ],
+        extra:'Doses por quilo na aba Pediatria.' },
+      { id:'herpes', nome:'Suspeita de encefalite herpética', sub:'comportamento, foco temporal',
+        doses:[
+          { droga:'Dexametasona', dose:'0,15 mg/kg', via:'EV', obs:'*20 min ANTES* do antibiótico.' },
+          { droga:'Ceftriaxona', dose:'2 g de 12/12 h', via:'EV', obs:'Não suspenda o antibiótico pela suspeita viral.' },
+          { droga:'Aciclovir', dose:'10 mg/kg de 8/8 h', via:'EV', obs:'10 mg/kg. Começar na suspeita, sem esperar a PCR.' }
+        ] }
+    ]},
     tags:['meningite','punçao lombar','ceftriaxona','dexametasona','rigidez de nuca','liquor'],
     fonte:'Ministério da Saúde — Guia de vigilância das meningites',
     secoes:[
@@ -3458,7 +4615,8 @@ const PROTOCOLOS = [
         { tipo:'inicio', rotulo:'Entrada', texto:'Febre, cefaleia, rigidez de nuca e alteração do nível de consciência',
           nota:'A tétrade completa é rara: dois dos quatro já bastam para suspeitar' },
         { tipo:'passo', rotulo:'Minuto zero', texto:'Hemoculturas + *DEXAMETASONA* + *ANTIBIÓTICO*',
-          nota:'Nessa ordem. Não atrase o antibiótico por causa da punção' },
+          nota:'Nessa ordem. Não atrase o antibiótico por causa da punção',
+          meds:['Dexametasona'] },
         { tipo:'decisao', texto:'Precisa de tomografia antes da punção?', ramos:[
           { rotulo:'Sim — déficit focal, papiledema, rebaixamento, convulsão, imunossupressão',
             cor:'perigo', texto:'*Tomografia primeiro* — mas o antibiótico já foi' },
@@ -3512,12 +4670,15 @@ const PROTOCOLOS = [
         { tipo:'inicio', rotulo:'Entrada', texto:'Disúria, polaciúria, urgência, dor suprapúbica' },
         { tipo:'decisao', texto:'Há febre, calafrio ou dor lombar?', ramos:[
           { rotulo:'Não — cistite', cor:'ok', texto:'*Tratamento curto por via oral*',
-            nota:'Fosfomicina 3 g dose única, ou nitrofurantoína 100 mg 6/6 h por 5 dias' },
+            nota:'Fosfomicina 3 g dose única, ou nitrofurantoína 100 mg 6/6 h por 5 dias',
+            meds:['Fosfomicina trometamol 3 g', 'Nitrofurantoína 100 mg'] },
           { rotulo:'Sim — pielonefrite', texto:'*Urocultura + antibiótico de maior espectro*',
-            nota:'Ceftriaxona 1 a 2 g EV; ciprofloxacino VO se ambulatorial' }
+            nota:'Ceftriaxona 1 a 2 g EV; ciprofloxacino VO se ambulatorial',
+            meds:['Ceftriaxona 1 g', 'Ciprofloxacino 500 mg'] }
         ]},
         { tipo:'decisao', texto:'É complicada?', ramos:[
-          { rotulo:'Gestante', texto:'*Cefalexina ou fosfomicina* — quinolona é proibida' },
+          { rotulo:'Gestante', texto:'*Cefalexina ou fosfomicina* — quinolona é proibida',
+            meds:['Fosfomicina trometamol 3 g', 'Cefalexina 500 mg'] },
           { rotulo:'Homem', texto:'Tratar 7 a 14 dias e investigar próstata' },
           { rotulo:'Sepse, vômito, obstrução', cor:'perigo', texto:'*Internar* + imagem + urologia' }
         ]},
@@ -3565,8 +4726,10 @@ const PROTOCOLOS = [
         { tipo:'passo', rotulo:'Sempre', texto:'*Demarcar a borda a caneta com o horário* + procurar a porta de entrada',
           nota:'Micose interdigital, fissura, úlcera, picada, ferida. Tratar a porta é parte do tratamento' },
         { tipo:'decisao', texto:'Qual o padrão?', ramos:[
-          { rotulo:'Erisipela — borda nítida, elevada, mais superficial', texto:'*Estreptococo* — amoxicilina ou penicilina' },
-          { rotulo:'Celulite — bordas mal definidas, mais profunda', texto:'*Estreptococo e S. aureus* — cefalexina' },
+          { rotulo:'Erisipela — borda nítida, elevada, mais superficial', texto:'*Estreptococo* — amoxicilina ou penicilina',
+            meds:['Amoxicilina 500 mg', 'Penicilina cristalina'] },
+          { rotulo:'Celulite — bordas mal definidas, mais profunda', texto:'*Estreptococo e S. aureus* — cefalexina',
+            meds:['Cefalexina 500 mg a 1 g'] },
           { rotulo:'Com abscesso', texto:'*Drenar* — é o tratamento; antibiótico é adjuvante' },
           { rotulo:'Sinal de necrose', cor:'perigo', texto:'*FASCIITE — cirurgia de urgência*' }
         ]},
@@ -3620,7 +4783,8 @@ const PROTOCOLOS = [
         { tipo:'passo', rotulo:'Em paralelo', texto:'Ressuscitação volêmica, hemoculturas e *antibiótico de amplo espectro na primeira hora*',
           nota:'Tratar como sepse: lactato, culturas, volume, vasopressor se necessário' },
         { tipo:'passo', rotulo:'Antibiótico', texto:'*Piperacilina-tazobactam ou carbapenêmico + vancomicina + CLINDAMICINA*',
-          nota:'A clindamicina é obrigatória: inibe a produção de toxina, mesmo em germe resistente a ela' },
+          nota:'A clindamicina é obrigatória: inibe a produção de toxina, mesmo em germe resistente a ela',
+          meds:['Piperacilina + tazobactam', 'Vancomicina', 'Clindamicina'] },
         { tipo:'passo', rotulo:'Marcadores', texto:'Aplicar o *LRINEC* como apoio — mas escore baixo NÃO afasta',
           nota:'PCR, leucócitos, hemoglobina, sódio, creatinina e glicose' },
         { tipo:'alerta', rotulo:'Nunca', texto:'*Adiar o desbridamento para "observar a evolução"*' },
@@ -3683,7 +4847,8 @@ const PROTOCOLOS = [
             nota:'Não melhorou: noradrenalina e albumina. Terapia intensiva' }
         ]},
         { tipo:'alerta', rotulo:'Proibido', texto:'*Anti-inflamatório e ácido acetilsalicílico*',
-          nota:'Aumentam o risco de sangramento. Só dipirona ou paracetamol' },
+          nota:'Aumentam o risco de sangramento. Só dipirona ou paracetamol',
+          meds:['Dipirona 500 mg', 'Paracetamol 500 mg'] },
         { tipo:'fim', rotulo:'Depois', texto:'Notificação compulsória; cartão de acompanhamento entregue e explicado' }
       ]},
       { tipo:'doses', titulo:'Hidratação e sintomáticos', itens:[
@@ -3787,7 +4952,8 @@ const PROTOCOLOS = [
         { tipo:'passo', rotulo:'Examinar', texto:'Boca, pele, cateter, períneo, pulmão e seios da face — *sem toque retal*',
           nota:'Procurar mucosite, celulite de inserção de cateter e lesão perianal' },
         { tipo:'passo', rotulo:'Antibiótico', texto:'*Antipseudomonas em monoterapia*',
-          nota:'Cefepima, piperacilina-tazobactam ou meropeném' },
+          nota:'Cefepima, piperacilina-tazobactam ou meropeném',
+          meds:['Cefepima', 'Piperacilina + tazobactam', 'Meropeném'] },
         { tipo:'decisao', texto:'Precisa acrescentar vancomicina?', ramos:[
           { rotulo:'Sim', cor:'perigo', texto:'Infecção de cateter, mucosite grave, instabilidade, pele e partes moles, MRSA conhecido',
             nota:'Não é rotina — só nessas situações' },
@@ -3841,9 +5007,12 @@ const PROTOCOLOS = [
         { tipo:'passo', rotulo:'Imagem', texto:'*Ecocardiograma transtorácico*; transesofágico se negativo com alta suspeita, ou se houver prótese' },
         { tipo:'passo', rotulo:'Aplicar critérios de Duke', texto:'*2 maiores · ou 1 maior + 3 menores · ou 5 menores*' },
         { tipo:'decisao', texto:'Qual a apresentação?', ramos:[
-          { rotulo:'Subaguda, estável, valva nativa', cor:'ok', texto:'*Aguardar culturas* ou iniciar vancomicina + ceftriaxona' },
-          { rotulo:'Aguda, toxêmica, ou droga injetável', cor:'perigo', texto:'*Vancomicina + gentamicina* imediata' },
-          { rotulo:'Prótese com menos de 1 ano', cor:'perigo', texto:'*Vancomicina + gentamicina + rifampicina*' }
+          { rotulo:'Subaguda, estável, valva nativa', cor:'ok', texto:'*Aguardar culturas* ou iniciar vancomicina + ceftriaxona',
+            meds:['Vancomicina + ceftriaxona'] },
+          { rotulo:'Aguda, toxêmica, ou droga injetável', cor:'perigo', texto:'*Vancomicina + gentamicina* imediata',
+            meds:['Vancomicina + gentamicina'] },
+          { rotulo:'Prótese com menos de 1 ano', cor:'perigo', texto:'*Vancomicina + gentamicina + rifampicina*',
+            meds:['Vancomicina + gentamicina', 'Vancomicina + gentamicina + rifampicina'] }
         ]},
         { tipo:'passo', rotulo:'Avaliar cirurgia', texto:'Insuficiência cardíaca, infecção não controlada, abscesso, ou risco embólico alto' },
         { tipo:'fim', rotulo:'Depois', texto:'Tratamento de 4 a 6 semanas; 6 semanas ou mais em prótese' }
@@ -3953,7 +5122,8 @@ const PROTOCOLOS = [
         { tipo:'passo', rotulo:'HIV', texto:'*TDF + 3TC + DTG por 28 dias* — iniciar o quanto antes',
           nota:'Ideal em até 2 horas; máximo 72 horas' },
         { tipo:'passo', rotulo:'Hepatite B', texto:'Vacina e/ou *imunoglobulina*, conforme o esquema vacinal e o anti-HBs',
-          nota:'Não vacinado ou sem resposta, com fonte positiva ou desconhecida: imunoglobulina 0,06 mL/kg + iniciar a vacinação' },
+          nota:'Não vacinado ou sem resposta, com fonte positiva ou desconhecida: imunoglobulina 0,06 mL/kg + iniciar a vacinação',
+          meds:['Imunoglobulina anti-hepatite B (IGHAHB)'] },
         { tipo:'fim', rotulo:'Seguimento', texto:'Testagem em 30 e 90 dias; abrir CAT se for acidente de trabalho' }
       ]},
       { tipo:'doses', titulo:'Esquemas', itens:[
@@ -4000,9 +5170,11 @@ const PROTOCOLOS = [
           nota:'Internação nos últimos 90 dias, antibiótico recente, diálise, asilo: pensar em resistente' },
         { tipo:'decisao', texto:'Há fator de risco para germe multirresistente?', ramos:[
           { rotulo:'Não', cor:'ok', texto:'*Espectro estreito* dirigido ao sítio',
-            nota:'Ceftriaxona cobre a maior parte do que é comunitário' },
+            nota:'Ceftriaxona cobre a maior parte do que é comunitário',
+            meds:['Ceftriaxona'] },
           { rotulo:'Sim', texto:'*Ampliar*: antipseudomonas, e vancomicina se houver risco de MRSA',
-            nota:'Piperacilina-tazobactam, cefepima ou meropeném' }
+            nota:'Piperacilina-tazobactam, cefepima ou meropeném',
+            meds:['Piperacilina + tazobactam', 'Cefepima', 'Meropeném', 'Vancomicina'] }
         ]},
         { tipo:'passo', rotulo:'4', texto:'Definir *dose, via e duração* na mesma prescrição' },
         { tipo:'fim', rotulo:'5', texto:'Reavaliar em 48 a 72 h: descalonar, trocar para via oral, ou suspender' }
@@ -4064,16 +5236,21 @@ const PROTOCOLOS = [
         ]},
         { tipo:'decisao', texto:'P — Qual o potássio ANTES de iniciar a insulina?', ramos:[
           { rotulo:'K < 3,3', cor:'perigo', texto:'*NÃO iniciar insulina.* Repor KCl 10–30 mEq/L primeiro',
-            nota:'A insulina joga potássio para dentro da célula e pode causar arritmia fatal' },
+            nota:'A insulina joga potássio para dentro da célula e pode causar arritmia fatal',
+            meds:['KCl — se K < 3,3'] },
           { rotulo:'K 3,3 – 5,2', cor:'ok', texto:'*Repor KCl 20–30 mEq/L* e iniciar a insulina',
-            nota:'Reposição e insulina correm juntas' },
+            nota:'Reposição e insulina correm juntas',
+            meds:['Insulina regular (BIC)', 'KCl — se K 3,3–5,2'] },
           { rotulo:'K > 5,2', texto:'*Não repor.* Iniciar a insulina e acompanhar',
-            nota:'Redosar o potássio a cada 2 h — ele vai cair' }
+            nota:'Redosar o potássio a cada 2 h — ele vai cair',
+            meds:['Insulina regular (BIC)'] }
         ]},
         { tipo:'passo', rotulo:'I — Insulina', texto:'*Insulina regular 0,1 U/kg/h em BIC*',
-          nota:'Solução 1:1 — 1 mL (100 UI) em 100 mL de SF. Bolus inicial de 0,1–0,15 U/kg é opcional' },
+          nota:'Solução 1:1 — 1 mL (100 UI) em 100 mL de SF. Bolus inicial de 0,1–0,15 U/kg é opcional',
+          meds:['Insulina regular (BIC)'] },
         { tipo:'decisao', texto:'A glicemia está caindo 50–70 mg/dL por hora?', ramos:[
-          { rotulo:'Cai de menos', texto:'*Dobrar* a velocidade de infusão da insulina' },
+          { rotulo:'Cai de menos', texto:'*Dobrar* a velocidade de infusão da insulina',
+            meds:['Insulina regular (BIC)'] },
           { rotulo:'No alvo', cor:'ok', texto:'Manter a infusão e seguir monitorando' },
           { rotulo:'Cai demais', texto:'*Reduzir* para 0,02–0,05 U/kg/h e associar SG 5%' }
         ]},
@@ -4081,11 +5258,13 @@ const PROTOCOLOS = [
           nota:'Associar *SG 5%* e MANTER a insulina — ela é o que fecha o ânion gap. Suspender agora deixa a acidose sem tratamento' },
         { tipo:'decisao', texto:'Critérios de resolução alcançados?', ramos:[
           { rotulo:'Ainda não', texto:'Manter insulina em BIC, volume e reposição de potássio',
-            nota:'Reavaliar o fator precipitante — CAD que não fecha costuma ter infecção não tratada' },
+            nota:'Reavaliar o fator precipitante — CAD que não fecha costuma ter infecção não tratada',
+            meds:['Insulina regular (BIC)'] },
           { rotulo:'Sim', cor:'ok', texto:'*Glicemia < 200 + pH > 7,3 + HCO3 > 18 + AG < 12*' }
         ]},
         { tipo:'passo', rotulo:'Transição', texto:'*Insulina regular 10 U SC e aguardar 1 hora* antes de desligar a bomba',
-          nota:'Desligar a BIC sem cobertura subcutânea = a cetoacidose volta' },
+          nota:'Desligar a BIC sem cobertura subcutânea = a cetoacidose volta',
+          meds:['Insulina regular SC (transição)'] },
         { tipo:'fim', rotulo:'Manutenção', texto:'*Esquema basal-bolus: 0,2–0,5 U/kg/dia*',
           nota:'50% NPH (⅔ manhã, ⅓ noite) + 50% regular (⅓ em cada refeição)' }
       ]},
@@ -4155,11 +5334,13 @@ const PROTOCOLOS = [
         { tipo:'passo', rotulo:'1º — Volume', texto:'*Cristaloide 15 a 20 mL/kg na 1ª hora*',
           nota:'É o que salva. Depois 250 a 500 mL/h, guiado pelo sódio corrigido' },
         { tipo:'passo', rotulo:'2º — Potássio', texto:'Dosar ANTES da insulina',
-          nota:'Abaixo de 3,3: repor e ADIAR a insulina. Entre 3,3 e 5,2: repor 20 a 30 mEq/L. Acima de 5,2: não repor' },
+          nota:'Abaixo de 3,3: repor e ADIAR a insulina. Entre 3,3 e 5,2: repor 20 a 30 mEq/L. Acima de 5,2: não repor',
+          meds:['Insulina regular'] },
         { tipo:'passo', rotulo:'3º — Insulina', texto:'*0,05 a 0,1 UI/kg/h em bomba*',
           nota:'Dose menor que na cetoacidose. Queda alvo de 50 a 70 mg/dL por hora' },
         { tipo:'passo', rotulo:'Quando chegar a 300', texto:'Associar soro glicosado e reduzir a insulina',
-          nota:'Manter glicemia entre 250 e 300 até a osmolaridade e o estado mental normalizarem' },
+          nota:'Manter glicemia entre 250 e 300 até a osmolaridade e o estado mental normalizarem',
+          meds:['Insulina regular'] },
         { tipo:'passo', rotulo:'Sempre', texto:'*Procurar o gatilho*: hemograma, urina, radiografia de tórax, ECG e culturas' },
         { tipo:'fim', rotulo:'Destino', texto:'Terapia intensiva ou leito monitorizado; profilaxia de trombose' }
       ]},
@@ -4200,11 +5381,14 @@ const PROTOCOLOS = [
         { tipo:'inicio', rotulo:'Entrada', texto:'Glicemia abaixo de 70 mg/dL com sintomas, ou abaixo de 54 em qualquer situação' },
         { tipo:'decisao', texto:'O paciente está consciente e consegue engolir?', ramos:[
           { rotulo:'Sim', cor:'ok', texto:'*15 g de carboidrato de absorção rápida VO*',
-            nota:'1 copo de suco, 3 colheres de açúcar em água, ou 15 g de glicose. Repetir em 15 min se necessário' },
+            nota:'1 copo de suco, 3 colheres de açúcar em água, ou 15 g de glicose. Repetir em 15 min se necessário',
+            meds:['Carboidrato rápido', 'Glicose 50%'] },
           { rotulo:'Não', cor:'perigo', texto:'*GLICOSE 50% EV em bolus*',
-            nota:'40 a 60 mL em veia calibrosa. No lactente, glicose a 10%, 2 a 5 mL/kg' }
+            nota:'40 a 60 mL em veia calibrosa. No lactente, glicose a 10%, 2 a 5 mL/kg',
+            meds:['Glicose 50%', 'Glicose 10% (criança)'] }
         ]},
-        { tipo:'passo', rotulo:'Se etilista', texto:'*TIAMINA 100 a 300 mg EV* antes ou junto da glicose' },
+        { tipo:'passo', rotulo:'Se etilista', texto:'*TIAMINA 100 a 300 mg EV* antes ou junto da glicose',
+          meds:['Glicose 50%', 'Tiamina'] },
         { tipo:'passo', rotulo:'Reavaliar', texto:'Glicemia capilar em 15 minutos; repetir se ainda abaixo de 70' },
         { tipo:'passo', rotulo:'Depois de recuperar', texto:'*Alimentar com carboidrato complexo* para evitar recorrência' },
         { tipo:'decisao', texto:'Qual a causa?', ramos:[
@@ -4305,12 +5489,15 @@ const PROTOCOLOS = [
         { tipo:'inicio', rotulo:'Entrada', texto:'Tireotoxicose com febre, taquicardia extrema, agitação e disfunção orgânica',
           nota:'Escala de Burch-Wartofsky ajuda, mas o tratamento é clínico e imediato' },
         { tipo:'passo', rotulo:'1º — Bloquear o efeito periférico', texto:'*PROPRANOLOL* — controla a taquicardia e reduz a conversão de T4 em T3',
-          nota:'Cautela na insuficiência cardíaca: usar esmolol, que é titulável' },
+          nota:'Cautela na insuficiência cardíaca: usar esmolol, que é titulável',
+          meds:['Propranolol', 'Esmolol'] },
         { tipo:'passo', rotulo:'2º — Bloquear a síntese', texto:'*Tionamida: propiltiouracil ou metimazol*',
-          nota:'Propiltiouracil é preferido na crise, porque também bloqueia a conversão periférica' },
+          nota:'Propiltiouracil é preferido na crise, porque também bloqueia a conversão periférica',
+          meds:['Propiltiouracil', 'Metimazol'] },
         { tipo:'passo', rotulo:'3º — Bloquear a liberação', texto:'*IODO — pelo menos 1 hora DEPOIS da tionamida*',
           nota:'Dar antes alimenta a glândula e piora a crise (efeito Jod-Basedow)' },
-        { tipo:'passo', rotulo:'4º — Corticoide', texto:'*Hidrocortisona* — reduz a conversão periférica e cobre insuficiência adrenal relativa' },
+        { tipo:'passo', rotulo:'4º — Corticoide', texto:'*Hidrocortisona* — reduz a conversão periférica e cobre insuficiência adrenal relativa',
+          meds:['Hidrocortisona'] },
         { tipo:'passo', rotulo:'Suporte', texto:'Resfriamento, hidratação, controle da arritmia e tratamento do gatilho',
           nota:'Antitérmico: paracetamol ou dipirona. *Nunca ácido acetilsalicílico*: desloca o hormônio da proteína' },
         { tipo:'fim', rotulo:'Destino', texto:'Terapia intensiva; endocrinologia acionada' }
@@ -4358,9 +5545,11 @@ const PROTOCOLOS = [
         { tipo:'passo', rotulo:'Via aérea', texto:'*Intubar precocemente* — a hipoventilação é regra e progride',
           nota:'Cuidado com sedativos: a metabolização está muito lenta' },
         { tipo:'passo', rotulo:'1º — CORTICOIDE', texto:'*Hidrocortisona 100 mg EV, ANTES do hormônio tireoidiano*',
-          nota:'Colher cortisol antes, se possível, mas não atrasar' },
+          nota:'Colher cortisol antes, se possível, mas não atrasar',
+          meds:['Hidrocortisona'] },
         { tipo:'passo', rotulo:'2º — Hormônio', texto:'*Levotiroxina EV em dose de ataque*',
-          nota:'200 a 400 mcg EV, depois 50 a 100 mcg/dia. Dose menor no idoso e no coronariopata' },
+          nota:'200 a 400 mcg EV, depois 50 a 100 mcg/dia. Dose menor no idoso e no coronariopata',
+          meds:['Levotiroxina'] },
         { tipo:'passo', rotulo:'Suporte', texto:'Reaquecimento *passivo*, corrigir hipoglicemia e hiponatremia, tratar o gatilho',
           nota:'Reaquecimento ativo externo causa vasodilatação e colapso' },
         { tipo:'fim', rotulo:'Destino', texto:'Terapia intensiva; endocrinologia acionada' }
@@ -4406,9 +5595,11 @@ const PROTOCOLOS = [
         { tipo:'passo', rotulo:'Colher e tratar', texto:'*Colher cortisol e ACTH — e administrar o corticoide na sequência*',
           nota:'Não atrase o tratamento esperando o resultado' },
         { tipo:'passo', rotulo:'1º — Corticoide', texto:'*HIDROCORTISONA 100 mg EV em bolus*',
-          nota:'Depois 50 mg de 6/6 h, ou 200 mg/dia em infusão contínua' },
+          nota:'Depois 50 mg de 6/6 h, ou 200 mg/dia em infusão contínua',
+          meds:['Hidrocortisona'] },
         { tipo:'passo', rotulo:'2º — Volume', texto:'*Cristaloide com glicose* — 1000 mL na primeira hora',
-          nota:'Soro fisiológico com glicose corrige a hipovolemia, a hiponatremia e a hipoglicemia' },
+          nota:'Soro fisiológico com glicose corrige a hipovolemia, a hiponatremia e a hipoglicemia',
+          meds:['Cloreto de sódio 0,9% com glicose'] },
         { tipo:'passo', rotulo:'3º — Corrigir', texto:'Hipoglicemia, hipercalemia e hiponatremia' },
         { tipo:'passo', rotulo:'4º — Gatilho', texto:'Procurar e tratar: infecção é o mais comum' },
         { tipo:'fim', rotulo:'Depois', texto:'Se usou dexametasona, o teste de estimulação com ACTH ainda pode ser feito; com hidrocortisona, não' }
@@ -4513,7 +5704,8 @@ const PROTOCOLOS = [
           { rotulo:'Não', texto:'Otimização clínica com reavaliação frequente' }
         ]},
         { tipo:'passo', rotulo:'Enquanto espera', texto:'*Tratamento clínico das complicações*',
-          nota:'Hipercalemia: cálcio, insulina com glicose, beta-2. Acidose: bicarbonato. Hipervolemia: furosemida' },
+          nota:'Hipercalemia: cálcio, insulina com glicose, beta-2. Acidose: bicarbonato. Hipervolemia: furosemida',
+          meds:['Gluconato de cálcio 10%', 'Insulina regular + glicose 50%', 'Bicarbonato de sódio 8,4%', 'Furosemida'] },
         { tipo:'passo', rotulo:'Escolher a modalidade', texto:'Hemodiálise intermitente no estável; contínua no instável',
           nota:'Diálise peritoneal é opção em serviços sem hemodiálise, sobretudo em criança' },
         { tipo:'fim', rotulo:'Depois', texto:'Reavaliar a necessidade de diálise a cada sessão — nem sempre é definitiva' }
@@ -4564,11 +5756,14 @@ const PROTOCOLOS = [
             nota:'Também entra aqui: K > 5,5 com DRC, LRA, rabdomiólise ou sangramento intestinal' }
         ]},
         { tipo:'passo', rotulo:'1 · Estabilizar', texto:'*Gluconato de cálcio 10%* — 1 ampola + SG 5% 100 mL em 5 min',
-          nota:'Efeito dura 30–60 min. Se o ECG continuar alterado, repetir após 5 min. *Não baixa o potássio*' },
+          nota:'Efeito dura 30–60 min. Se o ECG continuar alterado, repetir após 5 min. *Não baixa o potássio*',
+          meds:['Gluconato de cálcio 10%'] },
         { tipo:'passo', rotulo:'2 · Deslocar', texto:'*Polarizante* (insulina regular 10 UI + glicose 50 g) em 30–60 min + *salbutamol* inalatório',
-          nota:'Dura 4 h, repetir de 2/2 a 4/4 h. *Glicemia capilar de 1/1 h por 6 h.* Se glicemia > 250, insulina sem glicose' },
+          nota:'Dura 4 h, repetir de 2/2 a 4/4 h. *Glicemia capilar de 1/1 h por 6 h.* Se glicemia > 250, insulina sem glicose',
+          meds:['Polarizante com glicemia > 250', 'Salbutamol'] },
         { tipo:'passo', rotulo:'3 · Remover', texto:'*Furosemida 40–60 mg EV* · hemodiálise se anúria ou refratário',
-          nota:'Hipovolêmico: repor volume antes. Resina de troca e bicarbonato são pouco eficazes' },
+          nota:'Hipovolêmico: repor volume antes. Resina de troca e bicarbonato são pouco eficazes',
+          meds:['Furosemida', 'Bicarbonato de sódio'] },
         { tipo:'alerta', rotulo:'Erro clássico', texto:'*Parar no passo 1 ou 2*',
           nota:'O gluconato só protege o coração e a polarizante só empurra o potássio para dentro da célula. Sem remoção, ele volta a subir em horas' },
         { tipo:'fim', rotulo:'Destino', texto:'*Leito monitorizado* + suspender IECA, BRA, espironolactona e AINE',
@@ -4601,7 +5796,8 @@ const PROTOCOLOS = [
       { tipo:'doses', titulo:'3 · Remover do corpo', itens:[
         { droga:'Furosemida', dose:'2–3 ampolas (40–60 mg)', via:'EV', obs:'*Hipovolêmico:* repor volume com SF e então furosemida. *Euvolêmico:* furosemida e repor SF para manter balanço hídrico zero.' },
         { droga:'Poliestirenossulfonato de cálcio (Sorcal)', dose:'30 g em 100 mL de manitol 10% ou água', via:'VO', obs:'Até de 4/4 h. *Menos eficaz e de ação lenta* — não conte com ele na urgência.' },
-        { droga:'Bicarbonato de sódio', dose:'Conforme acidose', via:'EV', obs:'*Pouco eficaz* isoladamente. Reservado a quem tem acidose metabólica associada.' },
+        { droga:'Bicarbonato de sódio', dose:'Conforme acidose', via:'EV', obs:'*Pouco eficaz* isoladamente. Reservado a quem tem acidose metabólica associada — e à parada por hipercalemia.' },
+        { droga:'Na PCR por hipercalemia', dose:'Gluconato de cálcio 10% 30 mL (3 g) em bolus + bicarbonato 8,4% 1 mEq/kg', via:'EV/IO', obs:'Cálcio puro, em bolus, sem esperar 5 min; bicarbonato em via separada (precipita). Seguir a conduta de PCR.' },
         { droga:'Hemodiálise', dose:'—', via:'—', obs:'*Tratamento definitivo* na hipercalemia refratária, na anúria ou quando há urgência dialítica.' }
       ]},
       { tipo:'passos', titulo:'Conduta imediata', itens:[
@@ -4648,12 +5844,14 @@ const PROTOCOLOS = [
           nota:'ECG se K < 3,0, houver sintoma ou uso de digoxina. Procurar onda U proeminente' },
         { tipo:'decisao', texto:'Qual a gravidade?', ramos:[
           { rotulo:'Leve — 3,0 a 3,5', texto:'*Via oral*: xarope de KCl 6% 20 mL de 6/6 h a 8/8 h',
-            nota:'Repor 40 a 100 mEq por dia. Ou KCl 600 mg, 2 comprimidos' },
+            nota:'Repor 40 a 100 mEq por dia. Ou KCl 600 mg, 2 comprimidos',
+            meds:['Xarope de KCl 6%', 'KCl comprimido 600 mg'] },
           { rotulo:'< 3,0, sintoma ou ECG', cor:'perigo', texto:'*Endovenosa E oral, associadas*',
             nota:'Associar as duas vias encurta bastante o tempo de correção' }
         ]},
         { tipo:'decisao', texto:'Qual acesso está disponível?', ramos:[
-          { rotulo:'Periférico', texto:'*10 mEq/hora* — 2 ampolas de KCl 19,1% + SF 1000 mL, cerca de 5 h' },
+          { rotulo:'Periférico', texto:'*10 mEq/hora* — 2 ampolas de KCl 19,1% + SF 1000 mL, cerca de 5 h',
+            meds:['KCl 19,1% — acesso periférico'] },
           { rotulo:'Central', texto:'*20 mEq/hora* — 1 ampola + SF 100 mL, cerca de 2 h',
             nota:'Velocidade maior exige via central e monitorização' }
         ]},
@@ -4661,7 +5859,8 @@ const PROTOCOLOS = [
           nota:'A glicose estimula insulina, que joga mais potássio para dentro da célula. Diluir sempre em soro fisiológico' },
         { tipo:'decisao', texto:'O potássio não sobe apesar da reposição?', ramos:[
           { rotulo:'Quase sempre', cor:'ok', texto:'*É hipomagnesemia* — reponha o magnésio e o potássio sobe',
-            nota:'Sulfato de magnésio 10%, 2 ampolas + SG 5% 100 mL em 2–5 min' }
+            nota:'Sulfato de magnésio 10%, 2 ampolas + SG 5% 100 mL em 2–5 min',
+            meds:['Sulfato de magnésio 10%'] }
         ]},
         { tipo:'fim', rotulo:'Investigar a causa', texto:'Diurético · vômito · diarreia · alcalose · insulina · beta-2',
           nota:'Na cetoacidose o potássio *cai* quando a insulina começa — por isso se checa antes de iniciar' }
@@ -4739,7 +5938,8 @@ const PROTOCOLOS = [
           nota:'Antes de tratar: corrigir o sódio pela glicemia e afastar pseudo-hiponatremia' },
         { tipo:'decisao', texto:'Há sintoma grave? (convulsão, rebaixamento, coma)', ramos:[
           { rotulo:'Sim', cor:'perigo', texto:'*NaCl 3% — 100 a 150 mL em 20 min*, repetir até 3 vezes',
-            nota:'Preparo: NaCl 20% 45 mL + SF 455 mL = 500 mL. *Corre em veia periférica*' },
+            nota:'Preparo: NaCl 20% 45 mL + SF 455 mL = 500 mL. *Corre em veia periférica*',
+            meds:['NaCl 3% — bolus no sintoma grave'] },
           { rotulo:'Não', texto:'Investigar a *volemia* antes de repor qualquer coisa' }
         ]},
         { tipo:'passo', rotulo:'Meta do bolus', texto:'Subir o sódio *4 a 6 mEq/L* e reverter o sintoma',
@@ -4895,8 +6095,10 @@ const PROTOCOLOS = [
           nota:'Cálcio corrigido = cálcio medido + 0,8 × (4 − albumina)' },
         { tipo:'decisao', texto:'Hipo ou hipercalcemia?', ramos:[
           { rotulo:'Hipocalcemia sintomática', cor:'perigo', texto:'*Gluconato de cálcio 10% EV lento*',
-            nota:'Chvostek e Trousseau positivos, parestesia perioral, tetania, QT longo' },
-          { rotulo:'Hipocalcemia assintomática', texto:'*Reposição oral* + corrigir magnésio e vitamina D' },
+            nota:'Chvostek e Trousseau positivos, parestesia perioral, tetania, QT longo',
+            meds:['Gluconato de cálcio 10% (ampola de 10 mL)'] },
+          { rotulo:'Hipocalcemia assintomática', texto:'*Reposição oral* + corrigir magnésio e vitamina D',
+            meds:['Sulfato de magnésio 50%'] },
           { rotulo:'Hipercalcemia acima de 14, ou sintomática', cor:'perigo',
             texto:'*Hidratação vigorosa + bisfosfonato*',
             nota:'Soro fisiológico 200 a 300 mL/h. Calcitonina para o efeito rápido' },
@@ -5053,7 +6255,8 @@ const PROTOCOLOS = [
         { tipo:'inicio', rotulo:'Entrada', texto:'Dor lombar súbita em cólica, irradiando para flanco e virilha',
           nota:'Paciente *agitado, sem posição antálgica*. Quem fica imóvel provavelmente tem peritonite' },
         { tipo:'passo', rotulo:'Primeiro', texto:'*ANALGESIA* — a investigação vem depois',
-          nota:'Cetoprofeno 100 mg EV (AINE é primeira linha) + dipirona. Morfina como resgate' },
+          nota:'Cetoprofeno 100 mg EV (AINE é primeira linha) + dipirona. Morfina como resgate',
+          meds:['Cetoprofeno', 'Dipirona', 'Morfina'] },
         { tipo:'decisao', texto:'Há alguma red flag?', ramos:[
           { rotulo:'Febre + obstrução', cor:'perigo', texto:'*PIONEFROSE — urgência de DRENAGEM*',
             nota:'Antibiótico sozinho não resolve rim obstruído. Duplo J ou nefrostomia' },
@@ -5065,7 +6268,8 @@ const PROTOCOLOS = [
         { tipo:'decisao', texto:'Qual o tamanho do cálculo?', ramos:[
           { rotulo:'< 5 mm', cor:'ok', texto:'*Elimina sozinho* na maioria dos casos' },
           { rotulo:'5 a 10 mm', texto:'*Tansulosina 0,4 mg/dia* por até 4 semanas',
-            nota:'Terapia expulsiva para cálculo distal' },
+            nota:'Terapia expulsiva para cálculo distal',
+            meds:['Tansulosina'] },
           { rotulo:'> 10 mm', texto:'*Avaliação urológica* — quase nunca elimina sozinho' }
         ]},
         { tipo:'alerta', rotulo:'Não fazer', texto:'*Hidratação venosa vigorosa para "empurrar o cálculo"*',
@@ -5136,7 +6340,8 @@ const PROTOCOLOS = [
           nota:'Volume residual acima de 300 a 400 mL confirma' },
         { tipo:'decisao', texto:'Pode sondar pela uretra?', ramos:[
           { rotulo:'Sim', cor:'ok', texto:'*Sondagem vesical de alívio ou de demora*',
-            nota:'Sonda de Foley 16 a 18 Fr, com lidocaína gel em abundância' },
+            nota:'Sonda de Foley 16 a 18 Fr, com lidocaína gel em abundância',
+            meds:['Lidocaína gel 2%'] },
           { rotulo:'Trauma pélvico com uretrorragia, ou falha após 2 tentativas', cor:'perigo',
             texto:'*Cistostomia suprapúbica* — acionar a urologia' }
         ]},
@@ -5190,16 +6395,21 @@ const PROTOCOLOS = [
           nota:'Causa orgânica muda todo o tratamento' },
         { tipo:'decisao', texto:'O paciente aceita medicação por via oral?', ramos:[
           { rotulo:'Sim, colabora', cor:'ok', texto:'*VO é preferível* — menos trauma e mesma eficácia',
-            nota:'Risperidona 2 mg ou olanzapina 10 mg VO; clorpromazina 25 mg se preferir' },
+            nota:'Risperidona 2 mg ou olanzapina 10 mg VO; clorpromazina 25 mg se preferir',
+            meds:['Clorpromazina 25 mg', 'Risperidona 2 mg', 'Olanzapina 10 mg'] },
           { rotulo:'Não, ou risco iminente', texto:'*Contenção química IM*',
-            nota:'Haloperidol 5 mg + prometazina 50 mg IM na mesma seringa' }
+            nota:'Haloperidol 5 mg + prometazina 50 mg IM na mesma seringa',
+            meds:['Haloperidol 5 mg/mL', 'Prometazina 50 mg/2 mL'] }
         ]},
         { tipo:'decisao', texto:'Qual a causa provável?', ramos:[
-          { rotulo:'Psicose, mania', texto:'*Haloperidol + prometazina*', nota:'Combinação clássica; a prometazina reduz o extrapiramidal' },
+          { rotulo:'Psicose, mania', texto:'*Haloperidol + prometazina*', nota:'Combinação clássica; a prometazina reduz o extrapiramidal',
+            meds:['Haloperidol 5 mg/mL', 'Prometazina 50 mg/2 mL'] },
           { rotulo:'Álcool, abstinência, estimulante', cor:'perigo', texto:'*Benzodiazepínico*, não antipsicótico',
-            nota:'Midazolam 5 a 10 mg IM ou diazepam EV. Haloperidol baixa o limiar convulsivo' },
+            nota:'Midazolam 5 a 10 mg IM ou diazepam EV. Haloperidol baixa o limiar convulsivo',
+            meds:['Midazolam 15 mg/3 mL'] },
           { rotulo:'Delirium no idoso', texto:'*Haloperidol em dose baixa* (0,5 a 1 mg)',
-            nota:'Evitar benzodiazepínico: piora a confusão' }
+            nota:'Evitar benzodiazepínico: piora a confusão',
+            meds:['Haloperidol 5 mg/mL'] }
         ]},
         { tipo:'alerta', rotulo:'Só em último caso', texto:'*Contenção mecânica*',
           nota:'Cinco pontos, decúbito dorsal, cabeceira elevada. Nunca em decúbito ventral' },
@@ -5323,9 +6533,11 @@ const PROTOCOLOS = [
           { rotulo:'Não', texto:'Provável surto psicótico primário' }
         ]},
         { tipo:'passo', rotulo:'Tratar', texto:'*Antipsicótico* — via oral se o paciente colabora',
-          nota:'Risperidona 2 mg ou olanzapina 10 mg VO; haloperidol 2 a 5 mg IM se recusa ou agitação' },
+          nota:'Risperidona 2 mg ou olanzapina 10 mg VO; haloperidol 2 a 5 mg IM se recusa ou agitação',
+          meds:['Haloperidol 5 mg/mL', 'Risperidona', 'Olanzapina'] },
         { tipo:'passo', rotulo:'Adjuvante', texto:'Benzodiazepínico se houver ansiedade ou insônia importantes',
-          nota:'Lorazepam 2 mg VO ou diazepam 10 mg EV' },
+          nota:'Lorazepam 2 mg VO ou diazepam 10 mg EV',
+          meds:['Lorazepam', 'Diazepam'] },
         { tipo:'fim', rotulo:'Destino', texto:'Avaliação da psiquiatria; internar se houver risco, primeiro surto ou ausência de rede' }
       ]},
       { tipo:'doses', titulo:'Medicações', itens:[
@@ -5368,18 +6580,24 @@ const PROTOCOLOS = [
         { tipo:'inicio', rotulo:'Entrada', texto:'Tremor, sudorese, ansiedade, náusea e taquicardia após redução ou parada do álcool',
           nota:'Aplicar CIWA-Ar para graduar e guiar as doses' },
         { tipo:'passo', rotulo:'Antes de tudo', texto:'*TIAMINA 300 mg EV* + glicemia capilar',
-          nota:'Tiamina antes ou junto de qualquer glicose' },
+          nota:'Tiamina antes ou junto de qualquer glicose',
+          meds:['Tiamina'] },
         { tipo:'passo', rotulo:'Base', texto:'*BENZODIAZEPÍNICO titulado pelos sintomas*',
-          nota:'Diazepam 10 mg EV lento, repetindo até a sedação leve. Esquema guiado por sintoma é superior ao de dose fixa' },
+          nota:'Diazepam 10 mg EV lento, repetindo até a sedação leve. Esquema guiado por sintoma é superior ao de dose fixa',
+          meds:['Diazepam 5 mg/mL'] },
         { tipo:'passo', rotulo:'Corrigir', texto:'Hidratação, magnésio, potássio e fósforo',
-          nota:'Sem corrigir o magnésio, o quadro não controla' },
+          nota:'Sem corrigir o magnésio, o quadro não controla',
+          meds:['Sulfato de magnésio 50%', 'Cloreto de potássio'] },
         { tipo:'decisao', texto:'Qual a gravidade?', ramos:[
-          { rotulo:'Leve — CIWA abaixo de 8', cor:'ok', texto:'Ambulatorial, com tiamina e seguimento' },
+          { rotulo:'Leve — CIWA abaixo de 8', cor:'ok', texto:'Ambulatorial, com tiamina e seguimento',
+            meds:['Tiamina'] },
           { rotulo:'Moderada — CIWA 8 a 15', texto:'Observação com benzodiazepínico titulado' },
           { rotulo:'Grave ou delirium tremens', cor:'perigo', texto:'*Internação em leito monitorizado*',
-            nota:'Doses altas de benzodiazepínico; considerar fenobarbital ou dexmedetomidina se refratário' }
+            nota:'Doses altas de benzodiazepínico; considerar fenobarbital ou dexmedetomidina se refratário',
+            meds:['Fenobarbital'] }
         ]},
-        { tipo:'fim', rotulo:'Antes da alta', texto:'Tiamina oral, ácido fólico, e encaminhamento ao CAPS-AD' }
+        { tipo:'fim', rotulo:'Antes da alta', texto:'Tiamina oral, ácido fólico, e encaminhamento ao CAPS-AD',
+          meds:['Tiamina', 'Ácido fólico 5 mg'] }
       ]},
       { tipo:'doses', titulo:'Medicações', itens:[
         { droga:'Tiamina', dose:'300 mg', via:'EV', obs:'De 8/8 h nos primeiros dias, depois oral. Antes de qualquer glicose.' },
@@ -5426,7 +6644,8 @@ const PROTOCOLOS = [
           nota:'Explicar que a crise passa sozinha em 20 a 30 minutos e não causa dano. Respiração lenta e diafragmática' },
         { tipo:'decisao', texto:'Cedeu com a abordagem verbal?', ramos:[
           { rotulo:'Sim', cor:'ok', texto:'Alta com orientação e encaminhamento' },
-          { rotulo:'Não', texto:'*Benzodiazepínico em dose baixa*', nota:'Clonazepam 0,5 mg ou diazepam 5 a 10 mg VO' }
+          { rotulo:'Não', texto:'*Benzodiazepínico em dose baixa*', nota:'Clonazepam 0,5 mg ou diazepam 5 a 10 mg VO',
+            meds:['Clonazepam', 'Diazepam'] }
         ]},
         { tipo:'fim', rotulo:'Alta', texto:'Sintomas resolvidos, causa orgânica afastada, com encaminhamento à atenção primária ou à saúde mental' }
       ]},
@@ -5451,59 +6670,194 @@ const PROTOCOLOS = [
     ] },
 
   /* ======================= 09 · TRAUMA E ORTOPEDIA ======================= */
-  { id:'atendimento-trauma', titulo:'Atendimento inicial ao politraumatizado (ABCDE)', categoria:'trauma', gravidade:'emergencia',
-    resumo:'A sequência do ATLS, o exame primário e as intervenções que acontecem dentro de cada letra.',
-    tags:['trauma','atls','abcde','exame primario','politraumatizado','xabcde'],
-    fonte:'ATLS / SBAIT — Sociedade Brasileira de Atendimento Integrado ao Traumatizado',
+  { id:'atendimento-trauma', titulo:'Atendimento inicial ao politraumatizado (xABCDE)', categoria:'trauma', gravidade:'emergencia',
+    resumo:'Da pré-chegada ao destino: parar o sangramento externo, via aérea com a coluna protegida, tratar o que mata no tórax, sangue cedo em vez de soro, TXA, pelve, neurológico, aquecer — e transferir sem esperar exame.',
+    tags:['trauma','politrauma','politraumatizado','atls','xabcde','abcde','choque hemorragico','torniquete','transfusao macica','acido tranexamico','fast','efast','cinta pelvica','hipotensao permissiva','triade letal'],
+    fonte:'ATLS 11ª ed. (2025) — avaliação primária xABCDE · Diretriz Europeia de Manejo do Sangramento e da Coagulopatia no Trauma (2023) · apoio: UpToDate (2026)',
+    ficha:[
+      { rotulo:'Quando',     valor:'Todo trauma com mecanismo de alta energia, sinal vital alterado ou lesão que ameaça a vida — e todo idoso que caiu, mesmo com cara de bem.' },
+      { rotulo:'Prioridade', valor:'*Sangramento externo primeiro*, depois via aérea, respiração e circulação — tratando cada problema na hora em que aparece.' },
+      { rotulo:'Meta',       valor:'Parar a hemorragia e levar ao tratamento definitivo (centro cirúrgico, angiografia ou transferência) sem perder tempo com exame que não muda a conduta.' }
+    ],
     secoes:[
-      { tipo:'alerta', titulo:'Regras que valem para todo trauma', itens:[
-        'A sequência é *XABCDE*: hemorragia exsanguinante primeiro, depois via aérea.',
-        'Não passe para a letra seguinte sem resolver a anterior.',
-        'Reavalie do começo sempre que o paciente piorar.',
-        'Hipotensão no trauma é hemorragia até prova em contrário.',
-        'Hipotermia, acidose e coagulopatia formam a *tríade letal*: aqueça desde a porta.'
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Antes de chegar', texto:'*MIST do SAMU:* mecanismo, lesões, sinais vitais (a pior PA e a maior FC), tratamento feito',
+          nota:'Um líder que não faz procedimento, papéis definidos em voz alta, EPI, sangue O e material de via aérea e de drenagem prontos' },
+
+        { tipo:'decisao', texto:'x — Há sangramento externo que mata? (olhar de relance, segundos)', ramos:[
+          { rotulo:'Em membro', cor:'perigo', texto:'*Compressão direta firme*; se não para, *torniquete* acima da ferida até o sangue parar',
+            nota:'Anote o horário. Sem torniquete comercial: manguito de PA inflado acima da sistólica, como ponte' },
+          { rotulo:'Em junção (virilha, axila, base do pescoço)', cor:'perigo', texto:'*Tamponar a ferida* com gaze hemostática e manter pressão contínua',
+            nota:'Torniquete não funciona nessas regiões' },
+          { rotulo:'Torniquete do pré-hospitalar', texto:'Conferir posição, se está funcionando e o horário em que foi colocado' },
+          { rotulo:'Nenhum', cor:'ok', texto:'Ir direto para a via aérea' }
+        ]},
+
+        { tipo:'decisao', texto:'A — A via aérea está segura? (perguntar o nome: resposta clara = pérvia por ora)', ramos:[
+          { rotulo:'Fala normalmente', cor:'ok', texto:'Oxigênio, cabeceira a 30° (ou Trendelenburg reverso com restrição da coluna) e seguir' },
+          { rotulo:'Obstruída ou em risco', cor:'perigo', texto:'*Aspirar, cânula e intubar cedo*',
+            nota:'Sangue, vômito, dente, trauma de face ou pescoço, hematoma que cresce, queimadura de via aérea, Glasgow ≤ 8. Dupla preparação (intubação + cricotireoidostomia) se a via aérea é difícil',
+            ir:'via-aerea-dificil' },
+          { rotulo:'Precisa intubar e está chocado', cor:'perigo', texto:'*Ressuscitar ANTES de induzir:* controlar o sangramento e começar o sangue',
+            nota:'Indução e pressão positiva no chocado causam parada. Indutor em meia dose, videolaringoscópio, capnografia para confirmar',
+            meds:[{ droga:'Cetamina', dose:'0,5–1 mg/kg', via:'EV' }, { droga:'Etomidato', dose:'0,15–0,3 mg/kg', via:'EV' }], ir:'sequencia-rapida-intubacao' }
+        ]},
+
+        { tipo:'passo', rotulo:'Coluna cervical', texto:'*Trauma contuso:* presumir lesão e restringir o movimento até a imagem',
+          nota:'Para intubar ou ventilar com bolsa: abrir a parte da frente do colar e alguém segura a cabeça alinhada. Ferimento penetrante isolado com neurológico normal: sem restrição de rotina (aumenta mortalidade)' },
+
+        { tipo:'decisao', texto:'B — Respira bem? (SpO₂ > 93%, expansão, ausculta de ápices e axilas, palpação, eFAST)', ramos:[
+          { rotulo:'Hipotensão + murmúrio abolido de um lado', cor:'perigo', texto:'*Pneumotórax hipertensivo:* descompressão com agulha ou com o dedo, sem esperar raio-X',
+            nota:'4º–5º espaço intercostal na linha axilar média, depois dreno — ou dreno direto se estiver à mão', ir:'pneumotorax' },
+          { rotulo:'Macicez + choque', cor:'perigo', texto:'*Hemotórax maciço:* dreno calibroso, sangue e cirurgião',
+            nota:'Instável: dreno cirúrgico 24–28 Fr. Estável: pigtail 14 Fr costuma bastar', ir:'drenagem-torax' },
+          { rotulo:'Ferida que aspira ar', texto:'*Pneumotórax aberto:* curativo de três pontas e dreno longe da ferida', ir:'trauma-toracico' },
+          { rotulo:'Parede que afunda na inspiração', texto:'*Tórax instável:* oxigênio, analgesia forte e ventilação se falhar', ir:'trauma-toracico' },
+          { rotulo:'Sem alteração', cor:'ok', texto:'Seguir — e reauscultar se piorar depois de intubar' }
+        ]},
+
+        { tipo:'passo', rotulo:'C — Acesso e sangue para exame', texto:'*Dois acessos 16G ou maiores* · tipagem e prova cruzada · gasometria com lactato · beta-HCG na mulher em idade fértil',
+          nota:'Sem veia: intraóssea ou central guiada por ultrassom, longe da lesão vascular suspeita. Palpe o pulso central; PA manual se a PAS está abaixo de 90 (o aparelho automático superestima)' },
+
+        { tipo:'decisao', texto:'C — Está em choque? (pele fria, enchimento lento, FC alta, índice de choque > 0,8–1, pressão de pulso estreita)', ramos:[
+          { rotulo:'Sim — hemorrágico', cor:'perigo', texto:'*Sangue O agora* (O-negativo na mulher em idade fértil), em 1:1:1 — cristaloide mínimo',
+            nota:'Hipotensão permissiva (PAS 80–90) até controlar o sangramento, se não houver TCE. TXA até 3 h do trauma. Cálcio guiado pelo iônico',
+            meds:[{ droga:'Ácido tranexâmico', dose:'1 g em 10 min + 1 g em 8 h', via:'EV' }, { droga:'Gluconato de cálcio 10%', dose:'1–3 g conforme o cálcio iônico', via:'EV' }] },
+          { rotulo:'Sim — jugular túrgida', cor:'perigo', texto:'*Tamponamento ou pneumotórax hipertensivo:* FAST começando pelo coração',
+            nota:'O hipovolêmico com tamponamento pode não ter jugular túrgida', ir:'tamponamento' },
+          { rotulo:'Sim — bradicardia com pele quente', texto:'*Choque neurogênico* (lesão medular alta) — mas afaste hemorragia antes',
+            ir:'trauma-raquimedular' },
+          { rotulo:'Não', cor:'ok', texto:'Seguir, reavaliando: hipotensão só aparece depois de perder ~30% do volume' }
+        ]},
+
+        { tipo:'decisao', texto:'Onde está sangrando? (o chão e mais quatro: tórax, abdome, pelve e retroperitônio, ossos longos)', ramos:[
+          { rotulo:'Abdome (FAST positivo, instável)', cor:'perigo', texto:'*Centro cirúrgico*, sem passar pela tomografia',
+            nota:'FAST negativo não exclui: repita quando o paciente mudar. Ferimento por arma branca engana o FAST e a TC', ir:'trauma-abdominal' },
+          { rotulo:'Pelve instável', cor:'perigo', texto:'*Cinta pélvica na altura dos trocânteres* sem esperar imagem; não manipular de novo',
+            nota:'Sem cinta: lençol amarrado. Continua sangrando: conferir a posição; depois angiografia ou cirurgia' },
+          { rotulo:'Ossos longos', texto:'*Alinhar e imobilizar* — fêmur sangra litros', ir:'fratura-exposta' },
+          { rotulo:'Sem pulso', cor:'perigo', texto:'*Toracotomia de reanimação* só em ferimento penetrante de tórax com sinal de vida recente e cirurgião disponível',
+            nota:'No trauma contuso quase nunca funciona. Evitar a parada é o que salva', ir:'pcr-adulto' }
+        ]},
+
+        { tipo:'decisao', texto:'Precisa de transfusão maciça? Escore ABC: penetrante, FAST positivo, PAS ≤ 90, FC ≥ 120 (1 ponto cada)', ramos:[
+          { rotulo:'ABC ≥ 2 com sangramento ativo', cor:'perigo', texto:'*Acionar o protocolo de transfusão maciça*: hemácia, plasma e plaqueta 1:1:1, aquecidos',
+            nota:'Sangue total O de baixo título, se o serviço tiver. Cálcio a cada poucas unidades. Fibrinogênio baixo: crioprecipitado',
+            meds:[{ droga:'Concentrado de hemácias', dose:'1:1:1 com plasma e plaquetas', via:'EV' }] },
+          { rotulo:'Melhora e volta a cair', cor:'perigo', texto:'*Resposta transitória = ainda sangrando:* controle definitivo agora' },
+          { rotulo:'Melhora sustentada', cor:'ok', texto:'Seguir para o neurológico e, depois, para a avaliação secundária' }
+        ]},
+
+        { tipo:'decisao', texto:'Usa anticoagulante? (e o sangramento ameaça a vida)', ramos:[
+          { rotulo:'Varfarina', cor:'perigo', texto:'*Complexo protrombínico* + vitamina K 10 mg EV',
+            nota:'Sem complexo protrombínico: plasma 15–30 mL/kg. INR 15 min depois',
+            meds:[{ droga:'Complexo protrombínico', dose:'1.500–2.000 UI em 10 min', via:'EV' }, { droga:'Vitamina K', dose:'10 mg em 10–20 min', via:'EV' }] },
+          { rotulo:'Rivaroxabana, apixabana, edoxabana', cor:'perigo', texto:'*Complexo protrombínico* e antifibrinolítico',
+            meds:[{ droga:'Complexo protrombínico', dose:'2.000 UI ou 25–50 UI/kg', via:'EV' }] },
+          { rotulo:'Dabigatrana', cor:'perigo', texto:'*Idarucizumabe*; sem ele, hemodiálise',
+            meds:[{ droga:'Idarucizumabe', dose:'5 g', via:'EV' }] },
+          { rotulo:'Não', cor:'ok', texto:'Seguir' }
+        ]},
+
+        { tipo:'passo', rotulo:'D — Neurológico', texto:'*Glasgow total e por componente* (o motor é o que mais informa) · pupilas · lateralização · nível sensitivo',
+          nota:'Acompanhe a tendência. No TCE, um único episódio de hipotensão ou hipóxia aumenta a mortalidade: sem hipotensão permissiva', ir:'tce' },
+
+        { tipo:'passo', rotulo:'E — Expor e aquecer', texto:'*Despir tudo e rolar em bloco:* dorso, glúteos, couro cabeludo, axilas, períneo e dobras',
+          nota:'Depois cobrir: sala aquecida, tirar roupa molhada, manta térmica, soro e sangue aquecidos. Hipotermia, acidose e coagulopatia matam juntas' },
+
+        { tipo:'passo', rotulo:'Adjuntos da primária', texto:'Monitor e capnografia · *eFAST* (repetir se mudar) · raio-X de tórax e pelve no instável · ECG se o mecanismo pode lesar o coração',
+          nota:'Exame "de rotina" não ajuda: peça o que muda a conduta. Queda ou colisão sem explicação: pense em síncope, arritmia, AVC ou hipoglicemia como causa' },
+
+        { tipo:'decisao', texto:'Terminada a primária: para onde vai?', ramos:[
+          { rotulo:'Instável', cor:'perigo', texto:'*Centro cirúrgico, angiografia ou transferência* — sem avaliação secundária detalhada e sem TC que atrase' },
+          { rotulo:'Lesão além da capacidade do hospital', cor:'perigo', texto:'*Transferir cedo*, sem esperar exame; mande o sangue junto',
+            nota:'Só faça antes o que evita piorar no caminho: intubar, drenar, cinta pélvica. Passagem no formato S-xABCDE-BAR' },
+          { rotulo:'Estável', cor:'ok', texto:'*Avaliação secundária* da cabeça aos pés, história AMPLA e TC guiada pelo mecanismo' }
+        ]},
+
+        { tipo:'fim', rotulo:'Sempre', texto:'Piorou? *Recomeçar do x* · analgesia (fentanil) · vacina antitetânica',
+          nota:'Até 39% dos politraumatizados têm lesão que passou despercebida na primeira avaliação',
+          meds:[{ droga:'Fentanil', dose:'0,5–1 mcg/kg a cada 5–10 min', via:'EV' }] }
       ]},
-      { tipo:'fluxo', titulo:'Avaliação primária — XABCDE', itens:[
-        { tipo:'inicio', rotulo:'X', texto:'*Hemorragia exsanguinante* — compressão direta, torniquete, curativo compressivo',
-          nota:'Torniquete 5 a 7 cm acima da lesão, apertado até parar o sangramento. Anote a hora' },
-        { tipo:'passo', rotulo:'A', texto:'*Via aérea com proteção da coluna cervical*',
-          nota:'Falar é o melhor teste. Indicações de via aérea definitiva: Glasgow ≤ 8, trauma de face, queimadura de via aérea' },
-        { tipo:'passo', rotulo:'B', texto:'*Ventilação*: expor o tórax, inspecionar, palpar, percutir e auscultar',
-          nota:'Procurar pneumotórax hipertensivo, aberto, hemotórax maciço e tórax instável' },
-        { tipo:'passo', rotulo:'C', texto:'*Circulação*: dois acessos calibrosos, controlar hemorragia, avaliar perfusão',
-          nota:'Fontes de sangramento: tórax, abdome, retroperitônio, pelve, ossos longos e o chão' },
-        { tipo:'passo', rotulo:'D', texto:'*Neurológico*: Glasgow, pupilas, déficit motor e glicemia' },
-        { tipo:'passo', rotulo:'E', texto:'*Exposição e prevenção de hipotermia* — despir tudo, depois aquecer',
-          nota:'Manta térmica e soro aquecido. Rolar em bloco para examinar o dorso' },
-        { tipo:'fim', rotulo:'Depois', texto:'Avaliação secundária: história AMPLA e exame da cabeça aos pés' }
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Hemorragia é a maior causa evitável de morte no trauma*: pele fria e taquicardia são sangramento até prova em contrário.',
+        'A pressão só cai depois de perder ~30% do volume: use *índice de choque > 0,8–1*, pressão de pulso e lactato. No idoso, PAS < 110 já pode ser choque e o betabloqueador esconde a taquicardia.',
+        '*TCE:* um único episódio de hipotensão ou hipóxia aumenta a mortalidade — sem hipotensão permissiva.',
+        'Piorou logo depois de intubar: pneumotórax que a pressão positiva tornou hipertensivo — reauscultar e olhar o alarme de pressão.',
+        'Extubação acidental é a complicação evitável mais comum: fixar e conferir o tubo a cada transporte.'
       ]},
-      { tipo:'lista', titulo:'Classes de choque hemorrágico', itens:[
-        '*Classe I* — até 15% (750 mL): FC normal, PA normal. Cristaloide.',
-        '*Classe II* — 15 a 30%: FC acima de 100, PA normal, pressão de pulso estreita, ansiedade.',
-        '*Classe III* — 30 a 40%: FC acima de 120, hipotensão, confusão, oligúria. Sangue.',
-        '*Classe IV* — acima de 40%: FC acima de 140, hipotensão grave, letargia, anúria. Protocolo maciço.',
-        'A criança e o jovem mantêm a PA até muito tarde: use FC, TEC e nível de consciência.'
+
+      { tipo:'passos', titulo:'Conduta imediata', itens:[
+        '*Parar o sangramento externo:* compressão, torniquete ou tamponamento da ferida.',
+        'Garantir a via aérea com a coluna protegida; *ressuscitar antes* de intubar o chocado.',
+        'Tratar na hora pneumotórax hipertensivo, hemotórax maciço e tamponamento.',
+        'Dois acessos calibrosos e *sangue O cedo*, em 1:1:1 — cristaloide o mínimo possível.',
+        '*TXA* se até 3 h do trauma, cálcio pelo iônico e cinta pélvica se a pelve for instável.',
+        'Glasgow por componente e pupilas; expor tudo e aquecer.',
+        'Decidir o destino: instável ao centro cirúrgico ou transferência; estável à avaliação secundária e à TC.'
       ]},
-      { tipo:'doses', titulo:'Medidas iniciais', itens:[
-        { droga:'Cristaloide aquecido (Ringer lactato)', dose:'1000 mL no adulto; 20 mL/kg na criança', via:'EV', obs:'Não hiper-hidratar: o objetivo é a reposição com sangue precoce.' },
-        { droga:'Concentrado de hemácias', dose:'Conforme a perda', via:'EV', obs:'Protocolo de transfusão maciça na classe III e IV: hemácia, plasma e plaqueta em 1:1:1.' },
-        { droga:'Ácido tranexâmico', dose:'1 g em 10 minutos, depois 1 g em 8 horas', via:'EV', obs:'Só se iniciado em até 3 horas do trauma. Depois disso pode piorar.' },
-        { droga:'Torniquete', dose:'—', via:'—', obs:'5 a 7 cm acima da lesão, apertar até cessar o sangramento. Registrar o horário.' },
-        { droga:'Vacina dT ou dTpa', dose:'0,5 mL', via:'IM', obs:'Conforme o esquema vacinal e o tipo de ferida.' },
-        { droga:'Manta térmica e soro aquecido', dose:'—', via:'—', obs:'Prevenir hipotermia é parte do tratamento do choque.' }
+
+      { tipo:'doses', titulo:'Medicações e hemoderivados', itens:[
+        { droga:'Ácido tranexâmico 250 mg/5 mL', dose:'1 g em 10 min, depois 1 g em 8 h', via:'EV', obs:'4 ampolas + SF 100 mL. *Só até 3 horas do trauma* — depois pode aumentar a mortalidade.' },
+        { droga:'Concentrado de hemácias', dose:'O-negativo ou O-positivo, 1:1:1 com plasma e plaquetas', via:'EV', obs:'O-negativo na mulher em idade fértil. Sangue total O de baixo título, se houver. Aquecido.' },
+        { droga:'Plasma fresco congelado', dose:'1 unidade para cada unidade de hemácias', via:'EV', obs:'Parte do 1:1:1. Na varfarina sem complexo protrombínico: 15–30 mL/kg.' },
+        { droga:'Plaquetas', dose:'1 aférese (ou pool) a cada 6 unidades de hemácias', via:'EV', obs:'Completa a proporção 1:1:1. Também no sangramento grave em uso de antiagregante.' },
+        { droga:'Crioprecipitado', dose:'15–20 unidades (ou fibrinogênio 3–4 g)', via:'EV', obs:'Se fibrinogênio < 150 mg/dL ou pelo teste viscoelástico.' },
+        { droga:'Gluconato de cálcio 10%', dose:'1–3 g (10–30 mL) em 10 min', via:'EV', obs:'Guiado pelo cálcio iônico (manter normal). Sem dosagem rápida: empírico após algumas unidades. Cloreto de cálcio 10% 10 mL (1 g) equivale a ~3 g de gluconato, de preferência em veia central.' },
+        { droga:'Cristaloide aquecido', dose:'Bolus pequeno (250–500 mL)', via:'EV', obs:'Só sem hemorragia significativa ou enquanto o sangue não chega. Volume grande dilui fatores, esfria e acidifica.' },
+        { droga:'Complexo protrombínico', dose:'Varfarina: 1.500–2.000 UI em 10 min · anti-Xa: 2.000 UI ou 25–50 UI/kg', via:'EV', obs:'Sangramento que ameaça a vida. INR 15 min depois na varfarina.' },
+        { droga:'Vitamina K', dose:'10 mg em 10–20 min', via:'EV', obs:'Sempre junto com o complexo protrombínico na varfarina: sozinha demora 12–24 h.' },
+        { droga:'Idarucizumabe', dose:'5 g', via:'EV', obs:'Reverte a dabigatrana. Sem ele: hemodiálise.' },
+        { droga:'Cetamina', dose:'0,5–1 mg/kg (meia dose no choque)', via:'EV', obs:'Indução para intubar o traumatizado instável, depois de começar o sangue.' },
+        { droga:'Etomidato', dose:'0,15–0,3 mg/kg', via:'EV', obs:'Alternativa de indução; metade da dose no choque e no idoso frágil.' },
+        { droga:'Fentanil', dose:'0,5–1 mcg/kg a cada 5–10 min', via:'EV', obs:'Analgesia de ação curta, que menos derruba a pressão. Bloqueio regional quando possível.' },
+        { droga:'Torniquete', dose:'Acima da ferida, até parar o sangramento', via:'—', obs:'Anotar o horário. Manguito de PA como ponte.' },
+        { droga:'Cinta pélvica', dose:'Na altura dos grandes trocânteres', via:'—', obs:'Pelve instável com choque: colocar sem esperar imagem. Sem cinta: lençol.' },
+        { droga:'Vacina dT ou dTpa', dose:'0,5 mL', via:'IM', obs:'Conforme o esquema vacinal e o tipo de ferida.' }
       ]},
+
+      { tipo:'lista', titulo:'Choque hemorrágico: como reconhecer', itens:[
+        '*Classe I* (< 15%): sinais vitais normais.',
+        '*Classe II* (15–30%): FC normal ou alta, pressão de pulso estreita, déficit de bases −2 a −6 — considerar sangue.',
+        '*Classe III* (31–40%): FC alta, PA normal ou baixa, confusão, déficit de bases −6 a −10 — sangue.',
+        '*Classe IV* (> 40%): FC muito alta, hipotensão, letargia, déficit de bases abaixo de −10 — transfusão maciça.',
+        '*Índice de choque* (FC ÷ PAS) > 0,8–1 e *escore ABC ≥ 2* (penetrante, FAST positivo, PAS ≤ 90, FC ≥ 120) apontam sangue precoce e transfusão maciça antes da hipotensão.'
+      ]},
+
+      { tipo:'lista', titulo:'Via aérea difícil no trauma (LEMON)', itens:[
+        '*L*ook: trauma de face e pescoço distorce a anatomia.',
+        '*E*valuate 3-3-2 (abrir o colar para medir): abertura de boca, mento-hioide e hioide-tireoide.',
+        '*M*allampati: quase nunca dá para fazer — veja quanto se enxerga e se há sangue ou vômito.',
+        '*O*bstrução (hematoma, edema de inalação) e *O*besidade — ela dificulta também a cricotireoidostomia.',
+        '*N*eck: restrição da coluna limita a mobilidade — videolaringoscópio e bougie.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Sempre que houver trauma significativo:* tipagem e prova cruzada; beta-HCG na mulher em idade fértil; glicemia capilar.',
+        '*No instável:* raio-X de tórax e pelve na sala, eFAST (repetido), gasometria com lactato e déficit de bases.',
+        '*Conforme o caso:* coagulograma no anticoagulado, CPK em quem ficou no chão, ECG e troponina se há risco de contusão cardíaca, cálcio iônico durante a transfusão, teste viscoelástico se disponível.',
+        '*No estável:* TC guiada pelo mecanismo; se a TC vai ser feita, o raio-X de tórax e pelve no contuso não acrescenta. Penetrante: raio-X da região mesmo assim.',
+        'Leucócitos, álcool em quem está claramente bêbado e toxicológico sem implicação clínica não ajudam.'
+      ]},
+
       { tipo:'naofazer', titulo:'Não fazer', itens:[
-        'Pular para a tomografia com o paciente instável — instável vai para o centro cirúrgico.',
-        'Infundir volumes enormes de cristaloide: dilui fatores, piora a coagulopatia e a hipotermia.',
-        'Retirar objeto empalado no pronto-socorro.',
-        'Esquecer de rolar o paciente e examinar o dorso e o períneo.',
-        'Deixar o paciente exposto e frio depois de examinar.'
+        'Levar o paciente instável para a tomografia.',
+        'Infundir litros de cristaloide no choque hemorrágico: dilui fatores, esfria e piora a coagulopatia.',
+        'Hipotensão permissiva no TCE.',
+        'Esperar o raio-X para descomprimir um pneumotórax hipertensivo.',
+        'Atrasar a transferência para terminar exames ou suturar ferida que não sangra.',
+        'Retirar objeto empalado no pronto-socorro ou manipular a pelve instável várias vezes.'
       ]},
-      { tipo:'texto', titulo:'História AMPLA', conteudo:'*A*lergias · *M*edicações em uso · *P*assado médico e gestação · *L*íquidos e alimentos, hora da última ingesta · *A*mbiente e mecanismo do trauma. O mecanismo prediz a lesão: altura da queda, velocidade, uso de cinto, deformidade do veículo, tempo de encarceramento.' },
+
+      { tipo:'texto', titulo:'Destino e transferência', conteudo:'*Instável:* centro cirúrgico, angiografia ou transferência para centro de trauma — a avaliação secundária espera. *Estável:* avaliação secundária completa (história AMPLA: alergias, medicações, passado e gestação, líquidos e última refeição, ambiente e mecanismo) e TC conforme o mecanismo. *Transferir* assim que ficar claro que as lesões passam da capacidade do hospital: o exame completo *não* é pré-requisito, e a TC só se justifica se puder mudar o destino. Leve o sangue junto e passe o caso no formato *S-xABCDE-BAR*: situação, o que foi feito para o sangramento, via aérea (tubo, colar), respiração (dreno), circulação (acessos, hemoderivados, TXA), neurológico (Glasgow, pupilas), exposição (lesões, temperatura), antecedentes, avaliação e recomendação.' },
+
       { tipo:'dica', titulo:'Pega do plantão', itens:[
-        'Reavalie do X sempre que o paciente piorar — não continue de onde parou.',
-        'Anote o horário do torniquete: ele define a conduta cirúrgica depois.',
-        'FAST à beira do leito responde rápido: líquido livre, tamponamento, pneumotórax.'
+        'Piorou? Recomece do x, não de onde parou.',
+        'Todo ferimento penetrante do tórax ou do abdome atinge os dois compartimentos até prova em contrário.',
+        'Idoso que caiu: presuma lesão grave mesmo com cara de bem — anticoagulante, betabloqueador e hematoma subdural silencioso.',
+        'Anote o horário do torniquete e o da primeira dose de TXA.',
+        'Possível crime: guarde as roupas em saco de papel e não corte pelo furo do projétil.'
       ]}
     ] },
 
@@ -5532,7 +6886,8 @@ const PROTOCOLOS = [
         ]},
         { tipo:'decisao', texto:'Há sinal de hipertensão intracraniana?', ramos:[
           { rotulo:'Sim', cor:'perigo', texto:'*Cabeceira a 30°, normocapnia, sedação e osmoterapia*',
-            nota:'Manitol 0,25 a 1 g/kg ou salina hipertônica. Neurocirurgia imediata' },
+            nota:'Manitol 0,25 a 1 g/kg ou salina hipertônica. Neurocirurgia imediata',
+            meds:['Manitol 20%', 'Salina hipertônica 3%'] },
           { rotulo:'Não', texto:'Observação neurológica seriada' }
         ]},
         { tipo:'fim', rotulo:'Destino', texto:'Grave vai para terapia intensiva; leve com tomografia normal pode ir para casa com acompanhante' }
@@ -5591,7 +6946,7 @@ const PROTOCOLOS = [
       ]},
       { tipo:'doses', titulo:'Procedimentos e medicações', itens:[
         { droga:'Descompressão por agulha', dose:'Cateter 14G, 5 cm ou mais', via:'—', obs:'5º espaço intercostal na linha axilar média é hoje o local preferido no adulto.' },
-        { droga:'Dreno de tórax', dose:'28 a 32 Fr no adulto', via:'—', obs:'5º espaço intercostal, linha axilar média, borda superior da costela inferior. Selo d\'água.' },
+        { droga:'Dreno de tórax', dose:'Instável ou hemotórax: 24 a 28 Fr · pneumotórax estável: pigtail 14 Fr', via:'—', obs:'5º espaço intercostal, linha axilar média, borda superior da costela inferior. Selo d\'água.' },
         { droga:'Curativo de três pontas', dose:'—', via:'—', obs:'No pneumotórax aberto, até drenar. Deixar um lado livre funcionando como válvula.' },
         { droga:'Dipirona', dose:'2 g', via:'EV', obs:'De 6/6 h. Analgesia é tratamento, não conforto.' },
         { droga:'Morfina', dose:'2 a 4 mg', via:'EV', obs:'Titulada. Cuidado com depressão respiratória na contusão pulmonar.' },
@@ -5644,7 +6999,7 @@ const PROTOCOLOS = [
         { tipo:'fim', rotulo:'Destino', texto:'Observação com exames seriados, ou centro cirúrgico' }
       ]},
       { tipo:'doses', titulo:'Medidas', itens:[
-        { droga:'Cristaloide aquecido', dose:'1000 mL no adulto; 20 mL/kg na criança', via:'EV', obs:'Reposição inicial, sem hiper-hidratar.' },
+        { droga:'Cristaloide aquecido', dose:'Bolus pequeno (250–500 mL) no adulto; 20 mL/kg na criança', via:'EV', obs:'Só enquanto o sangue não chega: no choque hemorrágico, *sangue cedo* (1:1:1) e hipotensão permissiva sem TCE. Volume grande dilui fatores, esfria e acidifica.' },
         { droga:'Concentrado de hemácias', dose:'Conforme a perda', via:'EV', obs:'Protocolo de transfusão maciça se houver hemorragia grave.' },
         { droga:'Ácido tranexâmico', dose:'1 g em 10 min, depois 1 g em 8 h', via:'EV', obs:'Em até 3 horas do trauma.' },
         { droga:'Cinta pélvica', dose:'—', via:'—', obs:'Na altura dos grandes trocânteres. Medida simples que reduz muito o sangramento.' },
@@ -5693,7 +7048,8 @@ const PROTOCOLOS = [
         { tipo:'decisao', texto:'Há hipotensão?', ramos:[
           { rotulo:'Com taquicardia', cor:'perigo', texto:'*Choque hemorrágico* — procurar o sangramento' },
           { rotulo:'Com bradicardia e pele quente', texto:'*Choque neurogênico* — volume e vasopressor',
-            nota:'Noradrenalina; atropina se bradicardia sintomática. Alvo de PAM 85 a 90 mmHg por 7 dias' }
+            nota:'Noradrenalina; atropina se bradicardia sintomática. Alvo de PAM 85 a 90 mmHg por 7 dias',
+            meds:['Atropina'] }
         ]},
         { tipo:'passo', rotulo:'Documentar', texto:'Exame neurológico completo com nível sensitivo e motor (escala ASIA)',
           nota:'Toque retal para tônus e sensibilidade perianal — define lesão completa ou incompleta' },
@@ -5742,7 +7098,8 @@ const PROTOCOLOS = [
         { tipo:'passo', rotulo:'C', texto:'*Calcular a superfície corporal queimada* e iniciar a reposição',
           nota:'Regra dos nove no adulto; palma da mão do paciente = 1%. Contar só 2º e 3º graus' },
         { tipo:'passo', rotulo:'Fórmula de Parkland', texto:'*2 a 4 mL × peso × %SCQ de Ringer lactato em 24 horas*',
-          nota:'Metade nas primeiras 8 horas contadas do TRAUMA, metade nas 16 seguintes' },
+          nota:'Metade nas primeiras 8 horas contadas do TRAUMA, metade nas 16 seguintes',
+          meds:['Ringer lactato — fórmula de Parkland'] },
         { tipo:'passo', rotulo:'Titular', texto:'Ajustar pela *diurese*: 0,5 mL/kg/h no adulto, 1 mL/kg/h na criança',
           nota:'A fórmula é ponto de partida, não meta. A diurese manda' },
         { tipo:'fim', rotulo:'Destino', texto:'Centro de queimados conforme os critérios; curativo e analgesia nos demais' }
@@ -5798,7 +7155,8 @@ const PROTOCOLOS = [
         { tipo:'passo', rotulo:'Primeiro', texto:'*Avaliar e registrar o exame neurovascular distal*',
           nota:'Pulso, perfusão, sensibilidade e motricidade — antes de qualquer manipulação' },
         { tipo:'passo', rotulo:'Na 1ª hora', texto:'*ANTIBIÓTICO + PROFILAXIA ANTITETÂNICA*',
-          nota:'Cefazolina 2 g EV. Gustilo III: acrescentar gentamicina' },
+          nota:'Cefazolina 2 g EV. Gustilo III: acrescentar gentamicina',
+          meds:['Cefazolina', 'Imunoglobulina antitetânica'] },
         { tipo:'passo', rotulo:'Ferida', texto:'Retirar contaminantes grosseiros, cobrir com gaze úmida em soro e *não lavar exaustivamente no PS*',
           nota:'A lavagem definitiva é no centro cirúrgico. Fotografar antes de cobrir, se possível' },
         { tipo:'passo', rotulo:'Alinhar e imobilizar', texto:'Tração suave para alinhar, talas, e *reavaliar o neurovascular depois*',
@@ -5854,7 +7212,8 @@ const PROTOCOLOS = [
         { tipo:'passo', rotulo:'Imagem', texto:'Radiografia em duas incidências *antes* da redução',
           nota:'Exceto quando há comprometimento vascular evidente — aí reduz primeiro' },
         { tipo:'passo', rotulo:'Reduzir', texto:'*Analgesia e sedação adequadas*, depois manobra específica',
-          nota:'Músculo contraído impede a redução. Sedação consciente com fentanila e midazolam ou propofol' },
+          nota:'Músculo contraído impede a redução. Sedação consciente com fentanila e midazolam ou propofol',
+          meds:['Fentanila 50 mcg/mL', 'Midazolam', 'Propofol'] },
         { tipo:'passo', rotulo:'Depois', texto:'*Reavaliar o neurovascular* + radiografia de controle + imobilizar',
           nota:'Nunca dispense a radiografia pós-redução' },
         { tipo:'fim', rotulo:'Destino', texto:'Ortopedia; a maioria vai para casa imobilizada, com retorno em poucos dias' }
@@ -5960,11 +7319,13 @@ const PROTOCOLOS = [
         { tipo:'passo', rotulo:'Limpeza', texto:'*Irrigação abundante com soro sob pressão* — 250 a 500 mL',
           nota:'É o que previne infecção, mais que qualquer antibiótico' },
         { tipo:'passo', rotulo:'Anestesia', texto:'Lidocaína 2% infiltrada nas bordas',
-          nota:'Sem vasoconstritor até 4,5 mg/kg; com vasoconstritor até 7 mg/kg. Aspirar antes de injetar' },
+          nota:'Sem vasoconstritor até 4,5 mg/kg; com vasoconstritor até 7 mg/kg. Aspirar antes de injetar',
+          meds:['Lidocaína 2% sem vasoconstritor'] },
         { tipo:'passo', rotulo:'Explorar', texto:'Procurar corpo estranho, tendão, osso e desbridar tecido desvitalizado',
           nota:'Radiografia se houver suspeita de corpo estranho radiopaco (vidro, metal)' },
         { tipo:'passo', rotulo:'Suturar', texto:'Sem tensão, aproximando as bordas, com o fio adequado ao local' },
-        { tipo:'fim', rotulo:'Antes da alta', texto:'*Profilaxia antitetânica* + curativo + data de retirada dos pontos por escrito' }
+        { tipo:'fim', rotulo:'Antes da alta', texto:'*Profilaxia antitetânica* + curativo + data de retirada dos pontos por escrito',
+          meds:['Imunoglobulina antitetânica'] }
       ]},
       { tipo:'lista', titulo:'Fio e tempo de retirada por região', itens:[
         '*Face*: náilon 5-0 ou 6-0 — retirar em 5 dias.',
@@ -6022,7 +7383,8 @@ const PROTOCOLOS = [
           { rotulo:'Mão, pé, puntiforme ou tardia', cor:'perigo', texto:'*NÃO suturar* — deixar por segunda intenção' }
         ]},
         { tipo:'passo', rotulo:'Profilaxias', texto:'*Antirrábica + antitetânica + antibiótico quando indicado*',
-          nota:'Classificar o acidente conforme o Ministério da Saúde e o animal envolvido' },
+          nota:'Classificar o acidente conforme o Ministério da Saúde e o animal envolvido',
+          meds:['Soro antirrábico humano'] },
         { tipo:'fim', rotulo:'Reavaliar em 48 h', texto:'Mordedura infecta com frequência — reavaliação é obrigatória' }
       ]},
       { tipo:'lista', titulo:'Profilaxia antirrábica — classificação', itens:[
@@ -6133,9 +7495,11 @@ const PROTOCOLOS = [
           nota:'Intraósseo após 2 tentativas ou 90 segundos sem sucesso' },
         { tipo:'decisao', texto:'Qual o ritmo?', ramos:[
           { rotulo:'Chocável (FV/TVsp)', cor:'perigo', texto:'*Desfibrilar 2 J/kg*, depois 4 J/kg',
-            nota:'Cargas seguintes até 10 J/kg ou a dose adulta. Adrenalina após o 2º choque; amiodarona após o 3º' },
+            nota:'Cargas seguintes até 10 J/kg ou a dose adulta. Adrenalina após o 2º choque; amiodarona após o 3º',
+            meds:['Adrenalina 1:10.000 (diluir 1 mL de 1:1000 em 9 mL de AD)', 'Amiodarona'] },
           { rotulo:'Não chocável (AESP/assistolia)', texto:'*Adrenalina o quanto antes*',
-            nota:'0,01 mg/kg a cada 3 a 5 minutos. Buscar as causas reversíveis' }
+            nota:'0,01 mg/kg a cada 3 a 5 minutos. Buscar as causas reversíveis',
+            meds:['Adrenalina 1:10.000 (diluir 1 mL de 1:1000 em 9 mL de AD)'] }
         ]},
         { tipo:'passo', rotulo:'Causas', texto:'*Hipóxia primeiro* — depois hipovolemia, hipo e hipercalemia, hipoglicemia, hipotermia, acidose',
           nota:'E os T: pneumotórax, tamponamento, toxinas, trombose' },
@@ -6239,14 +7603,17 @@ const PROTOCOLOS = [
         { tipo:'inicio', rotulo:'Classificar', texto:'Avaliar estado geral, olhos, sede, sinal da prega e diurese' },
         { tipo:'decisao', texto:'Qual o grau?', ramos:[
           { rotulo:'Sem desidratação — Plano A', cor:'ok', texto:'*Tratamento em casa* com sais de reidratação oral',
-            nota:'Menor de 1 ano: 50 a 100 mL após cada evacuação. Maior: 100 a 200 mL' },
+            nota:'Menor de 1 ano: 50 a 100 mL após cada evacuação. Maior: 100 a 200 mL',
+            meds:['Sais de reidratação oral (SRO) — Plano B'] },
           { rotulo:'Desidratação — Plano B', texto:'*TRO na unidade: 50 a 100 mL/kg em 4 horas*',
             nota:'Oferecer em colher ou copo, pouco e sempre. Reavaliar de hora em hora' },
           { rotulo:'Grave ou choque — Plano C', cor:'perigo', texto:'*Expansão venosa imediata*',
-            nota:'20 mL/kg de SF 0,9% ou Ringer em 20 a 30 minutos; repetir até melhorar a perfusão' }
+            nota:'20 mL/kg de SF 0,9% ou Ringer em 20 a 30 minutos; repetir até melhorar a perfusão',
+            meds:['Cloreto de sódio 0,9% ou Ringer lactato — Plano C'] }
         ]},
         { tipo:'passo', rotulo:'No Plano B', texto:'Se vomitar, dar *ondansetrona* e retomar a TRO',
-          nota:'Uma dose costuma resolver e evita a via venosa' },
+          nota:'Uma dose costuma resolver e evita a via venosa',
+          meds:['Ondansetrona'] },
         { tipo:'passo', rotulo:'Sempre', texto:'Manter aleitamento materno e alimentação habitual',
           nota:'Não suspender leite nem diluir fórmula' },
         { tipo:'fim', rotulo:'Reavaliar em 4 horas', texto:'Melhorou: Plano A em casa. Persiste: repetir o Plano B. Piorou: Plano C' }
@@ -6290,15 +7657,19 @@ const PROTOCOLOS = [
         { tipo:'inicio', rotulo:'Entrada', texto:'Diarreia aguda, com ou sem vômito, em criança' },
         { tipo:'passo', rotulo:'Primeiro', texto:'*Classificar a desidratação* e aplicar o Plano A, B ou C' },
         { tipo:'passo', rotulo:'Sempre', texto:'*Zinco* por 10 a 14 dias + manter alimentação e aleitamento',
-          nota:'O zinco reduz duração, gravidade e recorrência — recomendação do Ministério da Saúde' },
+          nota:'O zinco reduz duração, gravidade e recorrência — recomendação do Ministério da Saúde',
+          meds:['Zinco'] },
         { tipo:'decisao', texto:'Precisa de antibiótico?', ramos:[
-          { rotulo:'Não — a maioria', cor:'ok', texto:'*Rotavírus e norovírus*: só reidratação e zinco' },
+          { rotulo:'Não — a maioria', cor:'ok', texto:'*Rotavírus e norovírus*: só reidratação e zinco',
+            meds:['Sais de reidratação oral', 'Zinco'] },
           { rotulo:'Disenteria febril com toxemia', texto:'*Considerar antibiótico*',
-            nota:'Azitromicina ou ceftriaxona. Coprocultura antes' },
+            nota:'Azitromicina ou ceftriaxona. Coprocultura antes',
+            meds:['Azitromicina', 'Ceftriaxona'] },
           { rotulo:'Suspeita de E. coli produtora de toxina Shiga', cor:'perigo',
             texto:'*NÃO dar antibiótico*', nota:'Aumenta o risco de síndrome hemolítico-urêmica' }
         ]},
-        { tipo:'fim', rotulo:'Alta', texto:'Hidratada, aceitando líquidos, com SRO, zinco e sinais de alarme explicados' }
+        { tipo:'fim', rotulo:'Alta', texto:'Hidratada, aceitando líquidos, com SRO, zinco e sinais de alarme explicados',
+          meds:['Zinco'] }
       ]},
       { tipo:'doses', titulo:'Medicações', itens:[
         { droga:'Sais de reidratação oral', dose:'Conforme o plano A, B ou C', via:'VO', obs:'Base do tratamento.' },
@@ -6342,7 +7713,8 @@ const PROTOCOLOS = [
         { tipo:'passo', rotulo:'O tratamento é SUPORTE', texto:'*Oxigênio, aspiração de vias aéreas superiores e hidratação*',
           nota:'Não existe medicação que mude o curso da doença' },
         { tipo:'passo', rotulo:'Higiene nasal', texto:'Soro fisiológico e aspiração antes das mamadas e antes de dormir',
-          nota:'A obstrução nasal é grande parte do desconforto no lactente, que respira pelo nariz' },
+          nota:'A obstrução nasal é grande parte do desconforto no lactente, que respira pelo nariz',
+          meds:['Soro fisiológico 0,9% nasal'] },
         { tipo:'decisao', texto:'Qual a gravidade?', ramos:[
           { rotulo:'Leve, saturando bem, mamando', cor:'ok', texto:'*Alta com orientação* e retorno em 24 a 48 h' },
           { rotulo:'Moderada — SatO2 abaixo de 92% ou esforço', texto:'*Internar*: oxigênio e hidratação',
@@ -6392,16 +7764,20 @@ const PROTOCOLOS = [
       { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
         { tipo:'inicio', rotulo:'Entrada', texto:'Sibilância, tosse e esforço respiratório em criança com asma conhecida ou não' },
         { tipo:'passo', rotulo:'Primeira hora', texto:'*Salbutamol spray com espaçador, a cada 20 minutos, 3 vezes*',
-          nota:'Spray com espaçador é superior à nebulização na crise leve a moderada' },
+          nota:'Spray com espaçador é superior à nebulização na crise leve a moderada',
+          meds:['Salbutamol spray 100 mcg com espaçador', 'Salbutamol solução para nebulização'] },
         { tipo:'passo', rotulo:'Junto', texto:'*Corticoide sistêmico na primeira hora*',
-          nota:'Prednisolona 1 a 2 mg/kg VO. A via oral tem a mesma eficácia da venosa' },
+          nota:'Prednisolona 1 a 2 mg/kg VO. A via oral tem a mesma eficácia da venosa',
+          meds:['Prednisolona'] },
         { tipo:'passo', rotulo:'Se moderada a grave', texto:'Associar *ipratrópio* nos 3 primeiros ciclos + oxigênio',
-          nota:'Alvo de SatO2 entre 94 e 98% na criança' },
+          nota:'Alvo de SatO2 entre 94 e 98% na criança',
+          meds:['Brometo de ipratrópio'] },
         { tipo:'decisao', texto:'Como está após a primeira hora?', ramos:[
           { rotulo:'Boa resposta', cor:'ok', texto:'*Alta* com corticoide por 3 a 5 dias e plano escrito' },
           { rotulo:'Resposta parcial', texto:'Manter tratamento e observar por mais 1 a 2 horas' },
           { rotulo:'Refratária', cor:'perigo', texto:'*Sulfato de magnésio* + internação',
-            nota:'40 a 50 mg/kg EV em 20 minutos. Considerar terbutalina e terapia intensiva' }
+            nota:'40 a 50 mg/kg EV em 20 minutos. Considerar terbutalina e terapia intensiva',
+            meds:['Sulfato de magnésio', 'Terbutalina'] }
         ]},
         { tipo:'fim', rotulo:'Sempre na alta', texto:'Conferir a técnica inalatória e entregar o plano de ação por escrito' }
       ]},
@@ -6448,14 +7824,17 @@ const PROTOCOLOS = [
           nota:'Choro e agitação pioram a obstrução. Não examinar a garganta se houver suspeita de epiglotite' },
         { tipo:'decisao', texto:'Qual a gravidade (escore de Westley)?', ramos:[
           { rotulo:'Leve — sem estridor em repouso', cor:'ok', texto:'*Dexametasona em dose única* e alta',
-            nota:'0,15 a 0,6 mg/kg VO. Observar por 2 a 4 horas' },
+            nota:'0,15 a 0,6 mg/kg VO. Observar por 2 a 4 horas',
+            meds:['Dexametasona'] },
           { rotulo:'Moderada — estridor em repouso, tiragem', texto:'*Dexametasona + adrenalina nebulizada*',
-            nota:'Observar por pelo menos 2 a 4 horas após a adrenalina, pelo efeito rebote' },
+            nota:'Observar por pelo menos 2 a 4 horas após a adrenalina, pelo efeito rebote',
+            meds:['Dexametasona', 'Adrenalina 1:1000 nebulizada'] },
           { rotulo:'Grave — agitação, cianose, exaustão', cor:'perigo',
             texto:'*Adrenalina + oxigênio + terapia intensiva*', nota:'Preparar via aérea; tubo menor que o previsto pela idade' }
         ]},
         { tipo:'alerta', rotulo:'Atenção', texto:'*Efeito rebote da adrenalina em 2 horas*',
-          nota:'Nunca dar alta logo após a nebulização com adrenalina' },
+          nota:'Nunca dar alta logo após a nebulização com adrenalina',
+          meds:['Adrenalina 1:1000 nebulizada'] },
         { tipo:'fim', rotulo:'Alta', texto:'Sem estridor em repouso, sem tiragem, hidratada, 2 a 4 horas após a adrenalina' }
       ]},
       { tipo:'doses', titulo:'Medicações — por quilo', itens:[
@@ -6498,7 +7877,8 @@ const PROTOCOLOS = [
           nota:'Temperatura axilar acima de 37,8 °C ou retal acima de 38 °C' },
         { tipo:'decisao', texto:'Qual a idade?', ramos:[
           { rotulo:'Menor de 1 mês', cor:'perigo', texto:'*Internar + investigação completa + antibiótico*',
-            nota:'Hemograma, PCR, urina, hemocultura, urocultura e LÍQUOR. Ampicilina + gentamicina ou cefotaxima' },
+            nota:'Hemograma, PCR, urina, hemocultura, urocultura e LÍQUOR. Ampicilina + gentamicina ou cefotaxima',
+            meds:['Ampicilina + gentamicina', 'Cefotaxima'] },
           { rotulo:'1 a 3 meses', texto:'*Investigação completa* e estratificar',
             nota:'Baixo risco: bom estado, leucócitos entre 5 e 15 mil, urina normal, PCR baixa. Aí pode observar' },
           { rotulo:'3 a 36 meses', cor:'ok', texto:'Avaliar estado geral e vacinação',
@@ -6548,7 +7928,8 @@ const PROTOCOLOS = [
       { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
         { tipo:'inicio', rotulo:'Entrada', texto:'Crise convulsiva em criança de 6 meses a 5 anos, com febre e sem infecção do sistema nervoso' },
         { tipo:'passo', rotulo:'Se ainda convulsionando', texto:'*Benzodiazepínico* e cronometrar',
-          nota:'Diazepam 0,2 a 0,5 mg/kg EV ou retal; midazolam 0,2 mg/kg IM ou nasal' },
+          nota:'Diazepam 0,2 a 0,5 mg/kg EV ou retal; midazolam 0,2 mg/kg IM ou nasal',
+          meds:['Diazepam', 'Midazolam'] },
         { tipo:'passo', rotulo:'Sempre', texto:'*Glicemia capilar*, temperatura e exame neurológico',
           nota:'Procurar o foco da febre: otite, amigdalite, virose, ITU' },
         { tipo:'decisao', texto:'Simples ou complexa?', ramos:[
@@ -6603,15 +7984,18 @@ const PROTOCOLOS = [
         { tipo:'passo', rotulo:'0 a 15 min', texto:'Culturas e *primeiro bolus de 10 a 20 mL/kg*',
           nota:'Em 5 a 20 minutos, reavaliando perfusão, fígado e ausculta a cada bolus' },
         { tipo:'passo', rotulo:'Até 60 min', texto:'*ANTIBIÓTICO DE AMPLO ESPECTRO*',
-          nota:'Ceftriaxona 50 a 75 mg/kg. Não atrasar esperando cultura além de 45 minutos' },
+          nota:'Ceftriaxona 50 a 75 mg/kg. Não atrasar esperando cultura além de 45 minutos',
+          meds:['Ceftriaxona'] },
         { tipo:'decisao', texto:'Respondeu ao volume?', ramos:[
           { rotulo:'Sim', cor:'ok', texto:'Manter reavaliação frequente' },
           { rotulo:'Não, após 40 a 60 mL/kg', cor:'perigo', texto:'*Choque refratário a volume — iniciar droga vasoativa*',
-            nota:'Choque frio (TEC lento, extremidades frias): adrenalina. Choque quente (pulso amplo, extremidades quentes): noradrenalina' }
+            nota:'Choque frio (TEC lento, extremidades frias): adrenalina. Choque quente (pulso amplo, extremidades quentes): noradrenalina',
+            meds:['Adrenalina', 'Noradrenalina'] }
         ]},
         { tipo:'alerta', rotulo:'Cuidado', texto:'Sinais de sobrecarga: estertores, hepatomegalia nova, piora do esforço',
           nota:'Aí pare o volume e vá para o inotrópico' },
-        { tipo:'fim', rotulo:'Depois', texto:'Terapia intensiva pediátrica; considerar hidrocortisona se houver choque refratário a catecolamina' }
+        { tipo:'fim', rotulo:'Depois', texto:'Terapia intensiva pediátrica; considerar hidrocortisona se houver choque refratário a catecolamina',
+          meds:['Hidrocortisona'] }
       ]},
       { tipo:'doses', titulo:'Medicações — por quilo', itens:[
         { droga:'Cristaloide (SF 0,9% ou Ringer lactato)', dose:'10 a 20 mL/kg por bolus', via:'EV ou IO', obs:'Em 5 a 20 minutos. Até 40 a 60 mL/kg na 1ª hora, reavaliando. Em desnutrido e cardiopata: 5 a 10 mL/kg.' },
@@ -6655,12 +8039,15 @@ const PROTOCOLOS = [
         { tipo:'passo', rotulo:'Confirmar que é viral', texto:'Sem esforço respiratório, ausculta limpa, orofaringe sem exsudato típico',
           nota:'Tosse, coriza e conjuntivite apontam para vírus e afastam estreptococo' },
         { tipo:'passo', rotulo:'Tratamento', texto:'*Lavagem nasal, hidratação, antitérmico e observação*',
-          nota:'A lavagem nasal com soro é a medida mais eficaz no lactente, que respira pelo nariz' },
+          nota:'A lavagem nasal com soro é a medida mais eficaz no lactente, que respira pelo nariz',
+          meds:['Soro fisiológico 0,9% nasal'] },
         { tipo:'decisao', texto:'Há critério para antibiótico?', ramos:[
           { rotulo:'Não — a imensa maioria', cor:'ok', texto:'*Sem antibiótico*',
             nota:'Explicar que o quadro dura 7 a 10 dias e a tosse pode passar de 2 semanas' },
-          { rotulo:'Otite média aguda com abaulamento', texto:'*Amoxicilina* 45 a 90 mg/kg/dia' },
-          { rotulo:'Faringite com Centor alto e sem sintoma viral', texto:'*Amoxicilina ou penicilina benzatina*' },
+          { rotulo:'Otite média aguda com abaulamento', texto:'*Amoxicilina* 45 a 90 mg/kg/dia',
+            meds:['Amoxicilina'] },
+          { rotulo:'Faringite com Centor alto e sem sintoma viral', texto:'*Amoxicilina ou penicilina benzatina*',
+            meds:['Amoxicilina'] },
           { rotulo:'Sinusite: 10 dias sem melhora, ou piora após melhora', texto:'*Amoxicilina-clavulanato*' }
         ]},
         { tipo:'fim', rotulo:'Alta', texto:'Com lavagem nasal ensinada, sinais de alarme explicados e retorno se piorar' }
@@ -6768,10 +8155,13 @@ const PROTOCOLOS = [
         { tipo:'passo', rotulo:'Identificar a síndrome', texto:'Pupilas, pele, mucosas, ruídos intestinais, temperatura e nível de consciência',
           nota:'É o que separa colinérgico de anticolinérgico, opioide de simpaticomimético' },
         { tipo:'passo', rotulo:'Descontaminar', texto:'Retirar roupa, lavar a pele; *carvão ativado* se indicado',
-          nota:'1 g/kg VO ou por sonda, na primeira 1 a 2 hora, com via aérea protegida' },
+          nota:'1 g/kg VO ou por sonda, na primeira 1 a 2 hora, com via aérea protegida',
+          meds:['Carvão ativado'] },
         { tipo:'passo', rotulo:'Antídoto', texto:'Se existir e estiver indicado',
-          nota:'Naloxona, flumazenil, N-acetilcisteína, atropina, bicarbonato, etanol ou fomepizol' },
-        { tipo:'passo', rotulo:'Eliminar', texto:'Alcalinização urinária, carvão em doses múltiplas ou hemodiálise, conforme a substância' },
+          nota:'Naloxona, flumazenil, N-acetilcisteína, atropina, bicarbonato, etanol ou fomepizol',
+          meds:['Naloxona', 'Bicarbonato de sódio 8,4%'] },
+        { tipo:'passo', rotulo:'Eliminar', texto:'Alcalinização urinária, carvão em doses múltiplas ou hemodiálise, conforme a substância',
+          meds:['Carvão ativado'] },
         { tipo:'fim', rotulo:'Sempre', texto:'*Acionar o CIATox (0800 722 6001)* e avaliar risco de suicídio antes da alta' }
       ]},
       { tipo:'lista', titulo:'Síndromes tóxicas', itens:[
@@ -6824,14 +8214,18 @@ const PROTOCOLOS = [
           nota:'Oxigênio, monitorização e glicemia capilar' },
         { tipo:'decisao', texto:'Qual o padrão?', ramos:[
           { rotulo:'Miose + bradipneia', texto:'*Opioide — naloxona titulada*',
-            nota:'Começar com 0,04 a 0,4 mg. O alvo é ventilação adequada, não acordar o paciente' },
+            nota:'Começar com 0,04 a 0,4 mg. O alvo é ventilação adequada, não acordar o paciente',
+            meds:['Naloxona 0,4 mg/mL'] },
           { rotulo:'Rebaixamento com sinais vitais preservados', cor:'ok', texto:'*Benzodiazepínico — suporte apenas*',
-            nota:'Na imensa maioria, só observação. Flumazenil raramente é necessário' }
+            nota:'Na imensa maioria, só observação. Flumazenil raramente é necessário',
+            meds:['Flumazenil 0,1 mg/mL'] }
         ]},
         { tipo:'alerta', rotulo:'Cuidado', texto:'*Naloxona em dose alta em dependente* precipita abstinência aguda',
-          nota:'Agitação, vômito, hipertensão. Titule devagar' },
+          nota:'Agitação, vômito, hipertensão. Titule devagar',
+          meds:['Naloxona 0,4 mg/mL'] },
         { tipo:'passo', rotulo:'Observar', texto:'Manter monitorizado: a naloxona dura 30 a 90 minutos, o opioide dura mais',
-          nota:'Considerar infusão contínua se houve necessidade de doses repetidas' },
+          nota:'Considerar infusão contínua se houve necessidade de doses repetidas',
+          meds:['Naloxona 0,4 mg/mL'] },
         { tipo:'fim', rotulo:'Antes da alta', texto:'Avaliação de risco de suicídio e encaminhamento ao CAPS-AD se houver uso de substância' }
       ]},
       { tipo:'doses', titulo:'Antídotos', itens:[
@@ -6872,10 +8266,12 @@ const PROTOCOLOS = [
         { tipo:'inicio', rotulo:'Entrada', texto:'Ingestão de paracetamol acima de 7,5 g (ou 150 mg/kg), ou dose ignorada',
           nota:'Perguntar a hora exata e se foi dose única ou repetida' },
         { tipo:'decisao', texto:'Quanto tempo desde a ingestão?', ramos:[
-          { rotulo:'Menos de 1 a 2 h', texto:'Considerar *carvão ativado* 1 g/kg', nota:'Só com via aérea protegida e paciente colaborativo' },
+          { rotulo:'Menos de 1 a 2 h', texto:'Considerar *carvão ativado* 1 g/kg', nota:'Só com via aérea protegida e paciente colaborativo',
+            meds:['Carvão ativado'] },
           { rotulo:'Até 8 h', cor:'ok', texto:'Dosar paracetamol sérico e aplicar o *nomograma de Rumack-Matthew*',
             nota:'Se o nível não sair a tempo, começar a NAC empiricamente' },
-          { rotulo:'Mais de 8 h ou tempo ignorado', cor:'perigo', texto:'*Iniciar NAC AGORA*, sem esperar exame' }
+          { rotulo:'Mais de 8 h ou tempo ignorado', cor:'perigo', texto:'*Iniciar NAC AGORA*, sem esperar exame',
+            meds:['NAC endovenosa — ataque'] }
         ]},
         { tipo:'passo', rotulo:'Antídoto', texto:'*N-acetilcisteína* — via oral e endovenosa têm eficácia semelhante',
           nota:'Preferir endovenosa se houver vômito, rebaixamento ou sinal de hepatotoxicidade' },
@@ -6921,16 +8317,19 @@ const PROTOCOLOS = [
         { tipo:'inicio', rotulo:'Entrada', texto:'Ingestão de antidepressivo tricíclico — amitriptilina, nortriptilina, imipramina, clomipramina' },
         { tipo:'passo', rotulo:'Imediato', texto:'*ECG e monitorização contínua*',
           nota:'Medir o QRS. Repetir o ECG com frequência: a alteração é dinâmica' },
-        { tipo:'passo', rotulo:'Se na 1ª hora', texto:'*Carvão ativado* 1 g/kg, com via aérea protegida' },
+        { tipo:'passo', rotulo:'Se na 1ª hora', texto:'*Carvão ativado* 1 g/kg, com via aérea protegida',
+          meds:['Carvão ativado'] },
         { tipo:'decisao', texto:'O QRS está alargado?', ramos:[
           { rotulo:'Acima de 100 ms', cor:'perigo', texto:'*BICARBONATO DE SÓDIO 1 a 2 mEq/kg em bolus*',
-            nota:'Repetir até o QRS estreitar. Alvo de pH entre 7,45 e 7,55' },
+            nota:'Repetir até o QRS estreitar. Alvo de pH entre 7,45 e 7,55',
+            meds:['Bicarbonato de sódio 8,4%'] },
           { rotulo:'Normal', texto:'Monitorizar e repetir o ECG' }
         ]},
         { tipo:'passo', rotulo:'Convulsão', texto:'*Benzodiazepínico* — e nunca fenitoína',
           nota:'A fenitoína piora a toxicidade cardíaca do tricíclico' },
         { tipo:'passo', rotulo:'Hipotensão', texto:'Volume, bicarbonato e *noradrenalina* se necessário',
-          nota:'Considerar emulsão lipídica a 20% no caso refratário' },
+          nota:'Considerar emulsão lipídica a 20% no caso refratário',
+          meds:['Bicarbonato de sódio 8,4%', 'Emulsão lipídica 20%'] },
         { tipo:'fim', rotulo:'Destino', texto:'Terapia intensiva com monitorização por pelo menos 24 horas após a normalização do ECG' }
       ]},
       { tipo:'doses', titulo:'Medicações', itens:[
@@ -6975,9 +8374,11 @@ const PROTOCOLOS = [
         { tipo:'passo', rotulo:'Via aérea', texto:'Aspirar, oxigênio e preparar intubação',
           nota:'Se for intubar, *evitar succinilcolina*: o bloqueio se prolonga muito' },
         { tipo:'passo', rotulo:'Antídoto', texto:'*ATROPINA em bolus, dobrando a dose até secar as secreções*',
-          nota:'Não existe dose máxima. O alvo é ausculta limpa e ausência de broncorreia, não a frequência cardíaca' },
+          nota:'Não existe dose máxima. O alvo é ausculta limpa e ausência de broncorreia, não a frequência cardíaca',
+          meds:['Atropina 0,5 mg/mL'] },
         { tipo:'passo', rotulo:'Segundo antídoto', texto:'*Pralidoxima*, se disponível, no organofosforado',
-          nota:'Reativa a colinesterase. Não funciona no carbamato, que não precisa dela' },
+          nota:'Reativa a colinesterase. Não funciona no carbamato, que não precisa dela',
+          meds:['Pralidoxima'] },
         { tipo:'fim', rotulo:'Destino', texto:'Terapia intensiva, com vigilância da síndrome intermediária por pelo menos 96 horas' }
       ]},
       { tipo:'doses', titulo:'Medicações', itens:[
@@ -7016,16 +8417,20 @@ const PROTOCOLOS = [
       { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
         { tipo:'inicio', rotulo:'Entrada', texto:'Rebaixamento, hálito etílico, ou suspeita de ingestão de álcool não etílico' },
         { tipo:'passo', rotulo:'Sempre', texto:'*Glicemia capilar + tiamina* + exame neurológico completo',
-          nota:'Tiamina ANTES da glicose. Procurar sinal de trauma craniano' },
+          nota:'Tiamina ANTES da glicose. Procurar sinal de trauma craniano',
+          meds:['Tiamina', 'Glicose 50%'] },
         { tipo:'passo', rotulo:'Exames', texto:'Gasometria, eletrólitos, função renal, osmolaridade e lactato',
           nota:'Calcular ânion-gap e gap osmolar' },
         { tipo:'decisao', texto:'Há acidose com ânion-gap e gap osmolar elevados?', ramos:[
           { rotulo:'Sim', cor:'perigo', texto:'*Metanol ou etilenoglicol — bloquear a álcool-desidrogenase*',
-            nota:'Fomepizol se disponível; etanol se não houver. Hemodiálise' },
-          { rotulo:'Não', cor:'ok', texto:'Provável intoxicação por etanol — suporte e observação' }
+            nota:'Fomepizol se disponível; etanol se não houver. Hemodiálise',
+            meds:['Fomepizol', 'Etanol'] },
+          { rotulo:'Não', cor:'ok', texto:'Provável intoxicação por etanol — suporte e observação',
+            meds:['Etanol'] }
         ]},
         { tipo:'passo', rotulo:'Etanol', texto:'Suporte: hidratação, tiamina, proteção da via aérea e reavaliação',
-          nota:'A maioria melhora com o tempo. Vigiar abstinência nas horas seguintes' },
+          nota:'A maioria melhora com o tempo. Vigiar abstinência nas horas seguintes',
+          meds:['Tiamina'] },
         { tipo:'fim', rotulo:'Antes da alta', texto:'Reavaliar o estado neurológico e oferecer encaminhamento ao CAPS-AD' }
       ]},
       { tipo:'doses', titulo:'Medicações', itens:[
@@ -7116,16 +8521,19 @@ const PROTOCOLOS = [
       { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
         { tipo:'inicio', rotulo:'Entrada', texto:'Exposição a incêndio, motor em ambiente fechado, aquecedor ou churrasqueira em recinto sem ventilação' },
         { tipo:'passo', rotulo:'Imediato', texto:'*Retirar da exposição* + *OXIGÊNIO A 100% em máscara com reservatório*',
-          nota:'Reduz a meia-vida da carboxi-hemoglobina de 4 a 6 horas para cerca de 60 a 90 minutos' },
+          nota:'Reduz a meia-vida da carboxi-hemoglobina de 4 a 6 horas para cerca de 60 a 90 minutos',
+          meds:['Oxigênio a 100%'] },
         { tipo:'passo', rotulo:'Exames', texto:'*Carboxi-hemoglobina* (gasometria com co-oximetria), ECG, troponina e gasometria',
           nota:'Não confie na oximetria de pulso' },
         { tipo:'decisao', texto:'Há critério para câmara hiperbárica?', ramos:[
           { rotulo:'Sim', cor:'perigo', texto:'*Acionar serviço de medicina hiperbárica*',
             nota:'Perda de consciência, sintoma neurológico, isquemia miocárdica, gestação, COHb acima de 25% (ou 15 a 20% na gestante)' },
-          { rotulo:'Não', texto:'Manter oxigênio a 100% até a COHb ficar abaixo de 5% e os sintomas cederem' }
+          { rotulo:'Não', texto:'Manter oxigênio a 100% até a COHb ficar abaixo de 5% e os sintomas cederem',
+            meds:['Oxigênio a 100%'] }
         ]},
         { tipo:'passo', rotulo:'Em incêndio fechado', texto:'Pensar também em *intoxicação por cianeto*',
-          nota:'Acidose lática grave desproporcional: hidroxocobalamina' },
+          nota:'Acidose lática grave desproporcional: hidroxocobalamina',
+          meds:['Hidroxocobalamina'] },
         { tipo:'fim', rotulo:'Depois', texto:'Alertar sobre a *síndrome neurológica tardia*, que pode surgir em 2 a 40 dias' }
       ]},
       { tipo:'doses', titulo:'Tratamento', itens:[
@@ -7167,11 +8575,13 @@ const PROTOCOLOS = [
         { tipo:'passo', rotulo:'Primeiro', texto:'*SUSPENDER TODAS as drogas serotoninérgicas*',
           nota:'É a medida mais importante; sem ela o quadro não resolve' },
         { tipo:'passo', rotulo:'Base', texto:'*Benzodiazepínico* + hidratação + resfriamento',
-          nota:'Diazepam 0,1 a 0,2 mg/kg EV; Ringer lactato 20 a 30 mL/kg, com alvo de diurese de 50 a 100 mL/h' },
+          nota:'Diazepam 0,1 a 0,2 mg/kg EV; Ringer lactato 20 a 30 mL/kg, com alvo de diurese de 50 a 100 mL/h',
+          meds:['Diazepam', 'Ringer lactato'] },
         { tipo:'decisao', texto:'Qual a gravidade?', ramos:[
           { rotulo:'Leve', cor:'ok', texto:'Suspender a droga + benzodiazepínico + observação' },
           { rotulo:'Moderada', texto:'Acrescentar *ciproeptadina* 12 mg VO',
-            nota:'Antagonista de serotonina; 2 mg a cada 2 h até remissão, máximo de 32 mg/dia' },
+            nota:'Antagonista de serotonina; 2 mg a cada 2 h até remissão, máximo de 32 mg/dia',
+            meds:['Ciproeptadina'] },
           { rotulo:'Grave — hipertermia acima de 41,5 °C', cor:'perigo',
             texto:'*Intubação, sedação profunda e bloqueio neuromuscular*',
             nota:'Terapia intensiva. A rigidez é o que gera calor: paralisar é o que resfria' }
@@ -7283,9 +8693,11 @@ const PROTOCOLOS = [
         ]},
         { tipo:'decisao', texto:'Aranha — qual o gênero?', ramos:[
           { rotulo:'Loxosceles (marrom)', texto:'*Lesão que evolui em dias* — soro antiloxoscélico se precoce e grave',
-            nota:'Vigiar hemólise: hemograma, bilirrubinas, função renal e urina' },
+            nota:'Vigiar hemólise: hemograma, bilirrubinas, função renal e urina',
+            meds:['Soro antiloxoscélico'] },
           { rotulo:'Phoneutria (armadeira)', texto:'Dor intensa imediata — *bloqueio local com lidocaína*',
-            nota:'Soro só nos casos moderados a graves, sobretudo em criança' },
+            nota:'Soro só nos casos moderados a graves, sobretudo em criança',
+            meds:['Lidocaína 1 a 2% sem vasoconstritor'] },
           { rotulo:'Latrodectus (viúva-negra)', texto:'Contratura e sudorese — soro antilatrodéctico se grave' }
         ]},
         { tipo:'fim', rotulo:'Sempre', texto:'Notificação e contato com o CIATox' }
@@ -7316,52 +8728,184 @@ const PROTOCOLOS = [
 
   /* ======================= 12 · PROCEDIMENTOS ======================= */
   { id:'sequencia-rapida-intubacao', titulo:'Sequência rápida de intubação', categoria:'proced', gravidade:'emergencia',
-    resumo:'Os sete Ps, escolha do sedativo e do bloqueador conforme a hemodinâmica, e o plano de resgate.',
-    tags:['sri','intubacao','etomidato','quetamina','succinilcolina','rocuronio','pre-oxigenacao'],
-    fonte:'AMIB — Diretrizes brasileiras de via aérea na emergência',
+    resumo:'Os 7 Ps na ordem: preparar, pré-oxigenar com fluxo máximo, corrigir a fisiologia antes da droga, indutor e bloqueador em dose cheia, provar com capnografia e sedar logo depois.',
+    tags:['sri','iot','intubacao','intubacao orotraqueal','via aerea','etomidato','cetamina','quetamina','propofol','succinilcolina','rocuronio','sugamadex','pre-oxigenacao','sequencia atrasada','push-dose'],
+    fonte:'SCCM 2023 — Sequência Rápida de Intubação no Adulto Crítico · DAS 2018 — Intubação Traqueal do Adulto Crítico · Walls — Manual de Via Aérea de Emergência · apoio: UpToDate (2026)',
+    ficha:[
+      { rotulo:'Quando',     valor:'Falha em proteger a via aérea, em oxigenar ou em ventilar — ou curso clínico que vai chegar lá.' },
+      { rotulo:'Prioridade', valor:'*Corrigir hipotensão e hipoxemia antes da droga*: PAS < 100, índice de choque > 0,8 e SpO₂ < 93% são os maiores preditores de parada na intubação.' },
+      { rotulo:'Meta',       valor:'Tubo na *primeira tentativa*, sem dessaturar e sem colapso circulatório — e confirmado pela capnografia.' }
+    ],
     secoes:[
-      { tipo:'alerta', titulo:'Antes de induzir', itens:[
-        '*Ressuscite antes de intubar*: hipotensão, hipoxemia e acidose na indução causam parada.',
-        'Pré-oxigene por 3 minutos — o hipoxêmico dessatura em segundos.',
-        'Succinilcolina é proibida em neuropata, queimado com mais de 48 h e hipercalemia grave.',
-        'Etomidato não pode ser repetido.',
-        'Tenha plano B e C definidos *antes* de dar a droga.'
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Decisão de intubar', texto:'Não protege a via aérea, não oxigena, não ventila — ou vai piorar',
+          nota:'Se houver tempo, confirme que a intubação respeita a vontade do paciente e deixe-o falar com a família' },
+
+        { tipo:'passo', rotulo:'Preparo (−10 min)', texto:'*Plano A, B e C falados em voz alta* · papéis definidos · 2 acessos · monitor, oxímetro e *capnografia* · drogas puxadas e rotuladas',
+          nota:'Material: aspirador testado, videolaringoscópio, lâminas, tubo testado (e um número acima e abaixo), fio-guia, bougie, supraglótico, kit de cricotireoidostomia, ventilador pronto' },
+
+        { tipo:'decisao', texto:'Via aérea anatomicamente difícil? (abertura de boca, pescoço, marcos cervicais, ventilação com máscara)', ramos:[
+          { rotulo:'Não', cor:'ok', texto:'*Sequência rápida com videolaringoscópio*' },
+          { rotulo:'Sim, mas o resgate da oxigenação é viável', texto:'Sequência rápida mesmo assim, com *bougie, supraglótico e pescoço marcado* à mão',
+            nota:'Marque a membrana cricotireóidea antes de induzir' },
+          { rotulo:'Sim, e o resgate é improvável', cor:'perigo', texto:'*Não paralisar:* intubação acordada com anestesia tópica e chamar ajuda',
+            ir:'via-aerea-dificil' }
+        ]},
+
+        { tipo:'decisao', texto:'Como pré-oxigenar? (3 minutos, cabeceira a 30° ou Trendelenburg reverso)', ramos:[
+          { rotulo:'Cooperativo, respirando bem', texto:'*Máscara com reservatório com o fluxômetro aberto até o fim*',
+            nota:'A 15 L/min o vazamento limita a FiO₂ a ~65%. Sem 3 minutos: 8 respirações profundas. Se o fluxômetro só chega a 15: bolsa-válvula-máscara bem vedada ou VNI' },
+          { rotulo:'Hipoxêmico apesar do O₂ (pneumonia, SDRA, obeso)', cor:'perigo', texto:'*VNI com PEEP* e FiO₂ 100% — é o que mais evita hipoxemia',
+            nota:'Não tolera VNI: cateter nasal de alto fluxo. Evite VNI em quem vomita ou sangra no trato digestivo alto', ir:'vni' },
+          { rotulo:'Agitado, arranca a máscara', texto:'*Sequência atrasada:* cetamina para dissociar, pré-oxigenar, depois bloquear',
+            nota:'Pode causar apneia ou hipotensão mesmo em dose baixa: esteja pronto para assumir a via aérea. Procure outra causa de agitação',
+            meds:[{ droga:'Cetamina', dose:'1 mg/kg ou 10–25 mg repetidos', via:'EV' }] },
+          { rotulo:'Respiração insuficiente', texto:'*Bolsa-válvula-máscara assistida*, sincronizada com a inspiração',
+            nota:'Pressão < 20 cmH₂O para não insuflar o estômago. Pressão alta (obeso, asma): pressão cricoide durante a ventilação' }
+        ]},
+
+        { tipo:'passo', rotulo:'Em todos', texto:'*Cateter nasal a 15 L/min* desde a pré-oxigenação até o tubo passar',
+          nota:'Oxigenação apneica: barata, prolonga o tempo seguro. Alto fluxo nasal no hipoxêmico' },
+
+        { tipo:'decisao', texto:'A fisiologia aguenta a indução? (PAS < 100, índice de choque > 0,8, SpO₂ < 93%, acidose grave, VD em falência)', ramos:[
+          { rotulo:'Hipotenso ou índice de choque > 0,8', cor:'perigo', texto:'*Volume ou sangue e noradrenalina correndo ANTES do indutor*',
+            nota:'Cristaloide 20–30 mL/kg na hipovolemia; concentrado de hemácias no sangramento. Adrenalina em bolus preparada como ponte. Tamponamento e pneumotórax: tratar antes',
+            meds:[{ droga:'Noradrenalina', dose:'iniciar 5–15 mcg/min', via:'EV BIC' }, { droga:'Adrenalina', dose:'10–20 mcg em bolus', via:'EV' }], ir:'choque-abordagem' },
+          { rotulo:'SpO₂ < 93% mesmo pré-oxigenado', cor:'perigo', texto:'*VNI com PEEP alta* e ventilar com bolsa durante a apneia',
+            nota:'Se não passa de 93%, o risco de hipoxemia grave é alto: considere intubação acordada' },
+          { rotulo:'Acidose metabólica grave (cetoacidose, sepse)', cor:'perigo', texto:'*Apneia mínima:* ventilar com bolsa durante a apneia e sair com volume-minuto alto',
+            nota:'Parar de hiperventilar por segundos derruba o pH e a pressão' },
+          { rotulo:'Estável', cor:'ok', texto:'Seguir, com noradrenalina diluída ao lado do leito' }
+        ]},
+
+        { tipo:'decisao', texto:'Qual indutor? (dose cheia no estável; metade no choque e no idoso frágil)', ramos:[
+          { rotulo:'Choque, cardiopata, idoso', texto:'*Etomidato* — o que menos derruba a pressão',
+            nota:'Metade da dose no choque cardiogênico e no idoso frágil. Cetamina em meia dose é alternativa no choque séptico',
+            meds:[{ droga:'Etomidato', dose:'0,3 mg/kg (0,15 no choque)', via:'EV' }] },
+          { rotulo:'Broncoespasmo', texto:'*Cetamina* (broncodilata); propofol só se a PA estiver boa',
+            meds:[{ droga:'Cetamina', dose:'1–2 mg/kg', via:'EV' }, { droga:'Propofol', dose:'1,5–2 mg/kg', via:'EV' }], ir:'asma-crise' },
+          { rotulo:'PIC alta, SCA, dissecção', texto:'*Etomidato*, com fentanil antes se não estiver em choque',
+            nota:'Fentanil em 30–60 s, 3 minutos antes, atenua o pico de pressão da laringoscopia',
+            meds:[{ droga:'Etomidato', dose:'0,3 mg/kg', via:'EV' }, { droga:'Fentanil', dose:'3 mcg/kg', via:'EV' }] },
+          { rotulo:'Estado de mal epiléptico', texto:'*Propofol* ou etomidato',
+            meds:[{ droga:'Propofol', dose:'1,5–3 mg/kg', via:'EV' }] }
+        ]},
+
+        { tipo:'decisao', texto:'Qual bloqueador? (os dois em dose cheia: subdosar é o erro mais comum)', ramos:[
+          { rotulo:'Sem contraindicação', texto:'*Succinilcolina* — peso real',
+            nota:'2 mg/kg no choque. Início em 45 s, dura 6–10 min',
+            meds:[{ droga:'Succinilcolina', dose:'1,5 mg/kg', via:'EV' }] },
+          { rotulo:'Contraindicada (ver lista)', texto:'*Rocurônio* — sugamadex à mão',
+            nota:'Início em 45–60 s, dura 45–70 min: a sedação contínua tem de começar logo depois',
+            meds:[{ droga:'Rocurônio', dose:'1,5 mg/kg', via:'EV' }, { droga:'Sugamadex', dose:'16 mg/kg para reverter', via:'EV' }] }
+        ]},
+
+        { tipo:'passo', rotulo:'Paralisia com indução (0 s)', texto:'*Indutor em bolus e o bloqueador logo em seguida* — dose calculada, sem titular',
+          nota:'Não ventilar com bolsa de rotina; ventilar com cuidado (PEEP 5–10, 10/min, duas mãos) só quando o risco de hipoxemia ou acidose supera o de aspiração. Pressão cricoide não é mais de rotina' },
+
+        { tipo:'passo', rotulo:'Passagem (45–60 s)', texto:'Laringoscopia quando a *mandíbula estiver frouxa* — videolaringoscópio de primeira escolha',
+          nota:'Sem relaxamento aos 45 s: espere mais 15–30 s vigiando a saturação. Rampa no obeso' },
+
+        { tipo:'decisao', texto:'O tubo passou?', ramos:[
+          { rotulo:'Sim', cor:'ok', texto:'*Provar com capnografia de onda*',
+            nota:'Ausculta, embaçamento e ver o tubo passar não provam nada. Raio-X só mostra a profundidade' },
+          { rotulo:'Não, saturação boa', texto:'Otimizar e tentar de novo: posição, bougie, outra lâmina, outro operador',
+            nota:'Cada tentativa a mais triplica os eventos adversos. Três falhas = plano B' },
+          { rotulo:'Não, saturação caindo', cor:'perigo', texto:'*Abortar e oxigenar:* bolsa-máscara com cânulas e duas mãos, ou supraglótico' },
+          { rotulo:'Não intubo, não oxigeno', cor:'perigo', texto:'*Cricotireoidostomia agora*',
+            nota:'Com rocurônio, o sugamadex pode devolver a respiração — mas não atrase o pescoço esperando', ir:'via-aerea-dificil' }
+        ]},
+
+        { tipo:'decisao', texto:'Depois do tubo, caiu a saturação ou a pressão?', ramos:[
+          { rotulo:'Saturação caindo', cor:'perigo', texto:'Tubo fora (esofágico ou deslocado), seletivo, rolha, *pneumotórax*, balonete furado ou O₂ desconectado',
+            nota:'Tire do ventilador e ventile com bolsa: se a resistência é alta, pense em rolha, seletivo ou pneumotórax', ir:'pneumotorax' },
+          { rotulo:'Pressão caindo', cor:'perigo', texto:'Ventilação agressiva demais, efeito do indutor, perda de volume, pneumotórax',
+            nota:'FR ≤ 8 e expiração longa no obstrutivo. Volume e noradrenalina; adrenalina em bolus como ponte',
+            meds:[{ droga:'Adrenalina', dose:'10–20 mcg em bolus', via:'EV' }] },
+          { rotulo:'Estável', cor:'ok', texto:'Seguir para os cuidados pós-intubação' }
+        ]},
+
+        { tipo:'fim', rotulo:'Pós-intubação (60 s em diante)', texto:'*Fixar* · raio-X · cabeceira a 30° · ventilação protetora · *analgesia e sedação em até 15 min*',
+          nota:'Taquicardia e hipertensão no paralisado = paciente acordado. Guiar pela RASS', ir:'ventilacao-mecanica-inicial' }
       ]},
-      { tipo:'fluxo', titulo:'Os 7 P da sequência rápida', itens:[
-        { tipo:'inicio', rotulo:'1 · Preparo', texto:'Checklist: aspirador testado, dois laringoscópios, tubo com balonete testado, bougie, dispositivo supraglótico, capnografia, acesso pérvio e drogas puxadas' },
-        { tipo:'passo', rotulo:'2 · Pré-oxigenação', texto:'*3 minutos* com máscara com reservatório a 15 L/min, ou 8 respirações profundas',
-          nota:'Cabeceira a 20 a 30 graus. Oxigênio nasal a 15 L/min durante a apneia prolonga o tempo seguro' },
-        { tipo:'passo', rotulo:'3 · Pré-otimização', texto:'Corrigir hipotensão e acidose *antes* da indução',
-          nota:'Volume, e adrenalina diluída (1 mL em 19 mL de SF) 0,5 a 1 mL a cada 5 minutos se necessário' },
-        { tipo:'passo', rotulo:'4 · Paralisia com indução', texto:'*Hipnótico e bloqueador em sequência rápida*',
-          nota:'Etomidato ou cetamina; succinilcolina ou rocurônio' },
-        { tipo:'passo', rotulo:'5 · Posicionamento', texto:'Alinhar os eixos: coxim occipital, ou rampa no obeso',
-          nota:'Meato acústico externo na altura do esterno' },
-        { tipo:'passo', rotulo:'6 · Passagem e confirmação', texto:'*Capnografia é o padrão-ouro* — não a ausculta isolada' },
-        { tipo:'fim', rotulo:'7 · Pós-intubação', texto:'Fixar, radiografia, sedação contínua, ventilador ajustado' }
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*PAS < 100, índice de choque > 0,8 ou SpO₂ < 93%*: maiores preditores de parada na intubação — corrija antes de induzir.',
+        '*Acidose metabólica grave*: segundos de apneia derrubam o pH e a pressão.',
+        'Obeso, gestante a termo e doente grave dessaturam em *menos de 3 minutos*, mesmo bem pré-oxigenados.',
+        'Eventos adversos: 14% na primeira tentativa, 47% na segunda, 64% na terceira.',
+        'Paralisado com taquicardia e hipertensão está *acordado*: sedação agora.'
       ]},
-      { tipo:'doses', titulo:'Drogas — por quilo', itens:[
-        { droga:'Fentanila 50 mcg/mL', dose:'2 a 3 mcg/kg', via:'EV', obs:'3 minutos antes. Atenua a resposta pressórica. Cuidado no hipotenso.' },
-        { droga:'Etomidato 2 mg/mL', dose:'0,3 mg/kg', via:'EV', obs:'Estabilidade hemodinâmica. Não repetir. Suprime o cortisol transitoriamente.' },
-        { droga:'Cetamina 50 mg/mL', dose:'1 a 2 mg/kg', via:'EV', obs:'Escolha no asmático e no chocado. Mantém o drive e a hemodinâmica.' },
-        { droga:'Midazolam', dose:'0,1 a 0,3 mg/kg', via:'EV', obs:'Conferir a concentração: existem 1 mg/mL e 5 mg/mL. Causa hipotensão.' },
-        { droga:'Propofol', dose:'1 a 2 mg/kg', via:'EV', obs:'Hipotensão importante. Evitar no instável.' },
-        { droga:'Succinilcolina', dose:'1,5 mg/kg', via:'EV', obs:'Início em 45 s, dura 6 a 10 min. Contraindicada nas situações da caixa de atenção.' },
-        { droga:'Rocurônio', dose:'1,2 mg/kg', via:'EV', obs:'Início em 60 s, dura 45 a 60 min. Sem as contraindicações da succinilcolina.' },
-        { droga:'Adrenalina diluída (1 mL de 1:1000 em 19 mL de SF)', dose:'0,5 a 1 mL', via:'EV', obs:'Fica 50 mcg/mL. Corrigir pressão antes de induzir.' }
+
+      { tipo:'passos', titulo:'Conduta imediata — os 7 Ps', itens:[
+        '*Preparar:* avaliar a via aérea, dizer os planos A, B e C em voz alta, dois acessos, monitor e capnografia.',
+        '*Pré-oxigenar* por 3 minutos com fluxo máximo e cabeceira a 30°; cateter nasal a 15 L/min até o tubo passar.',
+        '*Otimizar:* volume, sangue e noradrenalina antes da indução; VNI se SpO₂ < 93%.',
+        '*Paralisar com indução:* indutor e bloqueador em bolus, um depois do outro, em dose calculada.',
+        '*Posicionar:* cabeceira a 30°, rampa no obeso; sem pressão cricoide de rotina.',
+        '*Passar e provar:* videolaringoscópio quando a mandíbula estiver frouxa; capnografia de onda.',
+        '*Pós-intubação:* fixar, raio-X, ventilação protetora e sedação com analgesia em até 15 minutos.'
       ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Etomidato 2 mg/mL', dose:'0,3 mg/kg', via:'EV', obs:'70 kg: 10 mL. Metade no choque cardiogênico e no idoso frágil. Dose única: suprime o cortisol por horas — na sepse, considerar corticoide.' },
+        { droga:'Cetamina 50 mg/mL', dose:'1–2 mg/kg (metade no choque)', via:'EV', obs:'Broncoespasmo e choque séptico. Sequência atrasada: 1 mg/kg ou 10–25 mg repetidos até dissociar.' },
+        { droga:'Propofol 1% (10 mg/mL)', dose:'1,5–3 mg/kg', via:'EV', obs:'Só no estável: hipotensão dose-dependente. Bom no broncoespasmo e no estado de mal.' },
+        { droga:'Midazolam 5 mg/mL', dose:'0,2–0,3 mg/kg', via:'EV', obs:'Indutor de exceção: início lento, hipotensão e costuma ser subdosado.' },
+        { droga:'Succinilcolina 100 mg', dose:'1,5 mg/kg (2 mg/kg no choque)', via:'EV', obs:'Peso real. Diluir 100 mg em 10 mL (10 mg/mL). Início 45 s, dura 6–10 min. Ver contraindicações.' },
+        { droga:'Rocurônio 10 mg/mL', dose:'1,5 mg/kg', via:'EV', obs:'70 kg: 10,5 mL. Início 45–60 s, dura 45–70 min. Começar a sedação logo depois.' },
+        { droga:'Sugamadex 100 mg/mL', dose:'16 mg/kg', via:'EV', obs:'Reversão imediata do rocurônio. 70 kg: 11,2 mL. Confirme que existe no serviço antes de escolher rocurônio pensando nele.' },
+        { droga:'Fentanil 50 mcg/mL', dose:'3 mcg/kg em 30–60 s', via:'EV', obs:'Opcional, 3 minutos antes: PIC alta, SCA, dissecção. Não usar no choque.' },
+        { droga:'Noradrenalina', dose:'Iniciar 5–15 mcg/min, titular', via:'EV BIC', obs:'Correndo antes do indutor no hipotenso ou no índice de choque > 0,8. Alvo PAM ≥ 65.' },
+        { droga:'Adrenalina em bolus (10 mcg/mL)', dose:'10–20 mcg (1–2 mL) a cada 2–5 min', via:'EV', obs:'1 ampola (1 mg) + SF 0,9% 99 mL. Ponte enquanto a noradrenalina e o volume agem.' },
+        { droga:'Fenilefrina em bolus (100 mcg/mL)', dose:'100 mcg (50–200)', via:'EV', obs:'1 ampola (10 mg) + SF 0,9% 100 mL. Só vasoconstrição: prefira adrenalina se o coração é fraco.' },
+        { droga:'Fentanil em infusão', dose:'0,5–3 mcg/kg/h', via:'EV BIC', obs:'Analgesia primeiro, logo após o tubo. 1.000 mcg + SF 80 mL = 10 mcg/mL.' },
+        { droga:'Propofol em infusão', dose:'5–50 mcg/kg/min', via:'EV BIC', obs:'Se a pressão permite. Midazolam 0,02–0,1 mg/kg/h é alternativa no instável.' }
+      ]},
+
+      { tipo:'tempo', titulo:'Linha do tempo — os 7 Ps', itens:[
+        { quando:'−10 min', o_que:'Preparo: avaliação, planos, equipe, material e drogas.' },
+        { quando:'−5 min', o_que:'Pré-oxigenação (3 minutos no mínimo).' },
+        { quando:'−3 min', o_que:'Otimização fisiológica — pode levar mais tempo se precisar.' },
+        { quando:'0', o_que:'Paralisia com indução.' },
+        { quando:'+30 s', o_que:'Posicionamento, sem ventilar com bolsa de rotina.' },
+        { quando:'+45 s', o_que:'Passagem do tubo e prova pela capnografia.' },
+        { quando:'+60 s', o_que:'Pós-intubação: fixar, ventilar, sedar.' }
+      ]},
+
+      { tipo:'lista', titulo:'Contraindicações da succinilcolina', itens:[
+        'Hipertermia maligna no paciente ou na família.',
+        'Doença neuromuscular com desnervação e distrofias musculares.',
+        'AVC, queimadura extensa ou lesão medular com *mais de 72 horas*.',
+        'Rabdomiólise.',
+        '*Hipercalemia com alteração no ECG* — sem ECG, na dúvida, rocurônio.'
+      ]},
+
+      { tipo:'lista', titulo:'Checklist antes da droga (STOP-MAID)', itens:[
+        '*S*ucção testada e ligada.',
+        '*T*ools: videolaringoscópio, lâminas, tubos, fio-guia, bougie, supraglótico e kit de cricotireoidostomia.',
+        '*O*xigênio: fluxo máximo na máscara, cateter nasal para a apneia, bolsa-válvula-máscara com PEEP.',
+        '*P*osição: cabeceira a 30°, rampa no obeso, cama na altura certa.',
+        '*M*onitores: ECG, PA, oximetria e *capnografia de onda*.',
+        '*A*ssistente e *A*valiação da via aérea; *I*ntravenoso (dois acessos); *D*rogas puxadas, rotuladas e conferidas em voz alta.'
+      ]},
+
       { tipo:'naofazer', titulo:'Não fazer', itens:[
-        'Induzir paciente hipotenso ou hipoxêmico sem otimizar antes.',
-        'Ventilar com bolsa-máscara de rotina entre a indução e a intubação: aumenta a insuflação gástrica.',
-        'Succinilcolina nas contraindicações.',
-        'Confiar só na ausculta para confirmar o tubo.',
-        'Iniciar sem plano B: dispositivo supraglótico e material de cricotireoidostomia à vista.'
+        'Induzir o paciente hipotenso ou hipoxêmico sem otimizar antes.',
+        'Pré-oxigenar com máscara a 15 L/min achando que é FiO₂ de 100%.',
+        'Subdosar o bloqueador ou laringoscopar antes da mandíbula relaxar.',
+        'Confirmar o tubo pela ausculta ou pelo raio-X.',
+        'Insistir na quarta tentativa com a saturação caindo em vez de oxigenar e ir para o plano B.',
+        'Deixar o paciente paralisado com rocurônio sem sedação e analgesia contínuas.'
       ]},
-      { tipo:'texto', titulo:'Tamanhos e fixação', conteudo:'Adulto: tubo 7,5 na mulher e 8,0 no homem, fixado em 21 a 23 cm na comissura labial. Criança: tubo sem balonete = idade ÷ 4 + 4; com balonete = idade ÷ 4 + 3,5; profundidade = diâmetro do tubo × 3. Lâmina curva (Macintosh) 3 ou 4 no adulto; reta (Miller) no lactente.' },
+
+      { tipo:'texto', titulo:'Pós-intubação e tamanhos', conteudo:'Fixar o tubo, raio-X para profundidade e barotrauma, cabeceira a 30° e ventilação protetora; ajustar o ventilador à doença (obstrutivo com FR baixa e expiração longa; acidótico com volume-minuto alto). *Analgesia primeiro, depois sedação*, guiadas pela RASS — com rocurônio o paciente fica paralisado por quase uma hora e não consegue avisar que está acordado. *Tamanhos no adulto:* tubo 7,0–7,5 na mulher e 7,5–8,0 no homem, fixado em 21 a 23 cm na comissura labial; lâmina curva 3 ou 4. Na criança: tubo com balonete = idade ÷ 4 + 3,5; profundidade = diâmetro × 3.' },
+
       { tipo:'dica', titulo:'Pega do plantão', itens:[
-        'Diga o plano em voz alta para a equipe antes de dar a droga: quem faz o quê, e qual é o plano B.',
-        'Oxigênio nasal a 15 L/min mantido durante a apneia dá minutos preciosos.',
-        'Registre número de tentativas, dispositivo usado e a fixação.'
+        'Diga o plano em voz alta antes da droga: quem faz o quê e qual é o plano B.',
+        'Alguém só olha a saturação e fala o número em voz alta — o oxímetro de dedo atrasa no chocado.',
+        'Noradrenalina diluída ao lado do leito em toda intubação de doente grave, mesmo normotenso.',
+        'Registre horário, drogas e doses, número de tentativas, dispositivo, capnografia e fixação.'
       ]}
     ] },
 
@@ -7541,7 +9085,8 @@ const PROTOCOLOS = [
         { tipo:'passo', rotulo:'Confirmar', texto:'Agulha firme sem apoio, aspiração de medula e infusão sem extravasamento',
           nota:'Nem sempre se aspira medula — a infusão livre já confirma' },
         { tipo:'passo', rotulo:'Analgesia', texto:'*Lidocaína intraóssea antes de infundir* no paciente consciente',
-          nota:'A infusão dói muito. Lidocaína 2%: 40 mg no adulto, 0,5 mg/kg na criança' },
+          nota:'A infusão dói muito. Lidocaína 2%: 40 mg no adulto, 0,5 mg/kg na criança',
+          meds:['Lidocaína 2% intraóssea'] },
         { tipo:'passo', rotulo:'Infundir', texto:'Sob *pressão* — bolsa pressurizada ou seringa',
           nota:'O fluxo por gravidade é lento demais' },
         { tipo:'fim', rotulo:'Trocar', texto:'Obter acesso definitivo e retirar em até 24 horas' }
@@ -7587,14 +9132,15 @@ const PROTOCOLOS = [
         { tipo:'passo', rotulo:'Localizar', texto:'*Triângulo de segurança*: borda lateral do peitoral maior, borda anterior do grande dorsal e linha do mamilo',
           nota:'Confirmar o lado com a imagem e com o exame — drenar o lado errado é evento sentinela' },
         { tipo:'passo', rotulo:'Anestesiar', texto:'Lidocaína na pele, subcutâneo, *periósteo e pleura parietal*',
-          nota:'A pleura é o que mais dói. Aspirar ao avançar confirma a cavidade' },
+          nota:'A pleura é o que mais dói. Aspirar ao avançar confirma a cavidade',
+          meds:['Lidocaína 1 a 2%'] },
         { tipo:'passo', rotulo:'Incisar e dissecar', texto:'Incisão de 2 a 3 cm, dissecção romba com pinça até a pleura' },
         { tipo:'passo', rotulo:'Explorar com o dedo', texto:'*Confirmar a cavidade e afastar aderências e vísceras*' },
         { tipo:'passo', rotulo:'Introduzir', texto:'Dreno direcionado posterior e superior no pneumotórax; posterior e inferior no derrame' },
         { tipo:'fim', rotulo:'Conectar e fixar', texto:'Selo d\'água, sutura em bailarina, curativo e *radiografia de controle*' }
       ]},
       { tipo:'doses', titulo:'Material', itens:[
-        { droga:'Dreno tubular', dose:'Trauma e hemotórax 28 a 32 Fr · pneumotórax espontâneo 14 a 20 Fr', via:'—', obs:'Empiema espesso pede calibre maior.' },
+        { droga:'Dreno tubular', dose:'Trauma instável e hemotórax 24 a 28 Fr · pneumotórax traumático estável: pigtail 14 Fr · espontâneo 14 a 20 Fr', via:'—', obs:'Empiema espesso pede calibre maior.' },
         { droga:'Lidocaína 1 a 2%', dose:'10 a 20 mL', via:'INFILTRAÇÃO', obs:'Até 4,5 mg/kg sem vasoconstritor. Anestesiar bem o periósteo e a pleura.' },
         { droga:'Analgesia sistêmica', dose:'Dipirona 2 g + morfina titulada', via:'EV', obs:'Antes do procedimento. A drenagem dói muito.' },
         { droga:'Sedação leve', dose:'Midazolam ou fentanila tituladas', via:'EV', obs:'Se o paciente estiver estável e monitorizado.' },
@@ -7635,7 +9181,8 @@ const PROTOCOLOS = [
         { tipo:'passo', rotulo:'Localizar', texto:'*Ultrassom* — marcar o ponto com o paciente na posição da punção',
           nota:'Escolher onde há maior lâmina de líquido e distância segura do diafragma' },
         { tipo:'passo', rotulo:'Anestesiar', texto:'Lidocaína na pele, subcutâneo, periósteo e *pleura parietal*',
-          nota:'Aspirar ao avançar; a saída de líquido confirma a profundidade' },
+          nota:'Aspirar ao avançar; a saída de líquido confirma a profundidade',
+          meds:['Lidocaína 1 a 2%'] },
         { tipo:'passo', rotulo:'Puncionar', texto:'Cateter sobre agulha, pela borda superior da costela inferior, com aspiração contínua' },
         { tipo:'passo', rotulo:'Coletar', texto:'*Bioquímica, celularidade, citologia oncótica, ADA, Gram e cultura*',
           nota:'Semear em frasco de hemocultura aumenta o rendimento' },
@@ -7686,7 +9233,8 @@ const PROTOCOLOS = [
         { tipo:'passo', rotulo:'Coletar', texto:'*Contagem de PMN, albumina, proteína, Gram e cultura em frasco de hemocultura*',
           nota:'PMN acima de 250/mm³ fecha peritonite bacteriana espontânea' },
         { tipo:'decisao', texto:'Retirou mais de 5 litros?', ramos:[
-          { rotulo:'Sim', texto:'*Repor albumina*: 6 a 8 g por litro retirado' },
+          { rotulo:'Sim', texto:'*Repor albumina*: 6 a 8 g por litro retirado',
+            meds:['Albumina humana 20%'] },
           { rotulo:'Não', cor:'ok', texto:'Sem necessidade de reposição' }
         ]},
         { tipo:'fim', rotulo:'Depois', texto:'Curativo compressivo; vigiar hipotensão e vazamento pelo orifício' }
@@ -7732,7 +9280,8 @@ const PROTOCOLOS = [
           nota:'Só no decúbito lateral dá para medir a pressão de abertura. Sentado é mais fácil, mas não mede' },
         { tipo:'passo', rotulo:'Localizar', texto:'*L3-L4 ou L4-L5* — linha entre as cristas ilíacas cruza L4',
           nota:'A medula termina em L1-L2 no adulto; abaixo disso só há cauda equina' },
-        { tipo:'passo', rotulo:'Antissepsia e anestesia', texto:'Clorexidina, campo estéril e lidocaína na pele e no trajeto' },
+        { tipo:'passo', rotulo:'Antissepsia e anestesia', texto:'Clorexidina, campo estéril e lidocaína na pele e no trajeto',
+          meds:['Lidocaína 1 a 2%'] },
         { tipo:'passo', rotulo:'Puncionar', texto:'Agulha com bisel *paralelo às fibras* (voltado para o lado), angulada para o umbigo',
           nota:'Agulha atraumática (ponta de lápis) reduz muito a cefaleia pós-punção' },
         { tipo:'passo', rotulo:'Medir e coletar', texto:'*Pressão de abertura* e 4 frascos de 1 a 2 mL',
@@ -7786,7 +9335,8 @@ const PROTOCOLOS = [
           { rotulo:'Não', texto:'*Sincronizar* na carga do ritmo' }
         ]},
         { tipo:'passo', rotulo:'Preparo', texto:'*Sedar com as pás já posicionadas* e a bolsa-válvula na mão',
-          nota:'Midazolam se há IC · propofol se não há · fentanil junto. A janela entre sedar e chocar precisa ser curta' },
+          nota:'Midazolam se há IC · propofol se não há · fentanil junto. A janela entre sedar e chocar precisa ser curta',
+          meds:['Midazolam (com IC)', 'Propofol (sem IC)', 'Fentanil'] },
         { tipo:'passo', rotulo:'Antes de disparar', texto:'*Conferir os marcadores de SYNC sobre cada onda R na tela*',
           nota:'Marcador na onda T em vez da R pode induzir FV. Avisar "afastar" em voz alta e conferir visualmente' },
         { tipo:'decisao', texto:'Reverteu?', ramos:[
@@ -7855,16 +9405,23 @@ const PROTOCOLOS = [
       { tipo:'fluxo', titulo:'Passo a passo', itens:[
         { tipo:'inicio', rotulo:'Avaliar', texto:'Via aérea, comorbidades, jejum, alergias e classificação ASA' },
         { tipo:'passo', rotulo:'Preparar', texto:'Monitor, oxigênio, aspirador, ambu, material de intubação e antídotos',
-          nota:'Naloxona e flumazenil à vista. Dois profissionais: um faz, outro monitoriza' },
+          nota:'Naloxona e flumazenil à vista. Dois profissionais: um faz, outro monitoriza',
+          meds:['Naloxona', 'Flumazenil'] },
         { tipo:'passo', rotulo:'Analgesia primeiro', texto:'*Fentanila titulada* — dor não se resolve com hipnótico',
-          nota:'1 mcg/kg, ou 1 mL de cada vez, checando resposta' },
+          nota:'1 mcg/kg, ou 1 mL de cada vez, checando resposta',
+          meds:['Fentanila 50 mcg/mL'] },
         { tipo:'passo', rotulo:'Sedação depois', texto:'Titular *2 mL de cada vez*, aguardando o pico do efeito',
-          nota:'Propofol, midazolam ou cetamina, conforme o paciente e o procedimento' },
+          nota:'Propofol, midazolam ou cetamina, conforme o paciente e o procedimento',
+          meds:['Propofol 10 mg/mL', 'Midazolam', 'Cetamina'] },
         { tipo:'decisao', texto:'Qual o perfil?', ramos:[
-          { rotulo:'Estável, procedimento curto', cor:'ok', texto:'*Propofol* — início e recuperação rápidos' },
-          { rotulo:'Instável ou hipotenso', texto:'*Cetamina* — mantém hemodinâmica e drive respiratório' },
-          { rotulo:'Precisa de ansiólise leve', texto:'*Midazolam* isolado' },
-          { rotulo:'Cardioversão', texto:'Fentanila + propofol ou etomidato tituladas' }
+          { rotulo:'Estável, procedimento curto', cor:'ok', texto:'*Propofol* — início e recuperação rápidos',
+            meds:['Propofol 10 mg/mL'] },
+          { rotulo:'Instável ou hipotenso', texto:'*Cetamina* — mantém hemodinâmica e drive respiratório',
+            meds:['Cetamina'] },
+          { rotulo:'Precisa de ansiólise leve', texto:'*Midazolam* isolado',
+            meds:['Midazolam'] },
+          { rotulo:'Cardioversão', texto:'Fentanila + propofol ou etomidato tituladas',
+            meds:['Fentanila 50 mcg/mL', 'Propofol 10 mg/mL', 'Etomidato 2 mg/mL'] }
         ]},
         { tipo:'fim', rotulo:'Depois', texto:'Observar até recuperação plena; alta só com acompanhante e sem dirigir por 12 horas' }
       ]},
@@ -7907,11 +9464,14 @@ const PROTOCOLOS = [
       { tipo:'fluxo', titulo:'Escada da analgesia no pronto-socorro', itens:[
         { tipo:'inicio', rotulo:'Medir', texto:'Escala numérica de 0 a 10, ou de faces na criança' },
         { tipo:'decisao', texto:'Qual a intensidade?', ramos:[
-          { rotulo:'Leve (1 a 3)', cor:'ok', texto:'*Dipirona ou paracetamol*' },
+          { rotulo:'Leve (1 a 3)', cor:'ok', texto:'*Dipirona ou paracetamol*',
+            meds:['Dipirona 500 mg/mL', 'Paracetamol'] },
           { rotulo:'Moderada (4 a 6)', texto:'*Dipirona + anti-inflamatório*, ou opioide fraco',
-            nota:'Somar mecanismos vale mais que subir a dose de um só' },
+            nota:'Somar mecanismos vale mais que subir a dose de um só',
+            meds:['Dipirona 500 mg/mL'] },
           { rotulo:'Intensa (7 a 10)', cor:'perigo', texto:'*Opioide forte titulado*',
-            nota:'Morfina diluída, 2 a 3 mg de cada vez' }
+            nota:'Morfina diluída, 2 a 3 mg de cada vez',
+            meds:['Morfina 10 mg/mL'] }
         ]},
         { tipo:'passo', rotulo:'Somar', texto:'*Multimodal*: analgésico simples + anti-inflamatório + adjuvante + medida local',
           nota:'Bloqueio local, gelo, imobilização e posicionamento fazem parte' },
@@ -7961,9 +9521,11 @@ const PROTOCOLOS = [
       { tipo:'fluxo', titulo:'Como fazer', itens:[
         { tipo:'inicio', rotulo:'Antes', texto:'Perguntar alergia, calcular a dose máxima pelo peso e avaliar a função neurovascular' },
         { tipo:'passo', rotulo:'Escolher', texto:'*Lidocaína* para o dia a dia; *bupivacaína* quando se quer duração longa',
-          nota:'Com vasoconstritor: dura mais, sangra menos e permite dose maior' },
+          nota:'Com vasoconstritor: dura mais, sangra menos e permite dose maior',
+          meds:['Lidocaína sem vasoconstritor', 'Bupivacaína sem vasoconstritor'] },
         { tipo:'passo', rotulo:'Reduzir a dor da injeção', texto:'Aquecer a solução, agulha fina (27 a 30G), injetar *devagar*, pela borda da ferida',
-          nota:'Tamponar com bicarbonato (1 mL de bicarbonato para 9 mL de lidocaína) reduz a ardência' },
+          nota:'Tamponar com bicarbonato (1 mL de bicarbonato para 9 mL de lidocaína) reduz a ardência',
+          meds:['Lidocaína sem vasoconstritor', 'Bicarbonato de sódio 8,4%'] },
         { tipo:'passo', rotulo:'Infiltrar', texto:'Aspirar, injetar avançando, formar botão dérmico e progredir a partir dele' },
         { tipo:'passo', rotulo:'Aguardar', texto:'3 a 5 minutos e *testar a sensibilidade* antes de começar' },
         { tipo:'fim', rotulo:'Vigiar', texto:'Sintomas neurológicos ou cardíacos durante e após a infiltração' }
@@ -8007,7 +9569,8 @@ const PROTOCOLOS = [
       { tipo:'fluxo', titulo:'Sonda vesical — passo a passo', itens:[
         { tipo:'inicio', rotulo:'Indicar', texto:'Retenção urinária, controle de diurese no grave, pré-operatório, ou lesão sacral em incontinente' },
         { tipo:'passo', rotulo:'Preparar', texto:'Técnica estéril, campo, antissepsia e *lidocaína gel em abundância*',
-          nota:'Instilar 10 a 20 mL na uretra e aguardar 3 a 5 minutos — reduz muito a dor' },
+          nota:'Instilar 10 a 20 mL na uretra e aguardar 3 a 5 minutos — reduz muito a dor',
+          meds:['Lidocaína gel 2%'] },
         { tipo:'passo', rotulo:'No homem', texto:'Tracionar o pênis a 90 graus, introduzir até a bifurcação e aguardar a urina',
           nota:'Se houver resistência na próstata, abaixe o pênis e peça para o paciente respirar fundo' },
         { tipo:'passo', rotulo:'Insuflar', texto:'*Só depois de ver a urina fluir* — insuflar na uretra rompe o canal',
@@ -8074,6 +9637,14 @@ const PROTOCOLOS = [
         { tipo:'passo', rotulo:'6 · QRS', texto:'Duração (normal abaixo de 120 ms), morfologia, progressão de R e ondas Q patológicas' },
         { tipo:'passo', rotulo:'7 · ST e T', texto:'*O passo mais importante* — supra, infra, inversão de T' },
         { tipo:'fim', rotulo:'8 · QT', texto:'QTc pela fórmula de Bazett; acima de 500 ms é risco de torsades' }
+      ]},
+      { tipo:'lista', titulo:'ECG na dor torácica: o que cada achado sugere', itens:[
+        '*Equivalentes de supra* (conduzir como IAM com supra): BRE novo com clínica (critérios de Sgarbossa), infra horizontal de V1–V4 com R alto (posterior — confirmar em V7–V9), *de Winter* (infra ascendente com T alta e simétrica em V2–V6).',
+        '*Onda T hiperaguda* (alta, larga, simétrica): infarto nos primeiros minutos — repetir o ECG em 5 a 10 min.',
+        '*Pericardite:* supra difuso e côncavo, fora de território coronariano, com infra de PR (e supra de PR em aVR).',
+        '*Derrame pericárdico:* baixa voltagem e *alternância elétrica* — com hipotensão, é tamponamento até o POCUS dizer que não.',
+        '*TEP:* taquicardia sinusal é o mais comum; S1Q3T3, BRD novo, desvio do eixo para a direita e T invertida em V1–V4 falam de VD sobrecarregado. Nenhum é sensível.',
+        '*ECG normal não exclui:* um terço das dissecções de aorta e boa parte das SCA chegam com traçado normal ou inespecífico.'
       ]},
       { tipo:'lista', titulo:'Critérios de supra de ST', itens:[
         'Supra maior que 1 mm em duas derivações contíguas.',
@@ -8166,6 +9737,420 @@ const PROTOCOLOS = [
         'Marque o ponto de punção e puncione ali, sem mudar a posição do paciente.',
         'Repita o exame depois de cada intervenção grande: é isso que o torna diferente da imagem formal.'
       ]}
-    ] }
+    ] },
 
+  { id:'pre-eclampsia', titulo:'Pré-eclâmpsia grave, eclâmpsia e HELLP', categoria:'obstetricia', gravidade:'emergencia',
+    resumo:'Gestante a partir de 20 semanas ou puérpera até 6 semanas com PA alta: sulfato de magnésio, baixar a PA em até 1 hora, reconhecer HELLP e chamar o obstetra para decidir o parto.',
+    tags:['pre-eclampsia','pré-eclâmpsia','eclampsia','eclâmpsia','hellp','gestante','puerpera','hipertensao na gestacao','sulfato de magnesio','zuspan','pritchard','hidralazina','nifedipino','convulsao na gestante'],
+    fonte:'Ministério da Saúde — Manual de Gestação de Alto Risco (2022) · FEBRASGO — Pré-eclâmpsia (Protocolo 2021) · ACOG — Hipertensão Gestacional e Pré-eclâmpsia (2020) · OMS — Pré-eclâmpsia e eclâmpsia (2011)',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Gestante *≥ 20 semanas* ou *puérpera até 6 semanas* com PA ≥ 140/90 — ou com cefaleia, escotomas, dor epigástrica, convulsão ou falta de ar, mesmo com PA "quase normal".' },
+      { rotulo:'Prioridade',    valor:'*Sulfato de magnésio* na pré-eclâmpsia com sinal de gravidade e em toda eclâmpsia, e *PA ≥ 160/110 tratada em até 30–60 minutos*.' },
+      { rotulo:'Meta',          valor:'PAS 140–150 e PAD 90–100 (sem derrubar), nenhuma nova convulsão, e obstetra decidindo o momento e a via do parto.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Gestante ≥ 20 semanas ou puérpera até 6 semanas com PA ≥ 140/90, sintoma neurológico, dor epigástrica ou convulsão',
+          nota:'Medir a PA sentada, braço na altura do coração, manguito adequado. Repetir em 15 minutos se ≥ 160/110' },
+
+        { tipo:'decisao', texto:'Está convulsionando ou convulsionou agora?', ramos:[
+          { rotulo:'Sim — eclâmpsia', cor:'perigo', texto:'*Proteger, decúbito lateral esquerdo, O₂, aspirar* e sulfato de magnésio já',
+            nota:'A crise costuma ceder sozinha em 1–2 minutos. Não tente parar com diazepam: a droga é o magnésio. Toda convulsão em gestante ou puérpera é eclâmpsia até prova em contrário',
+            meds:[{ droga:'Sulfato de magnésio', dose:'4 g EV em 15–20 min', via:'EV' }] },
+          { rotulo:'Não', texto:'Procurar sinal de gravidade' }
+        ]},
+
+        { tipo:'decisao', texto:'Tem sinal de gravidade?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Pré-eclâmpsia grave:* sulfato de magnésio, anti-hipertensivo e obstetra',
+            nota:'PAS ≥ 160 ou PAD ≥ 110 · cefaleia, escotomas, confusão · dor epigástrica ou no hipocôndrio direito · edema agudo de pulmão · plaquetas < 100 mil · TGO/TGP ≥ 2× · creatinina > 1,1 · oligúria. Proteinúria não é obrigatória' },
+          { rotulo:'Não', texto:'Pré-eclâmpsia sem gravidade ou hipertensão gestacional: *internar e investigar* com o obstetra',
+            nota:'Laboratório e bem-estar fetal. Pode virar grave em horas: reavaliar sintomas e PA' }
+        ]},
+
+        { tipo:'passo', rotulo:'Sulfato de magnésio — ataque', texto:'*4 g EV em 15–20 minutos* (esquema de Zuspan)',
+          nota:'8 mL de MgSO₄ 50% + 12 mL de água destilada (20 mL) em bomba ou lento. Sem bomba: Pritchard — 4 g EV + 10 g IM (5 g em cada nádega)',
+          meds:[{ droga:'Sulfato de magnésio', dose:'4 g EV em 15–20 min', via:'EV' }] },
+
+        { tipo:'passo', rotulo:'Manutenção', texto:'*1 g/h EV em bomba* (até 2 g/h), por 24 h após o parto ou a última convulsão',
+          nota:'10 g (20 mL de 50%) + SF 0,9% 480 mL = 20 mg/mL: 1 g/h = 50 mL/h. Creatinina > 1,2 ou oligúria: reduzir para 0,5 g/h e dosar o magnésio. Pritchard: 5 g IM a cada 4 h',
+          meds:[{ droga:'Sulfato de magnésio', dose:'1 g/h (até 2 g/h)', via:'EV BIC' }] },
+
+        { tipo:'decisao', texto:'Antes de cada hora de magnésio: sinais de intoxicação?', ramos:[
+          { rotulo:'Reflexo patelar abolido, FR baixa ou diurese < 25 mL/h', cor:'perigo', texto:'*Suspender o magnésio* e dosar o magnésio sérico',
+            nota:'Depressão respiratória ou parada: *gluconato de cálcio* e suporte ventilatório',
+            meds:[{ droga:'Gluconato de cálcio 10%', dose:'10 mL (1 g) EV lento, em 3–10 min', via:'EV' }] },
+          { rotulo:'Tudo normal', cor:'ok', texto:'Manter a infusão e reavaliar de hora em hora' }
+        ]},
+
+        { tipo:'decisao', texto:'PA ≥ 160/110 confirmada em 15 minutos?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Anti-hipertensivo em até 30–60 minutos*',
+            nota:'Hidralazina 5 mg EV a cada 20 min (máx. 30 mg) OU nifedipino 10 mg VO a cada 20–30 min (máx. 30 mg). Labetalol EV não é vendido no Brasil. Refratária: nitroprussiato por pouco tempo, com obstetra e UTI',
+            meds:[{ droga:'Hidralazina', dose:'5 mg EV, repetir a cada 20 min (máx. 30 mg)', via:'EV' }, { droga:'Nifedipino', dose:'10 mg, repetir a cada 20–30 min (máx. 30 mg)', via:'VO' }],
+            ir:'crise-hipertensiva' },
+          { rotulo:'Não', cor:'ok', texto:'Sem anti-hipertensivo de urgência; seguir vigiando' }
+        ]},
+
+        { tipo:'alerta', rotulo:'Alvo', texto:'PAS 140–150 e PAD 90–100 — não abaixo disso',
+          nota:'Queda brusca da PA reduz o fluxo placentário e causa sofrimento fetal' },
+
+        { tipo:'decisao', texto:'Laboratório: é HELLP?', ramos:[
+          { rotulo:'Hemólise + TGO ≥ 70 + plaquetas < 100 mil', cor:'perigo', texto:'*HELLP:* estabilizar e interromper a gestação com o obstetra',
+            nota:'Hemólise: DHL ≥ 600, esquizócitos ou bilirrubina ≥ 1,2. Plaquetas < 50 mil antes de cesárea (ou < 20 mil em parto vaginal): transfundir. Dor no hipocôndrio direito com choque: hematoma hepático roto — cirurgia',
+            ir:'choque-abordagem' },
+          { rotulo:'Não', cor:'ok', texto:'Repetir o laboratório em 6–24 h enquanto a gestação continuar' }
+        ]},
+
+        { tipo:'decisao', texto:'Quanto tempo de gestação? (a decisão é do obstetra)', ramos:[
+          { rotulo:'≥ 34 semanas ou eclâmpsia, HELLP, EAP, DPP, piora', cor:'perigo', texto:'*Interromper após estabilizar* — não durante a convulsão',
+            nota:'A via é obstétrica: eclâmpsia não obriga cesárea' },
+          { rotulo:'< 34 semanas e estável', texto:'Corticoide para maturação e conduta em centro terciário',
+            nota:'Betametasona 12 mg IM, 2 doses com 24 h de intervalo',
+            meds:[{ droga:'Betametasona', dose:'12 mg IM, 2 doses com 24 h de intervalo', via:'IM' }] }
+        ]},
+
+        { tipo:'fim', rotulo:'Destino', texto:'*Centro obstétrico ou UTI* com obstetra · transferir só depois do magnésio e da PA controlada',
+          nota:'No puerpério, manter magnésio por 24 h e vigiar PA por pelo menos 72 h — a eclâmpsia pode surgir até 6 semanas depois do parto' }
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Convulsão* em gestante ≥ 20 semanas ou puérpera até 6 semanas: eclâmpsia até prova em contrário.',
+        '*PA ≥ 160/110* confirmada: tratar em até 30–60 minutos — é a hora do AVC hemorrágico.',
+        '*Dor epigástrica ou no hipocôndrio direito* com náusea: HELLP ou hematoma hepático, não gastrite.',
+        'Cefaleia intensa, escotomas, confusão ou *déficit focal*: iminência de eclâmpsia — e TC se o déficit persistir.',
+        'Falta de ar com estertores: *edema agudo de pulmão* da pré-eclâmpsia.'
+      ]},
+
+      { tipo:'passos', titulo:'Conduta imediata', itens:[
+        'Chamar o obstetra e colocar a gestante em *decúbito lateral esquerdo*, com monitor e dois acessos.',
+        'Fazer *sulfato de magnésio*: 4 g EV em 15–20 minutos e depois 1 g/h por 24 h.',
+        'Confirmar a PA em 15 minutos e, se ≥ 160/110, dar *hidralazina ou nifedipino* em até 30–60 minutos.',
+        'Colher hemograma, plaquetas, TGO, TGP, DHL, bilirrubinas, creatinina, ácido úrico e proteinúria.',
+        'Passar sonda vesical e medir a diurese de hora em hora.',
+        'Checar reflexo patelar, FR e diurese antes de cada hora de magnésio.',
+        'Avaliar a vitalidade fetal e a idade gestacional para o obstetra decidir o parto.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Sulfato de magnésio 50% (ampola 10 mL = 5 g)', dose:'Ataque 4 g EV em 15–20 min', via:'EV', obs:'8 mL de 50% + 12 mL de AD (20 mL). Na recorrência da convulsão: mais 2 g EV em 5–10 min.' },
+        { droga:'Sulfato de magnésio — manutenção', dose:'1 g/h (até 2 g/h) por 24 h', via:'EV BIC', obs:'10 g (20 mL de 50%) + SF 0,9% 480 mL = 20 mg/mL → 1 g/h = 50 mL/h. Creatinina > 1,2: 0,5 g/h.' },
+        { droga:'Sulfato de magnésio — Pritchard (sem bomba)', dose:'4 g EV + 10 g IM, depois 5 g IM a cada 4 h', via:'EV + IM', obs:'5 g (10 mL de 50%) em cada nádega, com agulha longa. Checar reflexo, FR e diurese antes de cada dose.' },
+        { droga:'Gluconato de cálcio 10%', dose:'10 mL (1 g) EV lento em 3–10 min', via:'EV', obs:'Antídoto da intoxicação por magnésio: arreflexia, depressão respiratória, parada.' },
+        { droga:'Hidralazina 20 mg/mL', dose:'5 mg EV, repetir a cada 20 min (máx. 30 mg)', via:'EV', obs:'1 ampola + 19 mL de SF = 1 mg/mL: 5 mL por dose. Hipotensão e taquicardia materna.' },
+        { droga:'Nifedipino 10 mg', dose:'10 mg, repetir a cada 20–30 min (máx. 30 mg)', via:'VO', obs:'Comprimido de liberação imediata, engolido — nunca sublingual. Pode associar ao magnésio.' },
+        { droga:'Betametasona (6 + 6 mg/mL)', dose:'12 mg (2 mL), 2 doses com 24 h de intervalo', via:'IM', obs:'Maturação pulmonar fetal se < 34 semanas. Alternativa: dexametasona 6 mg IM 12/12 h, 4 doses.' }
+      ]},
+
+      { tipo:'tempo', titulo:'Linha do tempo', itens:[
+        { quando:'0–15 min', o_que:'Decúbito lateral, monitor, acessos, obstetra chamado, sulfato de magnésio iniciado.' },
+        { quando:'15 min', o_que:'Repetir a PA: se ainda ≥ 160/110, primeira dose de anti-hipertensivo.' },
+        { quando:'30–60 min', o_que:'PA no alvo (140–150/90–100); laboratório colhido; sonda vesical.' },
+        { quando:'De hora em hora', o_que:'Reflexo patelar, FR, diurese e PA antes de cada grama de magnésio.' },
+        { quando:'24 h', o_que:'Magnésio até 24 h após o parto ou a última convulsão.' }
+      ]},
+
+      { tipo:'lista', titulo:'Critérios', itens:[
+        '*Pré-eclâmpsia:* PA ≥ 140/90 após 20 semanas com proteinúria (≥ 300 mg/24 h ou relação proteína/creatinina ≥ 0,3) ou lesão de órgão-alvo, mesmo sem proteinúria.',
+        '*Sinais de gravidade:* PAS ≥ 160 ou PAD ≥ 110; cefaleia, escotomas ou confusão; dor epigástrica ou no hipocôndrio direito; EAP; plaquetas < 100 mil; TGO/TGP ≥ 2× o normal; creatinina > 1,1 mg/dL.',
+        '*Eclâmpsia:* convulsão tônico-clônica sem outra causa em gestante com pré-eclâmpsia — pode ser a primeira manifestação, com PA pouco elevada.',
+        '*HELLP:* hemólise (DHL ≥ 600, esquizócitos ou bilirrubina ≥ 1,2) + TGO ≥ 70 + plaquetas < 100 mil.',
+        '*Intoxicação por magnésio:* reflexo patelar abolido, FR baixa (o MS usa < 16 irpm; outras referências, < 12) e diurese < 25 mL/h.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Sangue:* hemograma com plaquetas, TGO, TGP, DHL, bilirrubinas, creatinina, ureia, ácido úrico e coagulograma se plaquetas baixas ou sangramento.',
+        '*Urina:* relação proteína/creatinina em amostra ou proteinúria de 24 h; sonda vesical e diurese horária na forma grave.',
+        '*Fetal:* cardiotocografia e ultrassom com Doppler, conforme a idade gestacional.',
+        '*Magnésio sérico:* só se oligúria, creatinina alta ou sinal de intoxicação.',
+        '*TC de crânio:* déficit focal, convulsão atípica ou depois de 48 h do parto, ou rebaixamento que não melhora.'
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Tratar eclâmpsia só com diazepam ou fenitoína: a droga que previne e trata é o *sulfato de magnésio*.',
+        'Derrubar a PA abaixo de 140/90 — reduz o fluxo placentário.',
+        'Dar nifedipino sublingual ou associar a PA baixa com o magnésio sem vigiar.',
+        'Fazer cesárea durante a convulsão ou com a mãe instável: estabilizar primeiro.',
+        'Transferir sem magnésio e sem PA controlada.',
+        'Esquecer que a pré-eclâmpsia pode começar no puerpério, até 6 semanas depois do parto.'
+      ]},
+
+      { tipo:'texto', titulo:'Destino', conteudo:'Pré-eclâmpsia com sinal de gravidade, eclâmpsia e HELLP ficam em *centro obstétrico ou UTI* com obstetra — o plantonista estabiliza (magnésio, PA, via aérea) e o obstetra decide o momento e a via do parto. Serviço sem obstetrícia: iniciar magnésio e anti-hipertensivo e transferir com a regulação, em ambulância com equipe capaz de manejar convulsão. No puerpério, o magnésio segue por 24 h e a PA é vigiada por pelo menos 72 h. *Divergência:* o MS usa FR < 16 como critério para suspender o magnésio; ACOG e outras referências usam < 12.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Gestante com convulsão: magnésio primeiro, pergunta depois.',
+        'Deixe o gluconato de cálcio na beira do leito de quem recebe magnésio.',
+        'Antes de cada hora de magnésio: reflexo patelar, FR e diurese — escreva no prontuário.',
+        'Cefaleia e epigastralgia em puérpera da semana passada: meça a PA.'
+      ]}
+    ] },
+  { id:'sangramento-gestacao', titulo:'Sangramento na gestação', categoria:'obstetricia', gravidade:'emergencia',
+    resumo:'Estabilizar primeiro, depois separar pela idade gestacional: abortamento, ectópica e mola na primeira metade; placenta prévia, descolamento e rotura na segunda. Rh negativo recebe anti-D.',
+    tags:['sangramento na gestacao','sangramento vaginal','gestante','abortamento','aborto','gravidez ectopica','ectópica','mola','placenta previa','descolamento prematuro de placenta','dpp','rotura uterina','vasa previa','anti-d','rh negativo','beta-hcg'],
+    fonte:'Ministério da Saúde — Manual de Gestação de Alto Risco (2022) e Atenção Humanizada ao Abortamento (2011) · FEBRASGO — Protocolos de Abortamento, Gravidez Ectópica e Hemorragias da Segunda Metade · ACOG — Gravidez Ectópica (2018) e Placenta Prévia/Acreta · RCOG',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Toda mulher em idade fértil com sangramento vaginal, dor abdominal ou síncope — *beta-HCG antes de qualquer outra hipótese*.' },
+      { rotulo:'Prioridade',    valor:'*Estabilidade hemodinâmica primeiro:* dois acessos, tipagem e Rh. Na segunda metade, *nada de toque vaginal* antes do ultrassom.' },
+      { rotulo:'Meta',          valor:'Não perder a ectópica rota e o descolamento de placenta; anti-D em toda Rh negativo não sensibilizada.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Sangramento vaginal em gestante (ou beta-HCG positivo)',
+          nota:'Idade gestacional pela data da última menstruação ou ultrassom. Gestante jovem compensa: taquicardia vem antes da hipotensão' },
+
+        { tipo:'decisao', texto:'Está instável? (taquicardia, hipotensão, má perfusão, índice de choque ≥ 0,9)', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Sala vermelha:* dois acessos calibrosos, tipagem e reserva, sangue cedo, *obstetra e centro cirúrgico agora*',
+            nota:'Acima de 20 semanas: deslocar o útero para a esquerda (manual ou cunha sob o quadril direito). FAST com líquido livre na primeira metade = ectópica rota',
+            ir:'choque-abordagem' },
+          { rotulo:'Não', cor:'ok', texto:'Seguir pela idade gestacional' }
+        ]},
+
+        { tipo:'decisao', texto:'Qual a idade gestacional?', ramos:[
+          { rotulo:'Primeira metade (< 20 semanas)', texto:'Beta-HCG quantitativo, ultrassom transvaginal e exame especular' },
+          { rotulo:'Segunda metade (≥ 20 semanas)', cor:'perigo', texto:'*Sem toque vaginal:* ultrassom, cardiotocografia e obstetra',
+            nota:'O toque em placenta prévia pode causar hemorragia maciça' }
+        ]},
+
+        { tipo:'decisao', texto:'Primeira metade: o ultrassom mostra gestação dentro do útero?', ramos:[
+          { rotulo:'Útero vazio + beta-HCG acima da zona discriminatória', cor:'perigo', texto:'*Gravidez ectópica* até prova em contrário',
+            nota:'Zona discriminatória: 1.500–3.500 mUI/mL conforme o serviço (ACOG usa 3.500). Instável ou líquido livre = cirurgia. Estável, massa < 3,5 cm, sem batimento e beta-HCG < 5.000: metotrexato com o obstetra',
+            meds:[{ droga:'Metotrexato', dose:'50 mg/m² dose única', via:'IM' }] },
+          { rotulo:'Útero vazio + beta-HCG abaixo da zona', texto:'*Gestação de localização desconhecida:* repetir o beta-HCG em 48 h',
+            nota:'Subida < 35% em 48 h ou queda lenta falam contra gestação normal. Orientar sinais de alarme por escrito' },
+          { rotulo:'Gestação intrauterina', texto:'*Abortamento?* Classificar pelo colo e pelo conteúdo' },
+          { rotulo:'Imagem em "flocos de neve", beta-HCG muito alto', texto:'*Mola hidatiforme:* esvaziamento por aspiração com o obstetra',
+            nota:'Útero maior que a idade gestacional, hiperêmese, pré-eclâmpsia antes de 20 semanas, hipertireoidismo' }
+        ]},
+
+        { tipo:'decisao', texto:'Abortamento: como está o colo e o conteúdo?', ramos:[
+          { rotulo:'Colo fechado, embrião vivo', cor:'ok', texto:'*Ameaça de abortamento:* analgesia e orientação',
+            nota:'Repouso não muda o desfecho. Retorno se sangramento aumentar, febre ou dor forte' },
+          { rotulo:'Colo aberto, restos ou embrião sem batimento', texto:'*Inevitável, incompleto ou retido:* esvaziamento (aspiração ou misoprostol) com o obstetra',
+            meds:[{ droga:'Misoprostol', dose:'Retido: 800 mcg vaginal · incompleto: 400 mcg SL ou 600 mcg VO', via:'Vaginal/SL/VO' }] },
+          { rotulo:'Febre, secreção fétida, dor à mobilização', cor:'perigo', texto:'*Abortamento infectado:* antibiótico já e esvaziamento após iniciar',
+            nota:'Clindamicina + gentamicina (± ampicilina). Com choque: pacote da sepse',
+            meds:[{ droga:'Clindamicina', dose:'900 mg 8/8 h', via:'EV' }, { droga:'Gentamicina', dose:'5 mg/kg 1x/dia', via:'EV' }], ir:'sepse' }
+        ]},
+
+        { tipo:'decisao', texto:'Segunda metade: como é o sangramento?', ramos:[
+          { rotulo:'Indolor, vermelho vivo, útero mole', texto:'*Placenta prévia:* sem toque, ultrassom e internar',
+            nota:'Sangramento importante ou sofrimento fetal = cesárea. Corticoide se < 34 semanas' },
+          { rotulo:'Dor, útero duro (hipertonia), sangue escuro', cor:'perigo', texto:'*Descolamento prematuro de placenta:* repor, coagulograma e parto rápido',
+            nota:'O sangue pode ficar retido: a perda visível subestima o choque. Hipertensão, cocaína e trauma são gatilhos. Fibrinogênio < 200 = coagulopatia grave' },
+          { rotulo:'Dor súbita, parada das contrações, partes fetais palpáveis', cor:'perigo', texto:'*Rotura uterina:* laparotomia de emergência',
+            nota:'Quase sempre com cesárea ou cirurgia uterina prévia. Bradicardia fetal súbita' },
+          { rotulo:'Sangramento na rotura da bolsa com sofrimento fetal agudo', cor:'perigo', texto:'*Vasa prévia:* cesárea imediata',
+            nota:'O sangue é do feto: pouca perda já é grave para ele' }
+        ]},
+
+        { tipo:'decisao', texto:'Rh da gestante?', ramos:[
+          { rotulo:'Rh negativo com Coombs indireto negativo', texto:'*Imunoglobulina anti-D* em até 72 h',
+            nota:'Abaixo de 12 semanas bastam 50–120 mcg quando disponível; no Brasil a apresentação usual é 300 mcg. Não fazer se Coombs indireto positivo (já sensibilizada)',
+            meds:[{ droga:'Imunoglobulina anti-D', dose:'300 mcg', via:'IM' }] },
+          { rotulo:'Rh positivo', cor:'ok', texto:'Não precisa' }
+        ]},
+
+        { tipo:'fim', rotulo:'Destino', texto:'*Centro obstétrico ou cirúrgico* se instável, ectópica, DPP, rotura ou placenta prévia sangrando · *alta* só na ameaça de abortamento estável ou abortamento completo',
+          nota:'Gestação de localização desconhecida: alta com beta-HCG em 48 h marcado e orientação escrita' }
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        'Dor abdominal com síncope ou choque em mulher em idade fértil: *ectópica rota* até prova em contrário.',
+        '*Toque vaginal* na segunda metade antes do ultrassom: pode desencadear hemorragia maciça na placenta prévia.',
+        'Dor com útero duro e sangue escuro: *DPP* — a perda visível subestima a real.',
+        'Cesárea prévia com dor súbita e bradicardia fetal: *rotura uterina*.',
+        'Febre após manipulação ou aborto provocado: *abortamento infectado*, que evolui rápido para choque séptico.'
+      ]},
+
+      { tipo:'passos', titulo:'Conduta imediata', itens:[
+        'Avaliar a estabilidade: FC, PA, perfusão e índice de choque.',
+        'Puncionar *dois acessos calibrosos* e colher hemograma, tipagem e Rh, coagulograma e fibrinogênio.',
+        'Confirmar a gestação e a idade gestacional: beta-HCG quantitativo e ultrassom.',
+        'Acima de 20 semanas: *deslocar o útero para a esquerda* e não fazer toque vaginal.',
+        'Chamar o obstetra e, se instável, o centro cirúrgico ou obstétrico.',
+        'Fazer *anti-D* se Rh negativo e Coombs indireto negativo.',
+        'Iniciar sangue cedo no choque; evitar grande volume de cristaloide.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Imunoglobulina anti-D 300 mcg', dose:'300 mcg', via:'IM', obs:'Em até 72 h do sangramento, se Rh negativo e Coombs indireto negativo. Abaixo de 12 semanas, 50–120 mcg bastam quando existe a apresentação.' },
+        { droga:'Misoprostol 200 mcg', dose:'Retido: 800 mcg vaginal (ou 600 mcg SL) · incompleto: 400 mcg SL ou 600 mcg VO', via:'Vaginal/SL/VO', obs:'Primeiro trimestre, com o obstetra (FIGO 2017). Retido: pode repetir a cada 3 h. Alternativa à aspiração manual intrauterina (AMIU).' },
+        { droga:'Metotrexato', dose:'50 mg/m² dose única', via:'IM', obs:'Ectópica íntegra: estável, massa < 3,5 cm, sem batimento, beta-HCG < 5.000, com seguimento garantido. Beta-HCG no dia 4 e 7.' },
+        { droga:'Clindamicina', dose:'900 mg de 8/8 h', via:'EV', obs:'Abortamento infectado, com gentamicina. Começar antes do esvaziamento.' },
+        { droga:'Gentamicina', dose:'5 mg/kg 1x/dia', via:'EV', obs:'Abortamento infectado. Ajustar pela função renal.' },
+        { droga:'Betametasona (6 + 6 mg/mL)', dose:'12 mg, 2 doses com 24 h de intervalo', via:'IM', obs:'Placenta prévia ou DPP com parto provável antes de 34 semanas.' },
+        { droga:'Ácido tranexâmico 250 mg/5 mL', dose:'1 g EV em 10 min', via:'EV', obs:'Hemorragia obstétrica grave com coagulopatia, junto com a reposição — 4 ampolas + SF 100 mL.' }
+      ]},
+
+      { tipo:'tempo', titulo:'Linha do tempo', itens:[
+        { quando:'0–10 min', o_que:'Estabilidade, acessos, tipagem e Rh, deslocamento uterino se > 20 semanas.' },
+        { quando:'10–30 min', o_que:'Beta-HCG, ultrassom (FAST se instável), obstetra.' },
+        { quando:'Até 72 h', o_que:'Anti-D na Rh negativo não sensibilizada.' },
+        { quando:'48 h', o_que:'Novo beta-HCG na gestação de localização desconhecida.' }
+      ]},
+
+      { tipo:'lista', titulo:'Classificação', itens:[
+        '*Ameaça de abortamento:* sangramento com colo fechado e embrião vivo.',
+        '*Inevitável / incompleto:* colo aberto, restos na cavidade ou saída de tecido.',
+        '*Completo:* colo fechado, útero vazio, sangramento diminuindo, com beta-HCG em queda.',
+        '*Retido:* embrião sem batimento ou saco vazio, colo fechado.',
+        '*Infectado:* febre, dor, secreção fétida, geralmente após manipulação.',
+        '*Segunda metade:* placenta prévia (indolor), DPP (dor e hipertonia), rotura uterina (dor súbita, cesárea prévia), vasa prévia (sangramento com sofrimento fetal agudo na rotura da bolsa).'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Sangue:* hemograma, tipagem ABO e Rh, Coombs indireto, coagulograma e *fibrinogênio* (< 200 mg/dL na hemorragia obstétrica = gravidade).',
+        '*Beta-HCG quantitativo:* para a primeira metade e para comparar em 48 h.',
+        '*Ultrassom:* transvaginal na primeira metade; obstétrico com localização da placenta na segunda; FAST no instável.',
+        '*Cardiotocografia* acima da viabilidade fetal.'
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Toque vaginal na segunda metade antes de saber onde está a placenta.',
+        'Dispensar mulher em idade fértil com dor ou sangramento sem beta-HCG.',
+        'Dar alta a gestação de localização desconhecida sem beta-HCG marcado em 48 h.',
+        'Esquecer o anti-D na Rh negativo — inclusive no abortamento e na ectópica.',
+        'Confiar na perda visível no descolamento de placenta: o sangue fica retido.'
+      ]},
+
+      { tipo:'texto', titulo:'Destino', conteudo:'Instabilidade, ectópica, descolamento de placenta, rotura uterina, vasa prévia e placenta prévia sangrando vão para o *centro cirúrgico ou obstétrico* com o obstetra. Abortamento inevitável, incompleto, retido ou infectado interna para esvaziamento. *Alta* só na ameaça de abortamento estável ou no abortamento completo, e na gestação de localização desconhecida estável com beta-HCG em 48 h marcado — sempre com orientação escrita de retorno (dor, síncope, febre, sangramento maior que uma menstruação). *Divergência:* a zona discriminatória do beta-HCG varia (1.500–3.500 mUI/mL); o ACOG usa 3.500 para não interromper uma gestação desejada.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Beta-HCG em toda mulher em idade fértil com dor abdominal, sangramento ou síncope — sem exceção.',
+        'Gestante acima de 20 semanas deitada de barriga para cima perde débito: desloque o útero.',
+        'Escreva o tipo sanguíneo e se fez anti-D.',
+        'No trauma da gestante ≥ 20 semanas, monitorização fetal por 4–6 h mesmo com trauma leve.'
+      ]}
+    ] },
+  { id:'hemorragia-pos-parto', titulo:'Hemorragia pós-parto', categoria:'obstetricia', gravidade:'emergencia',
+    resumo:'Os 4 Ts, o índice de choque e a hora de ouro: massagem, ocitocina e ácido tranexâmico juntos, depois metilergometrina e misoprostol, balão, traje antichoque e cirurgia — sem esperar a puérpera ficar hipotensa.',
+    tags:['hemorragia pos-parto','hemorragia pós-parto','hpp','atonia uterina','puerpera','4 ts','indice de choque','ocitocina','metilergometrina','misoprostol','acido tranexamico','woman','balao de tamponamento','traje antichoque','inversao uterina','acretismo'],
+    fonte:'OPAS/Ministério da Saúde — Recomendações assistenciais para prevenção, diagnóstico e tratamento da hemorragia obstétrica (Zero Morte Materna por Hemorragia, 2018) · FEBRASGO — Hemorragia pós-parto · OMS — Recomendações para HPP (2012, atualização do ácido tranexâmico 2017) · FIGO',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Perda ≥ 500 mL após parto vaginal ou ≥ 1.000 mL após cesárea nas primeiras 24 h — ou *qualquer perda com sinal de choque*. A perda estimada no olho subestima.' },
+      { rotulo:'Prioridade',    valor:'*Pedir ajuda e agir em paralelo:* massagem uterina, ocitocina e ácido tranexâmico nos primeiros minutos. Índice de choque ≥ 0,9 já é alerta.' },
+      { rotulo:'Meta',          valor:'Sangramento controlado na *hora de ouro* (primeira hora), sem esperar a hipotensão — ela é tardia na puérpera.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Puérpera sangrando mais que o esperado ou com taquicardia, palidez ou hipotensão',
+          nota:'Primárias: até 24 h (a maioria). Tardias: de 24 h até 12 semanas — restos, infecção, subinvolução' },
+
+        { tipo:'passo', rotulo:'Minuto 0', texto:'*Pedir ajuda* · dois acessos calibrosos · O₂ · monitor · sonda vesical · tipagem, hemograma, coagulograma e *fibrinogênio*',
+          nota:'Estimar a perda pesando compressas e campos. Aquecer a paciente e os fluidos' },
+
+        { tipo:'decisao', texto:'Índice de choque (FC ÷ PAS)?', ramos:[
+          { rotulo:'≥ 1,4', cor:'perigo', texto:'*Hemorragia grave:* transfusão imediata e protocolo de transfusão maciça',
+            nota:'Sangue O negativo se não houver tipado. Cristaloide só como ponte, até 1,5–2 L', ir:'choque-abordagem' },
+          { rotulo:'0,9 a 1,3', cor:'perigo', texto:'*Alto risco de transfusão:* reserva de sangue e reavaliar a cada 15 min' },
+          { rotulo:'< 0,9', cor:'ok', texto:'Seguir o pacote, sem subestimar' }
+        ]},
+
+        { tipo:'passo', rotulo:'Em paralelo, nos primeiros minutos', texto:'*Massagem uterina bimanual* + *ocitocina* + *ácido tranexâmico*',
+          nota:'Ocitocina 5 UI EV lento (3 min) e 20 UI em 500 mL de SF a 250 mL/h. Ácido tranexâmico 1 g EV em 10 min, até 3 h do parto; repetir 1 g se sangrar de novo após 30 min',
+          meds:[{ droga:'Ocitocina', dose:'5 UI EV lento + 20 UI em 500 mL a 250 mL/h', via:'EV' }, { droga:'Ácido tranexâmico', dose:'1 g EV em 10 min', via:'EV' }] },
+
+        { tipo:'decisao', texto:'Qual dos 4 Ts?', ramos:[
+          { rotulo:'Tônus — útero amolecido (70%)', texto:'Massagem contínua e uterotônicos em sequência',
+            nota:'Esvaziar a bexiga ajuda o útero a contrair' },
+          { rotulo:'Trauma — útero contraído e sangrando', cor:'perigo', texto:'Revisar o canal: *laceração*, hematoma, *rotura* ou *inversão uterina*',
+            nota:'Inversão: recolocar o útero manualmente na hora, com a ocitocina parada até repor. Laceração: suturar' },
+          { rotulo:'Tecido — placenta incompleta', texto:'*Restos ou acretismo:* revisão da cavidade com o obstetra',
+            nota:'Placenta que não descola: suspeitar de acretismo — não tracionar' },
+          { rotulo:'Trombina — sangue que não coagula', cor:'perigo', texto:'*Coagulopatia:* fibrinogênio, plasma, plaquetas',
+            nota:'Fibrinogênio < 200 mg/dL: crioprecipitado ou concentrado de fibrinogênio. DPP, pré-eclâmpsia, embolia amniótica e sepse são as causas' }
+        ]},
+
+        { tipo:'decisao', texto:'Atonia: o útero respondeu à ocitocina?', ramos:[
+          { rotulo:'Não — 2ª linha', cor:'perigo', texto:'*Metilergometrina* IM, se não for hipertensa',
+            nota:'Contraindicada na hipertensão, pré-eclâmpsia e cardiopatia. Pode repetir em 20 min',
+            meds:[{ droga:'Metilergometrina', dose:'0,2 mg', via:'IM' }] },
+          { rotulo:'Ainda não — 3ª linha', cor:'perigo', texto:'*Misoprostol* retal',
+            nota:'Age em 10–20 min: não espere por ele para o próximo passo',
+            meds:[{ droga:'Misoprostol', dose:'800 mcg', via:'Retal' }] },
+          { rotulo:'Sim', cor:'ok', texto:'Manter a ocitocina de manutenção e vigiar' }
+        ]},
+
+        { tipo:'decisao', texto:'Sangramento persiste apesar dos uterotônicos?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Balão de tamponamento intrauterino* como ponte e centro cirúrgico',
+            nota:'Sem balão: compressão bimanual contínua ou compressão da aorta. Para transportar: *traje antichoque não pneumático*' },
+          { rotulo:'Não', cor:'ok', texto:'Vigilância de 15 em 15 min na primeira hora' }
+        ]},
+
+        { tipo:'decisao', texto:'Falhou o balão ou está em choque refratário?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Cirurgia:* suturas compressivas (B-Lynch), ligadura das artérias uterinas, *histerectomia*',
+            nota:'Não adie a histerectomia na puérpera em choque. Embolização onde houver radiologia intervencionista' },
+          { rotulo:'Não', cor:'ok', texto:'Manter o balão pelo tempo do protocolo e vigiar em UTI ou sala de recuperação' }
+        ]},
+
+        { tipo:'fim', rotulo:'Destino', texto:'*UTI* se choque, transfusão maciça ou cirurgia · transferir só com traje antichoque, balão e sangue em curso',
+          nota:'Na alta: sulfato ferroso, sinais de alarme de sangramento tardio e febre' }
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Índice de choque ≥ 0,9* já prevê transfusão; *≥ 1,4* é hemorragia grave — a PA cai tarde na puérpera.',
+        'Útero contraído e sangramento contínuo: *trauma do canal ou rotura*, não atonia.',
+        'Sangue que não coagula: *coagulopatia* — fibrinogênio < 200 mg/dL é sinal de gravidade.',
+        'Massa na vagina com dor intensa e choque após tração do cordão: *inversão uterina*.',
+        'Metilergometrina em hipertensa ou com pré-eclâmpsia: risco de AVC e convulsão.'
+      ]},
+
+      { tipo:'passos', titulo:'Conduta imediata', itens:[
+        'Pedir ajuda e anotar a hora do diagnóstico: começa a *hora de ouro*.',
+        'Puncionar dois acessos calibrosos, colher tipagem e fibrinogênio e passar sonda vesical.',
+        'Fazer *massagem uterina bimanual* e *ocitocina* EV.',
+        'Fazer *ácido tranexâmico 1 g EV* em 10 minutos, até 3 h do parto.',
+        'Procurar a causa pelos *4 Ts*: tônus, trauma, tecido e trombina.',
+        'Escalar em minutos: metilergometrina, misoprostol, balão, cirurgia.',
+        'Repor com *sangue cedo* e limitar o cristaloide; aquecer.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Ocitocina 5 UI/mL', dose:'5 UI EV lento (3 min) + 20 UI em 500 mL de SF a 250 mL/h', via:'EV', obs:'Manutenção: 20 UI em 500 mL a 125 mL/h por 4 h. Bolus rápido causa hipotensão e arritmia. Prevenção: 10 UI IM após o parto.' },
+        { droga:'Ácido tranexâmico 250 mg/5 mL', dose:'1 g EV em 10 min', via:'EV', obs:'4 ampolas + SF 100 mL. Até 3 h do parto. Repetir 1 g se o sangramento persistir após 30 min ou voltar em 24 h.' },
+        { droga:'Metilergometrina 0,2 mg/mL', dose:'0,2 mg', via:'IM', obs:'Pode repetir em 20 min, depois a cada 2–4 h (máx. 1 mg em 24 h). Contraindicada na hipertensão, pré-eclâmpsia e cardiopatia.' },
+        { droga:'Misoprostol 200 mcg', dose:'800 mcg (4 comprimidos)', via:'Retal', obs:'Início em 10–20 min. Febre e tremor são comuns. Não substitui a ocitocina.' },
+        { droga:'Balão de tamponamento intrauterino', dose:'Encher com SF até parar o sangramento (conforme o dispositivo)', via:'Intrauterino', obs:'Ponte para a cirurgia ou a transferência. Com ocitocina correndo e antibiótico profilático.' },
+        { droga:'Traje antichoque não pneumático', dose:'Colocar dos tornozelos ao abdome', via:'—', obs:'Ponte para transporte e cirurgia. Retirar de baixo para cima, só com a paciente estável.' },
+        { droga:'Hemocomponentes', dose:'Hemácias, plasma e plaquetas 1:1:1 na transfusão maciça', via:'EV', obs:'Fibrinogênio < 200 mg/dL: crioprecipitado ou concentrado de fibrinogênio. Repor cálcio.' }
+      ]},
+
+      { tipo:'tempo', titulo:'Linha do tempo — a hora de ouro', itens:[
+        { quando:'0–10 min', o_que:'Ajuda, acessos, massagem, ocitocina, ácido tranexâmico, sonda, exames.' },
+        { quando:'10–20 min', o_que:'4 Ts; metilergometrina se ainda atônico e não hipertensa.' },
+        { quando:'20–30 min', o_que:'Misoprostol; sangue se índice de choque ≥ 0,9 com perda ativa.' },
+        { quando:'30–60 min', o_que:'Balão de tamponamento; traje antichoque; centro cirúrgico se persistir.' },
+        { quando:'60 min', o_que:'Sangramento controlado — ou cirurgia em curso. Não passar da hora de ouro em tentativa clínica.' }
+      ]},
+
+      { tipo:'lista', titulo:'Definição e gravidade', itens:[
+        '*HPP:* perda ≥ 500 mL após parto vaginal ou ≥ 1.000 mL após cesárea em 24 h, ou qualquer perda com instabilidade hemodinâmica.',
+        '*HPP maciça:* perda > 2.000 mL em 24 h, ou necessidade de 4 ou mais concentrados de hemácias, ou fibrinogênio ≤ 200 mg/dL, ou queda de Hb ≥ 4 g/dL.',
+        '*Índice de choque obstétrico:* FC ÷ PAS — ≥ 0,9 alto risco de transfusão; ≥ 1,4 hemorragia grave e abordagem agressiva.',
+        '*4 Ts:* tônus (atonia, a mais comum), trauma (laceração, hematoma, rotura, inversão), tecido (restos, acretismo) e trombina (coagulopatia).'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Na chegada:* tipagem e prova cruzada, hemograma, coagulograma e *fibrinogênio*; lactato se choque.',
+        '*Beira do leito:* teste do coágulo (5 mL em tubo seco; sem coágulo em 7–10 min = coagulopatia) enquanto o laboratório não sai.',
+        '*Repetir* hemograma, fibrinogênio e cálcio iônico a cada 30–60 min na transfusão maciça.',
+        '*Ultrassom:* restos na cavidade, líquido livre (rotura) e hematomas.'
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Esperar a hipotensão para agir: a puérpera compensa até perder muito sangue.',
+        'Dar metilergometrina à hipertensa ou com pré-eclâmpsia.',
+        'Fazer ocitocina em bolus rápido — causa hipotensão e arritmia.',
+        'Tracionar o cordão com força ou arrancar a placenta que não descola.',
+        'Repor só com cristaloide em grande volume: dilui fatores e esfria.',
+        'Transferir sem controle temporário do sangramento (balão, traje antichoque) e sem sangue.'
+      ]},
+
+      { tipo:'texto', titulo:'Destino', conteudo:'Choque, transfusão maciça, balão de tamponamento ou cirurgia: *UTI*. Serviço sem centro cirúrgico ou banco de sangue: estabilizar com massagem, uterotônicos e ácido tranexâmico, colocar balão e traje antichoque e transferir pela regulação com sangue em curso, se houver. Vigilância de 15 em 15 min na primeira hora e de 30 em 30 min até 4 h depois do controle. Na alta: ferro oral, sinais de alarme de sangramento tardio (restos, infecção) e retorno precoce. *Divergência:* a sequência ocitocina → metilergometrina → misoprostol é a do protocolo brasileiro (OPAS/MS); a OMS aceita a carbetocina termoestável como alternativa à ocitocina onde ela não se conserva.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Calcule o índice de choque em voz alta: ele assusta a equipe na hora certa.',
+        'Ácido tranexâmico junto com a ocitocina, não depois — cada 15 min de atraso reduz o benefício.',
+        'Útero duro sangrando é trauma: pegue a valva e olhe o colo e a vagina.',
+        'Anote a hora de cada droga e a perda estimada — a hora de ouro passa rápido.'
+      ]}
+    ] }
 ];

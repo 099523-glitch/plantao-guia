@@ -126,8 +126,8 @@
           '<button type="button" class="icone" data-cf="x" aria-label="Cancelar">' + ICO('fechar') + '</button>' +
         '</header>' +
         (tipo === 'atb'
-          ? '<p class="cf-lead">Antibiótico empírico: o esquema abaixo é ponto de partida, não substitui o protocolo e o perfil de resistência do seu serviço.</p>'
-          : '<p class="cf-lead">Uma conferência de 10 segundos evita o erro mais comum do plantão.</p>') +
+          ? '<p class="cf-lead">Esquema empírico: ajuste ao protocolo e ao perfil de resistência do serviço.</p>'
+          : '<p class="cf-lead">Confira antes de copiar.</p>') +
         '<div class="cf-itens">' + itens.map(function (i, n) {
           return '<label class="cf-item"><input type="checkbox" data-cf-k="' + i.k + '">' +
                  '<span>' + i.t + '</span></label>';
@@ -355,17 +355,28 @@
      PASTAS DE TEXTO — anamnese, conduta, evasao, laudos
      ========================================================= */
   function cartaoTexto(c, pasta) {
-    return '<article class="ferr-card" data-id="' + esc(c.id) + '">' +
-      '<button type="button" class="ferr-card-corpo" data-acao="card-copiar" data-id="' + esc(c.id) + '">' +
-        '<span class="ferr-card-nome">' + esc(c.label) + (c.hora ? '<span class="ferr-tag hora">⏱ horário</span>' : '') + '</span>' +
-        (c.sub ? '<span class="ferr-card-sub">' + esc(c.sub) + '</span>' : '') +
-        '<span class="ferr-card-previa">' + esc(String(c.texto || '').slice(0, 110).replace(/\n/g, ' ')) + '…</span>' +
-      '</button>' +
-      '<div class="ferr-card-acoes">' +
-        '<button type="button" title="Empilhar no rascunho" data-acao="card-empilhar" data-id="' + esc(c.id) + '">+</button>' +
-        '<button type="button" title="Editar" data-acao="card-editar" data-id="' + esc(c.id) + '"'+ICO('lapis')+'</button>' +
-        '<button type="button" title="Apagar" data-acao="card-apagar" data-id="' + esc(c.id) + '"'+ICO('fechar')+'</button>' +
+    var aberto = cardAberto === c.id;
+    return '<article class="ferr-card' + (aberto ? ' aberta' : '') + '" data-id="' + esc(c.id) + '">' +
+      '<div class="fc-linha">' +
+        '<button type="button" class="fc-abre" data-acao="card-abrir" data-id="' + esc(c.id) + '">' +
+          '<span class="fc-seta">' + ICO(aberto ? 'setaBai' : 'setaDir') + '</span>' +
+          '<span class="fc-txt"><b>' + esc(c.label) + (c.hora ? ' <i class="ferr-tag hora">horário</i>' : '') + '</b>' +
+            (c.sub ? '<i>' + esc(c.sub) + '</i>' : '') + '</span>' +
+        '</button>' +
+        '<button type="button" class="rxl-btn forte" data-acao="card-copiar" data-id="' + esc(c.id) + '"' +
+          ' title="Copiar e enviar ao rascunho">' + ICO('copiar') + '<i>Copiar</i></button>' +
       '</div>' +
+      (aberto
+        ? '<div class="fc-corpo">' +
+            '<textarea class="fc-area" data-card-txt="' + esc(c.id) + '" rows="12" spellcheck="false">' +
+              esc(c.texto) + '</textarea>' +
+            '<div class="fc-acoes">' +
+              '<button type="button" class="ferr-btn peq forte" data-acao="card-salvar" data-id="' + esc(c.id) + '">Salvar</button>' +
+              '<button type="button" class="ferr-btn peq" data-acao="card-empilhar" data-id="' + esc(c.id) + '">Empilhar</button>' +
+              '<button type="button" class="ferr-btn peq perigo" data-acao="card-apagar" data-id="' + esc(c.id) + '">Apagar</button>' +
+            '</div>' +
+          '</div>'
+        : '<p class="fc-previa">' + esc((c.texto || '').slice(0, 150).replace(/\s+/g, ' ')) + '…</p>') +
     '</article>';
   }
 
@@ -582,6 +593,403 @@
     if (i) { i.focus(); try { i.setSelectionRange(i.value.length, i.value.length); } catch (x) { /* date */ } }
   }
 
+  /* =========================================================
+     DOCUMENTAL — passagem de plantão, regulação, declaração de
+     óbito e notificação compulsória. Conteúdo em FERR_DOC_*
+     (ferramentas-dados.js). Como no atestado, nada do paciente
+     fica gravado no aparelho: vive só na memória da aba.
+     ========================================================= */
+  function temDoc() { return typeof FERR_DOC_OBITO !== 'undefined'; }
+  function ricoDoc(t) { return esc(t).replace(/\*([^*]+)\*/g, '<b>$1</b>'); }
+  function listaDoc(titulo, itens, cls) {
+    return '<div class="el-lista' + (cls ? ' ' + cls : '') + '"><b>' + esc(titulo) + '</b><ul>' +
+      itens.map(function (i) { return '<li>' + ricoDoc(i) + '</li>'; }).join('') + '</ul></div>';
+  }
+  function campoDoc(attr, k, rot, val, o) {
+    o = o || {};
+    var cls = 'ferr-campo' + (o.larga ? ' larga' : '');
+    var dado = 'data-' + attr + '="' + k + '"';
+    if (o.area) {
+      return '<label class="' + cls + '"><span>' + esc(rot) + '</span><textarea ' + dado + ' rows="' + (o.rows || 3) +
+        '" placeholder="' + esc(o.ph || '') + '">' + esc(val) + '</textarea></label>';
+    }
+    if (o.opcoes) {
+      return '<label class="' + cls + '"><span>' + esc(rot) + '</span><select ' + dado + '>' +
+        '<option value="">—</option>' + o.opcoes.map(function (x) {
+          return '<option' + (x === val ? ' selected' : '') + '>' + esc(x) + '</option>';
+        }).join('') + '</select></label>';
+    }
+    return '<label class="' + cls + '"><span>' + esc(rot) + '</span><input type="' + (o.tipo || 'text') + '" ' + dado +
+      ' autocomplete="off" value="' + esc(val) + '" placeholder="' + esc(o.ph || '') + '"' +
+      (o.im ? ' inputmode="' + o.im + '"' : '') + '></label>';
+  }
+  function barraDoc(pref, rotulo) {
+    return '<div class="pp-barra">' +
+      '<button type="button" class="pp-copiar" data-acao="' + pref + '-copiar">' + ICO('copiar') + ' Copiar ' + esc(rotulo) + '</button>' +
+      '<button type="button" class="pp-imprimir" data-acao="' + pref + '-imprimir">' + ICO('laudo') + ' Imprimir</button>' +
+      '<button type="button" class="pp-sec" data-acao="' + pref + '-rascunho" title="Enviar ao rascunho">' + ICO('empilhar') + '</button>' +
+      '<button type="button" class="pp-sec" data-acao="' + pref + '-limpar" title="Limpar">' + ICO('lixo') + '</button>' +
+    '</div>';
+  }
+  function linhasDoc(t) {
+    return String(t || '').split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
+  }
+  function ouTraco(v) { v = String(v || '').trim(); return v || '—'; }
+
+  /* ---------- passagem de plantão (I-PASS) ---------- */
+  function pacNovo() { return { leito:'', nome:'', idade:'', dx:'', grav:'observar', resumo:'', pend:'', cont:'', sint:false }; }
+  var ph = { para:'', pacs:[pacNovo()], at:0 };
+  var ORDEM_GRAV = { instavel:0, observar:1, estavel:2 };
+  function gravDe(id) {
+    var g = typeof FERR_DOC_GRAV !== 'undefined' ? FERR_DOC_GRAV : [];
+    for (var i = 0; i < g.length; i++) if (g[i][0] === id) return g[i];
+    return ['observar', 'Observar de perto', ''];
+  }
+  function pacPreenchido(p) { return !!(p.leito || p.nome || p.dx || p.resumo || p.pend || p.cont); }
+  function textoPlantao() {
+    var m = medico();
+    var pacs = ph.pacs.map(function (p, i) { return { p:p, i:i }; })
+      .filter(function (x) { return pacPreenchido(x.p); })
+      .sort(function (a, b) { return (ORDEM_GRAV[a.p.grav] - ORDEM_GRAV[b.p.grav]) || (a.i - b.i); });
+    var inst = pacs.filter(function (x) { return x.p.grav === 'instavel'; }).length;
+    var t = 'PASSAGEM DE PLANTÃO — ' + dataHoje() + ' ' + hora() + '\n';
+    t += 'Passa: ' + (m.nome || '________________') + (m.crm ? ' (CRM ' + m.crm + ')' : '') +
+      ' · Recebe: ' + (ph.para.trim() || '________________') + '\n';
+    t += pacs.length + ' paciente' + (pacs.length === 1 ? '' : 's') +
+      (inst ? ' · ' + inst + ' instáve' + (inst === 1 ? 'l' : 'is') : '') + ' — em ordem de gravidade\n';
+    if (!pacs.length) t += '\n[preencha pelo menos um paciente]\n';
+    pacs.forEach(function (x, n) {
+      var p = x.p, g = gravDe(p.grav);
+      var idade = String(p.idade || '').trim();
+      if (/^\d+$/.test(idade)) idade += ' anos';
+      t += '\n' + (n + 1) + ') ' + [p.leito ? 'Leito ' + p.leito.trim() : '', p.nome.trim(), idade].filter(Boolean).join(' — ') + '\n';
+      t += 'I · Gravidade: ' + g[1].toUpperCase() + '\n';
+      var resumo = [p.dx.trim(), p.resumo.trim()].filter(Boolean).join('. ');
+      t += 'P · Resumo: ' + ouTraco(resumo) + '\n';
+      var pend = linhasDoc(p.pend), cont = linhasDoc(p.cont);
+      t += 'A · Pendências:' + (pend.length ? '\n' + pend.map(function (l) { return '   • ' + l; }).join('\n') : ' nenhuma') + '\n';
+      t += 'S · Se… então…:' + (cont.length ? '\n' + cont.map(function (l) { return '   • ' + l; }).join('\n') : ' —') + '\n';
+      t += 'S · Síntese de quem recebe: ' + (p.sint ? 'confirmada' : 'PENDENTE') + '\n';
+    });
+    return t;
+  }
+  function telaPlantao() {
+    if (ph.at >= ph.pacs.length) ph.at = ph.pacs.length - 1;
+    var p = ph.pacs[ph.at];
+    var html = '<div class="at doc">';
+    html += '<div class="at-form">';
+    html += '<p class="ferr-nota doc-lead">Modelo I-PASS: <b>I</b>ndicação de gravidade, <b>P</b>aciente (resumo), <b>A</b>ções pendentes, ' +
+      '<b>S</b>ituação e contingência, <b>S</b>íntese de quem recebe. O texto sai em ordem de gravidade. Nada fica salvo no aparelho — copie antes de sair.</p>';
+    html += '<div class="ferr-campos">' + campoDoc('ph', 'para', 'Quem recebe o plantão', ph.para, { ph:'Dr(a). …', larga:true }) + '</div>';
+    html += '<div class="doc-pacs">' + ph.pacs.map(function (q, i) {
+      var rot = q.leito ? 'Leito ' + q.leito : (q.nome || 'Paciente ' + (i + 1));
+      return '<button type="button" class="cg doc-pac g-' + esc(q.grav) + (i === ph.at ? ' on' : '') + '" data-acao="ph-pac" data-v="' + i + '">' + esc(rot) + '</button>';
+    }).join('') + '<button type="button" class="cg" data-acao="ph-novo">+ Paciente</button></div>';
+    html += '<div class="el-opcoes"><span class="el-opcoes-rot">I · Gravidade</span><div class="el-seg">' +
+      (typeof FERR_DOC_GRAV !== 'undefined' ? FERR_DOC_GRAV : []).map(function (g) {
+        return '<button type="button" class="el-op' + (p.grav === g[0] ? ' on' : '') + '" data-acao="ph-grav" data-v="' + g[0] + '" title="' + esc(g[2]) + '">' + esc(g[1]) + '</button>';
+      }).join('') + '</div></div>';
+    html += '<div class="ferr-campos">' +
+      campoDoc('ph', 'leito', 'Leito', p.leito, { ph:'Ex.: 4 ou Obs 2' }) +
+      campoDoc('ph', 'idade', 'Idade', p.idade, { ph:'Ex.: 67' }) +
+      campoDoc('ph', 'nome', 'Nome', p.nome, { larga:true, ph:'Nome ou iniciais' }) +
+      campoDoc('ph', 'dx', 'Diagnóstico ou hipótese principal', p.dx, { larga:true, ph:'Ex.: Sepse de foco urinário' }) +
+      campoDoc('ph', 'resumo', 'P · Resumo', p.resumo, { larga:true, area:true, ph:'O que aconteceu, o que já foi feito, como está agora' }) +
+      campoDoc('ph', 'pend', 'A · Pendências — uma por linha, com responsável e horário', p.pend, { larga:true, area:true,
+        ph:'Lactato de controle às 22 h — plantonista\nLaudo da TC — ligar para a radiologia' }) +
+      campoDoc('ph', 'cont', 'S · Se… então… — uma por linha', p.cont, { larga:true, area:true,
+        ph:'Se PAM < 65 depois de 30 mL/kg: iniciar noradrenalina e chamar a UTI' }) +
+    '</div>';
+    html += '<label class="ferr-check at-check"><input type="checkbox" data-ph="sint"' + (p.sint ? ' checked' : '') + '>' +
+      '<span>Quem recebe repetiu o resumo e as pendências <i>síntese confirmada</i></span></label>';
+    if (ph.pacs.length > 1) html += '<button type="button" class="ferr-btn peq perigo" data-acao="ph-del">Remover este paciente</button>';
+    html += '</div>';
+    html += '<div class="at-saida" id="docSaida">' + saidaDoc('ph') + '</div>';
+    return html + '</div>';
+  }
+
+  /* ---------- regulação / transferência ---------- */
+  function rgNovo() {
+    return { nome:'', idade:'', sexo:'', origem:'', contato:'', dx:'', recurso:'', motivo:'', hist:'',
+      pa:'', fc:'', fr:'', spo2:'', o2:'', tax:'', gcs:'', glic:'', via:'', drogas:'', disp:'', exames:'',
+      conduta:'', isol:'Não', alergia:'', chk:{} };
+  }
+  var rg = rgNovo();
+  var ISOL = ['Não', 'Contato', 'Gotícula', 'Aerossol'];
+  function textoRegulacao() {
+    var m = medico();
+    var sv = [
+      rg.pa ? 'PA ' + rg.pa + ' mmHg' : '', rg.fc ? 'FC ' + rg.fc + ' bpm' : '', rg.fr ? 'FR ' + rg.fr + ' irpm' : '',
+      rg.spo2 ? 'SpO₂ ' + rg.spo2 + '%' + (rg.o2 ? ' em ' + rg.o2 : ' em ar ambiente') : '',
+      rg.tax ? 'Tax ' + rg.tax + ' °C' : '', rg.gcs ? 'Glasgow ' + rg.gcs : '', rg.glic ? 'Glicemia ' + rg.glic + ' mg/dL' : ''
+    ].filter(Boolean).join(' · ');
+    var itens = typeof FERR_DOC_TRANSPORTE !== 'undefined' ? FERR_DOC_TRANSPORTE : [];
+    var feitos = itens.filter(function (x, i) { return rg.chk[i]; }).length;
+    var falta = itens.filter(function (x, i) { return !rg.chk[i]; });
+    var t = 'SOLICITAÇÃO DE REGULAÇÃO / TRANSFERÊNCIA — ' + dataHoje() + ' ' + hora() + '\n\n';
+    t += 'Origem: ' + ouTraco(rg.origem) + '\n';
+    t += 'Médico solicitante: ' + (m.nome || '________________') + (m.crm ? ', CRM ' + m.crm : '') +
+      (rg.contato ? ' · Contato: ' + rg.contato : '') + '\n\n';
+    t += 'Paciente: ' + [ouTraco(rg.nome), rg.idade ? rg.idade + (/^\d+$/.test(rg.idade.trim()) ? ' anos' : '') : '', rg.sexo].filter(Boolean).join(', ') + '\n';
+    t += 'Diagnóstico / hipótese: ' + ouTraco(rg.dx) + '\n';
+    t += 'Recurso solicitado: ' + ouTraco(rg.recurso) + '\n';
+    t += 'Motivo da transferência: ' + ouTraco(rg.motivo) + '\n\n';
+    t += 'Quadro e evolução: ' + ouTraco(rg.hist) + '\n';
+    t += 'Sinais vitais (' + hora() + '): ' + ouTraco(sv) + '\n';
+    t += 'Via aérea / suporte ventilatório: ' + ouTraco(rg.via) + '\n';
+    t += 'Drogas em curso: ' + ouTraco(rg.drogas) + '\n';
+    t += 'Dispositivos: ' + ouTraco(rg.disp) + '\n';
+    t += 'Exames relevantes: ' + ouTraco(rg.exames) + '\n';
+    t += 'Conduta realizada: ' + ouTraco(rg.conduta) + '\n';
+    t += 'Isolamento: ' + ouTraco(rg.isol) + '\n';
+    t += 'Alergias: ' + ouTraco(rg.alergia) + '\n';
+    if (itens.length) {
+      t += '\nTransporte seguro: ' + feitos + ' de ' + itens.length + ' itens conferidos' +
+        (falta.length ? '.\nPendentes:\n' + falta.map(function (l) { return '   • ' + l; }).join('\n') : ' — todos.') + '\n';
+    }
+    return t;
+  }
+  function telaRegulacao() {
+    var html = '<div class="at doc">';
+    html += '<div class="at-form">';
+    html += '<p class="ferr-nota doc-lead">O texto que a central de regulação precisa para decidir a vaga — na ordem em que o regulador pergunta. Campo vazio sai como "—": melhor o regulador ver que falta do que achar que foi esquecido.</p>';
+    html += '<div class="ferr-campos">' +
+      campoDoc('rg', 'origem', 'Serviço de origem', rg.origem, { larga:true, ph:'Ex.: UPA Centro, sala vermelha' }) +
+      campoDoc('rg', 'contato', 'Telefone de contato', rg.contato, { im:'tel', ph:'(00) 0000-0000' }) +
+      campoDoc('rg', 'nome', 'Paciente', rg.nome, { ph:'Nome completo' }) +
+      campoDoc('rg', 'idade', 'Idade', rg.idade, { ph:'Ex.: 58' }) +
+      campoDoc('rg', 'sexo', 'Sexo', rg.sexo, { opcoes:['Feminino', 'Masculino'] }) +
+      campoDoc('rg', 'dx', 'Diagnóstico ou hipótese', rg.dx, { larga:true, ph:'Ex.: IAM com supra de parede anterior, Killip II' }) +
+      campoDoc('rg', 'recurso', 'Recurso solicitado', rg.recurso, { opcoes:(typeof FERR_DOC_RECURSO !== 'undefined' ? FERR_DOC_RECURSO : []) }) +
+      campoDoc('rg', 'motivo', 'Motivo da transferência', rg.motivo, { ph:'O que falta aqui' }) +
+      campoDoc('rg', 'hist', 'Quadro e evolução', rg.hist, { larga:true, area:true, ph:'Início, o que mudou, resposta ao tratamento' }) +
+    '</div>';
+    html += '<div class="doc-sub">Sinais vitais</div><div class="ferr-campos doc-sv">' +
+      campoDoc('rg', 'pa', 'PA (mmHg)', rg.pa, { ph:'120/80' }) +
+      campoDoc('rg', 'fc', 'FC', rg.fc, { im:'numeric' }) +
+      campoDoc('rg', 'fr', 'FR', rg.fr, { im:'numeric' }) +
+      campoDoc('rg', 'spo2', 'SpO₂ (%)', rg.spo2, { im:'numeric' }) +
+      campoDoc('rg', 'o2', 'Em (O₂ / VNI / VM)', rg.o2, { ph:'cateter 3 L/min' }) +
+      campoDoc('rg', 'tax', 'Tax (°C)', rg.tax, { im:'decimal' }) +
+      campoDoc('rg', 'gcs', 'Glasgow', rg.gcs, { im:'numeric' }) +
+      campoDoc('rg', 'glic', 'Glicemia', rg.glic, { im:'numeric' }) +
+    '</div>';
+    html += '<div class="ferr-campos">' +
+      campoDoc('rg', 'via', 'Via aérea / ventilação', rg.via, { larga:true, ph:'Ex.: IOT tubo 7,5 a 22 cm, VCV 450 × 18, PEEP 8, FiO₂ 50%' }) +
+      campoDoc('rg', 'drogas', 'Drogas em curso', rg.drogas, { larga:true, ph:'Ex.: noradrenalina 0,2 mcg/kg/min; fentanil 100 mcg/h' }) +
+      campoDoc('rg', 'disp', 'Dispositivos', rg.disp, { larga:true, ph:'Acessos, sonda, dreno, cateter central' }) +
+      campoDoc('rg', 'exames', 'Exames relevantes', rg.exames, { larga:true, area:true, rows:2, ph:'ECG, troponina, lactato, TC…' }) +
+      campoDoc('rg', 'conduta', 'Conduta realizada', rg.conduta, { larga:true, area:true, rows:2, ph:'O que já foi feito e a que horas' }) +
+      campoDoc('rg', 'alergia', 'Alergias', rg.alergia, { ph:'Nega ou quais' }) +
+    '</div>';
+    html += '<div class="el-opcoes"><span class="el-opcoes-rot">Isolamento</span><div class="el-seg">' + ISOL.map(function (x) {
+      return '<button type="button" class="el-op' + (rg.isol === x ? ' on' : '') + '" data-acao="rg-isol" data-v="' + esc(x) + '">' + esc(x) + '</button>';
+    }).join('') + '</div></div>';
+    var itens = typeof FERR_DOC_TRANSPORTE !== 'undefined' ? FERR_DOC_TRANSPORTE : [];
+    html += '<div class="doc-sub">Transporte seguro — antes de sair</div><div class="doc-check">' + itens.map(function (l, i) {
+      return '<label class="ferr-check"><input type="checkbox" data-rgchk="' + i + '"' + (rg.chk[i] ? ' checked' : '') + '><span>' + esc(l) + '</span></label>';
+    }).join('') + '</div>';
+    html += '</div>';
+    html += '<div class="at-saida" id="docSaida">' + saidaDoc('rg') + '</div>';
+    return html + '</div>';
+  }
+
+  /* ---------- declaração de óbito: guia + rascunho da causa ---------- */
+  function dobNovo() { return { a:'', ta:'', b:'', tb:'', c:'', tc:'', d:'', td:'', p2:'', tp2:'' }; }
+  var dob = dobNovo();
+  function avisosObito() {
+    var av = [];
+    var modos = typeof FERR_DOC_MODOS !== 'undefined' ? FERR_DOC_MODOS : [];
+    var linhasI = ['a', 'b', 'c', 'd'].filter(function (k) { return dob[k].trim(); });
+    if (!linhasI.length) return av;
+    /* choque, insuficiência e falência de um órgão são aceitos no meio da
+       cadeia, com a causa embaixo; só erram quando viram a causa básica */
+    var BRANDOS = ['choque', 'insuficiencia respiratoria', 'insuficiencia cardiaca', 'falencia'];
+    var ultimaI = linhasI[linhasI.length - 1];
+    ['a', 'b', 'c', 'd', 'p2'].forEach(function (k) {
+      var v = dob[k].trim();
+      if (!v) return;
+      var n = ' ' + norm(v).replace(/[^a-z0-9 ]/g, ' ') + ' ';
+      var duro = false;
+      modos.forEach(function (mo) {
+        if (BRANDOS.indexOf(mo[0]) !== -1 || n.indexOf(' ' + mo[0] + ' ') === -1) return;
+        duro = true;
+        if (av.indexOf(mo[1]) === -1) av.push(mo[1]);
+      });
+      if (duro || k !== ultimaI) return;
+      modos.forEach(function (mo) {
+        if (BRANDOS.indexOf(mo[0]) !== -1 && n.indexOf(' ' + mo[0] + ' ') !== -1 && av.indexOf(mo[1]) === -1) av.push(mo[1]);
+      });
+    });
+    var siglas = [];
+    ['a', 'b', 'c', 'd', 'p2'].forEach(function (k) {
+      (dob[k].match(/\b[A-ZÁÉÍÓÚÂÊÔÃÕÇ]{2,6}\b/g) || []).forEach(function (s) { if (siglas.indexOf(s) === -1) siglas.push(s); });
+    });
+    var out = [];
+    if (av.length) out.push(['Modo de morrer, não causa', 'Troque por a doença que levou a isso: ' + av.join(', ') + '.']);
+    if (siglas.length) out.push(['Siglas', 'Escreva por extenso: ' + siglas.join(', ') + '.']);
+    if (linhasI.length === 1 && av.length) out.push(['Falta a causa básica', 'Só a linha a está preenchida e ela é um modo de morrer: acrescente o que causou isso nas linhas de baixo.']);
+    ['a', 'b', 'c', 'd'].forEach(function (k, i) {
+      if (i > 0 && dob[k].trim() && !dob[['a', 'b', 'c', 'd'][i - 1]].trim()) out.push(['Linha pulada', 'A linha ' + k + ' está preenchida e a de cima não: a cadeia tem de ser contínua, de a até a causa básica.']);
+    });
+    ['a', 'b', 'c', 'd', 'p2'].forEach(function (k) {
+      if (dob[k].trim() && !dob['t' + k].trim()) { if (!out.some(function (o) { return o[0] === 'Intervalo'; })) out.push(['Intervalo', 'Informe o tempo aproximado entre o início de cada condição e a morte.']); }
+    });
+    return out;
+  }
+  function textoObito() {
+    var t = 'DECLARAÇÃO DE ÓBITO — rascunho das causas da morte\n\nPARTE I\n';
+    var ks = ['a', 'b', 'c', 'd'].filter(function (k) { return dob[k].trim(); });
+    if (!ks.length) t += 'a) ________________\n';
+    ks.forEach(function (k, i) {
+      t += k + ') ' + dob[k].trim() + (dob['t' + k].trim() ? ' — ' + dob['t' + k].trim() : '') + '\n';
+      if (i < ks.length - 1) t += '   devido ou como consequência de\n';
+    });
+    t += '\nPARTE II\n' + (dob.p2.trim() ? dob.p2.trim() + (dob.tp2.trim() ? ' — ' + dob.tp2.trim() : '') : '—') + '\n';
+    if (ks.length) t += '\nCausa básica (última linha da Parte I): ' + dob[ks[ks.length - 1]].trim() + '\n';
+    return t;
+  }
+  function telaObito() {
+    if (!temDoc()) return '';
+    var D = FERR_DOC_OBITO;
+    var html = '<div class="doc">';
+    html += '<div class="doc-sub">Quem preenche</div>';
+    html += D.quem.map(function (q) {
+      return '<div class="el-status ' + q.c + ' doc-quem"><b>' + ricoDoc(q.t) + '</b><span>' + ricoDoc(q.x) + '</span></div>';
+    }).join('');
+    html += listaDoc('Parte I — a sequência que levou à morte', D.parte1);
+    html += listaDoc('Parte II — o que contribuiu', D.parte2);
+    html += '<div class="el-lista grave"><b>Não escrever como causa (é o modo de morrer)</b><ul><li>' +
+      (typeof FERR_DOC_MODOS !== 'undefined' ? FERR_DOC_MODOS : []).filter(function (m, i, arr) {
+        return ['pcr', 'falencia multipla', 'falencia'].indexOf(m[0]) === -1;
+      }).map(function (m) { return esc(m[1]); }).join(' · ') + '</li></ul></div>';
+    html += '<div class="el-lista"><b>Exemplo</b><ul>' + D.exemplo.map(function (e) {
+      return '<li><b class="doc-ex">' + esc(e[0] === 'II' ? 'Parte II' : e[0] + ')') + '</b> ' + esc(e[1]) + ' <i class="doc-int">' + esc(e[2]) + '</i></li>';
+    }).join('') + '</ul></div>';
+    html += listaDoc('Regras que evitam a DO devolvida', D.regras, 'atencao');
+
+    html += '<div class="doc-sub">Rascunho das causas — confira antes de passar a limpo</div>';
+    html += '<div class="at"><div class="at-form"><div class="ferr-campos doc-causas">';
+    ['a', 'b', 'c', 'd'].forEach(function (k) {
+      html += campoDoc('dob', k, 'Parte I — linha ' + k + (k === 'a' ? ' (causa direta)' : ''), dob[k], { ph: k === 'a' ? 'Ex.: Choque séptico' : 'devido a…' }) +
+        campoDoc('dob', 't' + k, 'Intervalo', dob['t' + k], { ph:'horas, dias, anos' });
+    });
+    html += campoDoc('dob', 'p2', 'Parte II', dob.p2, { ph:'Ex.: Diabetes mellitus tipo 2' }) +
+      campoDoc('dob', 'tp2', 'Intervalo', dob.tp2, { ph:'anos' });
+    html += '</div><button type="button" class="ferr-btn peq" data-acao="dob-exemplo">Carregar o exemplo</button></div>';
+    html += '<div class="at-saida" id="docSaida">' + saidaDoc('dob') + '</div></div>';
+    html += '<p class="ferr-nota doc-fonte">' + esc(D.fonte) + '. Este é um rascunho de apoio: vale o formulário oficial e o manual do Ministério da Saúde.</p>';
+    return html + '</div>';
+  }
+
+  /* ---------- notificação compulsória ---------- */
+  var ntBusca = '';
+  var GRUPOS_NT = [
+    ['ms', 'Imediata (até 24 h) — Ministério, Estado e Município', 'grave'],
+    ['ses', 'Imediata (até 24 h) — Estado e Município', 'grave'],
+    ['sms', 'Imediata (até 24 h) — Município', 'atencao'],
+    ['sem', 'Semanal', '']
+  ];
+  function listaNotif() {
+    if (typeof FERR_DOC_NOTIF === 'undefined') return '';
+    var q = norm(ntBusca).trim();
+    var itens = FERR_DOC_NOTIF.itens.filter(function (x) { return !q || norm(x[0] + ' ' + (x[2] || '')).indexOf(q) !== -1; });
+    if (!itens.length) return '<p class="ferr-nota">Nada com "' + esc(ntBusca) + '". Confira o nome na lista oficial.</p>';
+    return GRUPOS_NT.map(function (g) {
+      var l = itens.filter(function (x) { return x[1] === g[0]; });
+      if (!l.length) return '';
+      return '<div class="el-lista' + (g[2] ? ' ' + g[2] : '') + '"><b>' + esc(g[1]) + ' · ' + l.length + '</b><ul>' +
+        l.map(function (x) { return '<li>' + esc(x[0]) + (x[2] ? '<br><i class="doc-int">' + esc(x[2]) + '</i>' : '') + '</li>'; }).join('') +
+      '</ul></div>';
+    }).join('');
+  }
+  function telaNotificacao() {
+    if (typeof FERR_DOC_NOTIF === 'undefined') return '';
+    var N = FERR_DOC_NOTIF;
+    var html = '<div class="doc">';
+    html += listaDoc('Como notificar', N.regras, 'atencao');
+    html += '<input type="search" class="ferr-busca-local doc-busca" data-nt="busca" placeholder="Buscar agravo — ex.: dengue, meningite, violência" value="' + esc(ntBusca) + '">';
+    html += '<div id="docNotif">' + listaNotif() + '</div>';
+    html += '<p class="ferr-nota doc-fonte">Lista Nacional de Notificação Compulsória — ' + esc(N.portaria) + '. Estados e municípios podem acrescentar agravos: confira a lista local.</p>';
+    return html + '</div>';
+  }
+
+  function saidaDoc(pref) {
+    if (pref === 'ph') return '<pre class="at-texto">' + esc(textoPlantao()) + '</pre>' + barraDoc('ph', 'passagem');
+    if (pref === 'rg') return '<pre class="at-texto">' + esc(textoRegulacao()) + '</pre>' + barraDoc('rg', 'regulação');
+    if (pref === 'dob') {
+      var av = avisosObito();
+      return (av.length ? av.map(function (a) {
+        return '<div class="el-alerta">' + ICO('alerta') + '<div><b>' + esc(a[0]) + '</b>' + esc(a[1]) + '</div></div>';
+      }).join('') : '') +
+        '<pre class="at-texto">' + esc(textoObito()) + '</pre>' + barraDoc('dob', 'causas');
+    }
+    return '';
+  }
+  function repintaDoc(pref) {
+    var el = document.getElementById('docSaida');
+    if (el) el.innerHTML = saidaDoc(pref);
+  }
+
+  document.addEventListener('input', function (e) {
+    var el = e.target;
+    if (!el || !el.dataset) return;
+    var d = el.dataset;
+    if (d.ph !== undefined) {
+      if (d.ph === 'para') ph.para = el.value;
+      else if (d.ph === 'sint') ph.pacs[ph.at].sint = el.checked;
+      else ph.pacs[ph.at][d.ph] = el.value;
+      repintaDoc('ph'); return;
+    }
+    if (d.rg !== undefined) { rg[d.rg] = el.value; repintaDoc('rg'); return; }
+    if (d.rgchk !== undefined) { rg.chk[d.rgchk] = el.checked; repintaDoc('rg'); return; }
+    if (d.dob !== undefined) { dob[d.dob] = el.value; repintaDoc('dob'); return; }
+    if (d.nt !== undefined) {
+      ntBusca = el.value;
+      var box = document.getElementById('docNotif');
+      if (box) box.innerHTML = listaNotif();
+    }
+  });
+
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('[data-acao]');
+    if (!b || !dentro(e)) return;
+    var a = b.dataset.acao, v = b.dataset.v;
+    if (!/^(ph|rg|dob)-/.test(a)) return;
+    /* passagem */
+    if (a === 'ph-pac')  { ph.at = parseInt(v, 10) || 0; redesenhaFixo(); return; }
+    if (a === 'ph-novo') { ph.pacs.push(pacNovo()); ph.at = ph.pacs.length - 1; redesenhaFixo(); return; }
+    if (a === 'ph-grav') { ph.pacs[ph.at].grav = v; redesenhaFixo(); return; }
+    if (a === 'ph-del')  {
+      if (ph.pacs.length < 2 || !confirm('Remover este paciente da passagem?')) return;
+      ph.pacs.splice(ph.at, 1); ph.at = Math.max(0, ph.at - 1); redesenhaFixo(); return;
+    }
+    if (a === 'ph-copiar')   { copiar(textoPlantao(), 'Passagem de plantão'); return; }
+    if (a === 'ph-imprimir') { imprimir('Passagem de plantão', textoPlantao().replace(/^PASSAGEM DE PLANTÃO — [^\n]*\n/, '')); return; }
+    if (a === 'ph-rascunho') { pilha(textoPlantao()); return; }
+    if (a === 'ph-limpar')   {
+      if (!confirm('Apagar todos os pacientes desta passagem?')) return;
+      ph = { para:'', pacs:[pacNovo()], at:0 }; redesenhaFixo(); return;
+    }
+    /* regulação */
+    if (a === 'rg-isol')     { rg.isol = v; redesenhaFixo(); return; }
+    if (a === 'rg-copiar')   { copiar(textoRegulacao(), 'Texto da regulação'); return; }
+    if (a === 'rg-imprimir') { imprimir('Solicitação de regulação', textoRegulacao().replace(/^SOLICITAÇÃO[^\n]*\n\n/, '')); return; }
+    if (a === 'rg-rascunho') { pilha(textoRegulacao()); return; }
+    if (a === 'rg-limpar')   { if (!confirm('Limpar todos os campos da regulação?')) return; rg = rgNovo(); redesenhaFixo(); return; }
+    /* óbito */
+    if (a === 'dob-exemplo') {
+      var ex = temDoc() ? FERR_DOC_OBITO.exemplo : [];
+      dob = dobNovo();
+      ex.forEach(function (x) { var k = x[0] === 'II' ? 'p2' : x[0]; dob[k] = x[1]; dob['t' + k] = x[2]; });
+      redesenhaFixo(); return;
+    }
+    if (a === 'dob-copiar')   { copiar(textoObito(), 'Causas da morte'); return; }
+    if (a === 'dob-imprimir') { imprimir('Declaração de óbito — rascunho das causas', textoObito().replace(/^DECLARAÇÃO[^\n]*\n\n/, '')); return; }
+    if (a === 'dob-rascunho') { pilha(textoObito()); return; }
+    if (a === 'dob-limpar')   { dob = dobNovo(); redesenhaFixo(); return; }
+  });
+
   /* ---------- manobras e sinais ---------- */
   function telaManobras() {
     var itens = Base.exame();
@@ -748,8 +1156,7 @@
         '<div class="ferr-res-num">' + esc(r.valor) + '</div>' +
         (r.detalhe ? '<div class="ferr-res-txt">' + esc(r.detalhe) + '</div>' : '') +
         '<div class="ferr-res-acoes">' +
-          '<button type="button" class="ferr-btn peq" data-acao="calc-copiar" data-id="' + c.id + '">Copiar</button>' +
-          '<button type="button" class="ferr-btn peq" data-acao="calc-empilhar" data-id="' + c.id + '">Empilhar</button>' +
+          '<button type="button" class="ferr-btn peq forte" data-acao="calc-copiar" data-id="' + c.id + '">Copiar</button>' +
           '<button type="button" class="ferr-btn peq" data-acao="calc-limpar" data-id="' + c.id + '">Limpar</button>' +
         '</div>' +
       '</div>';
@@ -899,6 +1306,7 @@
      Só na sessão: não altera o dado da medicação. */
   var concPed = {};   /* { medId: mg/mL } */
   var buscaPedia  = '';
+  var pedAberto = null;   /* medicação expandida na lista */
 
   function pesoGlobal() {
     var el = document.getElementById('peso');
@@ -931,6 +1339,13 @@
   function calcPedia(d, kg, conc) {
     if (conc === undefined) conc = d.conc;
     if (!kg || d.mgkg == null) return null;
+    /* unid mL com conc 1000: o valor por kg já é mL/kg (SRO 75 mL/kg) — o resultado
+       é volume, não "mg ÷ 1000" (antes saía 1,13 mL em vez de 1.125 mL para 15 kg) */
+    if (d.unid === 'mL' && d.conc === 1000) {
+      var ml = function (x) { return String(Math.round(x)).replace('.', ','); };
+      var v = ml(kg * d.mgkg) + (d.mgkgMax && d.mgkgMax !== d.mgkg ? ' a ' + ml(kg * d.mgkgMax) : '') + ' mL';
+      return { mg:v, vol:'', limitou:false };
+    }
     var mg = kg * d.mgkg;
     var mgAlto = d.mgkgMax && d.mgkgMax !== d.mgkg ? kg * d.mgkgMax : null;
     var limitou = false;
@@ -970,27 +1385,55 @@
     '</div>';
   }
 
+  /* uma linha por medicação: dose calculada à vista e Copiar direto;
+     o detalhe (faixa, teto, apresentação, observações) abre ao clicar */
+  function doseResumo(m, kg) {
+    var d = (m.doses || [])[0];
+    if (!d) return '';
+    var r = calcPedia(d, kg, d.conc ? concDe(m, d) : undefined);
+    if (r) return (r.vol ? r.vol + ' · ' : '') + r.mg + (d.freq ? ' · ' + d.freq : '');
+    if (d.fixa) return d.fixa + (d.freq ? ' · ' + d.freq : '');
+    return kg ? '' : 'informe o peso';
+  }
+  function textoPedia(m, kg) {
+    var linhas = [m.nome + (m.apres ? ' — ' + m.apres : '')];
+    (m.doses || []).forEach(function (d) {
+      var r = calcPedia(d, kg, d.conc ? concDe(m, d) : undefined);
+      linhas.push('  ' + d.rot + ': ' + (r ? (r.vol ? r.vol + ' (' + r.mg + ')' : r.mg) : (d.fixa || '')) +
+        (d.freq ? ' — ' + d.freq : '') + (m.via ? ' — ' + m.via : ''));
+    });
+    if (kg) linhas.push('  (peso ' + String(kg).replace('.', ',') + ' kg)');
+    return linhas.join('\n');
+  }
+
   function cartaoPedia(m, kg, idade) {
     var veta = vetado(m, idade);
-    var cedo = !veta && idade !== null && m.minMeses && idade < m.minMeses;
-    var html = '<section class="pd-med' + (veta ? ' vetado' : (cedo ? ' cedo' : '')) + '">' +
-      '<header class="pd-topo">' +
-        '<div><h5>' + esc(m.nome) + '</h5>' +
-          '<span class="pd-apres">' + esc(m.apres) + '</span></div>' +
-        '<span class="pd-via">' + esc(m.via) + '</span>' +
-      '</header>' +
+    var aberto = pedAberto === m.id;
+    var resumo = veta ? 'não usar nesta idade' : doseResumo(m, kg);
+
+    var html = '<section class="pdl' + (veta ? ' vetado' : '') + (aberto ? ' aberta' : '') + '">' +
+      '<div class="pdl-linha">' +
+        '<button type="button" class="pdl-abre" data-acao="pedia-abrir" data-id="' + esc(m.id) + '">' +
+          '<span class="pdl-seta">' + ICO(aberto ? 'setaBai' : 'setaDir') + '</span>' +
+          '<span class="pdl-nome">' + esc(m.nome) +
+            '<i>' + esc(m.apres) + '</i></span>' +
+          '<span class="pdl-via">' + esc(m.via) + '</span>' +
+          '<span class="pdl-dose' + (veta ? ' ruim' : (kg ? '' : ' fraca')) + '">' + esc(resumo) + '</span>' +
+        '</button>' +
+        (veta ? '' :
+          '<button type="button" class="rxl-btn forte" data-acao="pedia-copiar" data-id="' + esc(m.id) + '"' +
+            ' title="Copiar e enviar ao rascunho">' + ICO('copiar') + '<i>Copiar</i></button>') +
+      '</div>';
+
+    if (!aberto) return html + '</section>';
+
+    html += '<div class="pdl-corpo">' +
       '<p class="pd-idade' + (veta ? ' ruim' : '') + '">' + ICO(veta ? 'alerta' : 'crianca') +
         '<span>' + esc(m.idade) + '</span></p>';
+    if (veta) html += '<div class="pd-veto"><b>Não usar nesta idade</b>' + esc(m.veto.txt) + '</div>';
+    else if (m.veto) html += '<div class="pd-veto leve"><b>Restrição de idade</b>' + esc(m.veto.txt) + '</div>';
 
-    if (veta) {
-      html += '<div class="pd-veto"><b>Não usar nesta idade</b>' + esc(m.veto.txt) + '</div>';
-    } else if (m.veto) {
-      html += '<div class="pd-veto leve"><b>Restrição de idade</b>' + esc(m.veto.txt) + '</div>';
-    }
-
-    var cUso = null;
     html += '<div class="pd-doses">' + (m.doses || []).map(function (d) {
-      if (d.conc) cUso = concDe(m, d);
       var r = calcPedia(d, kg, d.conc ? concDe(m, d) : undefined);
       return '<div class="pd-dose">' +
         '<div class="pd-dose-cab"><b>' + esc(d.rot) + '</b>' +
@@ -1017,7 +1460,7 @@
     if ((m.obs || []).length) {
       html += '<ul class="pd-obs">' + m.obs.map(function (o) { return '<li>' + esc(o) + '</li>'; }).join('') + '</ul>';
     }
-    return html + '</section>';
+    return html + '</div></section>';
   }
 
   function listaPedia() {
@@ -1924,9 +2367,7 @@
       '<button type="button" class="pp-copiar" data-acao="proto-copiar" data-id="' + esc(q.id) + '"' +
         (n ? '' : ' disabled') + '>' + ICO('copiar') +
         ' Copiar<span>' + n + (n === 1 ? ' item' : ' itens') + '</span></button>' +
-      '<button type="button" class="pp-imprimir" data-acao="proto-imprimir" data-id="' + esc(q.id) + '"' +
-        (n ? '' : ' disabled') + '>' + ICO('laudo') + ' Imprimir</button>' +
-      '<button type="button" class="pp-sec" data-acao="proto-rascunho" data-id="' + esc(q.id) + '"' +
+      '<button type="button" class="pp-sec oculto" data-acao="proto-rascunho" data-id="' + esc(q.id) + '"' +
         (n ? '' : ' disabled') + ' title="Enviar ao rascunho">' + ICO('empilhar') + '</button>' +
       (q.conduta ? '<a class="pp-sec ver" href="#' + esc(q.conduta) + '" title="Ver a conduta">' +
         ICO('livro') + '</a>' : '') +
@@ -2041,14 +2482,11 @@
                 '<span class="rxl-seta">' + ICO(aberto ? 'setaBai' : 'setaDir') + '</span>' +
                 '<span class="rxl-nome">' + esc(q.nome) + '</span>' +
                 '<span class="rxl-sub">' + esc(q.sub) + '</span>' +
-                (q.atencao ? '<span class="rxl-flag" title="Tem armadilha para conferir">!</span>' : '') +
                 '<span class="rxl-n">' + n + '</span>' +
               '</button>' +
               '<span class="rxl-acoes">' +
-                '<button type="button" class="rxl-btn" data-acao="proto-copiar" data-id="' + esc(q.id) + '"' +
-                  ' title="Copiar prescrição">' + ICO('copiar') + '<i>Copiar</i></button>' +
-                '<button type="button" class="rxl-btn" data-acao="proto-imprimir" data-id="' + esc(q.id) + '"' +
-                  ' title="Imprimir receituário">' + ICO('laudo') + '<i>Imprimir</i></button>' +
+                '<button type="button" class="rxl-btn forte" data-acao="proto-copiar" data-id="' + esc(q.id) + '"' +
+                  ' title="Copiar e enviar ao rascunho">' + ICO('copiar') + '<i>Copiar</i></button>' +
                 (modoAutor() ?
                   '<button type="button" class="rxl-btn so-ico" title="Editar" data-acao="quadro-editar" data-id="' + esc(q.id) + '">' + ICO('lapis') + '</button>' +
                   '<button type="button" class="rxl-btn so-ico" title="Apagar" data-acao="quadro-apagar" data-id="' + esc(q.id) + '">' + ICO('fechar') + '</button>' : '') +
@@ -2096,8 +2534,7 @@
     }
     h += '<div class="pp-barra">' +
       '<button type="button" class="pp-copiar" data-acao="int-copiar" data-id="' + esc(p.id) + '">' + ICO('copiar') + ' Copiar prescrição</button>' +
-      '<button type="button" class="pp-imprimir" data-acao="int-imprimir" data-id="' + esc(p.id) + '">' + ICO('laudo') + ' Imprimir</button>' +
-      '<button type="button" class="pp-sec" data-acao="int-rascunho" data-id="' + esc(p.id) + '" title="Enviar ao rascunho">' + ICO('empilhar') + '</button>' +
+      '<button type="button" class="pp-sec oculto" data-acao="int-rascunho" data-id="' + esc(p.id) + '" title="Enviar ao rascunho">' + ICO('empilhar') + '</button>' +
       (p.conduta ? '<a class="pp-sec ver" href="#' + esc(p.conduta) + '" title="Ver a conduta">' + ICO('livro') + '</a>' : '') +
     '</div>';
     return h + '</div>';
@@ -2124,8 +2561,7 @@
               '<span class="rxl-sub">' + esc(p.sub) + '</span>' +
               '<span class="rxl-n">' + (p.itens || []).length + '</span></button>' +
             '<span class="rxl-acoes">' +
-              '<button type="button" class="rxl-btn" data-acao="int-copiar" data-id="' + esc(p.id) + '" title="Copiar prescrição">' + ICO('copiar') + '<i>Copiar</i></button>' +
-              '<button type="button" class="rxl-btn" data-acao="int-imprimir" data-id="' + esc(p.id) + '" title="Imprimir">' + ICO('laudo') + '<i>Imprimir</i></button>' +
+              '<button type="button" class="rxl-btn forte" data-acao="int-copiar" data-id="' + esc(p.id) + '" title="Copiar e enviar ao rascunho">' + ICO('copiar') + '<i>Copiar</i></button>' +
             '</span></div>' + (aberto ? corpoInternado(p) : '') + '</article>';
         }).join('') + '</div></section>';
     }).join('') + '</div>';
@@ -2416,7 +2852,7 @@
   function contaCards(p) { return Base.cards(p).length; }
 
   var SECOES = [
-    { id:'presc', nome:'Prescrições', icone:'receita',
+    { id:'presc', nome:'Receitas prontas', icone:'receita',
       lead:'',
       plana: function () { return telaQuadros(); } },
 
@@ -2460,7 +2896,23 @@
           { id:'laudos',   nome:'Laudos', icone:'laudo',
             conta: contaCards('laudos') + ' laudos',
             ex: '',
-            tela: function () { return telaPasta('laudos', { nu:true, semBancada:true }); } }
+            tela: function () { return telaPasta('laudos', { nu:true, semBancada:true }); } },
+          { id:'plantao',  nome:'Passagem de plantão', icone:'relogio',
+            conta: 'modelo I-PASS, por gravidade',
+            ex: '',
+            tela: function () { return telaPlantao(); } },
+          { id:'regulacao', nome:'Regulação e transferência', icone:'elo',
+            conta: 'texto para a central + transporte',
+            ex: '',
+            tela: function () { return telaRegulacao(); } },
+          { id:'obito',    nome:'Declaração de óbito', icone:'livro',
+            conta: 'quem preenche e como',
+            ex: '',
+            tela: function () { return telaObito(); } },
+          { id:'notificacao', nome:'Notificação compulsória', icone:'escudo',
+            conta: 'lista nacional vigente',
+            ex: '',
+            tela: function () { return telaNotificacao(); } }
         ];
       } }
   ];
@@ -2789,6 +3241,19 @@
           (c.itens||[]).map(function(x){return x.rot;}).join(' ')].join(' ') });
     });
 
+    [['plantao', 'Passagem de plantão', 'I-PASS, pendências, se… então…, troca de plantão, handoff, SBAR'],
+     ['regulacao', 'Regulação e transferência', 'central de regulação, vaga, transferência, transporte, ambulância, UTI'],
+     ['obito', 'Declaração de óbito', 'atestado de óbito, DO, causa básica, SVO, IML, óbito fetal'],
+     ['notificacao', 'Notificação compulsória', 'SINAN, vigilância, notificar, agravo, portaria, CIEVS, violência']
+    ].forEach(function (x) {
+      out.push({ tipo:'texto', id:'doc-' + x[0], titulo:x[1], sub:'Prontuário', href:'#prontuario/' + x[0], texto:x[1] + ' ' + x[2] });
+    });
+    if (typeof FERR_DOC_NOTIF !== 'undefined') FERR_DOC_NOTIF.itens.forEach(function (x, i) {
+      out.push({ tipo:'texto', id:'notif-' + i, titulo:'Notificação: ' + x[0],
+        sub:{ ms:'Imediata — MS, Estado e Município', ses:'Imediata — Estado e Município', sms:'Imediata — Município', sem:'Semanal' }[x[1]],
+        href:'#prontuario/notificacao', texto:'notificacao compulsoria ' + x[0] });
+    });
+
     Object.keys(FERR_CARDS).forEach(function (pasta) {
       Base.cards(pasta).forEach(function (c) {
         out.push({ tipo:'texto', id:c.id, titulo:c.label, sub:c.sub || abaDe(pasta).nome,
@@ -2972,6 +3437,7 @@
     redesenha();
     window.scrollTo(0, y);
   }
+  var cardAberto = null;
   function achaCard(pasta, id) {
     var l = Base.cards(pasta);
     for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i];
@@ -3008,14 +3474,24 @@
 
     /* --- pastas de texto --- */
     if (acao === 'card-novo')    { abreForm('card', null); return; }
-    if (acao === 'card-editar')  { abreForm('card', achaCard(pasta, id)); return; }
+    if (acao === 'card-abrir')   { cardAberto = (cardAberto === id ? null : id); redesenhaFixo(); return; }
+    if (acao === 'card-editar')  { cardAberto = id; redesenhaFixo(); return; }
+    if (acao === 'card-salvar') {
+      var ta = document.querySelector('[data-card-txt="' + id + '"]');
+      var cs = achaCard(pasta, id);
+      if (!ta || !cs) return;
+      cs.texto = ta.value;
+      var lc = Base.cards(pasta).map(function (x) { return x.id === id ? cs : x; });
+      Base.setCards(pasta, lc);
+      toast('Salvo'); redesenhaFixo(); return;
+    }
     if (acao === 'card-apagar') {
       var c0 = achaCard(pasta, id);
       if (!c0 || !confirm('Apagar “' + c0.label + '”?')) return;
       Base.setCards(pasta, Base.cards(pasta).filter(function (x) { return x.id !== id; }));
       toast('Apagado'); redesenhaFixo(); return;
     }
-    if (acao === 'card-copiar')   { var c1 = achaCard(pasta, id); if (c1) copiar(c1.texto, c1.label); return; }
+    if (acao === 'card-copiar')   { var c1 = achaCard(pasta, id); if (c1) { copiar(c1.texto, c1.label); pilha(c1.texto); } return; }
     if (acao === 'card-empilhar') { var c2 = achaCard(pasta, id); if (c2) pilha(c2.texto); return; }
     if (acao === 'pasta-restaurar') {
       if (!confirm('Restaurar os textos padrão desta pasta? Isso apaga o que você editou aqui.')) return;
@@ -3096,12 +3572,12 @@
     }
     if (acao === 'rx-ctx') { ctxRx = v; grava('pref:rx-ctx', v); quadroAberto = null; internadoAberto = null; atbAberto = null; redesenhaFixo(); return; }
     if (acao === 'int-abrir') { internadoAberto = internadoAberto === id ? null : id; redesenhaFixo(); return; }
-    if (acao === 'int-copiar') { var i1 = internadoDe(id); if (i1) copiarClinico(textoInternado(i1), i1.nome, 'presc'); return; }
+    if (acao === 'int-copiar') { var i1 = internadoDe(id); if (i1) { copiarClinico(textoInternado(i1), i1.nome, 'presc'); pilha(textoInternado(i1)); } return; }
     if (acao === 'int-imprimir') { var i2 = internadoDe(id); if (i2) imprimir(i2.nome, textoInternado(i2), i2.sub); return; }
     if (acao === 'int-rascunho') { var i3 = internadoDe(id); if (i3) pilha(textoInternado(i3)); return; }
     if (acao === 'proto-copiar') {
       var q1p = quadroDe(id);
-      if (q1p) copiarClinico(textoProto(q1p), q1p.nome, 'presc');
+      if (q1p) { copiarClinico(textoProto(q1p), q1p.nome, 'presc'); pilha(textoProto(q1p)); }
       return;
     }
     if (acao === 'proto-imprimir') {
@@ -3133,6 +3609,18 @@
 
     /* --- pediatria --- */
     if (acao === 'pedia-filtro') { filtroPedia = v; redesenhaFixo(); return; }
+    if (acao === 'pedia-abrir') {
+      pedAberto = (pedAberto === id ? null : id);
+      var clp = document.getElementById('ferrListaPed');
+      if (clp) clp.innerHTML = listaPedia();
+      return;
+    }
+    if (acao === 'pedia-copiar') {
+      var mp = null;
+      FERR_PEDIA.forEach(function (x) { if (x.id === id) mp = x; });
+      if (mp) { var tp = textoPedia(mp, pesoGlobal()); copiarClinico(tp, mp.nome, 'presc'); pilha(tp); }
+      return;
+    }
     if (acao === 'pedia-conc') {
       if (v === '') delete concPed[id]; else concPed[id] = parseFloat(v);
       var cl2 = document.getElementById('ferrListaPed');
@@ -3221,7 +3709,7 @@
       var cc = calcDe(id), rr = cc && calcResultado(cc);
       if (!rr) return;
       var tt = textoResultado(cc, rr);
-      if (acao === 'calc-copiar') copiar(tt, cc.nome); else pilha(tt);
+      if (acao === 'calc-copiar') { copiar(tt, cc.nome); pilha(tt); } else pilha(tt);
       return;
     }
 
@@ -3497,8 +3985,7 @@
         ? '<div class="ferr-res-num">' + esc(r.valor) + '</div>' +
           (r.detalhe ? '<div class="ferr-res-txt">' + esc(r.detalhe) + '</div>' : '') +
           '<div class="ferr-res-acoes">' +
-            '<button type="button" class="ferr-btn peq" data-acao="calc-copiar" data-id="' + id + '">Copiar</button>' +
-            '<button type="button" class="ferr-btn peq" data-acao="calc-empilhar" data-id="' + id + '">Empilhar</button>' +
+            '<button type="button" class="ferr-btn peq forte" data-acao="calc-copiar" data-id="' + id + '">Copiar</button>' +
             '<button type="button" class="ferr-btn peq" data-acao="calc-limpar" data-id="' + id + '">Limpar</button>' +
           '</div>'
         : 'Preencha os campos para ver o resultado.';
@@ -3623,6 +4110,35 @@
   /* ---------- estado inicial ---------- */
   abaAtual = ler('ferr:aba', 'anamnese');
   if (!ehAba(abaAtual)) abaAtual = 'anamnese';
+
+  /* usados pela tela nova de doses (app.js) */
+  F.ped = {
+    lista: function () { return typeof FERR_PEDIA !== 'undefined' ? FERR_PEDIA : []; },
+    calc: function (m, d, kg) { return calcPedia(d, kg, d.conc ? concDe(m, d) : undefined); },
+    vetado: function (m, idade) { return vetado(m, idade); },
+    idade: function () { return idadePedia(); },
+    setIdade: function (v) { grava('pedia-idade', v); },
+    idadeTexto: function (m) { return idadeTexto(m); },
+    texto: function (m, kg) { return textoPedia(m, kg); },
+    copiar: function (m, kg) { var t = textoPedia(m, kg); copiarClinico(t, m.nome, 'presc'); pilha(t); },
+    /* a concentração que o volume usa (a escolhida pelo usuário, senão a padrão da dose) */
+    conc: function (m, d) { return d && d.conc ? concDe(m, d) : null; },
+    setConc: function (id, v) { if (v === '' || v == null) delete concPed[id]; else concPed[id] = parseFloat(v); }
+  };
+  /* usados pela tela nova de receitas (app.js) */
+  F.quadrosTodos = function () { return Base.quadros(); };
+  F.textoRx = function (id, ctx) {
+    var q = quadroDe(id); if (!q) return '';
+    var velhoCtx = ctxRx; ctxRx = ctx;
+    var t = textoProto(q);
+    ctxRx = velhoCtx;
+    return t;
+  };
+  F.linhasRx = function (id) {
+    var q = quadroDe(id); if (!q) return { unidade:[], receita:[], orient:[] };
+    return { unidade:rxDe(q, 'unidade'), receita:rxDe(q, 'receita'), orient:q.orientacoes || [] };
+  };
+  F.copiarRx = function (txt, nome) { if (!txt) return; copiarClinico(txt, nome, 'presc'); pilha(txt); };
 
   window.Ferramentas = F;
 })();

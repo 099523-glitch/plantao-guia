@@ -993,10 +993,10 @@ var FERR_QUADROS = [
   tags:['eap','edema agudo','insuficiencia cardiaca','furosemida','vni'], conduta:'eap-ic-descompensada',
   atencao:'Morfina não é mais rotina no edema agudo: associa-se a mais intubação e pior desfecho. Se a PAS estiver abaixo de 90 mmHg, o perfil é frio e úmido — inotrópico, não vasodilatador nem diurético agressivo.',
   unidade:[
-    { med:'PACIENTE SENTADO, COM PERNAS PENDENTES, E OXIGÊNIO SUPLEMENTAR', dose:'—', via:'—', obs:'Alvo de SatO2 entre 94 e 98%.' },
-    { med:'VENTILAÇÃO NÃO INVASIVA — CPAP OU BINÍVEL', dose:'—', via:'—', obs:'Iniciar precocemente: reduz intubação e mortalidade. CPAP de 8 a 10 cmH2O.' },
-    { med:'FUROSEMIDA 10 MG/ML SOLUÇÃO INJETÁVEL AMP 2 ML', dose:'2 a 4 ampolas (40 a 80 mg)', via:'EV', obs:'Em bolus. Se já usa furosemida em casa, dobrar a dose oral diária como dose endovenosa.' },
-    { med:'NITROGLICERINA 50 MG/5 ML — 50 MG + SG 5% 245 ML', dose:'Titular pela pressão', via:'EV', obs:'Bomba de infusão, se PAS maior que 110 mmHg.' },
+    { med:'PACIENTE SENTADO, COM PERNAS PENDENTES, E OXIGÊNIO SUPLEMENTAR', dose:'—', via:'—', obs:'Só se SpO2 abaixo de 90%; alvo 92 a 96%. Saturar 100% não ajuda.' },
+    { med:'VENTILAÇÃO NÃO INVASIVA — CPAP OU BINÍVEL', dose:'—', via:'—', obs:'Iniciar precocemente: reduz intubação. CPAP 5 a 8 cmH2O, subindo de 2 em 2 até 10 a 15 — ou BiPAP.' },
+    { med:'FUROSEMIDA 10 MG/ML SOLUÇÃO INJETÁVEL AMP 2 ML', dose:'Sem uso prévio: 2 a 5 ampolas (40 a 100 mg)', via:'EV', obs:'Em bolus. Se já usa em casa: 2 a 2,5 vezes a dose oral diária, EV. Reavaliar em 2 h: diurese abaixo de 100 a 150 mL/h ou sódio urinário abaixo de 50 a 70 → dobrar a dose.' },
+    { med:'NITROGLICERINA 25 MG/5 ML — 1 AMPOLA + SG 5% 245 ML (100 MCG/ML)', dose:'10 a 20 mcg/min (6 a 12 mL/h)', via:'EV', obs:'Bomba de infusão, se PAS maior que 110 mmHg. Subir a cada 3 a 5 minutos, até 200 mcg/min.' },
     { med:'MORFINA 10 MG/ML — 1 AMPOLA + 9 ML DE AD', dose:'3 mL a cada 5 a 30 minutos', via:'EV', obs:'LENTO. NÃO de rotina — só em dor ou ansiedade refratária; associa-se a mais intubação.' }
   ],
   receita:[
@@ -1012,19 +1012,19 @@ var FERR_QUADROS = [
   ] },
 
 { id:'q-dor-toracica-sca', grupo:'Cardiovascular', nome:'Dor torácica com suspeita de SCA', sub:'Pacote inicial enquanto se estratifica',
-  tags:['iam','infarto','dor toracica','aas','clopidogrel','sca'], conduta:'sca-com-supra',
-  atencao:'ECG em até 10 minutos da chegada. Supra de ST ou BRE novo aciona a rede de reperfusão imediatamente — angioplastia em até 120 minutos ou trombólise em até 30 minutos. Não dar nitrato se houve uso de sildenafil ou similar nas últimas 24 a 48 horas, nem no infarto de ventrículo direito.',
+  tags:['iam','infarto','dor toracica','aas','clopidogrel','sca'], conduta:'dor-toracica',
+  atencao:'ECG em até 10 minutos da chegada. Supra de ST ou equivalente aciona a reperfusão imediatamente — angioplastia em até 120 minutos ou trombólise em até 30 minutos. Antes de antiagregar e anticoagular, meça a PA nos dois braços: dor lancinante com assimetria de pulso é dissecção até prova em contrário. Não dar nitrato com sildenafil ou vardenafil em 24 h (tadalafila em 48 h), nem no infarto de ventrículo direito.',
   unidade:[
     { med:'ECG DE 12 DERIVAÇÕES EM ATÉ 10 MINUTOS, MONITORIZAÇÃO E ACESSO VENOSO', dose:'—', via:'—', obs:'Repetir o ECG a cada 15 a 30 minutos se a dor persistir e o primeiro for não diagnóstico.' },
     { med:'ÁCIDO ACETILSALICÍLICO 100 MG COMPRIMIDO', dose:'3 comprimidos (300 mg)', via:'VO', obs:'Mastigar e engolir. Primeira medida, salvo alergia.' },
-    { med:'CLOPIDOGREL 75 MG COMPRIMIDO', dose:'4 a 8 comprimidos (300 a 600 mg)', via:'VO', obs:'Dose de ataque conforme a estratégia de reperfusão. Acima de 75 anos em trombólise: 75 mg, sem ataque.' },
-    { med:'DINITRATO DE ISOSSORBIDA 5 MG COMPRIMIDO SUBLINGUAL', dose:'1 comprimido', via:'SL', obs:'Repetir a cada 5 minutos, até 3 doses, se a dor persistir e a PAS estiver acima de 100 mmHg.' },
+    { med:'SEGUNDO ANTIAGREGANTE (P2Y12) — SÓ COM O DIAGNÓSTICO E A ESTRATÉGIA DEFINIDOS', dose:'—', via:'VO', obs:'IAM com supra e angioplastia: ticagrelor 180 mg. Trombólise: clopidogrel 300 mg (75 mg acima de 75 anos). SCA sem supra com cateterismo em menos de 24 h: dar depois da coronariografia.' },
+    { med:'DINITRATO DE ISOSSORBIDA 5 MG COMPRIMIDO SUBLINGUAL', dose:'1 comprimido', via:'SL', obs:'Repetir a cada 5 minutos, até 3 doses, se a dor persistir e a PAS for 90 mmHg ou mais.' },
     { med:'MORFINA SULFATO 10 MG/ML SOLUÇÃO INJETÁVEL AMP 1 ML', dose:'2 a 4 mg', via:'EV', obs:'SE dor refratária ao nitrato. Diluir 1 ampola em 9 mL de água destilada e fracionar.' },
-    { med:'ENOXAPARINA SÓDICA 40 MG/0,4 ML SERINGA PREENCHIDA', dose:'1 mg/kg', via:'SC', obs:'De 12/12 h. Ajustar em clearance abaixo de 30 mL/min e acima de 75 anos.' }
+    { med:'ENOXAPARINA SÓDICA 40 MG/0,4 ML SERINGA PREENCHIDA', dose:'1 mg/kg', via:'SC', obs:'De 12/12 h — só com SCA provável e dissecção afastada. Sem redução por idade na SCA sem supra; clearance abaixo de 30: 1x/dia.' }
   ],
   receita:[],
   orientacoes:[
-    'Coletar troponina na chegada e repetir conforme o protocolo do serviço.',
+    'Coletar troponina na chegada e repetir: 0/1 h ou 0/2 h na alta sensibilidade, 0 e 3 a 6 h na convencional.',
     'Não liberar o paciente com dor torácica sem estratificação: aplicar HEART e a curva de troponina.',
     'Manter monitorizado e com desfibrilador disponível.'
   ] },
@@ -1063,7 +1063,7 @@ var FERR_QUADROS = [
     { med:'BROMIDRATO DE FENOTEROL 5 MG/ML + BROMETO DE IPRATRÓPIO 0,25 MG/ML', dose:'10 gotas de fenoterol + 40 gotas de ipratrópio', via:'INAL', obs:'Diluir em 5 mL de SF 0,9%. Nebulizar preferencialmente com ar comprimido. Repetir a cada 20 minutos na primeira hora.' },
     { med:'PREDNISONA 20 MG COMPRIMIDO', dose:'2 comprimidos (40 mg)', via:'VO', obs:'Dose única diária por 5 dias.' },
     { med:'OXIGÊNIO SUPLEMENTAR', dose:'—', via:'—', obs:'Titular para SatO2 de 88 a 92%.' },
-    { med:'VENTILAÇÃO NÃO INVASIVA — BINÍVEL', dose:'—', via:'—', obs:'SE acidose respiratória, dispneia importante ou uso de musculatura acessória.' }
+    { med:'VENTILAÇÃO NÃO INVASIVA — BINÍVEL', dose:'IPAP 10 a 12 · EPAP 4 a 5 cmH2O', via:'—', obs:'SE pH 7,35 ou menos com PaCO2 acima de 45. Subir o IPAP de 2 em 2 até cerca de 20; gasometria em 1 a 2 h. Sem acidose, VNI não está indicada.' }
   ],
   receita:[
     { med:'Prednisona 20 mg comprimido', uso:'Tomar 2 comprimidos VO 1 vez ao dia, pela manhã, por 5 dias.' },
@@ -1696,10 +1696,10 @@ FERR_QUADROS = FERR_QUADROS.concat([
     { med:'A — ÁCIDO ACETILSALICÍLICO 100 MG COMPRIMIDO', dose:'3 comprimidos (300 mg)', via:'VO', obs:'Mastigar. No primeiro momento, para quem não é alérgico e não tem sangramento ativo.' },
     { med:'B — ATENOLOL 25, 50 OU 100 MG COMPRIMIDO', dose:'Conforme o peso e a PA', via:'VO', obs:'De 12/12 h. Ver as contraindicações na caixa de atenção.' },
     { med:'C — CAPTOPRIL 25 MG COMPRIMIDO', dose:'1 comprimido', via:'VO', obs:'Iniciar nas primeiras 24 horas se não houver hipotensão.' },
-    { med:'C — CLOPIDOGREL 75 MG COMPRIMIDO', dose:'4 comprimidos (300 mg)', via:'VO', obs:'Segurar o ataque se houver cateterismo em menos de 24 horas — se for preciso operar, aumenta o risco de sangramento.' },
+    { med:'C — TICAGRELOR 90 MG COMPRIMIDO (OU CLOPIDOGREL 75 MG)', dose:'2 comprimidos (180 mg) — clopidogrel: 4 comprimidos (300 mg)', via:'VO', obs:'Segurar o ataque se houver cateterismo em menos de 24 horas: dar depois da coronariografia. Clopidogrel se não puder usar ticagrelor.' },
     { med:'C — COLESTEROL: ESTATINA DE ALTA POTÊNCIA', dose:'Atorvastatina 40 a 80 mg', via:'VO', obs:'Perfil lipídico em 24 horas.' },
-    { med:'C — CLEXANE (ENOXAPARINA) 1 MG/KG', dose:'1 mg/kg', via:'SC', obs:'De 12/12 h. Ver as contraindicações na caixa de atenção.' },
-    { med:'MONONITRATO DE ISOSSORBIDA 5 MG', dose:'1 comprimido', via:'SL', obs:'Repetir a cada 5 minutos se a dor persistir. NÃO usar em infarto de VD, PAS abaixo de 90 mmHg ou uso de sildenafil nas últimas 24 h. Não melhorou: nitroglicerina endovenosa.' },
+    { med:'C — CLEXANE (ENOXAPARINA) 1 MG/KG', dose:'1 mg/kg', via:'SC', obs:'De 12/12 h, sem redução por idade; clearance abaixo de 30: 1x/dia. Estratégia invasiva precoce: preferir heparina não fracionada 60 UI/kg (máx. 5.000) + 12 UI/kg/h.' },
+    { med:'DINITRATO DE ISOSSORBIDA 5 MG', dose:'1 comprimido', via:'SL', obs:'Repetir a cada 5 minutos se a dor persistir. NÃO usar em infarto de VD, PAS abaixo de 90 mmHg ou uso de sildenafil nas últimas 24 h. Não melhorou: nitroglicerina endovenosa.' },
     { med:'MORFINA SULFATO 10 MG/ML AMP 1 ML', dose:'2 a 4 mg a cada 5 minutos', via:'EV', obs:'NÃO de rotina — só em dor refratária. Proibida se PAS abaixo de 90, IAM inferior ou de VD, e na DPOC.' },
     { med:'OXIGÊNIO SUPLEMENTAR', dose:'—', via:'—', obs:'Só se a saturação estiver abaixo de 90%.' }
   ],
@@ -1729,14 +1729,14 @@ FERR_QUADROS = FERR_QUADROS.concat([
   tags:['pericardite','dor ventilatorio dependente','colchicina','infra pr'], conduta:'pericardite-miocardite',
   atencao:'O ECG tem supra de ST difuso e côncavo com infra de PR — não segue território coronariano. Afastar tamponamento: turgência jugular, hipotensão e bulhas abafadas. Se houver derrame importante, é ecocardiograma agora.',
   unidade:[
-    { med:'ÁCIDO ACETILSALICÍLICO 500 MG COMPRIMIDO', dose:'650 a 1000 mg', via:'VO', obs:'De 8/8 horas. Escolha se houver infarto associado.' },
-    { med:'IBUPROFENO 600 MG COMPRIMIDO', dose:'600 a 800 mg', via:'VO', obs:'De 8/8 horas. Alternativa ao ácido acetilsalicílico.' }
+    { med:'ÁCIDO ACETILSALICÍLICO 500 MG COMPRIMIDO', dose:'750 a 1000 mg', via:'VO', obs:'De 8/8 horas. Escolha se houver infarto recente associado.' },
+    { med:'IBUPROFENO 600 MG COMPRIMIDO', dose:'600 mg', via:'VO', obs:'De 8/8 horas. Alternativa ao ácido acetilsalicílico. Sempre com colchicina.' }
   ],
   receita:[
     { med:'Ibuprofeno 600 mg comprimido', uso:'Tomar 1 comprimido VO de 8/8 h, após as refeições, por 1 a 2 semanas, com redução gradual.' },
-    { med:'Colchicina 0,5 mg comprimido', uso:'Tomar 1 comprimido VO de 12/12 h por 3 meses. Reduz a recorrência pela metade — não esquecer.' },
+    { med:'Colchicina 0,5 mg comprimido', uso:'Tomar 1 comprimido VO de 12/12 h por 3 meses (1 vez ao dia se peso abaixo de 70 kg). Reduz a recorrência pela metade — não esquecer.' },
     { med:'Omeprazol 20 mg cápsula', uso:'Tomar 1 cápsula VO em jejum enquanto usar o anti-inflamatório.' },
-    { med:'Prednisona 20 mg comprimido', uso:'0,25 a 0,5 mg/kg/dia VO por 2 a 4 semanas. Só em casos refratários — corticoide aumenta a recorrência.' }
+    { med:'Prednisona 20 mg comprimido', uso:'0,2 a 0,5 mg/kg/dia VO por 2 a 4 semanas. Só se o anti-inflamatório for contraindicado ou falhar — corticoide aumenta a recorrência.' }
   ],
   orientacoes:[
     'Restrição de exercício físico até a resolução dos sintomas e a normalização dos marcadores.',
@@ -1748,11 +1748,11 @@ FERR_QUADROS = FERR_QUADROS.concat([
   tags:['pcr','fv','tv sem pulso','acls','adrenalina','amiodarona','desfibrilacao'], conduta:'pcr-adulto',
   atencao:'Desfibrilar é a única coisa que reverte FV — cada minuto de atraso custa cerca de 10% de sobrevida. Compressão de qualidade e mínima interrupção valem mais que qualquer droga.',
   unidade:[
-    { med:'1º CHOQUE — BIFÁSICO 200 J (MONOFÁSICO 360 J)', dose:'—', via:'—', obs:'Retomar RCP 30:2 imediatamente. Acesso venoso e monitorização. Preparar adrenalina. Checar o ritmo após 2 minutos.' },
+    { med:'1º CHOQUE — BIFÁSICO 120 A 200 J OU O MÁXIMO DO APARELHO (MONOFÁSICO 360 J)', dose:'—', via:'—', obs:'Retomar RCP 30:2 imediatamente. Acesso venoso e monitorização. Preparar adrenalina. Checar o ritmo após 2 minutos.' },
     { med:'2º CHOQUE + EPINEFRINA 1 MG/ML AMP 1 ML', dose:'1 mg', via:'EV', obs:'Seguida de flush de 20 mL de SF 0,9% e elevação do membro. Repetir a cada 3 a 5 minutos. Preparar amiodarona. Considerar via aérea avançada.' },
-    { med:'3º CHOQUE + AMIODARONA CLORIDRATO 50 MG/ML', dose:'300 mg + 250 mL de SG 5%', via:'EV', obs:'Ou lidocaína 1 a 1,5 mg/kg. Considerar os 5H e 5T.' },
+    { med:'3º CHOQUE + AMIODARONA CLORIDRATO 50 MG/ML', dose:'300 mg (2 ampolas) em bolus', via:'EV/IO', obs:'Puro ou em 20 mL de SG 5% — NÃO diluir em soro na parada. Ou lidocaína 1 a 1,5 mg/kg. Considerar os 5H e 5T.' },
     { med:'4º CHOQUE + EPINEFRINA', dose:'1 mg', via:'EV', obs:'Manter o ciclo de 3 a 5 minutos.' },
-    { med:'5º CHOQUE + AMIODARONA — SEGUNDA DOSE', dose:'150 mg + 100 mL de SG 5%', via:'EV', obs:'Dose única adicional.' },
+    { med:'5º CHOQUE + AMIODARONA — SEGUNDA DOSE', dose:'150 mg (1 ampola) em bolus', via:'EV/IO', obs:'Dose única adicional. Ou lidocaína 0,5 a 0,75 mg/kg.' },
     { med:'VIA AÉREA AVANÇADA', dose:'—', via:'—', obs:'Checar o tubo, confirmar por capnografia, fixar. PETCO2 abaixo de 10 mmHg indica compressão ruim.' }
   ],
   receita:[],
@@ -1784,9 +1784,9 @@ FERR_QUADROS = FERR_QUADROS.concat([
   unidade:[
     { med:'A — VIA AÉREA: INTUBAÇÃO E CAPNOGRAFIA', dose:'—', via:'—', obs:'Alvo de PETCO2 entre 35 e 45 mmHg.' },
     { med:'B — VENTILAÇÃO', dose:'—', via:'—', obs:'Ausculta para checar o tubo. Alvo de SatO2 entre 92 e 98%.' },
-    { med:'C — HEMODINÂMICA', dose:'—', via:'—', obs:'Alvo de PAS acima de 90 mmHg e PAM acima de 65. Corrigir com 1000 a 2000 mL de cristaloide e noradrenalina se necessário.' },
-    { med:'D — AVALIAÇÃO NEUROLÓGICA', dose:'—', via:'—', obs:'Se comatoso, indicar controle direcionado de temperatura entre 32 e 36 °C.' },
-    { med:'E — EXAMES', dose:'—', via:'—', obs:'ECG de 12 derivações, gasometria, eletrólitos, troponina, radiografia de tórax. Cateterismo se houver supra.' }
+    { med:'C — HEMODINÂMICA', dose:'—', via:'—', obs:'Alvo de PAS acima de 90 mmHg e PAM de 65 ou mais. Bolus de cristaloide conforme a resposta e noradrenalina se necessário.' },
+    { med:'D — AVALIAÇÃO NEUROLÓGICA', dose:'—', via:'—', obs:'Se comatoso: controle ativo da temperatura, evitando febre (acima de 37,5 °C) por pelo menos 72 horas.' },
+    { med:'E — EXAMES', dose:'—', via:'—', obs:'ECG de 12 derivações, gasometria, eletrólitos, glicemia, troponina, radiografia de tórax. Cateterismo de emergência se houver supra ou choque cardiogênico.' }
   ],
   receita:[],
   orientacoes:[
@@ -2332,20 +2332,21 @@ FERR_QUADROS = FERR_QUADROS.concat([
 /* ====================== PROCEDIMENTOS E SUPORTE ====================== */
 { id:'q-iot', grupo:'Procedimentos e suporte', nome:'Intubação — sequência rápida', sub:'Doses e diluições dos três tempos',
   tags:['iot','intubacao','sequencia rapida','etomidato','succinilcolina','rocuronio','cetamina'], conduta:'sequencia-rapida-intubacao',
-  atencao:'Ressuscitar ANTES de intubar: hipotensão, hipoxemia e acidose na indução causam parada. Succinilcolina é proibida em neuropata, queimado com mais de 48 horas e hipercalemia grave. Etomidato não pode ser repetido.',
+  atencao:'Ressuscitar ANTES de intubar: PAS abaixo de 100, índice de choque acima de 0,8 ou SpO2 abaixo de 93% na indução causam parada. Succinilcolina é proibida em hipertermia maligna, doença neuromuscular, AVC, queimadura ou lesão medular com mais de 72 horas, rabdomiólise e hipercalemia com alteração no ECG.',
   unidade:[
-    { med:'PRÉ-IOT SE HIPOTENSÃO — EPINEFRINA 1 MG/ML: 1 ML + 19 ML DE SF 0,9%', dose:'0,5 a 1 mL a cada 5 minutos', via:'EV', obs:'Fica 50 mcg/mL. Corrigir a pressão antes de induzir.' },
-    { med:'ANALGESIA — FENTANILA 50 MCG/ML', dose:'2 a 3 mcg/kg (cerca de 3 a 4 mL)', via:'EV', obs:'Sempre nessa concentração, para não errar a conta.' },
-    { med:'HIPNÓTICO — ETOMIDATO 2 MG/ML', dose:'0,3 mg/kg (cerca de 10 mL)', via:'EV', obs:'Estabilidade hemodinâmica. Dói: diluir se o paciente estiver acordado.' },
-    { med:'HIPNÓTICO — MIDAZOLAM', dose:'0,1 mg/kg', via:'EV', obs:'Na apresentação 5 mg/mL: 1 a 2 mL puro. Na de 1 mg/mL: 5 a 10 mL. Conferir sempre a concentração.' },
-    { med:'HIPNÓTICO — CETAMINA 50 MG/ML', dose:'1 a 1,5 mg/kg (1 a 2 mL)', via:'EV', obs:'Ideal no asmático, pela broncodilatação, e no choque.' },
-    { med:'BLOQUEADOR — SUCCINILCOLINA 100 MG', dose:'1,5 a 2 mg/kg', via:'EV', obs:'Diluir 1 frasco em 10 mL de AD e fazer 10 mL. Ver as contraindicações na caixa de atenção.' },
-    { med:'BLOQUEADOR — ROCURÔNIO 50 MG/5 ML', dose:'1,2 mg/kg (cerca de 10 mL)', via:'EV', obs:'Puro. Alternativa segura à succinilcolina; duração maior.' }
+    { med:'PRÉ-IOT SE HIPOTENSÃO — NORADRENALINA CORRENDO ANTES DO INDUTOR', dose:'Iniciar 5 a 15 mcg/min', via:'EV', obs:'Bomba de infusão. Volume ou sangue antes, conforme a causa.' },
+    { med:'ADRENALINA EM BOLUS — EPINEFRINA 1 MG/ML: 1 ML + 99 ML DE SF 0,9%', dose:'1 a 2 mL (10 a 20 mcg) a cada 2 a 5 minutos', via:'EV', obs:'Fica 10 mcg/mL. Ponte enquanto o volume e a noradrenalina agem.' },
+    { med:'OPCIONAL — FENTANILA 50 MCG/ML', dose:'3 mcg/kg em 30 a 60 s (70 kg: cerca de 4 mL)', via:'EV', obs:'3 minutos antes, só em PIC alta, SCA ou dissecção. NÃO usar no choque.' },
+    { med:'HIPNÓTICO — ETOMIDATO 2 MG/ML', dose:'0,3 mg/kg (cerca de 10 mL)', via:'EV', obs:'O que menos derruba a pressão. Metade da dose no choque cardiogênico e no idoso frágil.' },
+    { med:'HIPNÓTICO — MIDAZOLAM (EXCEÇÃO)', dose:'0,2 a 0,3 mg/kg', via:'EV', obs:'Na apresentação 5 mg/mL, 70 kg: 3 a 4 mL. Início lento, hipotensão e costuma ser subdosado. Conferir sempre a concentração.' },
+    { med:'HIPNÓTICO — CETAMINA 50 MG/ML', dose:'1 a 2 mg/kg (70 kg: 1,4 a 2,8 mL)', via:'EV', obs:'Broncoespasmo e choque séptico — metade da dose no choque.' },
+    { med:'BLOQUEADOR — SUCCINILCOLINA 100 MG', dose:'1,5 mg/kg (2 mg/kg no choque)', via:'EV', obs:'Peso real. Diluir 1 frasco em 10 mL de AD (10 mg/mL). Ver as contraindicações na caixa de atenção.' },
+    { med:'BLOQUEADOR — ROCURÔNIO 50 MG/5 ML', dose:'1,5 mg/kg (70 kg: 10,5 mL)', via:'EV', obs:'Puro. Sem as contraindicações da succinilcolina; dura 45 a 70 min — sedação contínua logo depois. Reversão: sugamadex 16 mg/kg.' }
   ],
   receita:[],
   orientacoes:[
     'Checklist antes: aspirador testado, dois laringoscópios, tubo com balonete testado, bougie, dispositivo supraglótico de resgate, capnografia, acesso pérvio e drogas puxadas.',
-    'Pré-oxigenar por 3 minutos; cabeceira elevada.',
+    'Pré-oxigenar por 3 minutos com o fluxômetro aberto até o fim (15 L/min na máscara dá só cerca de 65% de FiO2) ou VNI no hipoxêmico; cateter nasal a 15 L/min até o tubo passar; cabeceira a 30 graus.',
     'Confirmar por capnografia. Fixar o tubo e pedir a radiografia.',
     'Iniciar sedação contínua logo após — o bloqueador dura mais que o hipnótico.'
   ] },
@@ -2406,7 +2407,7 @@ FERR_QUADROS = FERR_QUADROS.concat([
   unidade:[
     { med:'ÁCIDO TRANEXÂMICO 250 MG/5 ML', dose:'1 ampola + 50 a 100 mL de SF 0,9%', via:'EV', obs:'Ou 2 a 3 ampolas + 250 mL de SF 0,9% de 8/8 h. No trauma: 1 g em 10 minutos e mais 1 g em 8 horas.' },
     { med:'VITAMINA K (FITOMENADIONA) 10 MG', dose:'1 ampola', via:'IM ou EV lento', obs:'Se houver uso de varfarina ou hepatopatia. Endovenoso lento pelo risco de anafilaxia.' },
-    { med:'CLORETO DE SÓDIO 0,9% OU RINGER LACTATO', dose:'Conforme a perda', via:'EV', obs:'Dois acessos calibrosos. Cuidado com a diluição dos fatores de coagulação — não hiper-hidratar.' },
+    { med:'CLORETO DE SÓDIO 0,9% OU RINGER LACTATO', dose:'Bolus pequenos (250 a 500 mL)', via:'EV', obs:'Dois acessos calibrosos. Só até o sangue chegar: no choque hemorrágico, sangue cedo (1:1:1) e protocolo de transfusão maciça.' },
     { med:'TIPAGEM SANGUÍNEA E RESERVA DE HEMOCOMPONENTES', dose:'—', via:'—', obs:'Colher hemograma, coagulograma, fibrinogênio e gasometria com lactato.' }
   ],
   receita:[],
@@ -3204,7 +3205,7 @@ FERR_QUADROS = FERR_QUADROS.concat([
    =========================================================== */
 var FERR_INTERNADOS = [
 
-{ id:'i-pac', grupo:'Respiratório', nome:'Pneumonia adquirida na comunidade', sub:'Enfermaria, sem critério de UTI', conduta:'resp/pac',
+{ id:'i-pac', grupo:'Respiratório', nome:'Pneumonia adquirida na comunidade', sub:'Enfermaria, sem critério de UTI', conduta:'resp/pneumonia-comunidade',
   itens:[
     { med:'Dieta', dose:'geral ou conforme aceitação', via:'VO', obs:'Jejum só se rebaixado ou com risco de broncoaspiração.' },
     { med:'SF 0,9%', dose:'1000 mL', via:'EV', obs:'Correr em 12 h. Suspender quando aceitar líquidos bem.' },
@@ -3246,8 +3247,8 @@ var FERR_INTERNADOS = [
 
 { id:'i-ic', grupo:'Cardiovascular', nome:'IC descompensada — perfil quente e úmido', sub:'Congestão sem hipoperfusão', conduta:'cardio/eap-ic-descompensada',
   itens:[
-    { med:'Dieta', dose:'hipossódica (2 g de sódio/dia)', via:'VO', obs:'Restrição hídrica 1.000–1.500 mL/dia.' },
-    { med:'Furosemida 10 mg/mL', dose:'40 mg (4 mL)', via:'EV', obs:'De 12/12 h — ou 2,5x a dose oral prévia. Reavaliar diurese em 6 h: se < 100 mL/h, dobrar.' },
+    { med:'Dieta', dose:'hipossódica, sem excesso de sal', via:'VO', obs:'Restrição hídrica só se houver hiponatremia.' },
+    { med:'Furosemida 10 mg/mL', dose:'20–40 mg (2–4 mL) sem uso prévio', via:'EV', obs:'De 12/12 h. Se já usa: 1,5–2x a dose oral diária, EV. Reavaliar em 2–4 h: diurese < 100–150 mL/h ou Na urinário < 50–70 → dobrar.' },
     { med:'Cloreto de potássio 6% xarope', dose:'10 mL', via:'VO', obs:'De 8/8 h se K < 4,0. Dosar K e Mg diariamente.' },
     { med:'Oxigênio', dose:'cateter nasal 2 L/min', via:'INAL', obs:'Se SpO2 < 90%.' },
     { med:'Manter', dose:'IECA/BRA, betabloqueador e espironolactona da casa', via:'VO', obs:'Não suspender o betabloqueador se não houver hipotensão ou choque. Reduzir a dose se PAS < 90.' },
@@ -3280,7 +3281,7 @@ var FERR_INTERNADOS = [
   ],
   cuidados:['Cabeceira a 30°.', 'Mudança de decúbito de 2/2 h.', 'Sem sonda vesical de rotina.', 'Fisioterapia e fonoaudiologia desde o 1º dia.', 'Investigar a causa: ECG, ecocardiograma, doppler de carótidas.'] },
 
-{ id:'i-abstinencia', grupo:'Neurológico', nome:'Síndrome de abstinência alcoólica', sub:'Tremor, sudorese e agitação — sem delirium tremens', conduta:'psiq/abstinencia-alcoolica',
+{ id:'i-abstinencia', grupo:'Neurológico', nome:'Síndrome de abstinência alcoólica', sub:'Tremor, sudorese e agitação — sem delirium tremens', conduta:'psiq/abstinencia-alcool',
   itens:[
     { med:'Dieta', dose:'geral', via:'VO', obs:'' },
     { med:'Tiamina 100 mg/mL', dose:'300 mg (3 mL)', via:'IM ou EV', obs:'1x/dia por 3–5 dias. SEMPRE antes de qualquer glicose.' },
@@ -3292,7 +3293,7 @@ var FERR_INTERNADOS = [
   ],
   cuidados:['Ambiente calmo e iluminado, sem contenção se possível.', 'Convulsão ou alucinação = delirium tremens iminente: avisar a equipe.', 'Sem glicose antes da tiamina.'] },
 
-{ id:'i-pielo', grupo:'Infeccioso', nome:'Pielonefrite aguda', sub:'Internada por vômito, febre alta ou sepse leve', conduta:'nefro/itu',
+{ id:'i-pielo', grupo:'Infeccioso', nome:'Pielonefrite aguda', sub:'Internada por vômito, febre alta ou sepse leve', conduta:'infecto/itu',
   itens:[
     { med:'Dieta', dose:'geral', via:'VO', obs:'' },
     { med:'SF 0,9%', dose:'1000 mL', via:'EV', obs:'Em 8 h, depois manutenção conforme aceitação oral.' },
@@ -3314,7 +3315,7 @@ var FERR_INTERNADOS = [
   ],
   cuidados:['Membro elevado.', 'Tratar a porta de entrada (micose interdigital, ferida).', 'Dor desproporcional, bolha violácea ou crepitação = fasciíte: cirurgia agora.'] },
 
-{ id:'i-aspirativa', grupo:'Infeccioso', nome:'Pneumonia aspirativa', sub:'Idoso, disfagia ou rebaixamento', conduta:'resp/pac',
+{ id:'i-aspirativa', grupo:'Infeccioso', nome:'Pneumonia aspirativa', sub:'Idoso, disfagia ou rebaixamento', conduta:'resp/pneumonia-comunidade',
   itens:[
     { med:'Dieta', dose:'jejum até avaliação da deglutição', via:'—', obs:'SNE se disfagia; dieta pastosa e espessada se liberado.' },
     { med:'SF 0,9%', dose:'1000 mL', via:'EV', obs:'Em 12 h.' },
@@ -3338,7 +3339,7 @@ var FERR_INTERNADOS = [
   ],
   cuidados:['Sem antidiarreico se febre ou sangue nas fezes.', 'Antibiótico só se disenteria, imunossuprimido ou sepse (ciprofloxacino 500 mg 12/12 h 3 dias).', 'Isolamento de contato.', 'Coprocultura se sangue ou febre alta.'] },
 
-{ id:'i-pancreatite', grupo:'Gastro', nome:'Pancreatite aguda leve', sub:'Sem falência orgânica', conduta:'gastro/pancreatite-aguda',
+{ id:'i-pancreatite', grupo:'Gastro', nome:'Pancreatite aguda leve', sub:'Sem falência orgânica', conduta:'gastro/pancreatite',
   itens:[
     { med:'Dieta', dose:'jejum nas primeiras 24 h', via:'—', obs:'Liberar dieta leve com pouca gordura assim que a dor e a náusea permitirem, em geral em 24–48 h.' },
     { med:'Ringer lactato', dose:'1000 mL', via:'EV', obs:'Em 2 h (5–10 mL/kg/h nas primeiras 4 h), depois 1000 mL de 8/8 h. Reavaliar volemia de 6/6 h — não hiper-hidratar.' },
@@ -3407,3 +3408,182 @@ var FERR_INTERNADOS = [
   ],
   cuidados:['Procurar a causa: infecção, dor, retenção urinária, fecaloma, hiponatremia, hipóxia, medicação.', 'Óculos, aparelho auditivo, relógio e luz do dia; família presente.', 'Sem contenção física de rotina; sem sonda vesical.', 'Mobilizar no dia.'] }
 ];
+
+/* ===========================================================
+   DOCUMENTAL — Prontuário: passagem de plantão, regulação,
+   declaração de óbito e notificação compulsória.
+   Só conteúdo; o motor está em ferramentas.js.
+   =========================================================== */
+
+/* I-PASS: gravidade do paciente na passagem */
+const FERR_DOC_GRAV = [
+  ['instavel', 'Instável', 'Precisa de reavaliação ativa e plano imediato'],
+  ['observar', 'Observar de perto', 'Pode piorar; tem gatilho definido para agir'],
+  ['estavel',  'Estável', 'Sem previsão de intercorrência']
+];
+
+/* recurso pedido à central de regulação */
+const FERR_DOC_RECURSO = ['Leito de UTI', 'Hemodinâmica', 'Neurocirurgia', 'Cirurgia geral / trauma', 'Cirurgia vascular ou cardíaca',
+  'Obstetrícia de alto risco', 'UTI pediátrica / neonatal', 'Exame de imagem (TC/RM)', 'Enfermaria clínica', 'Outro'];
+
+/* checklist de transporte seguro */
+const FERR_DOC_TRANSPORTE = [
+  'Estabilizado para o transporte (via aérea, ventilação, pressão) — ou o risco está documentado',
+  'Dois acessos venosos pérvios e bem fixados',
+  'Via aérea definitiva se há risco de perdê-la no caminho',
+  'Monitor, oxímetro, desfibrilador e oxigênio para o trajeto, com sobra',
+  'Drogas em bomba com volume para o trajeto; sedação e analgesia garantidas',
+  'Tubo, sondas, drenos e cateteres fixados; drenos abertos ou em selo',
+  'Contato médico a médico feito e vaga confirmada pela regulação',
+  'Relatório, exames e imagens acompanham o paciente',
+  'Família informada; consentimento registrado',
+  'Equipe e ambulância adequadas ao risco (suporte avançado com médico se instável)'
+];
+
+/* declaração de óbito: termos que descrevem o modo de morrer, não a causa */
+const FERR_DOC_MODOS = [
+  ['parada cardiorrespiratoria', 'Parada cardiorrespiratória'], ['parada cardiaca', 'Parada cardíaca'], ['pcr', 'PCR'],
+  ['falencia de multiplos orgaos', 'Falência de múltiplos órgãos'], ['falencia multipla', 'Falência múltipla de órgãos'],
+  ['insuficiencia respiratoria', 'Insuficiência respiratória (sem a causa)'], ['insuficiencia cardiaca', 'Insuficiência cardíaca (sem a causa)'],
+  ['choque', 'Choque (sem o tipo e a causa)'], ['assistolia', 'Assistolia'], ['fibrilacao ventricular', 'Fibrilação ventricular'],
+  ['morte natural', 'Morte natural'], ['senilidade', 'Senilidade'], ['velhice', 'Velhice'], ['causa desconhecida', 'Causa desconhecida'],
+  ['falencia', 'Falência de órgão (sem a causa)']
+];
+
+const FERR_DOC_OBITO = {
+  quem: [
+    { t:'Morte natural *com* assistência médica', c:'ok',
+      x:'Quem preenche é o médico que vinha assistindo. No hospital, o assistente — ou, na falta dele, o plantonista que constatou o óbito.' },
+    { t:'Morte natural *sem* assistência médica', c:'atencao',
+      x:'Onde houver Serviço de Verificação de Óbito (SVO), encaminhar ao SVO. Sem SVO: o médico do serviço público de saúde mais próximo, ou, na falta, qualquer médico da localidade — com a causa provável pela história; se não houver como definir, registrar que foi morte sem assistência médica.' },
+    { t:'Morte violenta ou suspeita', c:'grave',
+      x:'Acidente, agressão, suicídio, intoxicação, queda, afogamento — ou qualquer suspeita: *IML, sempre*, mesmo que a morte venha dias depois por uma complicação (a fratura do idoso que morre de pneumonia continua sendo morte por causa externa). O plantonista *não* preenche a DO; registra o atendimento e aciona a autoridade policial.' },
+    { t:'Óbito fetal', c:'info',
+      x:'DO obrigatória quando a gestação tem *20 semanas ou mais*, ou o feto pesa *500 g ou mais*, ou mede *25 cm ou mais*. Quem preenche é o médico que assistiu a mãe. Abaixo disso a DO não é obrigatória.' },
+    { t:'Nascido vivo que morreu', c:'info',
+      x:'Qualquer idade gestacional ou peso: se houve qualquer sinal de vida ao nascer, faz-se a Declaração de Nascido Vivo *e* a DO.' }
+  ],
+  parte1: [
+    'Uma causa por linha. De cima para baixo, cada linha é *consequência* da linha de baixo ("devido a ou como consequência de").',
+    'Linha a: a causa que levou diretamente à morte. A *última linha preenchida é a causa básica* — a doença ou lesão que iniciou a cadeia. É ela que entra na estatística.',
+    'Nem sempre é preciso usar as quatro linhas: se a causa básica explica tudo sozinha, ela fica na linha a.',
+    'Ao lado de cada causa, o *intervalo aproximado* entre o início da condição e a morte (minutos, horas, dias, anos).',
+    'Escreva por extenso e sem siglas: "infarto agudo do miocárdio", não "IAM"; "acidente vascular cerebral isquêmico", não "AVC".',
+    'Seja específico: tipo e local do câncer, agente da pneumonia se conhecido, tipo do choque e a causa dele.'
+  ],
+  parte2: [
+    'Outras condições significativas que *contribuíram* para a morte, mas não fazem parte da cadeia da Parte I (ex.: diabetes, DPOC, obesidade).',
+    'Não repetir aqui o que já está na Parte I.'
+  ],
+  exemplo: [
+    ['a', 'Edema agudo de pulmão', 'horas'],
+    ['b', 'Infarto agudo do miocárdio', '2 dias'],
+    ['c', 'Hipertensão arterial sistêmica', '15 anos'],
+    ['II', 'Diabetes mellitus tipo 2', '10 anos']
+  ],
+  regras: [
+    'Constatar o óbito pessoalmente antes de preencher. Nunca assinar DO em branco nem cobrar por ela.',
+    'Hora do óbito e local exatos; letra legível e todos os campos — "ignorado" só quando de fato não se sabe.',
+    'Mulher em idade fértil: responder se o óbito ocorreu na gravidez, no parto, no aborto, até 42 dias ou até 1 ano após — é o que permite achar a morte materna.',
+    'Causa externa (só quando for o médico legista ou o perito que preenche): tipo, acidente de trabalho, local e descrição.',
+    'Vias: 1ª (branca) para a Secretaria de Saúde; 2ª (amarela) para a família levar ao cartório; 3ª (rosa) fica no serviço. Confira o fluxo local.'
+  ],
+  fonte: 'Resolução CFM nº 1.779/2005 · Ministério da Saúde — Declaração de Óbito: manual de instruções para preenchimento'
+};
+
+/* Lista Nacional de Notificação Compulsória — Anexo 1 do Anexo V da
+   Portaria de Consolidação GM/MS nº 4/2017, na redação da Portaria GM/MS
+   nº 11.211, de 13/05/2026 (DOU 14/05/2026).
+   per: 'ms' imediata MS+SES+SMS · 'ses' imediata SES+SMS · 'sms' imediata SMS · 'sem' semanal */
+const FERR_DOC_NOTIF = {
+  portaria: 'Portaria GM/MS nº 11.211, de 13 de maio de 2026 (DOU de 14/05/2026), que dá a redação atual do Anexo 1 do Anexo V da Portaria de Consolidação GM/MS nº 4/2017',
+  itens: [
+    ['Acidente de trabalho', 'sms'],
+    ['Acidente de trabalho com exposição a material biológico', 'sem'],
+    ['Acidente por animal peçonhento', 'sms'],
+    ['Acidente por animal potencialmente transmissor da raiva (atendimento antirrábico)', 'sms'],
+    ['Anomalias congênitas', 'sem'],
+    ['Botulismo', 'ms'],
+    ['Câncer relacionado ao trabalho', 'sem'],
+    ['Cólera', 'ms'],
+    ['Coqueluche', 'ses'],
+    ['Dengue — casos', 'sem'],
+    ['Dengue — óbitos', 'ms'],
+    ['Dermatoses ocupacionais', 'sem'],
+    ['Difteria', 'ms'],
+    ['Distúrbio de voz relacionado ao trabalho', 'sem'],
+    ['Doença de Chagas aguda', 'ses'],
+    ['Doença de Chagas crônica', 'sem'],
+    ['Doença de Creutzfeldt-Jakob', 'sem'],
+    ['Doença falciforme', 'sem'],
+    ['Doença invasiva por Haemophilus influenzae', 'ses'],
+    ['Doença meningocócica e outras meningites', 'ses'],
+    ['Doenças com suspeita de disseminação intencional (antraz pneumônico, tularemia, varíola)', 'ms'],
+    ['Doenças febris hemorrágicas emergentes (arenavírus, Ebola, Marburg, Lassa, febre purpúrica brasileira)', 'ms'],
+    ['Zika — doença aguda', 'sem'],
+    ['Zika — doença aguda em gestante', 'ses'],
+    ['Zika — óbito com suspeita', 'ms'],
+    ['Síndrome congênita associada ao vírus Zika', 'sem'],
+    ['Esporotricose humana', 'sem'],
+    ['Esquistossomose', 'sem'],
+    ['Evento de saúde pública que se constitua ameaça à saúde pública', 'ms'],
+    ['Evento supostamente atribuível à vacinação ou imunização (ESAVI)', 'ms'],
+    ['Febre amarela', 'ms'],
+    ['Chikungunya — casos', 'sem'],
+    ['Chikungunya em área sem transmissão', 'ms'],
+    ['Chikungunya — óbito com suspeita', 'ms'],
+    ['Febre do Nilo Ocidental e outras arboviroses de importância em saúde pública', 'ms'],
+    ['Febre do Oropouche — casos', 'sem'],
+    ['Febre do Oropouche — óbitos e óbitos fetais', 'ms'],
+    ['Febre do Oropouche em gestante', 'ms'],
+    ['Febre do Oropouche — anomalias congênitas', 'ms'],
+    ['Febre maculosa e outras riquetsioses', 'ms'],
+    ['Febre tifoide', 'ses'],
+    ['Hanseníase', 'sem'],
+    ['Hantavirose', 'ms'],
+    ['Hepatites virais', 'sem'],
+    ['Hepatite B em gestante, parturiente ou puérpera e criança exposta', 'sem'],
+    ['HIV/aids', 'sem'],
+    ['HIV em gestante, parturiente ou puérpera e criança exposta', 'sem'],
+    ['Infecção pelo HIV', 'sem'],
+    ['Infecção pelo HTLV (e em gestante, parturiente, puérpera e criança exposta)', 'sem'],
+    ['Influenza humana por novo subtipo viral', 'ms'],
+    ['Intoxicação exógena (substâncias químicas, agrotóxicos, gases tóxicos, metais pesados)', 'sem'],
+    ['Leishmaniose tegumentar americana', 'sem'],
+    ['Leishmaniose visceral', 'sem'],
+    ['Leptospirose', 'sms'],
+    ['LER/DORT', 'sem'],
+    ['Malária na região amazônica', 'sem'],
+    ['Malária fora da região amazônica', 'ms'],
+    ['Mpox (monkeypox)', 'ms'],
+    ['Óbito infantil e óbito materno', 'sem'],
+    ['Parotidite (caxumba)', 'sem', 'O art. 2º da portaria diz imediata e o anexo diz semanal; o Ministério da Saúde confirmou semanal.'],
+    ['Perda auditiva relacionada ao trabalho', 'sem'],
+    ['Pneumoconioses relacionadas ao trabalho', 'sem'],
+    ['Peste', 'ms'],
+    ['Poliomielite / paralisia flácida aguda', 'ms'],
+    ['Raiva humana', 'ms'],
+    ['Síndrome da rubéola congênita', 'ms'],
+    ['Sarampo e rubéola', 'ms'],
+    ['Sífilis adquirida, congênita e em gestante', 'sem'],
+    ['Síndrome inflamatória multissistêmica (SIM-A e SIM-P) associada à covid-19', 'ms'],
+    ['SRAG hospitalizado ou óbito por SRAG (e SARS-CoV, MERS-CoV)', 'ms'],
+    ['Síndrome gripal por covid-19 confirmada', 'ms'],
+    ['Tétano acidental', 'ses'],
+    ['Tétano neonatal', 'ms'],
+    ['Toxoplasmose gestacional e congênita', 'sem'],
+    ['Transtornos mentais relacionados ao trabalho', 'sem'],
+    ['Tuberculose', 'sem'],
+    ['Varicela', 'ses'],
+    ['Violência doméstica e/ou outras violências', 'sem'],
+    ['Violência sexual e tentativa de suicídio', 'sms']
+  ],
+  regras: [
+    '*Suspeita já notifica* — não espere a confirmação laboratorial.',
+    '*Imediata* (até 24 h): avise a vigilância epidemiológica pelo meio mais rápido (telefone, e-mail, CIEVS) e depois preencha a ficha.',
+    '*Semanal*: ficha de notificação no sistema indicado (Sinan na maioria; SRAG no SIVEP-Gripe; síndrome gripal no e-SUS Notifica) — a vigilância do serviço orienta.',
+    'É dever de todo profissional de saúde, em serviço público ou privado, e não depende da concordância do paciente.',
+    '*Violência:* ficha de violência interpessoal/autoprovocada. Criança ou adolescente: comunicar também o Conselho Tutelar. Idoso: Conselho do Idoso ou Ministério Público. Mulher: a Lei nº 13.931/2019 manda comunicar a autoridade policial em até 24 h.',
+    'Tentativa de suicídio e violência sexual são de notificação imediata ao município — junto com o acolhimento e a profilaxia.'
+  ]
+};

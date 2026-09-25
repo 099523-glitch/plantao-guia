@@ -8,7 +8,7 @@
        a versão do SW muda, e aí o precache é refeito).
    Suba VERSAO a cada alteração de conteúdo ou código.
    ============================================================ */
-const VERSAO = 'plantao-v56';
+const VERSAO = 'medatalho-v98';
 const ESSENCIAL = [
   './',
   './index.html',
@@ -32,6 +32,8 @@ const ESSENCIAL = [
   './fontes-web/inter-latin-ext.woff2',
   './fontes-web/jetbrainsmono-latin.woff2',
   './fontes-web/jetbrainsmono-latin-ext.woff2',
+  './fontes-web/manrope-latin.woff2',
+  './fontes-web/manrope-latin-ext.woff2',
   './icones/icone.svg',
   './icones/icone-192.png',
   './icones/icone-512.png',
@@ -41,7 +43,9 @@ const ESSENCIAL = [
 self.addEventListener('install', function (e) {
   e.waitUntil(
     caches.open(VERSAO)
-      .then(function (c) { return c.addAll(ESSENCIAL); })
+      /* cache:'reload' — sem isso o precache pode pegar o arquivo antigo do cache HTTP do
+         navegador e a versão nova nasce com código velho ("não atualizou") */
+      .then(function (c) { return c.addAll(ESSENCIAL.map(function (u) { return new Request(u, { cache:'reload' }); })); })
       .then(function () { return self.skipWaiting(); })
   );
 });

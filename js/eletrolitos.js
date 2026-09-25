@@ -40,14 +40,14 @@
   function campoNum(id, k, rot, ph, extra) {
     var s = v(id)[k];
     return '<label class="el-campo"><span>' + esc(rot) + '</span>' +
-      '<input type="number" inputmode="decimal" step="any" placeholder="' + esc(ph || '') + '"' +
+      '<input type="text" inputmode="decimal" autocomplete="off" placeholder="' + esc(ph || '') + '"' +
       ' data-el="' + id + '" data-k="' + k + '" value="' + esc(s === undefined ? '' : s) + '"' +
       (extra || '') + '></label>';
   }
   function grande(id, k, rot, unidade, ph) {
     var s = v(id)[k];
     return '<label class="el-grande"><span class="el-grande-rot">' + esc(rot) + '</span>' +
-      '<span class="el-grande-caixa"><input type="number" inputmode="decimal" step="any" autofocus placeholder="' + esc(ph || '') + '"' +
+      '<span class="el-grande-caixa"><input type="text" inputmode="decimal" autocomplete="off" autofocus placeholder="' + esc(ph || '') + '"' +
       ' data-el="' + id + '" data-k="' + k + '" value="' + esc(s === undefined ? '' : s) + '">' +
       '<i>' + esc(unidade) + '</i></span></label>';
   }
@@ -67,13 +67,13 @@
   function rx(o) {
     var txt = textoRx(o);
     return '<div class="el-rx' + (o.cls ? ' ' + o.cls : '') + '" data-el-txt="' + esc(txt) + '">' +
-      '<div class="el-rx-cab"><b>' + esc(o.titulo) + '</b></div>' +
-      '<span class="el-rx-acoes">' +
-        '<button type="button" class="ferr-btn peq" data-el-acao="copiar">Copiar</button>' +
-        '<button type="button" class="ferr-btn peq" data-el-acao="rascunho">Rascunho</button>' +
-      '</span>' +
+      '<div class="el-rx-cab"><b>' + esc(o.titulo) + '</b>' +
+        (o.tempo ? '<span class="el-rx-tempo">' + ICO('relogio') + esc(o.tempo) + '</span>' : '') +
+        '<span class="el-rx-acoes">' +
+          '<button type="button" class="ferr-btn peq forte" data-el-acao="copiar">Copiar</button>' +
+          '<button type="button" class="ferr-btn peq" data-el-acao="rascunho">Rascunho</button>' +
+        '</span></div>' +
       '<code class="el-rx-linha">' + esc(o.linha) + '</code>' +
-      (o.tempo ? '<span class="el-rx-tempo">' + ICO('relogio') + esc(o.tempo) + '</span>' : '') +
       (o.nota ? '<p class="el-rx-nota">' + esc(o.nota) + '</p>' : '') +
     '</div>';
   }
@@ -126,7 +126,7 @@
       ], 'atencao');
       html += passo(1, 'Estabilizar a membrana' + (emerg ? '' : ' — só se o ECG estiver alterado'),
         rx({ titulo:'Gluconato de cálcio 10%', linha:'1 ampola (10 mL) + SG 5% 100 mL — EV', tempo:'em 5 minutos',
-             nota:'Efeito em minutos, dura 30–60 min. Se a alteração do ECG persistir, repetir após 5 min. Não baixa o potássio.' }));
+             nota:'Efeito em minutos, dura 30–60 min. Se a alteração do ECG persistir, repetir após 5 min. Não baixa o potássio. Em parada cardíaca: 30 mL (3 g) em bolus, sem diluir, + bicarbonato 8,4% 1 mEq/kg em outra via.' }));
       html += passo(2, 'Deslocar para dentro da célula',
         rx({ titulo:'Solução polarizante', linha:'Insulina regular 10 UI + glicose 50% 100 mL — EV', tempo:'em 30–60 minutos',
              nota:'Efeito em 15–30 min, dura ~4 h; pode repetir de 2/2 a 4/4 h. Glicemia capilar de 1/1 h por 6 h. Se glicemia > 250: insulina isolada, sem glicose.' }) +
@@ -137,7 +137,7 @@
              nota:'Hipovolêmico: volume com SF antes. Euvolêmico: repor SF para balanço zero.' }) +
         rx({ titulo:'Resina de troca (poliestirenossulfonato de cálcio)', linha:'30 g em 100 mL de manitol 10% ou água — VO', tempo:'até de 4/4 h',
              nota:'Lento e pouco eficaz — não conte com ele na urgência.' }) +
-        '<p class="el-nota">Hemodiálise é o tratamento definitivo na hipercalemia refratária, na anúria e na urgência dialítica. Bicarbonato só se houver acidose metabólica associada.</p>');
+        '<p class="el-nota">Hemodiálise é o tratamento definitivo na hipercalemia refratária, na anúria e na urgência dialítica. Bicarbonato só se houver acidose metabólica associada ou parada cardíaca.</p>');
       html += lista('Depois', ['Repetir potássio e ECG após cada ciclo (1–2 h).', 'Procurar a causa: LRA, DRC agudizada, rabdomiólise, acidose, hemólise, sangramento digestivo.']);
       html += linkConduta('#nefro/hipercalemia', 'Ver a conduta completa de hipercalemia');
       return html;
@@ -217,7 +217,7 @@
     var na = num(s.na);
     var hipo = na !== null && na < 135, hiper = na !== null && na > 145;
     var alvoPadrao = hipo ? na + 8 : (hiper ? na - 10 : '');
-    var html = '<div class="el-grid2">' +
+    var html = '<div class="el-entrada el-grid2">' +
       campoNum(id, 'na', 'Sódio atual (mEq/L)', 'ex.: 118') +
       campoNum(id, 'alvo', 'Sódio alvo em 24 h', alvoPadrao === '' ? 'atual ± 8' : String(alvoPadrao)) +
       campoNum(id, 'peso', 'Peso (kg)', 'ex.: 70') +
@@ -291,7 +291,7 @@
     var s = v(id);
     if (s.peso === undefined && pesoGlobal()) s.peso = pesoGlobal();
     var html = alerta('Indicação estrita', 'Acidose metabólica grave — pH < 7,1 (ou < 7,0 na cetoacidose) — ou instabilidade refratária, hipercalemia com acidose e intoxicação por tricíclico. Tratar a causa é o tratamento.');
-    html += '<div class="el-grid2">' +
+    html += '<div class="el-entrada el-grid2">' +
       campoNum(id, 'peso', 'Peso (kg)', 'ex.: 70') +
       campoNum(id, 'atual', 'HCO₃⁻ atual (mEq/L)', 'ex.: 8') +
       campoNum(id, 'alvo', 'HCO₃⁻ alvo', '12') +
@@ -369,7 +369,7 @@
      ========================================================= */
   function telaNaCorrigido(id) {
     var s = v(id);
-    var html = '<div class="el-grid2">' + campoNum(id, 'na', 'Sódio medido (mEq/L)', 'ex.: 128') + campoNum(id, 'gli', 'Glicemia (mg/dL)', 'ex.: 450') + '</div>';
+    var html = '<div class="el-entrada el-grid2">' + campoNum(id, 'na', 'Sódio medido (mEq/L)', 'ex.: 128') + campoNum(id, 'gli', 'Glicemia (mg/dL)', 'ex.: 450') + '</div>';
     var na = num(s.na), gli = num(s.gli);
     if (na === null || gli === null) return html + vazio('Informe sódio e glicemia.');
     var exc = Math.max(0, gli - 100);
@@ -430,7 +430,7 @@
      ========================================================= */
   function telaCaCorrigido(id) {
     var s = v(id);
-    var html = '<div class="el-grid2">' + campoNum(id, 'ca', 'Cálcio total (mg/dL)', 'ex.: 7,0') + campoNum(id, 'alb', 'Albumina (g/dL)', 'ex.: 2,5') + '</div>' +
+    var html = '<div class="el-entrada el-grid2">' + campoNum(id, 'ca', 'Cálcio total (mg/dL)', 'ex.: 7,0') + campoNum(id, 'alb', 'Albumina (g/dL)', 'ex.: 2,5') + '</div>' +
       opcoes(id, 'ref', 'Albumina de referência', [['4', '4,0 g/dL'], ['4.4', '4,4 g/dL']]);
     var ca = num(s.ca), alb = num(s.alb), ref = num(s.ref) || 4;
     if (ca === null || alb === null) return html + vazio('Informe cálcio e albumina.');
@@ -472,8 +472,12 @@
     for (var i = 0; i < ITENS.length; i++) if (ITENS[i].id === id) return ITENS[i];
     return null;
   }
+  /* tile de tamanho fixo: o símbolo encolhe conforme o comprimento e o
+     "corrigido" fica só no nome do cartão, que já diz isso */
   function simbolo(it) {
-    return '<span class="el-sim ' + it.cor + '">' + esc(it.sim) + (it.sup ? '<sup>' + esc(it.sup) + '</sup>' : '') + '</span>';
+    var n = it.sim.replace(/[^A-Za-z]/g, '').length;
+    var cls = n >= 3 ? ' g3' : (n === 2 ? ' g2' : '');
+    return '<span class="el-sim' + cls + '">' + esc(it.sim) + '</span>';
   }
 
   /* a capa: os sete cartões */
@@ -493,11 +497,47 @@
     });
   };
 
+  /* tudo que é entrada (valores e opções) fica dentro da mesma faixa;
+     o que vem depois é resultado */
+  function arruma(raiz) {
+    if (!raiz) return;
+    var faixa = raiz.querySelector('.el-entrada');
+    if (!faixa) return;
+    while (faixa.nextElementSibling && faixa.nextElementSibling.classList.contains('el-opcoes')) {
+      faixa.appendChild(faixa.nextElementSibling);
+    }
+    var resto = [], n = faixa.nextElementSibling;
+    while (n) { resto.push(n); n = n.nextElementSibling; }
+    if (!resto.length || raiz.querySelector('.el-saida')) return;
+    var caixa = document.createElement('div');
+    caixa.className = 'el-saida';
+    faixa.parentNode.insertBefore(caixa, faixa.nextSibling);
+    resto.forEach(function (x) { caixa.appendChild(x); });
+    passos(caixa);
+  }
+  /* a saída vira um passo a passo numerado: o que é → o que fazer → como seguir */
+  function passos(caixa) {
+    var ROT = [
+      ['el-status', 'Resultado'], ['el-alerta', 'Atenção'], ['el-rx', 'Prescrever'], ['el-conduta', 'Conduzir'],
+      ['el-calc', 'Cálculo'], ['el-lista', 'Conferir'], ['el-opcoes', 'Escolha'], ['el-passo', 'Passo'], ['el-nota', 'Reavaliar'], ['el-vazio', 'Aguardando']
+    ];
+    [].slice.call(caixa.children).forEach(function (x) {
+      if (x.querySelector(':scope > .el-p-rot')) return;
+      var rot = 'Seguir';
+      for (var i = 0; i < ROT.length; i++) if (x.classList.contains(ROT[i][0])) { rot = ROT[i][1]; break; }
+      if (x.tagName === 'P' && rot === 'Seguir') rot = 'Observação';
+      x.setAttribute('data-p', rot);
+    });
+    var kids = [].slice.call(caixa.children);
+    caixa.classList.toggle('sem-valor', kids.length > 0 && kids.every(function (x) { return x.classList.contains('el-vazio'); }));
+  }
+
   E.tela = function (id) {
     var it = itemDe(id);
     if (!it) return '';
+    setTimeout(function () { arruma(document.querySelector('[data-el-tool="' + id + '"]')); }, 0);
     return '<div class="el-tool" data-el-tool="' + it.id + '">' + it.tela(it.id) + '</div>' +
-      '<p class="rodape-aviso">' + ICO('alerta') + '<span>Apoio à decisão, sem revisão clínica formal. Confira dose, apresentação e diretriz vigente antes de prescrever.</span></p>';
+      '<p class="rodape-aviso">' + ICO('alerta') + '<span>Confira dose, apresentação e diretriz vigente antes de prescrever.</span></p>';
   };
 
   /* para a busca global */
@@ -518,6 +558,7 @@
     var pos = ativo && ativo.selectionStart;
     var it = itemDe(id);
     raiz.innerHTML = it.tela(id);
+    arruma(raiz);
     if (k) {
       var de = raiz.querySelector('[data-el="' + id + '"][data-k="' + k + '"]');
       if (de) { de.focus(); try { de.setSelectionRange(pos, pos); } catch (e) { /* number */ } }
@@ -526,7 +567,10 @@
   document.addEventListener('input', function (e) {
     var el = e.target.closest && e.target.closest('[data-el]');
     if (!el) return;
-    v(el.dataset.el)[el.dataset.k] = el.value;
+    var limpo = el.value.replace(/[^0-9.,-]/g, '');
+    if (limpo !== el.value) { var p = el.selectionStart - 1; el.value = limpo;
+      try { el.setSelectionRange(p, p); } catch (err) {} }
+    v(el.dataset.el)[el.dataset.k] = limpo;
     redesenha(el.dataset.el);
   });
   document.addEventListener('click', function (e) {

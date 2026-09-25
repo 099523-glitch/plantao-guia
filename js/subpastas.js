@@ -16,7 +16,7 @@ const SUBPASTAS = {
 
   cardio: [
     { id:'parada',          nome:'Parada e choque',              ids:['pcr-adulto','choque-abordagem'] },
-    { id:'torax',           nome:'Dor torácica',                 ids:['dor-toracica','sca-com-supra','sca-sem-supra','sindrome-aortica','pericardite-miocardite'] },
+    { id:'torax',           nome:'Dor torácica',                 ids:['dor-toracica','sca-com-supra','sca-sem-supra','sindrome-aortica','pericardite-miocardite','takotsubo'] },
     { id:'arritmias',       nome:'Arritmias',                    ids:['taquiarritmia-instavel','taqui-qrs-estreito','fa-flutter','taqui-qrs-largo','bradiarritmia'] },
     { id:'congestao',       nome:'Congestão e obstrução',        ids:['eap-ic-descompensada','tamponamento'] },
     { id:'tromboembolismo', nome:'Tromboembolismo venoso',       ids:['tep','tvp'] },
@@ -41,7 +41,7 @@ const SUBPASTAS = {
   ],
 
   gastro: [
-    { id:'abdome',          nome:'Abdome agudo',                 ids:['abdome-agudo','apendicite','diverticulite','obstrucao-intestinal','isquemia-mesenterica'] },
+    { id:'abdome',          nome:'Abdome agudo',                 ids:['abdome-agudo','apendicite','diverticulite','obstrucao-intestinal','isquemia-mesenterica','ruptura-esofago'] },
     { id:'hemorragia',      nome:'Hemorragia digestiva',         ids:['hda','hdb'] },
     { id:'biliar',          nome:'Pâncreas e via biliar',        ids:['pancreatite','colecistite-colangite'] },
     { id:'figado',          nome:'Fígado',                       ids:['cirrose-descompensada'] },
@@ -93,6 +93,10 @@ const SUBPASTAS = {
     { id:'digestivo-pedia', nome:'Desidratação e digestivo',     ids:['desidratacao-crianca','gastroenterite-pedia'] },
     { id:'febre-convulsao', nome:'Febre e convulsão',            ids:['febre-sem-foco','convulsao-febril'] },
     { id:'protecao',        nome:'Proteção da criança',          ids:['maus-tratos'] }
+  ],
+  obstetricia: [
+    { id:'hipertensao-gestacao',  nome:'Hipertensão na gestação',      ids:['pre-eclampsia'] },
+    { id:'hemorragia-obstetrica', nome:'Hemorragia obstétrica',        ids:['sangramento-gestacao','hemorragia-pos-parto'] }
   ],
 
   toxico: [

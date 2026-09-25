@@ -19,6 +19,7 @@ var FERR_BULARIO = [
     { sit:'Choque séptico', dose:'0,05–0,5 mcg/kg/min (até 1–2 em refratário)', via:'EV BIC', prep:'Solução 64 mcg/mL: paciente de 70 kg a 0,1 mcg/kg/min = 6,6 mL/h. Titular a cada 5–10 min para PAM ≥ 65.', obs:'Primeira escolha. Associar vasopressina 0,03 UI/min se dose > 0,25–0,5 mcg/kg/min.' },
     { sit:'Choque cardiogênico com hipotensão', dose:'0,05–0,3 mcg/kg/min', via:'EV BIC', prep:'', obs:'Junto com dobutamina se baixo débito; preferida à dopamina (menos arritmia).' },
     { sit:'Choque hemorrágico / trauma (ponte)', dose:'0,05–0,2 mcg/kg/min', via:'EV BIC', prep:'', obs:'Só enquanto o volume e o sangue chegam. Não substitui hemoderivado.' },
+    { sit:'Antes da intubação no hipotenso ou com índice de choque > 0,8', dose:'Iniciar 5–15 mcg/min (≈ 0,05–0,2 mcg/kg/min)', via:'EV BIC', prep:'64 mcg/mL: 5–15 mcg/min = 5–14 mL/h.', obs:'Correndo ANTES do indutor. Alvo PAM ≥ 65.' },
     { sit:'Pós-parada com hipotensão', dose:'0,1–0,5 mcg/kg/min', via:'EV BIC', prep:'', obs:'Alvo PAS > 90 e PAM > 65.' }
   ],
   renal:'Sem ajuste.', contra:'Nenhuma absoluta no choque. Hipovolemia não corrigida (repor volume junto).',
@@ -33,6 +34,7 @@ var FERR_BULARIO = [
     { sit:'Anafilaxia', dose:'0,3–0,5 mg (0,3–0,5 mL)', via:'IM', prep:'Vasto lateral da coxa. Repetir a cada 5–15 min se necessário.', obs:'Primeira e única droga que salva. Sem resposta a 2–3 doses IM: infusão EV 0,05–0,1 mcg/kg/min.' },
     { sit:'Choque anafilático refratário', dose:'0,05–0,5 mcg/kg/min', via:'EV BIC', prep:'20 mcg/mL: 70 kg a 0,1 mcg/kg/min = 21 mL/h.', obs:'' },
     { sit:'Bradicardia instável (após atropina)', dose:'2–10 mcg/min', via:'EV BIC', prep:'20 mcg/mL: 6–30 mL/h.', obs:'Alternativa à dopamina enquanto prepara o marca-passo.' },
+    { sit:'Hipotensão peri-intubação (bolus "push-dose")', dose:'10–20 mcg (5–30) a cada 2–5 min', via:'EV', prep:'1 ampola (1 mg) + SF 0,9% 99 mL = 10 mcg/mL: 1–2 mL por vez.', obs:'Ponte enquanto volume e noradrenalina agem. Rotule a seringa: 10 mcg/mL.' },
     { sit:'Choque séptico refratário (2ª/3ª linha)', dose:'0,05–0,5 mcg/kg/min', via:'EV BIC', prep:'', obs:'Aumenta lactato (efeito beta), o que confunde a meta.' },
     { sit:'Crupe / estridor pós-extubação', dose:'3–5 mL (3–5 mg) puros', via:'INAL', prep:'Nebulizar com O2 5 L/min. Pode repetir em 30 min.', obs:'Observar 2–3 h após (efeito rebote).' }
   ],
@@ -92,8 +94,9 @@ var FERR_BULARIO = [
   apres:['Ampola 10 mg/mL — 1 mL'],
   dil:'1 ampola (10 mg) + SF 0,9% 100 mL = 100 mcg/mL. Bolus: 1 mL dessa solução = 100 mcg.',
   ind:[
-    { sit:'Hipotensão na raquianestesia / procedimento', dose:'50–100 mcg em bolus, repetir a cada 1–2 min', via:'EV', prep:'', obs:'Bradicardia reflexa.' },
-    { sit:'Hipotensão com taquiarritmia (quando a nora não convém)', dose:'0,5–2 mcg/kg/min', via:'EV BIC', prep:'100 mcg/mL: 70 kg a 1 mcg/kg/min = 42 mL/h.', obs:'Reduz o débito — não usar em choque cardiogênico.' }
+    { sit:'Hipotensão na raquianestesia, na sedação ou na intubação', dose:'100 mcg em bolus (50–200), repetir a cada 1–2 min', via:'EV', prep:'', obs:'Só vasoconstrição, com bradicardia reflexa: se o coração é fraco, prefira adrenalina em bolus.' },
+    { sit:'Hipotensão com taquiarritmia (quando a nora não convém)', dose:'0,5–2 mcg/kg/min', via:'EV BIC', prep:'100 mcg/mL: 70 kg a 1 mcg/kg/min = 42 mL/h.', obs:'Reduz o débito — não usar no choque cardiogênico por falha de bomba (a exceção é a obstrução da via de saída, abaixo).' },
+    { sit:'Choque com obstrução dinâmica da via de saída do VE (Takotsubo, cardiomiopatia hipertrófica)', dose:'0,5–2 mcg/kg/min, titular', via:'EV BIC', prep:'', obs:'Junto com volume e betabloqueador cauteloso. Inotrópico e nitrato pioram a obstrução.' }
   ],
   renal:'Sem ajuste.', contra:'Choque cardiogênico, bradicardia grave.', cuidado:['Bradicardia reflexa.', 'Extravasamento: fentolamina.'] },
 
@@ -154,6 +157,7 @@ var FERR_BULARIO = [
   ind:[
     { sit:'FA / flutter com resposta rápida (estável)', dose:'5 mg EV em 2–5 min; repetir a cada 5 min até 15 mg', via:'EV', prep:'', obs:'Depois 25–50 mg VO 12/12 h (tartarato).' },
     { sit:'SCA sem contraindicação (IC, hipotensão, bradicardia)', dose:'25–50 mg VO 12/12 h nas primeiras 24 h', via:'VO', prep:'', obs:'EV só se hipertensão/taquicardia persistentes e sem sinais de IC.' },
+    { sit:'Dissecção de aorta (anti-impulso)', dose:'5 mg EV lento a cada 5 min, até 15 mg', via:'EV', prep:'', obs:'Alvo FC < 60 ANTES do vasodilatador. Esmolol é mais titulável. Não usar na dor por cocaína.' },
     { sit:'TSV refratária à adenosina', dose:'5 mg EV lento', via:'EV', prep:'', obs:'' }
   ],
   renal:'Sem ajuste.', hep:'Reduzir dose na cirrose.', contra:'BAV 2º/3º, FC < 50, PAS < 90, IC descompensada, asma em crise.',
@@ -164,7 +168,8 @@ var FERR_BULARIO = [
   dil:'Bolus: puro. Infusão: 125 mg (5 ampolas) + SF 0,9% 100 mL = 1 mg/mL.',
   ind:[
     { sit:'FA / flutter com resposta ventricular rápida (FE preservada)', dose:'0,25 mg/kg (≈ 15–20 mg) EV em 2 min; se não controlar em 15 min, 0,35 mg/kg (≈ 25 mg)', via:'EV', prep:'Manutenção 5–15 mg/h em BIC (1 mg/mL: 5–15 mL/h).', obs:'Depois 30–60 mg VO 6/6 h ou 120–360 mg/dia de liberação lenta.' },
-    { sit:'TSV refratária à adenosina', dose:'15–20 mg EV em 2 min', via:'EV', prep:'', obs:'' }
+    { sit:'TSV refratária à adenosina', dose:'15–20 mg EV em 2 min', via:'EV', prep:'', obs:'' },
+    { sit:'Dissecção de aorta com betabloqueador contraindicado', dose:'0,25 mg/kg EV em 2 min; depois 5–15 mg/h', via:'EV', prep:'', obs:'Alvo FC < 60. Evitar na IC descompensada.' }
   ],
   renal:'Sem ajuste.', hep:'Reduzir na cirrose.', contra:'IC com FE reduzida, hipotensão, BAV, WPW com FA (acelera a via acessória), uso de betabloqueador EV.',
   cuidado:['Hipotensão — pré-tratar com cálcio 1 g EV se limítrofe.', 'Interação com digoxina, ciclosporina, estatinas.'] },
@@ -220,7 +225,7 @@ var FERR_BULARIO = [
   apres:['Ampola 50 mcg/mL — 2, 5 e 10 mL'],
   dil:'Bolus: puro (1 mL = 50 mcg). Infusão: 1.000 mcg (20 mL) + SF 0,9% 80 mL = 10 mcg/mL. Ou 50 mL puros em seringa (50 mcg/mL).',
   ind:[
-    { sit:'Sequência rápida de intubação (pré-indução em PIC alta / dissecção)', dose:'1–3 mcg/kg 3 min antes', via:'EV', prep:'70 kg: 2–4 mL.', obs:'Hipotensão em hipovolêmico. Rigidez torácica em bolus rápido de dose alta.' },
+    { sit:'Sequência rápida de intubação (pré-tratamento opcional: PIC alta, SCA, dissecção)', dose:'3 mcg/kg em 30–60 s, 3 min antes', via:'EV', prep:'70 kg: 4,2 mL.', obs:'Não usar no choque. Rigidez torácica em bolus rápido de dose alta.' },
     { sit:'Analgesia no PS (dor intensa, trauma)', dose:'0,5–1 mcg/kg (25–50 mcg) a cada 5–10 min até controle', via:'EV lento', prep:'', obs:'Início em 2–3 min, dura 30–60 min. Titular.' },
     { sit:'Sedação contínua em VM', dose:'0,5–3 mcg/kg/h (25–200 mcg/h)', via:'EV BIC', prep:'10 mcg/mL: 50 mcg/h = 5 mL/h.', obs:'Associar midazolam/propofol; acumula após 24–48 h.' },
     { sit:'Sedação para procedimento', dose:'0,5–1 mcg/kg', via:'EV', prep:'', obs:'Com midazolam ou cetamina.' }
@@ -245,7 +250,8 @@ var FERR_BULARIO = [
   apres:['Frasco 50 mg/mL — 10 mL (500 mg)', 'Frasco 10 mg/mL — 20 mL (esketamina/S-cetamina em algumas marcas)'],
   dil:'Indução: puro (50 mg/mL) ou 1 mL + 9 mL de SF = 5 mg/mL. Analgesia/infusão: 500 mg + SF 0,9% 490 mL = 1 mg/mL.',
   ind:[
-    { sit:'Sequência rápida de intubação (choque, broncoespasmo, hipotenso)', dose:'1–2 mg/kg (1 mg/kg no chocado)', via:'EV', prep:'Em 30–60 s. 70 kg: 1,5–3 mL do frasco de 50 mg/mL.', obs:'Mantém PA e reflexos de via aérea; broncodilata. Escolha no choque e na asma.' },
+    { sit:'Sequência rápida de intubação (broncoespasmo, choque séptico)', dose:'1–2 mg/kg (metade no choque)', via:'EV', prep:'Em bolus. 70 kg: 1,4–2,8 mL do frasco de 50 mg/mL.', obs:'Mantém a PA e broncodilata. No choque cardiogênico, prefira etomidato.' },
+    { sit:'Sequência atrasada (agitado que não tolera a pré-oxigenação)', dose:'1 mg/kg, ou 10–25 mg repetidos até dissociar', via:'EV', prep:'Diluir 1 mL + 9 mL de SF (5 mg/mL) para as alíquotas.', obs:'Pode causar apneia, obstrução ou hipotensão: pronto para assumir a via aérea.' },
     { sit:'Sedação para procedimento (redução de fratura, curativo grande)', dose:'0,5–1 mg/kg EV, ou 4–5 mg/kg IM', via:'EV / IM', prep:'Efeito EV em 1 min, dura 10–15 min. IM em 3–5 min, dura 20–30 min.', obs:'Associar midazolam 0,03 mg/kg ou propofol (ketofol) para reduzir emergência dissociativa.' },
     { sit:'Analgesia subdissociativa (dor intensa, opioide-poupador)', dose:'0,1–0,3 mg/kg em 10–15 min (não em bolus), depois 0,1–0,3 mg/kg/h', via:'EV', prep:'1 mg/mL: 70 kg a 0,2 mg/kg/h = 14 mL/h.', obs:'Bolus rápido dá disforia e nistagmo.' },
     { sit:'Estado de mal refratário / agitação extrema (com contenção e via aérea garantida)', dose:'1–2 mg/kg, depois 1–5 mg/kg/h', via:'EV', prep:'', obs:'Agitação: 4–5 mg/kg IM — monitorizar; laringoespasmo e hipersalivação.' }
@@ -257,7 +263,7 @@ var FERR_BULARIO = [
   apres:['Ampola 20 mg/10 mL (2 mg/mL)'],
   dil:'Puro.',
   ind:[
-    { sit:'Sequência rápida de intubação (instável hemodinamicamente, cardiopata, PIC alta)', dose:'0,3 mg/kg', via:'EV', prep:'70 kg: 10 mL (20 mg) em 30 s.', obs:'Mais estável hemodinamicamente entre os indutores. Efeito em 30–60 s, dura 5–10 min.' }
+    { sit:'Sequência rápida de intubação (choque, cardiopata, idoso, PIC alta, SCA, dissecção)', dose:'0,3 mg/kg (metade no choque cardiogênico e no idoso frágil)', via:'EV', prep:'70 kg: 10 mL (20 mg) em bolus.', obs:'O indutor que menos derruba a pressão. Efeito em 30–60 s, dura 5–10 min. Dose única suprime o cortisol: na sepse, considerar corticoide.' }
   ],
   renal:'Sem ajuste.', contra:'Sepse/choque séptico (relativa — supressão adrenal por 24–48 h com dose única; preferir cetamina).',
   cuidado:['Mioclonias na indução (não é convulsão).', 'Dor à injeção.', 'Sem analgesia — associar opioide.', 'Não usar em infusão contínua (insuficiência adrenal).'] },
@@ -266,7 +272,7 @@ var FERR_BULARIO = [
   apres:['Frasco/ampola 1% (10 mg/mL) — 20 mL, 50 mL, 100 mL', 'Frasco 2% (20 mg/mL) — 50 mL'],
   dil:'Puro (1%). Trocar equipo e frasco a cada 12 h (meio de cultura).',
   ind:[
-    { sit:'Sequência rápida de intubação (estável, asmático, status epilepticus)', dose:'1,5–2,5 mg/kg (0,5–1 mg/kg no idoso ou hipotenso)', via:'EV', prep:'70 kg: 10–17 mL de 1%.', obs:'Hipotensão e apneia — evitar no chocado.' },
+    { sit:'Sequência rápida de intubação (estável, broncoespasmo, estado de mal)', dose:'1,5–3 mg/kg (0,5–1 mg/kg no idoso)', via:'EV', prep:'70 kg: 10–21 mL de 1%.', obs:'Hipotensão dose-dependente — evitar no instável.' },
     { sit:'Sedação contínua em VM', dose:'5–50 mcg/kg/min (0,3–3 mg/kg/h)', via:'EV BIC', prep:'1%: 70 kg a 1 mg/kg/h = 7 mL/h. Máximo 4 mg/kg/h.', obs:'Síndrome de infusão do propofol: > 4 mg/kg/h por > 48 h → acidose, rabdomiólise, bradicardia.' },
     { sit:'Sedação para procedimento (cardioversão, endoscopia)', dose:'0,5–1 mg/kg, depois 0,25–0,5 mg/kg a cada 1–2 min', via:'EV', prep:'', obs:'Apneia frequente: material de via aérea pronto.' },
     { sit:'Estado de mal refratário', dose:'1–2 mg/kg bolus, depois 2–5 mg/kg/h', via:'EV', prep:'', obs:'Paciente intubado.' }
@@ -279,7 +285,7 @@ var FERR_BULARIO = [
   dil:'Bolus: 1 ampola de 15 mg + SF 12 mL = 1 mg/mL. Infusão: 150 mg (30 mL de 5 mg/mL) + SF 0,9% 120 mL = 1 mg/mL.',
   ind:[
     { sit:'Crise convulsiva / estado de mal (1ª linha)', dose:'10 mg IM (> 40 kg) ou 5 mg IM (13–40 kg); EV 0,1–0,2 mg/kg (5–10 mg)', via:'IM / EV', prep:'IM é tão eficaz quanto EV e mais rápido de conseguir. Intranasal/bucal 0,2 mg/kg (máx. 10 mg).', obs:'Repetir uma vez em 5 min. Depois fenitoína/valproato/levetiracetam.' },
-    { sit:'Sequência rápida de intubação (indutor de exceção)', dose:'0,1–0,3 mg/kg', via:'EV', prep:'', obs:'Início lento (2–3 min) e hipotensão — cetamina/etomidato são melhores.' },
+    { sit:'Sequência rápida de intubação (indutor de exceção)', dose:'0,2–0,3 mg/kg', via:'EV', prep:'', obs:'Início lento (2–3 min), hipotensão e costuma ser subdosado — etomidato ou cetamina são melhores.' },
     { sit:'Sedação para procedimento', dose:'0,5–2 mg a cada 2–3 min (0,02–0,05 mg/kg), máx. 5 mg', via:'EV', prep:'Idoso: 0,5 mg por vez.', obs:'Com fentanil: reduzir ambos.' },
     { sit:'Sedação contínua em VM', dose:'0,02–0,1 mg/kg/h (1–7 mg/h)', via:'EV BIC', prep:'1 mg/mL: 3 mg/h = 3 mL/h.', obs:'Acumula (delirium, VM prolongada) — preferir propofol/dexmedetomidina quando possível.' },
     { sit:'Agitação psicomotora (com haloperidol)', dose:'5 mg IM (2,5 mg no idoso)', via:'IM', prep:'', obs:'' }
@@ -292,6 +298,7 @@ var FERR_BULARIO = [
   dil:'1 ampola (200 mcg) + SF 0,9% 48 mL = 50 mL a 4 mcg/mL.',
   ind:[
     { sit:'Sedação leve em VM / desmame / delirium hiperativo em UTI', dose:'0,2–1,4 mcg/kg/h, sem bolus', via:'EV BIC', prep:'4 mcg/mL: 70 kg a 0,5 mcg/kg/h = 8,75 mL/h.', obs:'Não deprime a respiração. Paciente despertável. Ataque de 1 mcg/kg em 10 min é opcional e causa bradicardia/hipotensão — evitar.' },
+    { sit:'Ansiedade que impede a VNI', dose:'0,2–0,7 mcg/kg/h, sem bolus', via:'EV BIC', prep:'4 mcg/mL: 70 kg a 0,4 mcg/kg/h = 7 mL/h.', obs:'Só depois de explicar, ajustar a máscara e os parâmetros. Não deprime a respiração; vigiar bradicardia e hipotensão. Evitar benzodiazepínico + opioide.' },
     { sit:'Abstinência alcoólica refratária (adjuvante ao benzodiazepínico)', dose:'0,2–0,7 mcg/kg/h', via:'EV BIC', prep:'', obs:'Controla a hiperatividade autonômica; não previne convulsão.' }
   ],
   renal:'Sem ajuste.', hep:'Reduzir na hepatopatia.', contra:'BAV avançado, bradicardia < 50, hipovolemia.',
@@ -301,7 +308,7 @@ var FERR_BULARIO = [
   apres:['Frasco 100 mg (pó) — diluir em 10 mL (10 mg/mL)', 'Frasco 500 mg'],
   dil:'100 mg + AD ou SF 10 mL = 10 mg/mL. Geladeira.',
   ind:[
-    { sit:'Sequência rápida de intubação', dose:'1–1,5 mg/kg (peso real)', via:'EV', prep:'70 kg: 10 mL (100 mg). Início em 45–60 s, dura 6–10 min.', obs:'IM 3–4 mg/kg se sem acesso (início em 3–4 min).' }
+    { sit:'Sequência rápida de intubação', dose:'1,5 mg/kg (2 mg/kg no choque), peso real', via:'EV', prep:'70 kg: 10,5 mL (105 mg). Início em 45 s, dura 6–10 min.', obs:'Contraindicada: hipertermia maligna, doença neuromuscular, AVC/queimadura/lesão medular > 72 h, rabdomiólise, hipercalemia com alteração no ECG. IM 3–4 mg/kg se sem acesso.' }
   ],
   renal:'Sem ajuste, mas hipercalemia é o risco: evitar se K > 5,5.', contra:'Hipercalemia ou risco (queimadura > 24–72 h, lesão medular/AVC > 72 h até 6 meses, doença neuromuscular, imobilização prolongada, rabdomiólise, miopatia), hipertermia maligna (pessoal/familiar), glaucoma de ângulo aberto agudo (relativa).',
   cuidado:['Hipertermia maligna: dantroleno.', 'Bradicardia em 2ª dose e em criança: atropina.', 'Fasciculações e mialgia.', 'Aumenta pressão intraocular e intragástrica.'] },
@@ -310,7 +317,7 @@ var FERR_BULARIO = [
   apres:['Frasco 50 mg/5 mL (10 mg/mL)'],
   dil:'Puro. Geladeira (ou até 60 dias em temperatura ambiente).',
   ind:[
-    { sit:'Sequência rápida de intubação', dose:'1,2 mg/kg (peso ideal)', via:'EV', prep:'70 kg: 8,4 mL. Início 45–60 s, dura 45–70 min.', obs:'Escolha quando succinilcolina é contraindicada. Reversão com sugamadex 16 mg/kg.' },
+    { sit:'Sequência rápida de intubação', dose:'1,5 mg/kg', via:'EV', prep:'70 kg: 10,5 mL. Início 45–60 s, dura 45–70 min.', obs:'Sem as contraindicações da succinilcolina. Sedação contínua logo depois do tubo. Reversão com sugamadex 16 mg/kg.' },
     { sit:'Bloqueio de manutenção em VM (SDRA grave, PIC)', dose:'0,6 mg/kg bolus; 0,3–0,6 mg/kg/h', via:'EV', prep:'', obs:'Sempre com sedação profunda comprovada.' }
   ],
   renal:'Duração prolongada na IRA; usar TOF.', hep:'Prolonga na cirrose.', contra:'Alergia prévia (anafilaxia mais comum entre os bloqueadores).',
@@ -320,7 +327,7 @@ var FERR_BULARIO = [
   apres:['Frasco 200 mg/2 mL (100 mg/mL)', 'Frasco 500 mg/5 mL'],
   dil:'Puro.',
   ind:[
-    { sit:'Reversão imediata (não consigo intubar nem ventilar após rocurônio 1,2 mg/kg)', dose:'16 mg/kg', via:'EV', prep:'70 kg: 1.120 mg = 11,2 mL (5–6 frascos de 200 mg).', obs:'Reverte em 1,5–3 min. Custo alto — confirmar disponibilidade antes de escolher rocurônio.' },
+    { sit:'Reversão imediata (não intubo, não oxigeno após rocurônio 1,5 mg/kg)', dose:'16 mg/kg', via:'EV', prep:'70 kg: 1.120 mg = 11,2 mL (5–6 frascos de 200 mg).', obs:'Reverte em 1,5–3 min — não atrase a cricotireoidostomia esperando. Custo alto: confirmar disponibilidade antes de escolher rocurônio.' },
     { sit:'Reversão de bloqueio moderado (TOF 2)', dose:'2 mg/kg', via:'EV', prep:'', obs:'Profundo (TOF 0, PTC 1–2): 4 mg/kg.' }
   ],
   renal:'ClCr < 30: não recomendado (o complexo é excretado pelo rim).', contra:'Nenhuma absoluta.',
@@ -421,6 +428,7 @@ var FERR_BULARIO = [
   dil:'1 ampola (0,4 mg) + SF 9 mL = 0,04 mg/mL para titular. Infusão: 2 mg (5 ampolas) + SF 0,9% 500 mL = 4 mcg/mL.',
   ind:[
     { sit:'Depressão respiratória por opioide (FR < 10, miose)', dose:'0,04–0,4 mg EV a cada 2–3 min até FR > 12 (máx. 2 mg; até 10 mg se suspeita forte)', via:'EV / IM / IN', prep:'Sem acesso: 0,4–2 mg IM ou intranasal.', obs:'Objetivo é ventilar, não acordar — dose alta em dependente precipita abstinência violenta.' },
+    { sit:'PCR associada a opioide', dose:'0,4–2 mg', via:'EV/IO/IM/IN', prep:'', obs:'Não atrasa compressão, desfibrilação nem via aérea.' },
     { sit:'Recorrência (opioide de ação longa: metadona, fentanil transdérmico)', dose:'2/3 da dose que reverteu, por hora, em BIC', via:'EV BIC', prep:'4 mcg/mL: para 0,4 mg/h = 100 mL/h.', obs:'Meia-vida da naloxona (30–60 min) é menor que a da maioria dos opioides — observar 4–6 h após.' }
   ],
   renal:'Sem ajuste.', contra:'Nenhuma na depressão respiratória.',
@@ -528,7 +536,10 @@ var FERR_BULARIO = [
   dil:'25.000 UI (5 mL) + SF 0,9% 245 mL = 250 mL a 100 UI/mL.',
   ind:[
     { sit:'TEP / TVP (instável, IRC, obeso, provável trombólise/cirurgia)', dose:'Bolus 80 UI/kg (máx. 10.000); 18 UI/kg/h', via:'EV', prep:'100 UI/mL: 70 kg → bolus 5.600 UI, infusão 1.260 UI/h = 12,6 mL/h. TTPa em 6 h: alvo 1,5–2,5× (ou anti-Xa 0,3–0,7).', obs:'Ajuste por nomograma da unidade.' },
-    { sit:'SCA (com ou sem supra, junto com antiagregação)', dose:'Bolus 60 UI/kg (máx. 4.000); 12 UI/kg/h (máx. 1.000 UI/h) por 48 h', via:'EV', prep:'', obs:'Alvo TTPa 1,5–2×.' },
+    { sit:'SCA sem supra', dose:'Bolus 60 UI/kg (máx. 5.000); 12 UI/kg/h (máx. 1.000 UI/h)', via:'EV', prep:'100 UI/mL: 70 kg → bolus 4.200 UI, infusão 840 UI/h = 8,4 mL/h.', obs:'Alvo TTPa 1,5–2×. Preferida na estratégia invasiva e no ClCr < 30.' },
+    { sit:'IAM com supra + fibrinolítico', dose:'Bolus 60 UI/kg (máx. 4.000); 12 UI/kg/h (máx. 1.000 UI/h) por 48 h', via:'EV', prep:'', obs:'Alvo TTPa 1,5–2× (50–70 s).' },
+    { sit:'IAM com supra — angioplastia primária', dose:'70–100 UI/kg em bolus (máx. 10.000); com inibidor IIb/IIIa: 50–70 UI/kg (máx. 7.000)', via:'EV', prep:'', obs:'Sem infusão no PS: a sala de hemodinâmica ajusta pelo TCA.' },
+    { sit:'IAM com supra sem reperfusão', dose:'Bolus 50–70 UI/kg (máx. 5.000); 12 UI/kg/h', via:'EV', prep:'', obs:'Alvo TTPa 1,5–2×. Enoxaparina é alternativa.' },
     { sit:'Profilaxia de TEV (quando enoxaparina contraindicada — ClCr < 30)', dose:'5.000 UI de 8/8 h ou 12/12 h', via:'SC', prep:'', obs:'' },
     { sit:'FA com indicação de anticoagulação e via oral impossível', dose:'Como no TEP', via:'EV', prep:'', obs:'' }
   ],
@@ -540,8 +551,8 @@ var FERR_BULARIO = [
   dil:'Puro, SC profundo no abdome; não expelir a bolha; não massagear.',
   ind:[
     { sit:'TEP / TVP — tratamento', dose:'1 mg/kg de 12/12 h (ou 1,5 mg/kg 1x/dia)', via:'SC', prep:'Peso real. > 150 kg ou < 40 kg: anti-Xa.', obs:'Gestante: 1 mg/kg 12/12 h; câncer: preferir HBPM a DOAC em alguns cenários.' },
-    { sit:'SCA sem supra', dose:'1 mg/kg de 12/12 h (≥ 75 anos: 0,75 mg/kg)', via:'SC', prep:'', obs:'Até a angioplastia ou por 8 dias.' },
-    { sit:'IAM com supra + fibrinolítico', dose:'30 mg EV bolus + 1 mg/kg SC 12/12 h (< 75 anos); ≥ 75: sem bolus, 0,75 mg/kg', via:'EV + SC', prep:'', obs:'Primeiras 2 doses SC máx. 100 mg.' },
+    { sit:'SCA sem supra', dose:'1 mg/kg de 12/12 h', via:'SC', prep:'', obs:'Sem redução por idade (a de 0,75 mg/kg a partir dos 75 anos é do IAM com supra trombolisado). Até a angioplastia ou por 8 dias.' },
+    { sit:'IAM com supra + fibrinolítico', dose:'< 75 anos: 30 mg EV bolus + 1 mg/kg SC 12/12 h · ≥ 75 anos: sem bolus, 0,75 mg/kg SC 12/12 h', via:'EV + SC', prep:'', obs:'Duas primeiras doses SC com teto: 100 mg (< 75 anos) ou 75 mg (≥ 75). ClCr < 30: 1 mg/kg 1x/dia.' },
     { sit:'Profilaxia de TEV (clínico, cirúrgico)', dose:'40 mg 1x/dia (20 mg se ClCr < 30; 40 mg 12/12 h se IMC > 40)', via:'SC', prep:'', obs:'' }
   ],
   renal:'ClCr < 30: tratamento 1 mg/kg 1x/dia; profilaxia 20 mg/dia. Diálise: preferir HNF.', contra:'Sangramento ativo, HIT, plaquetas < 50.000, raquianestesia/punção lombar (respeitar 12 h dose profilática / 24 h dose plena antes, 4 h depois), cirurgia de SNC.',
@@ -588,7 +599,7 @@ var FERR_BULARIO = [
   dil:'Reconstituir com o diluente (1 mg/mL), sem agitar. Via exclusiva; sem outra droga na mesma linha.',
   ind:[
     { sit:'AVC isquêmico (até 4,5 h do início, sem contraindicação)', dose:'0,9 mg/kg (máx. 90 mg): 10% em bolus em 1 min, 90% em 60 min', via:'EV', prep:'70 kg: 63 mg → 6,3 mg bolus + 56,7 mg em 1 h.', obs:'PA < 185/110 antes e < 180/105 por 24 h. Sem antitrombótico por 24 h. Angioedema orolingual em uso de IECA.' },
-    { sit:'TEP maciço (instável)', dose:'100 mg em 2 h (ou 0,6 mg/kg, máx. 50 mg, em 15 min na PCR)', via:'EV', prep:'Heparina em pausa durante a infusão, retomar sem bolus quando TTPa < 2×.', obs:'Na PCR por TEP suspeito: 50 mg bolus e manter RCP por 60–90 min.' },
+    { sit:'TEP de alto risco (instável)', dose:'100 mg em 2 h', via:'EV', prep:'Heparina em pausa durante a infusão, retomar sem bolus quando TTPa < 2×.', obs:'Na PCR por TEP provável: 50 mg em bolus, repetir 50 mg em 15 min se preciso, e manter a RCP por 60–90 min.' },
     { sit:'IAM com supra sem angioplastia em 120 min', dose:'Acelerado: 15 mg bolus, 0,75 mg/kg (máx. 50) em 30 min, 0,5 mg/kg (máx. 35) em 60 min', via:'EV', prep:'Com AAS, clopidogrel e enoxaparina.', obs:'Tenecteplase em bolus único é mais prática.' },
     { sit:'Cateter venoso central obstruído', dose:'2 mg em 2 mL no lúmen por 30–120 min', via:'Intraluminal', prep:'', obs:'' }
   ],
@@ -600,6 +611,7 @@ var FERR_BULARIO = [
   dil:'Reconstituir com AD 10 mL (5 mg/mL). Bolus em 5–10 s. Não agitar.',
   ind:[
     { sit:'IAM com supra sem acesso a angioplastia em 120 min (até 12 h de dor)', dose:'< 60 kg: 30 mg · 60–69: 35 mg · 70–79: 40 mg · 80–89: 45 mg · ≥ 90: 50 mg (≥ 75 anos: metade)', via:'EV bolus', prep:'6–10 mL conforme peso.', obs:'Com AAS 300 mg, clopidogrel 300 mg (75 se ≥ 75 anos), enoxaparina. Transferir para cateterismo em 2–24 h.' },
+    { sit:'TEP de alto risco (instável)', dose:'Mesma tabela por peso: 30 a 50 mg em bolus', via:'EV bolus', prep:'', obs:'Uso fora de bula no Brasil; alteplase 100 mg em 2 h é o padrão.' },
     { sit:'AVC isquêmico (alternativa ao alteplase em centros habilitados)', dose:'0,25 mg/kg (máx. 25 mg) em bolus', via:'EV', prep:'', obs:'' }
   ],
   renal:'Sem ajuste.', contra:'As mesmas do alteplase.', cuidado:['Reperfusão: arritmia de reperfusão, hipotensão.', 'Sangramento — mesmas medidas do alteplase.'] },
@@ -608,8 +620,8 @@ var FERR_BULARIO = [
   apres:['Frasco 500 UI (Octaplex, Beriplex/Kcentra) — 4 fatores'],
   dil:'Reconstituir conforme o kit; infundir 3–5 mL/min.',
   ind:[
-    { sit:'Sangramento grave ou neurocirurgia urgente em uso de varfarina', dose:'INR 2–4: 25 UI/kg · 4–6: 35 UI/kg · > 6: 50 UI/kg (máx. 5.000 UI) + vitamina K 10 mg EV', via:'EV', prep:'', obs:'Corrige o INR em 10–30 min. Repetir INR em 30 min e 6 h.' },
-    { sit:'Sangramento grave por DOAC anti-Xa (rivaroxabana, apixabana) sem andexanet', dose:'25–50 UI/kg', via:'EV', prep:'', obs:'Dabigatrana: idarucizumabe 5 g EV (se indisponível, CCP ou diálise).' }
+    { sit:'Sangramento grave ou neurocirurgia urgente em uso de varfarina', dose:'INR 2–4: 25 UI/kg · 4–6: 35 UI/kg · > 6: 50 UI/kg (máx. 5.000 UI) — ou dose fixa 1.500–2.000 UI em 10 min sem INR/peso · + vitamina K 10 mg EV', via:'EV', prep:'', obs:'Corrige o INR em 10–30 min. INR 15 min após o fim da infusão; se > 1,5, dose adicional.' },
+    { sit:'Sangramento grave por anti-Xa (rivaroxabana, apixabana, edoxabana)', dose:'2.000 UI fixas ou 25–50 UI/kg', via:'EV', prep:'', obs:'Com antifibrinolítico. Dabigatrana: idarucizumabe 5 g EV (se indisponível, hemodiálise).' }
   ],
   renal:'Sem ajuste.', contra:'CIVD, HIT (contém heparina em algumas marcas), trombose recente (relativa).',
   cuidado:['Trombose arterial/venosa em 1–2%.', 'Não repetir sem novo INR.'] },
@@ -654,9 +666,12 @@ var FERR_BULARIO = [
   dil:'1 ampola + SG 5% ou SF 100 mL em 5–10 min (hipercalemia) ou 10–20 min (hipocalcemia). Não misturar com bicarbonato ou fosfato na mesma via.',
   ind:[
     { sit:'Hipercalemia com ECG alterado ou K ≥ 6,5', dose:'1–2 g (1–2 ampolas) em 5 min; repetir em 5 min se o ECG não melhorar', via:'EV', prep:'', obs:'Não baixa o K; protege o coração por 30–60 min.' },
+    { sit:'PCR por hipercalemia ou por bloqueador de canal de cálcio', dose:'30 mL (3 g) em bolus', via:'EV/IO', prep:'Puro. Cloreto de cálcio 10% 10 mL (1 g) equivale, de preferência em veia central.', obs:'Via separada do bicarbonato (precipita).' },
     { sit:'Hipocalcemia sintomática (tetania, QT longo, convulsão)', dose:'1–2 g em 10–20 min; depois 10 ampolas + SG 5% 900 mL a 50–100 mL/h', via:'EV', prep:'0,5–1,5 mg/kg/h de cálcio elementar.', obs:'Corrigir magnésio.' },
+    { sit:'Transfusão maciça no trauma (hipocalcemia pelo citrato)', dose:'1–3 g (10–30 mL) em 10 min, guiado pelo cálcio iônico', via:'EV', prep:'Cloreto de cálcio 10% 10 mL (1 g) equivale a ~3 g de gluconato — de preferência em veia central.', obs:'Manter o cálcio iônico normal. Sem dosagem rápida: empírico após algumas unidades de hemoderivado.' },
     { sit:'Intoxicação por bloqueador de canal de cálcio', dose:'3 g (30 mL) em 10 min; repetir a cada 10–20 min até 3–4 doses, ou infusão 0,2–0,4 mL/kg/h', via:'EV', prep:'Cloreto de cálcio 10% é 3× mais potente (1 g = 273 mg elementar) — só em central.', obs:'' },
     { sit:'Hipermagnesemia sintomática', dose:'1 g em 5 min', via:'EV', prep:'', obs:'' },
+    { sit:'Intoxicação pelo sulfato de magnésio (pré-eclâmpsia/eclâmpsia)', dose:'10 mL (1 g) EV lento, em 3–10 min', via:'EV', prep:'Puro ou diluído em 10 mL de SF.', obs:'Arreflexia, depressão respiratória ou parada: suspender o magnésio, suporte ventilatório e cálcio.' },
     { sit:'Queimadura por ácido fluorídrico', dose:'Gel de gluconato 2,5% tópico; 10 mL de 10% intra-arterial/infiltração em casos graves', via:'Tópico/infiltração', prep:'', obs:'' }
   ],
   renal:'Sem ajuste agudo; cautela na IRC com hiperfosfatemia (calcificação).', contra:'Hipercalcemia, intoxicação digitálica (relativa — arritmia; infundir lento em 20–30 min se imprescindível).',
@@ -667,7 +682,7 @@ var FERR_BULARIO = [
   dil:'Bolus: 2 g = 4 mL de 50% ou 20 mL de 10% + SG 5% 100 mL. Manutenção obstétrica: 10 g (20 mL de 50%) + SF 0,9% 480 mL = 20 mg/mL → 1 g/h = 50 mL/h.',
   ind:[
     { sit:'Torsades de pointes / PCR por torsades', dose:'2 g em 1–2 min (PCR) ou em 5–15 min (com pulso); depois 1–2 g/h', via:'EV', prep:'', obs:'Mesmo com Mg normal.' },
-    { sit:'Eclâmpsia / pré-eclâmpsia grave (Zuspan)', dose:'4 g em 15–20 min; manutenção 1–2 g/h por 24 h após o parto ou a última convulsão', via:'EV', prep:'Pritchard (sem bomba): 4 g EV + 10 g IM (5 g em cada nádega), depois 5 g IM 4/4 h.', obs:'Vigiar reflexo patelar, FR > 12, diurese > 25 mL/h. Antídoto: gluconato de cálcio 1 g.' },
+    { sit:'Eclâmpsia / pré-eclâmpsia grave (Zuspan)', dose:'4 g em 15–20 min; manutenção 1–2 g/h por 24 h após o parto ou a última convulsão', via:'EV', prep:'Pritchard (sem bomba): 4 g EV + 10 g IM (5 g em cada nádega), depois 5 g IM 4/4 h.', obs:'Manter só com reflexo patelar presente, FR ≥ 16 (MS; o ACOG usa 12) e diurese ≥ 25 mL/h. Antídoto: gluconato de cálcio 1 g EV lento.' },
     { sit:'Crise de asma grave sem resposta na 1ª hora', dose:'2 g em 20 min', via:'EV', prep:'', obs:'Dose única.' },
     { sit:'Hipomagnesemia sintomática (arritmia, tetania, hipocalemia refratária)', dose:'2 g em 10–20 min; depois 4–8 g em 12–24 h', via:'EV', prep:'', obs:'IRC: metade da dose.' },
     { sit:'FA com resposta rápida (adjuvante)', dose:'2 g em 20 min', via:'EV', prep:'', obs:'Facilita controle de FC.' }
@@ -681,7 +696,7 @@ var FERR_BULARIO = [
   ind:[
     { sit:'Acidose metabólica grave (pH < 7,1; < 7,0 na CAD) ou hipercalemia com acidose', dose:'Déficit = 0,3 × peso × (HCO3 alvo − atual); repor metade em 2 h e regasometrar', via:'EV', prep:'70 kg, HCO3 8 → 12: 84 mEq → 42 mL de 8,4% + 42 mL de SG em 2 h.', obs:'Não corrige a causa. Gera CO2 — ventilar.' },
     { sit:'Intoxicação por tricíclico (QRS > 100 ms, arritmia, hipotensão)', dose:'1–2 mEq/kg em bolus; repetir até QRS < 100; depois 150 mEq em SG 5% 1.000 mL a 150–250 mL/h', via:'EV', prep:'Alvo pH 7,50–7,55.', obs:'Também em cocaína com QRS largo e em salicilato (alcalinização urinária, pH urinário > 7,5).' },
-    { sit:'PCR', dose:'1 mEq/kg', via:'EV', prep:'', obs:'Só em hipercalemia, acidose prévia grave ou tricíclico — não é rotina.' },
+    { sit:'PCR', dose:'1 mEq/kg', via:'EV', prep:'', obs:'Só em hipercalemia, acidose prévia grave ou tricíclico (1–2 mEq/kg) — sem benefício de rotina em ensaio randomizado.' },
     { sit:'Rabdomiólise / prevenção de nefropatia por contraste (uso controverso)', dose:'150 mEq em SG 1.000 mL a 100–200 mL/h', via:'EV', prep:'', obs:'' }
   ],
   renal:'Na IRC a carga de sódio e volume é o limite; na acidose da IRC crônica, VO 500–1.000 mg 8/8 h.', contra:'Alcalose, hipocalcemia (agrava tetania), hipernatremia/hipervolemia, hipoventilação sem suporte.',
@@ -849,6 +864,7 @@ var FERR_BULARIO = [
     { sit:'Candidemia (paciente estável, sem exposição prévia a azol)', dose:'Ataque 800 mg (12 mg/kg); depois 400 mg (6 mg/kg) 1x/dia', via:'EV/VO', prep:'', obs:'Instável ou neutropênico: equinocandina (micafungina/anidulafungina). Retirar o cateter.' },
     { sit:'Meningite criptocócica — consolidação/manutenção', dose:'400–800 mg/dia por 8 semanas, depois 200 mg/dia', via:'VO/EV', prep:'Indução: anfotericina + flucitosina (ou + fluconazol 800).', obs:'' },
     { sit:'Candidíase esofágica', dose:'200–400 mg/dia por 14–21 dias', via:'VO/EV', prep:'', obs:'' },
+    { sit:'Perfuração de esôfago / mediastinite (empírico, grave ou imunossuprimido)', dose:'Ataque 800 mg; depois 400 mg 1x/dia', via:'EV', prep:'', obs:'Junto com antibiótico de amplo espectro. Ajustar pela cultura.' },
     { sit:'Candidíase vaginal', dose:'150 mg dose única', via:'VO', prep:'', obs:'' }
   ],
   renal:'ClCr < 50: metade da dose de manutenção (ataque igual). HD: dose plena após a sessão.', contra:'QT longo, uso de drogas que prolongam QT (relativa).',
@@ -879,7 +895,9 @@ var FERR_BULARIO = [
   ind:[
     { sit:'Hemorragia digestiva alta (antes da EDA)', dose:'80 mg em bolus, depois 8 mg/h por 72 h (ou 40 mg 12/12 h)', via:'EV', prep:'', obs:'Após EDA sem lesão de alto risco: VO 40 mg/dia.' },
     { sit:'Úlcera com sangramento de alto risco (Forrest Ia–IIb após terapia endoscópica)', dose:'8 mg/h por 72 h, depois 40 mg 12/12 h VO por 2 semanas', via:'EV → VO', prep:'', obs:'' },
-    { sit:'Profilaxia de úlcera de estresse (VM > 48 h, coagulopatia, choque)', dose:'40 mg 1x/dia', via:'EV/VO', prep:'', obs:'Suspender ao sair a indicação.' }
+    { sit:'Profilaxia de úlcera de estresse (VM > 48 h, coagulopatia, choque)', dose:'40 mg 1x/dia', via:'EV/VO', prep:'', obs:'Suspender ao sair a indicação.' },
+    { sit:'Perfuração de esôfago ou úlcera perfurada', dose:'40 mg 12/12 h', via:'EV', prep:'', obs:'Até a cirurgia; junto com jejum e antibiótico.' },
+    { sit:'Gastroproteção com AINE ou AAS em dose alta (pericardite)', dose:'20 mg 1x/dia', via:'VO', prep:'', obs:'Enquanto durar o anti-inflamatório.' }
   ],
   renal:'Sem ajuste.', hep:'Máx. 20 mg/dia na cirrose grave.', contra:'Hipersensibilidade.',
   cuidado:['Hipomagnesemia, C. difficile, pneumonia em uso prolongado.', 'Interação com clopidogrel (omeprazol) — preferir pantoprazol.'] },
@@ -945,7 +963,9 @@ var FERR_BULARIO = [
   apres:['Ampola 20 mg/2 mL (10 mg/mL)', 'Comprimido 40 mg'],
   dil:'Bolus puro (≤ 4 mg/min em dose > 120 mg — ototoxicidade). Infusão: 200 mg (10 ampolas) + SF 0,9% 80 mL = 2 mg/mL.',
   ind:[
-    { sit:'Edema agudo de pulmão / IC descompensada', dose:'40–80 mg EV em bolus (1–2,5× a dose oral diária); reavaliar diurese em 1–2 h: se < 100–150 mL/h, dobrar', via:'EV', prep:'Infusão contínua 5–20 mg/h após bolus em refratário.', obs:'Virgem de diurético: 20–40 mg. VO 40 mg ≈ EV 20 mg.' },
+    { sit:'Edema agudo de pulmão / IC com desconforto respiratório', dose:'Sem uso prévio: 40–100 mg · em uso: 2–2,5× a dose oral diária', via:'EV', prep:'Reavaliar em 2 h: diurese < 100–150 mL/h (ou Na urinário < 50–70 mEq/L) → dobrar.', obs:'Ex.: 40 mg VO 12/12 h → 80–100 mg EV. VO 40 mg ≈ EV 20 mg.' },
+    { sit:'IC descompensada sem desconforto respiratório', dose:'Sem uso prévio: 20–40 mg · em uso: 1,5–2× a dose oral diária', via:'EV', prep:'Reavaliar em 4 h; sem resposta, dobrar.', obs:'DRC ou congestão grave: começar no topo da faixa.' },
+    { sit:'IC — infusão contínua (congestão grave ou resposta prévia melhor)', dose:'Bolus + 5 mg/h, subir até 40 mg/h', via:'EV BIC', prep:'2 mg/mL: 5 mg/h = 2,5 mL/h.', obs:'Pausa > 4 h: novo bolus antes de retomar. Resistência (sem resposta a ≥ 150 mg EV): associar tiazídico.' },
     { sit:'Hipercalemia (com diurese preservada)', dose:'40–80 mg', via:'EV', prep:'Repor volume se hipovolêmico.', obs:'' },
     { sit:'Hipercalcemia (após hidratação vigorosa)', dose:'20–40 mg 6/6 h a 12/12 h', via:'EV', prep:'', obs:'Só se hipervolêmico; não é rotina.' },
     { sit:'IRA oligúrica (teste de resposta)', dose:'1–1,5 mg/kg (até 200 mg)', via:'EV', prep:'', obs:'Não converte IRA nem melhora prognóstico; só maneja volume.' }
@@ -978,10 +998,10 @@ var FERR_BULARIO = [
 
 { slug:'ocitocina', nome:'Ocitocina', classe:'Uterotônico',
   apres:['Ampola 5 UI/mL — 1 mL'],
-  dil:'Hemorragia pós-parto: 20–40 UI (4–8 ampolas) + SF 0,9% 500 mL. Indução: 5 UI + SF 500 mL (10 mUI/mL).',
+  dil:'Hemorragia pós-parto: 20 UI (4 ampolas) + SF 0,9% 500 mL. Indução: 5 UI + SF 500 mL (10 mUI/mL).',
   ind:[
     { sit:'Prevenção da hemorragia pós-parto (3º período)', dose:'10 UI IM (ou 5 UI EV lento) após a saída do ombro anterior', via:'IM/EV', prep:'', obs:'' },
-    { sit:'Hemorragia pós-parto por atonia', dose:'20–40 UI em 500 mL a 250 mL/h (≈ 20–40 mUI/min), após 5 UI EV lento', via:'EV', prep:'Massagem uterina, esvaziar bexiga, ácido tranexâmico 1 g. Sem resposta: misoprostol 800 mcg retal/SL, metilergometrina 0,2 mg IM (não em hipertensa).', obs:'Bolus rápido de dose alta: hipotensão, arritmia.' },
+    { sit:'Hemorragia pós-parto por atonia', dose:'5 UI EV lento (3 min) + 20 UI em 500 mL de SF a 250 mL/h; manutenção 20 UI em 500 mL a 125 mL/h por 4 h', via:'EV', prep:'Junto com massagem uterina bimanual e ácido tranexâmico 1 g. Sem resposta: metilergometrina 0,2 mg IM (não em hipertensa), depois misoprostol 800 mcg retal.', obs:'Bolus rápido de dose alta: hipotensão, arritmia.' },
     { sit:'Indução/condução do trabalho de parto', dose:'2 mUI/min, dobrar a cada 30–40 min até 3–5 contrações/10 min (máx. 20–32 mUI/min)', via:'EV BIC', prep:'', obs:'Hiperestimulação: parar, DLE, O2, terbutalina 0,25 mg SC.' }
   ],
   renal:'Sem ajuste.', contra:'Desproporção, sofrimento fetal, placenta prévia, > 1 cesárea prévia (relativa), hipersensibilidade.',
@@ -992,7 +1012,8 @@ var FERR_BULARIO = [
   dil:'Vaginal, retal, sublingual ou oral.',
   ind:[
     { sit:'Hemorragia pós-parto (quando ocitocina falha ou indisponível)', dose:'800 mcg SL ou retal, dose única', via:'SL / retal', prep:'', obs:'Início em 10–20 min; febre e tremor são comuns.' },
-    { sit:'Abortamento retido / incompleto (1º trimestre)', dose:'800 mcg vaginal (ou 600 mcg SL), repetir em 24 h se necessário', via:'Vaginal/SL', prep:'', obs:'' },
+    { sit:'Abortamento retido (1º trimestre)', dose:'800 mcg vaginal (ou 600 mcg SL), repetir a cada 3 h se necessário', via:'Vaginal/SL', prep:'', obs:'Com o obstetra (FIGO 2017).' },
+    { sit:'Abortamento incompleto (1º trimestre)', dose:'400 mcg SL ou 600 mcg VO, dose única', via:'SL/VO', prep:'', obs:'Com o obstetra (FIGO 2017). Alternativa: aspiração manual intrauterina.' },
     { sit:'Indução do parto com colo desfavorável (feto vivo)', dose:'25 mcg vaginal 6/6 h (máx. 6 doses)', via:'Vaginal', prep:'', obs:'Não com cesárea prévia (rotura uterina).' },
     { sit:'Óbito fetal / indução no 2º–3º trimestre', dose:'Conforme idade gestacional (protocolo FIGO): 13–26 sem 200 mcg 4–6/6 h; > 27 sem 25–50 mcg 4/4 h', via:'Vaginal', prep:'', obs:'' }
   ],

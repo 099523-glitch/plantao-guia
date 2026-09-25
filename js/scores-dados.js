@@ -1007,5 +1007,140 @@
 
   );
 
+  /* =========================================================
+     3. CONTAS DE GASOMETRIA, ELETRÓLITOS, ECG E QUEIMADO
+     Aparecem em Calculadoras (tipo formula, sem `secao`).
+     Unidades brasileiras: mEq/L, g/dL, mg/dL (ureia, não BUN).
+     ========================================================= */
+  function agCorrigido(ag, alb) {
+    return (alb === undefined || alb === null) ? ag : ag + 2.5 * (4 - alb);
+  }
+  var CONTAS = [
+  { id:'anion-gap', ramo:'conta', tipo:'formula',
+    nome:'Ânion gap', sub:'Na − (Cl + HCO₃), corrigido pela albumina',
+    quando:'Toda acidose metabólica: separa a de ânion gap alto (cetoacidose, lactato, insuficiência renal, tóxicos) da hiperclorêmica (diarreia, acidose tubular, excesso de soro fisiológico).',
+    limites:'O normal depende do aparelho do laboratório (em geral 8 a 12 sem o potássio). Sem corrigir pela albumina, a hipoalbuminemia esconde um gap alto.',
+    fonte:'Figge et al.; Kraut & Madias',
+    campos:[ {k:'na', rot:'Sódio (mEq/L)', min:100, max:180},
+             {k:'cl', rot:'Cloro (mEq/L)', min:60, max:150},
+             {k:'hco3', rot:'Bicarbonato (mEq/L)', min:1, max:50, passo:0.1},
+             {k:'alb', rot:'Albumina g/dL (vazio se não houver)', min:0.5, max:6, passo:0.1, opcional:true} ],
+    calc:function (v) {
+      var ag = v.na - (v.cl + v.hco3), agc = agCorrigido(ag, v.alb);
+      var ref = agc;
+      var cl = ref > 12 ? (ref >= 20 ? 'grave' : 'atencao') : 'ok';
+      var d = ref > 12 ? 'Ânion gap alto: cetoacidose, lactato, insuficiência renal, tóxicos (metanol, etilenoglicol, salicilato). Calcule o delta-delta.'
+            : ref < 8 ? 'Ânion gap baixo: pense em hipoalbuminemia não corrigida, erro de laboratório, paraproteína ou intoxicação por lítio/brometo.'
+            : 'Ânion gap normal: se há acidose, é hiperclorêmica — diarreia, acidose tubular renal, excesso de soro fisiológico.';
+      var val = 'AG ' + ag.toFixed(0) + (v.alb !== undefined ? ' · corrigido ' + agc.toFixed(0) : '') + ' mEq/L';
+      return { valor:val, classe:cl, detalhe:d + (v.alb !== undefined ? ' Correção: +2,5 para cada 1 g/dL de albumina abaixo de 4.' : '') };
+    } },
+
+  { id:'winter', ramo:'conta', tipo:'formula',
+    nome:'Fórmula de Winter', sub:'PaCO₂ esperada na acidose metabólica',
+    quando:'Acidose metabólica: confere se a compensação respiratória está adequada ou se há um distúrbio respiratório associado.',
+    limites:'Só vale na acidose metabólica (bicarbonato baixo). Leva 12 a 24 h para a compensação completa se estabelecer.',
+    fonte:'Albert, Dell & Winters (1967)',
+    campos:[ {k:'hco3', rot:'Bicarbonato (mEq/L)', min:1, max:30, passo:0.1},
+             {k:'paco2', rot:'PaCO₂ medida mmHg (vazio se não houver)', min:5, max:150, opcional:true} ],
+    calc:function (v) {
+      var esp = 1.5 * v.hco3 + 8, lo = esp - 2, hi = esp + 2;
+      var val = 'PaCO₂ esperada ' + lo.toFixed(0) + ' a ' + hi.toFixed(0) + ' mmHg';
+      if (v.hco3 >= 22) return { valor:val, classe:'atencao', detalhe:'Bicarbonato não está baixo: a fórmula de Winter só se aplica à acidose metabólica.' };
+      if (v.paco2 === undefined) return { valor:val, classe:'ok', detalhe:'Informe a PaCO₂ medida para saber se a compensação está adequada.' };
+      if (v.paco2 > hi) return { valor:val, classe:'grave', detalhe:'PaCO₂ medida ' + v.paco2 + ' acima do esperado: acidose respiratória associada — o paciente não está conseguindo compensar (cansaço, rebaixamento, sedação). Pense em suporte ventilatório.' };
+      if (v.paco2 < lo) return { valor:val, classe:'atencao', detalhe:'PaCO₂ medida ' + v.paco2 + ' abaixo do esperado: alcalose respiratória associada (sepse, salicilato, dor, ansiedade, TEP).' };
+      return { valor:val, classe:'ok', detalhe:'PaCO₂ medida ' + v.paco2 + ' dentro do esperado: compensação respiratória adequada.' };
+    } },
+
+  { id:'delta-delta', ramo:'conta', tipo:'formula',
+    nome:'Delta-delta', sub:'(AG − 12) ÷ (24 − HCO₃)',
+    quando:'Acidose com ânion gap alto: descobre se há um segundo distúrbio metabólico escondido (acidose hiperclorêmica ou alcalose metabólica).',
+    limites:'Aproximação: usa AG normal de 12 e bicarbonato normal de 24. Não se aplica se o ânion gap não está alto ou o bicarbonato não está baixo.',
+    fonte:'Wrenn (1990); Rastegar (2007)',
+    campos:[ {k:'na', rot:'Sódio (mEq/L)', min:100, max:180},
+             {k:'cl', rot:'Cloro (mEq/L)', min:60, max:150},
+             {k:'hco3', rot:'Bicarbonato (mEq/L)', min:1, max:50, passo:0.1},
+             {k:'alb', rot:'Albumina g/dL (vazio se não houver)', min:0.5, max:6, passo:0.1, opcional:true} ],
+    calc:function (v) {
+      var agc = agCorrigido(v.na - (v.cl + v.hco3), v.alb);
+      if (agc <= 12) return { valor:'AG ' + agc.toFixed(0) + ' — não se aplica', classe:'ok', detalhe:'Ânion gap não está alto: o delta-delta só é usado na acidose de ânion gap alto.' };
+      if (v.hco3 >= 24) return { valor:'HCO₃ ' + v.hco3 + ' — não se aplica', classe:'atencao', detalhe:'Ânion gap alto com bicarbonato normal ou alto: acidose de gap alto coexistindo com alcalose metabólica.' };
+      var dd = (agc - 12) / (24 - v.hco3);
+      var r = dd < 1 ? ['Menor que 1: acidose hiperclorêmica associada (diarreia, soro fisiológico, acidose tubular) além da de gap alto.','atencao']
+            : dd <= 2 ? ['Entre 1 e 2: acidose de ânion gap alto pura.','ok']
+            : ['Maior que 2: alcalose metabólica associada (vômito, diurético, sonda nasogástrica) escondida pela acidose.','atencao'];
+      return { valor:'Delta-delta ' + dd.toFixed(1), classe:r[1], detalhe:r[0] + ' AG usado: ' + agc.toFixed(0) + (v.alb !== undefined ? ' (corrigido pela albumina).' : '.') };
+    } },
+
+  { id:'osmolaridade', ramo:'conta', tipo:'formula',
+    nome:'Osmolaridade e gap osmolar', sub:'2 × Na + glicose ÷ 18 + ureia ÷ 6',
+    quando:'Hiponatremia, estado hiperosmolar e suspeita de álcool tóxico (metanol, etilenoglicol): o gap osmolar aparece antes da acidose.',
+    limites:'Usa ureia (não BUN). O etanol também aumenta o gap (cerca de etanol mg/dL ÷ 4,6) — desconte antes de culpar metanol. Gap normal não exclui intoxicação tardia, quando o álcool já foi metabolizado.',
+    fonte:'Purssell et al.; Kraut & Kurtz',
+    campos:[ {k:'na', rot:'Sódio (mEq/L)', min:100, max:190},
+             {k:'glic', rot:'Glicose (mg/dL)', min:10, max:2000},
+             {k:'ureia', rot:'Ureia (mg/dL)', min:2, max:500},
+             {k:'osm', rot:'Osmolalidade medida mOsm/kg (vazio se não houver)', min:150, max:500, opcional:true} ],
+    calc:function (v) {
+      var calc = 2 * v.na + v.glic / 18 + v.ureia / 6;
+      var ef = 2 * v.na + v.glic / 18;
+      var val = 'Calculada ' + calc.toFixed(0) + ' mOsm/L';
+      var d = calc > 320 ? 'Muito alta: com hiperglicemia, pense em estado hiperosmolar.'
+            : calc > 295 ? 'Alta (normal 275 a 295).' : calc < 275 ? 'Baixa (normal 275 a 295): hiponatremia hipotônica provável.' : 'Normal (275 a 295).';
+      d += ' Efetiva (sem ureia): ' + ef.toFixed(0) + '.';
+      var cl = (calc > 320 || calc < 265) ? 'grave' : (calc > 295 || calc < 275) ? 'atencao' : 'ok';
+      if (v.osm !== undefined) {
+        var gap = v.osm - calc;
+        val += ' · gap ' + gap.toFixed(0);
+        if (gap > 10) { cl = 'grave'; d += ' Gap osmolar acima de 10: sugere álcool tóxico (metanol, etilenoglicol) ou etanol — desconte o etanol e cruze com o ânion gap.'; }
+        else d += ' Gap osmolar normal (até 10).';
+      }
+      return { valor:val, classe:cl, detalhe:d };
+    } },
+
+  { id:'qtc', ramo:'cardio', tipo:'formula',
+    nome:'QT corrigido (QTc)', sub:'Bazett e Fridericia',
+    quando:'Antes e depois de droga que alonga o QT (haloperidol, ondansetrona, macrolídeo, quinolona, antiarrítmico), na síncope, na hipocalemia, na hipomagnesemia e no intoxicado.',
+    limites:'Bazett superestima o QTc com FC acima de 90 e subestima abaixo de 60 — nessas faixas vale o Fridericia. Meça o QT em DII ou V5, do início do QRS ao fim da T. Com QRS largo, o QT fica falsamente longo.',
+    fonte:'Bazett (1920); Fridericia (1920); AHA/ACCF 2010 — QT prolongado no hospital',
+    campos:[ {k:'qt', rot:'QT medido (ms)', min:200, max:800},
+             {k:'fc', rot:'FC (bpm)', min:30, max:220},
+             {k:'sexo', rot:'Sexo', opcoes:[['m','Masculino'],['f','Feminino']]} ],
+    calc:function (v) {
+      var rr = 60 / v.fc, baz = v.qt / Math.sqrt(rr), fri = v.qt / Math.cbrt(rr);
+      var usa = (v.fc > 90 || v.fc < 60) ? fri : baz, qual = (v.fc > 90 || v.fc < 60) ? 'Fridericia' : 'Bazett';
+      var lim = v.sexo === 'f' ? 480 : 470;
+      var cl = usa > 500 ? 'grave' : (usa > lim ? 'atencao' : 'ok');
+      var d = usa > 500 ? 'Acima de 500 ms: risco de torsades. Suspenda drogas que alongam o QT, corrija potássio e magnésio, monitor contínuo.'
+            : usa > lim ? 'Prolongado (acima de ' + lim + ' ms em ' + (v.sexo === 'f' ? 'mulher' : 'homem') + '). Evite associar drogas que alongam o QT; corrija K e Mg.'
+            : 'Dentro do normal.';
+      return { valor:'Bazett ' + baz.toFixed(0) + ' · Fridericia ' + fri.toFixed(0) + ' ms', classe:cl,
+               detalhe:d + ' Classificado pelo ' + qual + (qual === 'Fridericia' ? ' (FC fora de 60 a 90).' : '.') };
+    } },
+
+  { id:'parkland', ramo:'trauma', tipo:'formula',
+    nome:'Parkland — hidratação do queimado', sub:'4 mL × kg × % SCQ nas primeiras 24 h',
+    quando:'Queimadura de 2º e 3º grau com 20% ou mais da superfície corporal no adulto. Conte o tempo a partir da hora da queimadura, não da chegada.',
+    limites:'É ponto de partida, não receita fixa: titule pela diurese (0,5 mL/kg/h no adulto). O ATLS 10ª ed. começa com 2 mL × kg × % SCQ na queimadura térmica do adulto (4 mL na elétrica) — excesso de volume causa síndrome compartimental abdominal e de membros. Não conte a queimadura de 1º grau.',
+    fonte:'Baxter & Shires (Parkland); ATLS 10ª ed.',
+    campos:[ {k:'peso', rot:'Peso (kg)', min:20, max:300},
+             {k:'scq', rot:'Superfície queimada de 2º e 3º grau (%)', min:1, max:100},
+             {k:'h', rot:'Horas desde a queimadura (vazio se agora)', min:0, max:23, passo:0.5, opcional:true} ],
+    calc:function (v) {
+      if (v.scq < 20) return { valor:'SCQ ' + v.scq + '% — abaixo de 20%', classe:'ok',
+        detalhe:'Abaixo de 20% no adulto, a fórmula não se aplica: hidratação de manutenção e por via oral se possível.' };
+      var tot = 4 * v.peso * v.scq, metade = tot / 2, h = v.h || 0;
+      var rest8 = Math.max(8 - h, 0);
+      var fase1 = rest8 > 0 ? metade / rest8 : 0, fase2 = metade / 16;
+      var d = 'Ringer lactato. ' + (rest8 > 0
+        ? 'Primeira metade (' + Math.round(metade) + ' mL) até completar 8 h da queimadura: ' + Math.round(fase1) + ' mL/h por ' + rest8 + ' h. '
+        : 'Já passaram 8 h: o atraso não se compensa com bolus; siga a segunda fase e titule pela diurese. ')
+        + 'Depois, ' + Math.round(metade) + ' mL em 16 h: ' + Math.round(fase2) + ' mL/h. Alvo de diurese: ' + (0.5 * v.peso).toFixed(0) + ' mL/h (0,5 mL/kg/h).';
+      return { valor:Math.round(tot) + ' mL em 24 h', classe:v.scq >= 40 ? 'grave' : 'atencao', detalhe:d };
+    } }
+  ];
+
   Array.prototype.push.apply(FERR_CALC, NOVOS);
+  Array.prototype.push.apply(FERR_CALC, CONTAS);
 })();

@@ -3,11 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Guia de Plantão — Condutas Clínicas</title>
+<title>MedAtalho — o atalho do plantão</title>
 <meta name="robots" content="noindex, nofollow">
 <meta name="description" content="Condutas, prescrições, antibióticos, escores e doses de emergência para o plantão. Funciona sem internet.">
 <meta name="color-scheme" content="light dark">
-<meta name="theme-color" content="#F6F7F9">
+<meta name="theme-color" content="#F4F6FB">
+<meta property="og:title" content="MedAtalho">
+<meta property="og:description" content="Condutas, doses, receitas e escores para o plantão. Funciona sem internet.">
+<meta property="og:image" content="icones/og-1200x630.png">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
 
 <!-- fontes locais: nada de CDN, o plantão pode estar sem rede -->
 <link rel="preload" href="fontes-web/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
@@ -16,16 +21,22 @@
 
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icones/icone.svg" type="image/svg+xml">
-<link rel="icon" href="favicon.png" sizes="192x192" type="image/png">
+<link rel="icon" href="favicon.png" sizes="32x32" type="image/png">
+<link rel="icon" href="icones/favicon-16.png" sizes="16x16" type="image/png">
 <link rel="apple-touch-icon" href="icones/icone-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Plantão">
+<meta name="apple-mobile-web-app-title" content="MedAtalho">
+<link rel="apple-touch-startup-image" href="icones/abertura-claro.png" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3)">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <script>
 /* antes de pintar a tela: evita o flash branco ao abrir no escuro */
 /* claro é o padrão; só aplica escuro se o usuário tiver escolhido */
-try{if(localStorage.getItem('tema')==='escuro'){document.documentElement.dataset.tema='escuro';
-  var m=document.querySelector('meta[name="theme-color"]');if(m)m.content='#0C111A';}}catch(e){}
+/* tema automático: escuro das 19h às 7h. Tamanho do texto: --zoom no conteúdo */
+try{var t=localStorage.getItem('tema'),hh=new Date().getHours();
+  if(t==='escuro'||(t==='auto'&&(hh>=19||hh<7))){document.documentElement.dataset.tema='escuro';
+  var m=document.querySelector('meta[name="theme-color"]');if(m)m.content='#0B1220';}
+  var z=parseFloat(JSON.parse(localStorage.getItem('pref:zoom')));
+  if(z>1)document.documentElement.style.setProperty('--zoom',z);}catch(e){}
 </script>
 </head>
 <body>
@@ -34,10 +45,13 @@ try{if(localStorage.getItem('tema')==='escuro'){document.documentElement.dataset
   <div class="topo-inner">
     <button type="button" class="icone menu-btn" id="btnMenu" aria-label="Abrir o sumário" aria-expanded="false"></button>
 
-    <a class="marca" href="#">Condutas de <span class="fire">Plantão</span></a>
+    <a class="marca" href="#" aria-label="MedAtalho — início">
+      <span class="marca-ico" aria-hidden="true"><svg viewBox="-4 -4 56 56" fill="none" aria-hidden="true"><mask id="maTopo" maskUnits="userSpaceOnUse" x="-4" y="-4" width="56" height="56"><rect x="-4" y="-4" width="56" height="56" fill="#fff"/><path d="M22 28H37" stroke="#000" stroke-width="10"/></mask><g stroke="currentColor" stroke-width="4.6" stroke-linecap="round"><path d="M2.5 40H8L21 7L34 40" stroke-linejoin="miter" stroke-miterlimit="10" mask="url(#maTopo)"/><path d="M12.7 28H44.5" stroke-linejoin="round"/><path d="M39 22.5L44.5 28L39 33.5" stroke-linejoin="round"/></g></svg></span>
+      <span class="marca-txt"><span class="marca-nome">MedAtalho</span></span>
+    </a>
 
     <div class="topo-busca">
-      <input type="search" id="busca" class="busca" placeholder="Buscar conduta, quadro, droga ou dose  ( / )"
+      <input type="search" id="busca" class="busca" placeholder="Buscar conduta, quadro, droga ou dose"
              autocomplete="off" aria-label="Buscar em todo o guia">
       <button type="button" class="busca-x" id="btnBuscaX" aria-label="Limpar a busca" hidden></button>
     </div>
@@ -53,10 +67,13 @@ try{if(localStorage.getItem('tema')==='escuro'){document.documentElement.dataset
       <button type="button" class="icone" id="btnBancTop" aria-label="Abrir o rascunho"
               aria-controls="banc" aria-expanded="false" title="Rascunho"></button>
       <button type="button" class="icone" id="btnTema" aria-label="Alternar modo noturno" title="Modo noturno"></button>
-      <button type="button" class="icone" id="btnAjustes" aria-label="Ajustes" title="Ajustes"></button>
+      <button type="button" class="icone" id="btnAjustes" aria-label="Configurações" title="Configurações"></button>
     </div>
   </div>
 </header>
+
+<!-- abas principais: mesmas entradas do sumário, em linha (layout do Guia do Plantão) -->
+<nav class="abas-topo" id="abasTopo" aria-label="Seções do guia"></nav>
 
 <div class="wrap">
   <nav class="side" id="side" aria-label="Sumário do guia">
@@ -64,7 +81,6 @@ try{if(localStorage.getItem('tema')==='escuro'){document.documentElement.dataset
       <span class="toc-title">Sumário</span>
       <button type="button" class="icone side-x" id="btnSideX" aria-label="Fechar o sumário"></button>
     </div>
-    <div class="atalhos" id="atalhos"></div>
     <div class="toc-links" id="toc"></div>
   </nav>
 
@@ -99,11 +115,9 @@ try{if(localStorage.getItem('tema')==='escuro'){document.documentElement.dataset
 <div class="primeira" id="primeira" hidden>
   <div class="primeira-caixa" role="dialog" aria-modal="true" aria-labelledby="primeiraT">
     <h2 id="primeiraT">Antes de usar</h2>
-    <p>Este guia é <b>apoio à decisão</b>, em avaliação. O conteúdo clínico foi
-       redigido a partir de diretrizes brasileiras e <b>ainda não passou por
-       revisão médica formal</b>.</p>
-    <p>Confira dose, apresentação e a diretriz vigente antes de prescrever.
-       Não use como fonte única.</p>
+    <p>Apoio à decisão, redigido a partir de diretrizes brasileiras e
+       <b>ainda sem revisão médica formal</b>.</p>
+    <p>Confira dose, apresentação e diretriz vigente antes de prescrever.</p>
     <button type="button" class="ferr-btn forte" id="primeiraOk">Entendi</button>
   </div>
 </div>
@@ -119,27 +133,37 @@ try{if(localStorage.getItem('tema')==='escuro'){document.documentElement.dataset
       <span>Como quer ser chamado</span>
       <input type="text" id="optNome" maxlength="40" autocomplete="off" placeholder="Dr. Gustavo">
     </label>
+
+    <div class="painel-sec" id="secResponsavel">
+      <h3>Responsável técnico</h3>
+      <p>Enquanto ninguém assinar a revisão, toda conduta mostra o aviso de conteúdo não validado.</p>
+      <label class="ferr-campo">
+        <span>Nome e CRM de quem revisou</span>
+        <input type="text" id="optResponsavel" maxlength="80" autocomplete="off" placeholder="Dra. Ana Souza · CRM 12345">
+      </label>
+      <p class="painel-conta" id="respData"></p>
+    </div>
     <label class="opcao">
       <input type="checkbox" id="optAutor">
-      <span><b>Modo autor</b>Mostra as condutas ainda não preenchidas e o contador de progresso. Desligado, o guia só exibe o que já está pronto.</span>
+      <span><b>Modo autor</b>Mostra as condutas ainda não preenchidas e o progresso.</span>
     </label>
     <label class="opcao">
       <input type="checkbox" id="optResumo">
-      <span><b>Só o essencial</b>Fecha os blocos de leitura (observação, listas, dicas) em todo o guia. Dentro da conduta, clicar num bloco fecha ou abre só ele — o fluxograma nunca fecha.</span>
+      <span><b>Só o essencial</b>Fecha os blocos de leitura em todo o guia. O fluxograma nunca fecha.</span>
     </label>
 
     <label class="opcao">
       <input type="checkbox" id="optRxAjustes">
-      <span><b>Ajustes na prescrição</b>Mostra as caixas para tirar itens, os atalhos de posologia e o "adicionar sintomático" dentro de cada quadro. Desligado, o quadro é só ler e copiar.</span>
+      <span><b>Ajustes na prescrição</b>Caixas para tirar itens, atalhos de posologia e sintomáticos dentro do quadro.</span>
     </label>
     <label class="opcao">
       <input type="checkbox" id="optConferir">
-      <span><b>Conferir antes de copiar</b>Mostra um checklist de peso, alergia, função renal, gestação e padronização antes de copiar prescrição ou antibiótico. Desligado por padrão.</span>
+      <span><b>Conferir antes de copiar</b>Checklist de peso, alergia, função renal e gestação antes de copiar.</span>
     </label>
 
     <div class="painel-sec">
       <h3>Suas edições</h3>
-      <p>Tudo que você edita fica só neste aparelho. Exporte para levar a outro ou para não perder ao limpar o navegador.</p>
+      <p>Suas edições ficam só neste aparelho. Exporte para levar a outro.</p>
       <div class="painel-acoes">
         <button type="button" class="ferr-btn forte" id="btnExportar">Exportar backup</button>
         <button type="button" class="ferr-btn" id="btnImportar">Importar backup</button>
@@ -150,26 +174,17 @@ try{if(localStorage.getItem('tema')==='escuro'){document.documentElement.dataset
 
     <div class="painel-sec">
       <h3>Zerar</h3>
-      <p>Apaga todas as suas edições, favoritas e preferências deste aparelho, voltando ao conteúdo padrão.</p>
+      <p>Apaga edições, favoritas e preferências deste aparelho.</p>
       <div class="painel-acoes">
         <button type="button" class="ferr-btn perigo" id="btnZerar">Apagar tudo deste aparelho</button>
       </div>
     </div>
 
-    <p class="painel-rodape">Apoio à decisão, não substitui o julgamento clínico.
-      Conferir sempre dose e indicação na diretriz vigente e na padronização da unidade.</p>
+    <p class="painel-rodape">Apoio à decisão. Confira dose e indicação na diretriz vigente.</p>
   </div>
 </aside>
 
-<nav class="tabbar" aria-label="Navegação">
-  <a href="#" data-nav="home"><span data-ico="lupa"></span>Buscar</a>
-  <a href="#cardio" data-nav="guia"><span data-ico="livro"></span>Guia</a>
-  <a href="#presc" data-nav="presc"><span data-ico="receita"></span><b class="rot-longo">Prescrições</b><b class="rot-curto">Receitas</b></a>
-  <a href="#doses" data-nav="doses"><span data-ico="seringa"></span>Doses</a>
-  <button type="button" class="tab-mais" id="btnMais"><span data-ico="menu"></span>Mais</button>
-</nav>
-
-<footer>Guia de Plantão &bull; <em>sempre confirmar dose e indicação na diretriz vigente</em></footer>
+<footer>MedAtalho</footer>
 
 <script src="js/icones.js"></script>
 <script src="js/dados.js"></script>

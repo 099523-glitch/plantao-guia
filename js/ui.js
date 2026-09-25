@@ -67,7 +67,7 @@
       acceptNode: function (n) {
         if (!n.nodeValue || n.nodeValue.length < 4) return NodeFilter.FILTER_REJECT;
         var pai = n.parentNode;
-        if (!pai || pai.closest('.peso-calc, input, textarea, select, .ferr-saida, .pd-med')) return NodeFilter.FILTER_REJECT;
+        if (!pai || pai.closest('.peso-calc, input, textarea, select, .ferr-saida, .pd-med, .bzf, .dz2-card, .pd3')) return NodeFilter.FILTER_REJECT;
         RE_KG.lastIndex = 0;
         return RE_KG.test(n.nodeValue) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
       }
@@ -136,7 +136,7 @@
      e o foco volta para quem abriu. */
   var painelAberto = null;      /* elemento do diálogo em foco */
   var quemAbriu = null;         /* para devolver o foco ao fechar */
-  var FORA = ['header.topo', '.tabbar', '#doc', 'footer'];
+  var FORA = ['header.topo', '.abas-topo', '.tabbar', '#doc', 'footer'];
 
   function focaveis(raiz) {
     return [].slice.call(raiz.querySelectorAll(
@@ -214,11 +214,12 @@
     quemAbriu = null;
   }
   UI.fecha = fecha;
-  UI.abreAjustes = function () { fecha(); abre('ajustes'); };
+  UI.abreAjustes = function () { fecha(); location.hash = '#ajustes'; };
 
   $('btnMenu').addEventListener('click', function () { alterna('side'); });
   $('btnSideX').addEventListener('click', fecha);
-  $('btnAjustes').addEventListener('click', function () { alterna('ajustes'); });
+  /* configurações agora são uma página inteira (#ajustes) */
+  $('btnAjustes').addEventListener('click', function () { fecha(); location.hash = '#ajustes'; });
   $('btnAjustesX').addEventListener('click', fecha);
   veu.addEventListener('click', fecha);
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') fecha(); });
@@ -261,6 +262,25 @@
   $('optRxAjustes').addEventListener('change', pintaRx);
   pintaRx();
 
+  /* responsável técnico: registrado, some o aviso de conteúdo não validado */
+  var campoResp = $('optResponsavel');
+  function pintaResp() {
+    var d = pref('responsavel-data', '');
+    var el = $('respData');
+    if (el) el.textContent = campoResp.value.trim() ? ('Registrado em ' + d + '. O aviso deixa de aparecer nas condutas.') : '';
+  }
+  if (campoResp) {
+    campoResp.value = pref('responsavel', '');
+    pintaResp();
+    campoResp.addEventListener('change', function () {
+      var v = campoResp.value.trim();
+      grava('pref:responsavel', v);
+      grava('pref:responsavel-data', v ? new Date().toLocaleDateString('pt-BR') : '');
+      pintaResp();
+      if (window.Guia) Guia.prefMudou();
+    });
+  }
+
   /* nome do médico: aparece na saudação da home */
   var campoNome = $('optNome');
   campoNome.value = pref('nome', '');
@@ -300,7 +320,7 @@
       itens: dados
     };
     var d = new Date();
-    var nome = 'guia-plantao-' + d.getFullYear() + '-' +
+    var nome = 'medatalho-backup-' + d.getFullYear() + '-' +
       ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2) + '.json';
     var blob = new Blob([JSON.stringify(pacote, null, 2)], { type: 'application/json' });
     var a = document.createElement('a');
@@ -351,8 +371,8 @@
      BARRA INFERIOR — marca onde estamos
      ========================================================= */
   var abas = [].slice.call(document.querySelectorAll('.tabbar a'));
-  /* "Mais" abre a gaveta, que traz o sumário inteiro — nada fica escondido */
-  $('btnMais').addEventListener('click', function () { alterna('side'); });
+  var btnMais = $('btnMais');
+  if (btnMais) btnMais.addEventListener('click', function () { alterna('side'); });
   function pintaBarra() {
     var h = decodeURIComponent((location.hash || '').replace(/^#/, ''));
     var atual = 'home';
