@@ -62,5 +62,63 @@
       "short_name": "ATB",
       "url": "./index.html#atb"
     }
+  ],
+  "screenshots": [
+    {
+      "src": "icones/telas/celular-home.png",
+      "sizes": "780x1688",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Início: sala vermelha, urgências, queixas e ferramentas"
+    },
+    {
+      "src": "icones/telas/celular-guia.png",
+      "sizes": "780x1688",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Guia clínico por área"
+    },
+    {
+      "src": "icones/telas/celular-conduta.png",
+      "sizes": "780x1688",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Conduta imediata passo a passo"
+    },
+    {
+      "src": "icones/telas/celular-doses.png",
+      "sizes": "780x1688",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Doses e diluições por área"
+    },
+    {
+      "src": "icones/telas/celular-sodio.png",
+      "sizes": "780x1688",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Sódio: vazão e preparo prontos"
+    },
+    {
+      "src": "icones/telas/desktop-home.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Início no computador"
+    },
+    {
+      "src": "icones/telas/desktop-conduta.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Conduta com fluxograma e medicações"
+    },
+    {
+      "src": "icones/telas/desktop-doses.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Doses resolvidas pelo peso"
+    }
   ]
 }
