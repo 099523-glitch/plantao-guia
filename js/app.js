@@ -2308,9 +2308,18 @@
   var RE_NOTA_FORTE = /(dose do dia|\bDIA\b|UNIDADES|SOMENTE|dilu|volume|metade|n[aã]o substitui|m[aá]ximo de)/i;
   var PED_GRUPO_NOME = { analgesia:'Analgesia e febre', antiemetico:'Antieméticos', cortico:'Corticoides', inalacao:'Inalação e broncodilatador',
     'atb-oral':'Antibiótico oral', 'atb-ev':'Antibiótico venoso', alergia:'Alergia', emergencia:'Emergência', digestivo:'Digestivo', convulsao:'Convulsão', sedacao:'Sedação e analgesia',
-    reanimacao:'Reanimação', hidratacao:'Hidratação', gastro:'Gastro', outros:'Outros' };
+    reanimacao:'Reanimação', hidratacao:'Hidratação venosa', gastro:'Gastro', outros:'Outros',
+    antiacido:'Antiácidos', antiespasmodico:'Cólica e antiespasmódico', antiinflamatorio:'Anti-inflamatórios', antiparasitario:'Antiparasitários',
+    tosse:'Tosse e xaropes', laxante:'Laxantes', olhos:'Colírios', ouvido:'Gotas otológicas' };
+  /* as do app primeiro; as da planilha (pediatria-planilha.js) só entram se o id ainda não existe */
+  function pedLista() {
+    var app = Ferramentas.ped.lista(), ids = {};
+    app.forEach(function (m) { ids[m.id] = 1; });
+    var pl = typeof PED_PLANILHA !== 'undefined' ? PED_PLANILHA.filter(function (m) { return !ids[m.id]; }) : [];
+    return app.concat(pl);
+  }
   function dzPed(kg, idade) {
-    var P = Ferramentas.ped, lista = P.lista();
+    var P = Ferramentas.ped, lista = pedLista();
     var grupos = [];
     lista.forEach(function (m) {
       var gn = PED_GRUPO_NOME[m.grupo] || (m.grupo ? m.grupo.charAt(0).toUpperCase() + m.grupo.slice(1).replace(/-/g, ' ') : 'Medicações');
@@ -2340,10 +2349,9 @@
      Cada indicação: rótulo + faixa por kg, volume grande + intervalo por
      extenso, mg por dose embaixo. Dose "dividida" (dividido de 8/8 h…) sai
      POR TOMADA: teto diário primeiro, depois divide pelo número de tomadas.
-     À vista fica o que muda a dose (nota crítica, frasco trocado, UI,
-     atenção sobre concentração); o resto vai para "Detalhes e cuidados". */
+     Como no desenho, à vista só o volume, o intervalo e o veto por idade;
+     atenção, máximos, notas e UI ficam em "Detalhes e cuidados". */
   var pedTextos = {}, pedAbertos = {};
-  var RE_ATENCAO_DOSE = /(concentra|frasco|dobra|metade|dilu|UNIDADES|m[aá]xim|volume)/i;
   function pdNum(x, casas) { return Number(x).toLocaleString('pt-BR', { maximumFractionDigits:casas }); }
   function pdMg(x) { return pdNum(x, x >= 100 ? 0 : x >= 0.1 ? 2 : 3); }
   function pdMl(x) { return pdNum(x, x >= 1 ? 1 : 2); }
@@ -2363,10 +2371,28 @@
       .replace(/ se necessário/, ', se precisar').replace(/ conforme dor/, ' conforme a dor');
     return [{ txt:s, div:1 }];
   }
-  function pdCalc(m, d, kg, div) {
+  function pdCalc(m, d, kg, div, idade) {
     var P = Ferramentas.ped, c = d.conc && P.conc ? P.conc(m, d) : null;
     var un = d.unid === 'UI' ? ' UI' : ' mg';
     var hiK = d.mgkgMax && d.mgkgMax !== d.mgkg ? d.mgkgMax : null;
+    /* faixas fixas por idade (meses) ou por peso (kg) — planilha */
+    if (d.porIdade || d.porPeso) {
+      var x = d.porIdade ? idade : kg;
+      if (x == null) return { calc:false, valor:d.regra, sub:d.porIdade ? 'Informe a idade para escolher a dose' : 'Informe o peso para escolher a dose' };
+      var fx = (d.porIdade || d.porPeso).filter(function (f) { return x >= f.min && x <= f.max; })[0];
+      return fx ? { calc:true, valor:fx.txt, sub:fx.rot } : { calc:false, valor:d.regra, sub:d.fora || 'Fora das faixas da planilha' };
+    }
+    /* quantidade por kg já na unidade de saída (mL ou gotas) — planilha */
+    if (d.porKg != null) {
+      var g = d.saida === 'gotas';
+      var fu = function (v) { return g ? String(Math.max(1, Math.round(v))) : pdMl(v); };
+      var uni = function (t) { return g ? (t === '1' ? ' gota' : ' gotas') : ' mL'; };
+      if (!kg) return { calc:false, valor:(d.regra || pdNum(d.porKg, 3) + (g ? ' gota' : ' mL') + '/kg') + (div > 1 ? ' por dia' : ''), sub:'Informe o peso para ver a dose' };
+      var v = kg * d.porKg / div, limK = false;
+      if (d.maxSaida && v > d.maxSaida) { v = d.maxSaida; limK = true; }
+      var vt = fu(v);
+      return { calc:true, valor:vt + uni(vt), sub:d.conc && !g ? pdMg(v * d.conc) + ' mg por dose' : '', mg:d.conc && !g ? pdMg(v * d.conc) + ' mg' : '', lim:limK };
+    }
     if (d.mgkg == null) {
       var mk = /^(\d+(?:,\d+)?)(?: a (\d+(?:,\d+)?))? mL\/kg$/.exec(d.fixa || '');
       if (mk && kg) {
@@ -2391,6 +2417,7 @@
     return { calc:true, valor:c ? pdFaixa(loD / c, hiD != null ? hiD / c : null, pdMl) + ' mL' : mg, sub:c ? mg + ' por dose' : 'por dose', mg:c ? mg : '', lim:lim };
   }
   function pdRegra(d, div) {
+    if (d.porKg != null) return d.saida === 'gotas' && d.regra ? d.regra : pdNum(d.porKg, 3) + (d.saida === 'gotas' ? ' gota' : ' mL') + '/kg' + (div ? '/dia' : '/dose');
     if (d.mgkg == null) return '';
     var hiK = d.mgkgMax && d.mgkgMax !== d.mgkg ? d.mgkgMax : null;
     if (d.unid === 'mL' && d.conc === 1000) return pdFaixa(d.mgkg, hiK, function (x) { return pdNum(x, 2); }) + ' mL/kg';
@@ -2410,13 +2437,13 @@
   function cartaoPed4(m, kg, idade) {
     var P = Ferramentas.ped, veta = P.vetado(m, idade), aberto = !!pedAbertos[m.id];
     var copia = [m.nome + (m.apres ? ' — ' + m.apres : '') + (m.via ? ' (' + m.via + ')' : '')];
-    var avisos = [], regras = [], nDoses = (m.doses || []).length;
+    var regras = [], nDoses = (m.doses || []).length;
     var doses = (m.doses || []).map(function (d) {
       var ops = pdIntervalos(d.freq), div = ops.some(function (o) { return o.div > 1; });
       var rot = div && /^Dose diária$/i.test(d.rot || '') ? 'Dose habitual' : (d.rot || 'Dose');
       var regra = kg ? pdRegra(d, div) : '';
       var linhas = ops.map(function (o) {
-        var r = pdCalc(m, d, kg, o.div);
+        var r = pdCalc(m, d, kg, o.div, idade);
         copia.push('  ' + rot + ': ' + r.valor + (r.mg ? ' (' + r.mg + ')' : '') + (o.txt ? ' ' + o.txt : ''));
         return '<div class="pd4-op"><div class="pd4-v">' +
             (r.calc ? '<b class="pd4-num">' + esc(r.valor) + '</b>' : '<b class="pd4-regra">' + esc(r.valor) + '</b>') +
@@ -2424,24 +2451,22 @@
           (r.sub || r.lim ? '<div class="pd4-sub">' + (r.sub ? '<span>' + esc(r.sub) + '</span>' : '') + (r.lim ? '<i class="pd4-max">dose máxima</i>' : '') + '</div>' : '') +
         '</div>';
       }).join('');
-      /* notas: o que muda a dose fica à vista; o resto vai para os detalhes */
+      /* máximo, unidade e nota vão para "Detalhes e cuidados", como no desenho */
       var un = d.unid === 'UI' ? ' UI' : ' mg', c = d.conc && P.conc ? P.conc(m, d) : null;
-      var pref = nDoses > 1 ? rot + ': ' : '';
-      var nota = pdLimpaNota(d.nota, div), notaDet = '';
-      if (c && +c !== +d.conc) avisos.push(pref + 'Volume calculado para o frasco escolhido: ' + pdNum(c, 2) + un + '/mL.');
-      else if (nota && RE_NOTA_FORTE.test(nota)) avisos.push(pref + nota);
-      else notaDet = nota;
-      if (d.unid === 'UI') avisos.push(pref + 'Dose em UNIDADES (UI), não em mg.');
-      var max = d.mgkg != null && d.maxMg && !(d.unid === 'mL' && d.conc === 1000) ? 'Máximo de ' + pdNum(d.maxMg, 2) + un + (div ? ' por dia' : ' por dose') : '';
-      if (max || notaDet) regras.push('<div>' + (nDoses > 1 ? '<b>' + esc(rot) + '</b><br>' : '') + [max, notaDet].filter(Boolean).map(esc).join('<br>') + '</div>');
+      var nota = pdLimpaNota(d.nota, div);
+      if (c && d.conc && +c !== +d.conc) nota = 'Volume calculado para o frasco escolhido: ' + pdNum(c, 2) + un + '/mL.';
+      var extra = d.unid === 'UI' ? 'Dose em UNIDADES (UI), não em mg.' : '';
+      var max = '';
+      if (d.porKg != null && d.maxSaida) max = 'Máximo de ' + pdNum(d.maxSaida, 2) + (d.saida === 'gotas' ? ' gotas' : ' mL') + ' por dose';
+      else if (d.mgkg != null && d.maxMg && !(d.unid === 'mL' && d.conc === 1000)) max = 'Máximo de ' + pdNum(d.maxMg, 2) + un + (div ? ' por dia' : ' por dose');
+      if (max || extra || nota) regras.push('<div>' + (nDoses > 1 ? '<b>' + esc(rot) + '</b><br>' : '') + [max, extra, nota].filter(Boolean).map(esc).join('<br>') + '</div>');
       return '<div class="pd4-dose"><p class="pd4-rot"><span>' + esc(rot) + '</span>' + (regra ? '<b>' + esc(regra) + '</b>' : '') + '</p>' + linhas + '</div>';
     }).join('');
     if (kg) copia.push('  (peso ' + pdNum(kg, 1) + ' kg)');
     if (!veta && kg) pedTextos[m.id] = copia.join('\n');
-    var atVista = m.atencao && RE_ATENCAO_DOSE.test(m.atencao);
     var d0 = (m.doses || []).filter(function (d) { return d.conc; })[0];
     var cAtual = d0 && P.conc ? P.conc(m, d0) : null;
-    var det = (m.atencao && !atVista ? '<p class="pd4-alerta verm">' + ICO('alerta') + '<span>' + esc(m.atencao) + '</span></p>' : '') +
+    var det = (m.atencao ? '<p class="pd4-alerta verm">' + ICO('alerta') + '<span>' + esc(m.atencao) + '</span></p>' : '') +
       regras.join('') +
       (m.idade && !/^Qualquer idade$/i.test(m.idade) ? '<div><b>Idade</b> · ' + esc(m.idade) + '</div>' : '') +
       (m.obs || []).map(function (t) { return '<p>' + esc(t) + '</p>'; }).join('');
@@ -2453,9 +2478,7 @@
         return '<button type="button" data-pconc="' + esc(m.id) + '" data-v="' + a[0] + '" class="' + (+a[0] === +cAtual ? 'on' : '') + '">' + esc(a[1]) + '</button>';
       }).join('') + '</div>' : '') +
       (veta ? '<p class="pd4-veto">' + ICO('alerta') + '<span><b>Não usar nesta idade.</b> ' + esc(m.veto.txt || '') + '</span></p>' :
-        (atVista ? '<p class="pd4-alerta verm">' + ICO('alerta') + '<span>' + esc(m.atencao) + '</span></p>' : '') +
         '<div class="pd4-doses">' + doses + '</div>' +
-        avisos.map(function (t) { return '<p class="pd4-alerta ambar">' + ICO('alerta') + '<span>' + esc(t) + '</span></p>'; }).join('') +
         (det ? '<button type="button" class="pd4-det" data-pd-det="' + esc(m.id) + '" aria-expanded="' + aberto + '">' + ICO('setaDir') + '<span>' + (aberto ? 'Fechar detalhes' : 'Detalhes e cuidados') + '</span></button>' +
           '<div class="pd4-det-corpo">' + det + '</div>' : '')) +
     '</article>';
@@ -2492,7 +2515,7 @@
       return;
     }
     if ((t = e.target.closest('[data-dz-copiar]'))) {
-      var m = Ferramentas.ped.lista().filter(function (x) { return x.id === t.dataset.dzCopiar; })[0];
+      var m = pedLista().filter(function (x) { return x.id === t.dataset.dzCopiar; })[0];
       /* o texto copiado é o mesmo da tela (dose por tomada); sem ele, cai no texto antigo */
       if (m && pedTextos[m.id]) Ferramentas.copiarRx(pedTextos[m.id], m.nome);
       else if (m) Ferramentas.ped.copiar(m, pesoAtual());

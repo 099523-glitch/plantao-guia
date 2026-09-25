@@ -8,7 +8,7 @@
        a versão do SW muda, e aí o precache é refeito).
    Suba VERSAO a cada alteração de conteúdo ou código.
    ============================================================ */
-const VERSAO = 'medatalho-v98';
+const VERSAO = 'medatalho-v99';
 const ESSENCIAL = [
   './',
   './index.html',
@@ -23,6 +23,7 @@ const ESSENCIAL = [
   './js/ferramentas-dados.js',
   './js/scores-dados.js',
   './js/pediatria-dados.js',
+  './js/pediatria-planilha.js',
   './js/bulario-dados.js',
   './js/ferramentas.js',
   './js/eletrolitos.js',
