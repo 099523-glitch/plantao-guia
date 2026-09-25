@@ -202,8 +202,20 @@ try{var t=localStorage.getItem('tema'),hh=new Date().getHours();
 <script>
 /* offline: registra o service worker e avisa quando há versão nova */
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  /* versão nova assumiu (o sw.js faz skipWaiting + claim): recarrega uma vez sozinho,
+     senão a tela aberta continua com o CSS/JS velho até abrir o app de novo */
+  var tinhaSW = !!navigator.serviceWorker.controller, recarregou = false;
+  navigator.serviceWorker.addEventListener('controllerchange', function () {
+    if (!tinhaSW || recarregou) return;
+    recarregou = true;
+    location.reload();
+  });
   window.addEventListener('load', function () {
-    navigator.serviceWorker.register('sw.js').then(function (reg) {
+    navigator.serviceWorker.register('sw.js', { updateViaCache:'none' }).then(function (reg) {
+      /* ao voltar para o app (PWA fica aberto em segundo plano), procura versão nova */
+      document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible') reg.update().catch(function () {});
+      });
       reg.addEventListener('updatefound', function () {
         var novo = reg.installing;
         if (!novo) return;
