@@ -130,7 +130,9 @@ const CATEGORIAS = [
   { id:'psiq',      nome:'Psiquiatria',         icone:'mente' },
   { id:'trauma',    nome:'Trauma e Ortopedia',  icone:'osso' },
   { id:'pedia',     nome:'Pediatria',           icone:'crianca' },
-  { id:'obstetricia', nome:'Obstetrícia',       icone:'gestante' },
+  { id:'obstetricia', nome:'Gineco e Obstetrícia', icone:'gestante' },
+  { id:'orl',       nome:'Olhos e Otorrino',    icone:'cabeca' },
+  { id:'hemato',    nome:'Hemato e Oncologia',  icone:'gota' },
   { id:'toxico',    nome:'Intoxicações',        icone:'perigo' },
   { id:'proced',    nome:'Procedimentos',       icone:'seringa' }
 ];
@@ -147,7 +149,9 @@ const INTRO_CATEGORIA = {
   psiq:      'Agitação, risco de suicídio e abstinência: segurança do paciente e da equipe primeiro.',
   trauma:    'Atendimento inicial sistematizado ao trauma e as urgências ortopédicas do plantão.',
   pedia:     'Criança não é adulto pequeno: doses por peso, sinais de gravidade e hidratação.',
-  obstetricia: 'Gestante e puérpera no pronto-socorro: duas vidas, fisiologia própria — estabilizar a mãe e chamar o obstetra cedo.',
+  obstetricia: 'Gestante, puérpera e a mulher com dor pélvica, sangramento, corrimento ou violência sexual — beta-HCG primeiro, e o ginecologista ou obstetra cedo.',
+  orl:       'Olho vermelho, trauma ocular, nariz que sangra, ouvido e garganta — separar o que é receita do que ameaça a visão ou a via aérea.',
+  hemato:    'Anticoagulado que sangra, doença falciforme e as urgências oncológicas — o que reverter, o que transfundir e quando chamar o especialista.',
   toxico:    'Abordagem do intoxicado, antídotos e acidentes por animais peçonhentos.',
   proced:    'O passo a passo dos procedimentos que o plantonista faz: material, técnica e complicações.'
 };
@@ -7477,7 +7481,7 @@ const PROTOCOLOS = [
   { id:'pcr-pediatrica', titulo:'Parada cardiorrespiratória na criança (PALS)', categoria:'pedia', gravidade:'emergencia',
     resumo:'Compressões e ventilações por faixa etária, doses por peso e as causas reversíveis mais comuns.',
     tags:['pcr pediatrica','pals','rcp crianca','adrenalina','bradicardia','desfibrilacao'],
-    fonte:'SBP — Sociedade Brasileira de Pediatria / PALS',
+    fonte:'SBP — Sociedade Brasileira de Pediatria / AHA PALS 2025',
     secoes:[
       { tipo:'alerta', titulo:'O que muda em relação ao adulto', itens:[
         'A parada da criança é *hipóxica* na maioria: a via aérea e a ventilação pesam mais que na do adulto.',
@@ -7503,7 +7507,7 @@ const PROTOCOLOS = [
         ]},
         { tipo:'passo', rotulo:'Causas', texto:'*Hipóxia primeiro* — depois hipovolemia, hipo e hipercalemia, hipoglicemia, hipotermia, acidose',
           nota:'E os T: pneumotórax, tamponamento, toxinas, trombose' },
-        { tipo:'fim', rotulo:'Pós-parada', texto:'Alvo de SatO2 de 94 a 99%, normocapnia, PAS acima do percentil 5 e controle de temperatura' }
+        { tipo:'fim', rotulo:'Pós-parada', texto:'Alvo de SatO2 de 94 a 99%, normocapnia, *PAS e PAM acima do percentil 10* para a idade e controle de temperatura' }
       ]},
       { tipo:'doses', titulo:'Medicações — tudo por quilo', itens:[
         { droga:'Adrenalina 1:10.000 (diluir 1 mL de 1:1000 em 9 mL de AD)', dose:'0,01 mg/kg = 0,1 mL/kg', via:'EV ou IO', obs:'A cada 3 a 5 minutos. Máximo de 1 mg por dose. Flush de 5 mL após.' },
@@ -7513,7 +7517,7 @@ const PROTOCOLOS = [
         { droga:'Desfibrilação — choques seguintes', dose:'4 J/kg', via:'—', obs:'Pode subir até 10 J/kg ou a carga do adulto.' },
         { droga:'Cristaloide em bolus', dose:'20 mL/kg', via:'EV ou IO', obs:'Se hipovolemia. Em cardiopata, 5 a 10 mL/kg com reavaliação.' },
         { droga:'Glicose 10%', dose:'2 a 5 mL/kg', via:'EV ou IO', obs:'Se hipoglicemia. No lactente, usar glicose a 10%, não a 50%.' },
-        { droga:'Bicarbonato de sódio 8,4%', dose:'1 mEq/kg', via:'EV', obs:'Só em hipercalemia, acidose comprovada ou intoxicação por tricíclico.' }
+        { droga:'Bicarbonato de sódio 8,4%', dose:'1 mEq/kg', via:'EV', obs:'Só em hipercalemia, acidose comprovada ou intoxicação por tricíclico. No lactente pequeno e no neonato, diluir 1:1 em AD (4,2% = 0,5 mEq/mL) e dar 2 mL/kg.' }
       ]},
       { tipo:'naofazer', titulo:'Não fazer', itens:[
         'Atrasar a compressão para conseguir acesso venoso — vá para o intraósseo.',
@@ -7553,6 +7557,8 @@ const PROTOCOLOS = [
           { rotulo:'Nenhum', cor:'ok', texto:'Estável — seguir a avaliação com calma' },
           { rotulo:'Aparência só', texto:'Disfunção do sistema nervoso central ou metabólica' },
           { rotulo:'Respiração só', texto:'Desconforto respiratório' },
+          { rotulo:'Circulação só', cor:'perigo', texto:'*Choque compensado* — acesso, volume e reavaliação',
+            nota:'A pressão ainda está normal: é a hora de agir, antes da hipotensão' },
           { rotulo:'Dois ou três', cor:'perigo', texto:'*INSUFICIÊNCIA — sala de emergência agora*' }
         ]},
         { tipo:'passo', rotulo:'Depois', texto:'ABCDE completo com *glicemia capilar* e temperatura',
@@ -7569,7 +7575,7 @@ const PROTOCOLOS = [
       ]},
       { tipo:'doses', titulo:'Primeiras medidas', itens:[
         { droga:'Oxigênio', dose:'Máscara não reinalante 10 a 15 L/min', via:'—', obs:'Alvo de SatO2 acima de 94%.' },
-        { droga:'Glicemia capilar', dose:'—', via:'—', obs:'Em toda criança grave. Hipoglicemia abaixo de 54 mg/dL trata na hora.' },
+        { droga:'Glicemia capilar', dose:'—', via:'—', obs:'Em toda criança grave. Hipoglicemia é glicemia de 60 mg/dL ou menos (no neonato, 45 mg/dL ou menos): trata na hora.' },
         { droga:'Glicose 10%', dose:'2 a 5 mL/kg', via:'EV', obs:'Se hipoglicemia. Reavaliar em 15 minutos.' },
         { droga:'Cristaloide em bolus', dose:'10 a 20 mL/kg', via:'EV ou IO', obs:'Em 5 a 20 minutos, reavaliando a cada bolus. Menor volume em cardiopata e desnutrido.' },
         { droga:'Acesso intraósseo', dose:'—', via:'IO', obs:'Após 2 tentativas ou 90 segundos sem acesso venoso.' }
@@ -7591,7 +7597,7 @@ const PROTOCOLOS = [
   { id:'desidratacao-crianca', titulo:'Desidratação e planos de hidratação', categoria:'pedia', gravidade:'urgencia',
     resumo:'Planos A, B e C: quem toma soro em casa, quem fica na sala e quem recebe expansão venosa.',
     tags:['desidratacao','plano a','plano b','plano c','soro de reidratacao','expansao'],
-    fonte:'Ministério da Saúde / SBP — Manejo da diarreia e desidratação na infância',
+    fonte:'Ministério da Saúde — Manejo do paciente com diarreia (2023) / SBP',
     secoes:[
       { tipo:'alerta', titulo:'Red flags', itens:[
         'Letargia, olhos muito encovados, prega cutânea que desfaz muito lentamente, bebe mal ou é incapaz de beber.',
@@ -7603,13 +7609,13 @@ const PROTOCOLOS = [
         { tipo:'inicio', rotulo:'Classificar', texto:'Avaliar estado geral, olhos, sede, sinal da prega e diurese' },
         { tipo:'decisao', texto:'Qual o grau?', ramos:[
           { rotulo:'Sem desidratação — Plano A', cor:'ok', texto:'*Tratamento em casa* com sais de reidratação oral',
-            nota:'Menor de 1 ano: 50 a 100 mL após cada evacuação. Maior: 100 a 200 mL',
+            nota:'Após cada evacuação: menor de 1 ano, 50 a 100 mL; 1 a 10 anos, 100 a 200 mL; acima de 10 anos, à vontade',
             meds:['Sais de reidratação oral (SRO) — Plano B'] },
           { rotulo:'Desidratação — Plano B', texto:'*TRO na unidade: 50 a 100 mL/kg em 4 horas*',
             nota:'Oferecer em colher ou copo, pouco e sempre. Reavaliar de hora em hora' },
           { rotulo:'Grave ou choque — Plano C', cor:'perigo', texto:'*Expansão venosa imediata*',
-            nota:'20 mL/kg de SF 0,9% ou Ringer em 20 a 30 minutos; repetir até melhorar a perfusão',
-            meds:['Cloreto de sódio 0,9% ou Ringer lactato — Plano C'] }
+            nota:'Menor de 5 anos: SF 0,9% 20 mL/kg em 30 min, repetindo até hidratar. 5 anos ou mais: SF 30 mL/kg em 30 min + Ringer 70 mL/kg em 2 h 30 min',
+            meds:['Cloreto de sódio 0,9% ou Ringer lactato — Plano C', 'Plano C — 5 anos ou mais'] }
         ]},
         { tipo:'passo', rotulo:'No Plano B', texto:'Se vomitar, dar *ondansetrona* e retomar a TRO',
           nota:'Uma dose costuma resolver e evita a via venosa',
@@ -7620,9 +7626,10 @@ const PROTOCOLOS = [
       ]},
       { tipo:'doses', titulo:'Reposição', itens:[
         { droga:'Sais de reidratação oral (SRO) — Plano B', dose:'50 a 100 mL/kg', via:'VO', obs:'Em 4 horas, em pequenos volumes frequentes. É a via de escolha.' },
-        { droga:'SRO — Plano A, manutenção em casa', dose:'50 a 100 mL após cada evacuação (menor de 1 ano)', via:'VO', obs:'100 a 200 mL na criança maior. Ofertar até a diarreia parar.' },
-        { droga:'Cloreto de sódio 0,9% ou Ringer lactato — Plano C', dose:'20 mL/kg', via:'EV ou IO', obs:'Em 20 a 30 minutos. Repetir até 60 mL/kg reavaliando; no lactente menor de 1 ano, considerar etapas de 10 mL/kg.' },
-        { droga:'Ondansetrona', dose:'0,15 mg/kg (máximo de 4 mg abaixo de 15 kg; 8 mg acima)', via:'VO ou EV', obs:'Dose única costuma bastar para permitir a TRO.' },
+        { droga:'SRO — Plano A, manutenção em casa', dose:'Menor de 1 ano: 50 a 100 mL · 1 a 10 anos: 100 a 200 mL · acima de 10 anos: à vontade', via:'VO', obs:'Após cada evacuação diarreica (Ministério da Saúde, 2023). Ofertar até a diarreia parar.' },
+        { droga:'Cloreto de sódio 0,9% ou Ringer lactato — Plano C', dose:'20 mL/kg de SF 0,9% (menor de 5 anos)', via:'EV ou IO', obs:'Fase rápida em 30 minutos; repetir até a criança estar hidratada, reavaliando após cada etapa. Recém-nascido e cardiopata grave: começar com 10 mL/kg. Depois, fase de manutenção e reposição.' },
+        { droga:'Plano C — 5 anos ou mais', dose:'SF 0,9% 30 mL/kg em 30 min, depois Ringer lactato 70 mL/kg em 2 h 30 min', via:'EV ou IO', obs:'Fase rápida do Ministério da Saúde (2023). Reavaliar ao fim de cada etapa e passar à TRO assim que possível.' },
+        { droga:'Ondansetrona', dose:'0,15 mg/kg (máximo de 4 mg)', via:'VO ou EV', obs:'Dose única costuma bastar para permitir a TRO. Abaixo de 6 meses, sem dados na gastroenterite.' },
         { droga:'Zinco', dose:'10 mg/dia abaixo de 6 meses; 20 mg/dia acima', via:'VO', obs:'Por 10 a 14 dias. Reduz duração e recorrência da diarreia — recomendação do Ministério da Saúde.' },
         { droga:'Glicose 10%', dose:'2 a 5 mL/kg', via:'EV', obs:'Se hipoglicemia associada.' }
       ]},
@@ -7644,7 +7651,7 @@ const PROTOCOLOS = [
   { id:'gastroenterite-pedia', titulo:'Gastroenterite aguda na criança', categoria:'pedia', gravidade:'rotina',
     resumo:'Reidratação oral, ondansetrona, zinco e os sinais que indicam etiologia bacteriana.',
     tags:['gecal','diarreia','vomito','ondansetrona','zinco','rotavirus'],
-    fonte:'SBP — Sociedade Brasileira de Pediatria',
+    fonte:'SBP / Ministério da Saúde — Manejo do paciente com diarreia (2023) / OMS',
     secoes:[
       { tipo:'alerta', titulo:'Red flags', itens:[
         'Sangue nas fezes com febre alta e toxemia: disenteria, avaliar antibiótico.',
@@ -7663,8 +7670,8 @@ const PROTOCOLOS = [
           { rotulo:'Não — a maioria', cor:'ok', texto:'*Rotavírus e norovírus*: só reidratação e zinco',
             meds:['Sais de reidratação oral', 'Zinco'] },
           { rotulo:'Disenteria febril com toxemia', texto:'*Considerar antibiótico*',
-            nota:'Azitromicina ou ceftriaxona. Coprocultura antes',
-            meds:['Azitromicina', 'Ceftriaxona'] },
+            nota:'Ciprofloxacino é a 1ª linha (Ministério da Saúde e OMS); azitromicina como alternativa; ceftriaxona se grave ou internado. Coprocultura antes',
+            meds:['Ciprofloxacino', 'Azitromicina', 'Ceftriaxona'] },
           { rotulo:'Suspeita de E. coli produtora de toxina Shiga', cor:'perigo',
             texto:'*NÃO dar antibiótico*', nota:'Aumenta o risco de síndrome hemolítico-urêmica' }
         ]},
@@ -7674,11 +7681,12 @@ const PROTOCOLOS = [
       { tipo:'doses', titulo:'Medicações', itens:[
         { droga:'Sais de reidratação oral', dose:'Conforme o plano A, B ou C', via:'VO', obs:'Base do tratamento.' },
         { droga:'Zinco', dose:'10 mg/dia abaixo de 6 meses; 20 mg/dia acima', via:'VO', obs:'Por 10 a 14 dias, mesmo depois de a diarreia parar.' },
-        { droga:'Ondansetrona', dose:'0,15 mg/kg', via:'VO ou EV', obs:'Máximo de 4 mg abaixo de 15 kg. Dose única para permitir a TRO.' },
+        { droga:'Ondansetrona', dose:'0,15 mg/kg (máximo de 4 mg)', via:'VO ou EV', obs:'Dose única para permitir a TRO. Abaixo de 6 meses, sem dados na gastroenterite.' },
         { droga:'Racecadotrila', dose:'1,5 mg/kg por dose', via:'VO', obs:'De 8/8 h, por até 7 dias. Antissecretor, seguro na criança acima de 3 meses.' },
-        { droga:'Dipirona', dose:'10 a 15 mg/kg por dose', via:'VO ou EV', obs:'De 6/6 h, se dor ou febre.' },
-        { droga:'Azitromicina', dose:'10 mg/kg/dia', via:'VO', obs:'Por 3 dias, na disenteria com indicação de antibiótico.' },
-        { droga:'Ceftriaxona', dose:'50 a 75 mg/kg/dia', via:'EV ou IM', obs:'Se toxemia, menor de 3 meses ou imunossuprimido.' }
+        { droga:'Dipirona', dose:'10 a 15 mg/kg por dose', via:'VO ou EV', obs:'De 6/6 h, se dor ou febre. Acima de 3 meses ou 5 kg. Gotas 500 mg/mL: 1 gota a cada 2 kg, máximo de 40 gotas.' },
+        { droga:'Ciprofloxacino', dose:'15 mg/kg por dose (máximo de 500 mg)', via:'VO', obs:'De 12/12 h por 3 dias. Primeira linha na disenteria (Ministério da Saúde e OMS): o curso curto é aceito apesar da restrição de quinolona na criança.' },
+        { droga:'Azitromicina', dose:'10 mg/kg/dia (máximo de 500 mg)', via:'VO', obs:'Por 3 dias. Alternativa ao ciprofloxacino na disenteria.' },
+        { droga:'Ceftriaxona', dose:'50 a 100 mg/kg/dia', via:'EV ou IM', obs:'Disenteria grave ou com toxemia, menor de 3 meses, imunossuprimido ou internado. Por 3 a 5 dias.' }
       ]},
       { tipo:'naofazer', titulo:'Não fazer', itens:[
         'Loperamida em criança: risco de íleo paralítico e depressão neurológica.',
@@ -7698,7 +7706,7 @@ const PROTOCOLOS = [
   { id:'bronquiolite', titulo:'Bronquiolite viral aguda', categoria:'pedia', gravidade:'urgencia',
     resumo:'Suporte é o tratamento; critérios de internação e o que a diretriz desaconselha usar.',
     tags:['bronquiolite','vsr','lactente','oxigenio','soro fisiologico nasal','sibilancia'],
-    fonte:'SBP — Diretrizes sobre bronquiolite viral aguda',
+    fonte:'SBP — Diretrizes sobre bronquiolite viral aguda / Ministério da Saúde — nirsevimabe (Portaria SECTICS/MS 15/2025)',
     secoes:[
       { tipo:'alerta', titulo:'Red flags', itens:[
         'Apneia, sobretudo no lactente abaixo de 2 meses e no prematuro — é indicação de internação.',
@@ -7731,7 +7739,7 @@ const PROTOCOLOS = [
         { droga:'Oxigênio', dose:'Titular', via:'Cateter nasal', obs:'Alvo de SatO2 acima de 90 a 92%.' },
         { droga:'Cânula nasal de alto fluxo', dose:'1 a 2 L/kg/min', via:'—', obs:'Se disponível, no caso moderado que não responde ao cateter.' },
         { droga:'Hidratação', dose:'Manutenção, fracionada', via:'VO, SNG ou EV', obs:'Fracionar as mamadas. Sonda enteral é preferível à veia quando só falta ingesta.' },
-        { droga:'Dipirona ou paracetamol', dose:'10 a 15 mg/kg por dose', via:'VO', obs:'De 6/6 h, se febre ou desconforto.' },
+        { droga:'Dipirona ou paracetamol', dose:'10 a 15 mg/kg por dose', via:'VO', obs:'De 6/6 h, se febre ou desconforto. Dipirona só acima de 3 meses ou 5 kg; abaixo disso, paracetamol.' },
         { droga:'Solução salina hipertônica 3% inalatória', dose:'4 mL', via:'INAL', obs:'Uso discutível; alguns serviços usam no paciente internado. Não é consenso.' }
       ]},
       { tipo:'naofazer', titulo:'Não fazer', itens:[
@@ -7745,7 +7753,7 @@ const PROTOCOLOS = [
       { tipo:'dica', titulo:'Pega do plantão', itens:[
         'Aspirar o nariz e reavaliar antes de decidir internar: muitos melhoram só com isso.',
         'Explique à família que a tosse dura semanas e isso é esperado — evita retornos ansiosos.',
-        'Verifique se o lactente é candidato a palivizumabe (prematuro, cardiopata, pneumopata).'
+        'Pergunte pelo *nirsevimabe*: no SUS desde 2025 (Portaria SECTICS/MS 15/2025) para prematuro abaixo de 37 semanas e menor de 2 anos com comorbidade. O palivizumabe fica só para quem já iniciou o esquema.'
       ]}
     ] },
 
@@ -7767,7 +7775,7 @@ const PROTOCOLOS = [
           nota:'Spray com espaçador é superior à nebulização na crise leve a moderada',
           meds:['Salbutamol spray 100 mcg com espaçador', 'Salbutamol solução para nebulização'] },
         { tipo:'passo', rotulo:'Junto', texto:'*Corticoide sistêmico na primeira hora*',
-          nota:'Prednisolona 1 a 2 mg/kg VO. A via oral tem a mesma eficácia da venosa',
+          nota:'Prednisolona 1 a 2 mg/kg VO (máximo de 20 a 40 mg conforme a idade). A via oral tem a mesma eficácia da venosa',
           meds:['Prednisolona'] },
         { tipo:'passo', rotulo:'Se moderada a grave', texto:'Associar *ipratrópio* nos 3 primeiros ciclos + oxigênio',
           nota:'Alvo de SatO2 entre 94 e 98% na criança',
@@ -7783,10 +7791,11 @@ const PROTOCOLOS = [
       ]},
       { tipo:'doses', titulo:'Medicações — por quilo', itens:[
         { droga:'Salbutamol spray 100 mcg com espaçador', dose:'4 a 10 jatos', via:'INAL', obs:'A cada 20 minutos na 1ª hora. Um jato de cada vez, com 5 respirações entre eles.' },
-        { droga:'Salbutamol solução para nebulização', dose:'0,15 mg/kg (mínimo 2,5 mg)', via:'INAL', obs:'Cerca de 1 gota por 3 kg, máximo de 20 gotas, em 3 a 5 mL de SF.' },
-        { droga:'Brometo de ipratrópio', dose:'250 mcg abaixo de 20 kg; 500 mcg acima', via:'INAL', obs:'Nos 3 primeiros ciclos, associado ao beta-2, na crise moderada a grave.' },
-        { droga:'Prednisolona', dose:'1 a 2 mg/kg/dia (máximo de 40 mg)', via:'VO', obs:'Por 3 a 5 dias, dose única diária. Sem necessidade de desmame.' },
+        { droga:'Salbutamol solução para nebulização', dose:'0,15 mg/kg (mínimo 2,5 mg; máximo 5 mg)', via:'INAL', obs:'Gotas 5 mg/mL: 1 gota = 0,25 mg, então mínimo de 10 gotas e máximo de 20 gotas, em 3 a 5 mL de SF. A cada 20 minutos na 1ª hora.' },
+        { droga:'Brometo de ipratrópio', dose:'250 mcg (20 gotas) até 20 kg ou abaixo de 6 anos; 500 mcg (40 gotas) acima', via:'INAL', obs:'Nos 3 primeiros ciclos, associado ao beta-2, na crise moderada a grave. Solução 0,25 mg/mL: 1 gota = 12,5 mcg.' },
+        { droga:'Prednisolona', dose:'1 a 2 mg/kg/dia', via:'VO', obs:'Máximo de 20 mg abaixo de 2 anos, 30 mg de 2 a 5 anos e 40 mg acima de 5 anos (GINA). Por 3 a 5 dias, dose única diária, sem desmame.' },
         { droga:'Metilprednisolona', dose:'1 a 2 mg/kg', via:'EV', obs:'Se não tolerar a via oral.' },
+        { droga:'Hidrocortisona', dose:'4 mg/kg por dose (máximo de 100 mg)', via:'EV', obs:'De 6/6 h. Alternativa à metilprednisolona quando não tolera a via oral.' },
         { droga:'Sulfato de magnésio', dose:'40 a 50 mg/kg (máximo de 2 g)', via:'EV', obs:'Em 20 minutos, na crise grave refratária à primeira hora.' },
         { droga:'Oxigênio', dose:'Titular', via:'Cateter ou máscara', obs:'Alvo de SatO2 entre 94 e 98%.' },
         { droga:'Terbutalina', dose:'0,01 mg/kg (máximo de 0,3 mg)', via:'SC', obs:'A cada 20 minutos, até 3 doses, na crise refratária.' }
@@ -7863,11 +7872,11 @@ const PROTOCOLOS = [
   { id:'febre-sem-foco', titulo:'Febre sem sinais localizatórios no lactente', categoria:'pedia', gravidade:'urgencia',
     resumo:'Conduta por faixa etária; abaixo de 3 meses a régua é outra.',
     tags:['febre sem foco','lactente','rochester','hemocultura','urocultura','menor de 3 meses'],
-    fonte:'SBP — Sociedade Brasileira de Pediatria',
+    fonte:'SBP — Sociedade Brasileira de Pediatria / AAP — Febrile infants 8 to 60 days (2021)',
     secoes:[
       { tipo:'alerta', titulo:'A idade define tudo', itens:[
-        '*Abaixo de 1 mês*: internação, investigação completa com líquor e antibiótico empírico. Sem exceção.',
-        '*1 a 3 meses*: investigação completa; estratificar por critérios de baixo risco antes de decidir alta.',
+        '*Até 21 dias*: internação, urina, hemocultura, líquor e antibiótico empírico. Sem exceção.',
+        '*22 a 60 dias*: urina, hemocultura e marcadores inflamatórios (procalcitonina, PCR, neutrófilos); o líquor depende dos marcadores.',
         '*3 a 36 meses* com vacinação em dia e bom estado geral: risco de bacteremia oculta é baixo.',
         'Petéquias que não desaparecem à digitopressão com febre: meningococcemia — antibiótico imediato.',
         'Febre sem foco no lactente com aparência tóxica é sepse até prova em contrário.'
@@ -7876,36 +7885,42 @@ const PROTOCOLOS = [
         { tipo:'inicio', rotulo:'Entrada', texto:'Febre acima de 38 °C sem foco após anamnese e exame completos',
           nota:'Temperatura axilar acima de 37,8 °C ou retal acima de 38 °C' },
         { tipo:'decisao', texto:'Qual a idade?', ramos:[
-          { rotulo:'Menor de 1 mês', cor:'perigo', texto:'*Internar + investigação completa + antibiótico*',
-            nota:'Hemograma, PCR, urina, hemocultura, urocultura e LÍQUOR. Ampicilina + gentamicina ou cefotaxima',
-            meds:['Ampicilina + gentamicina', 'Cefotaxima'] },
-          { rotulo:'1 a 3 meses', texto:'*Investigação completa* e estratificar',
-            nota:'Baixo risco: bom estado, leucócitos entre 5 e 15 mil, urina normal, PCR baixa. Aí pode observar' },
-          { rotulo:'3 a 36 meses', cor:'ok', texto:'Avaliar estado geral e vacinação',
+          { rotulo:'Até 21 dias', cor:'perigo', texto:'*Internar + urina, hemocultura, LÍQUOR + antibiótico*',
+            nota:'Ampicilina + gentamicina (ou cefotaxima). Aciclovir se risco de herpes: vesículas, convulsão, hepatite, líquor alterado ou herpes materno',
+            meds:['Ampicilina', 'Gentamicina', 'Cefotaxima', 'Aciclovir'] },
+          { rotulo:'22 a 28 dias', texto:'*Urina, hemocultura e marcadores*; LÍQUOR se qualquer marcador alterado',
+            nota:'Alterado: procalcitonina > 0,5 ng/mL, PCR > 20 mg/L, neutrófilos > 4.000 a 5.200/mm³ ou T > 38,5 °C. Aí internar e tratar. Tudo normal: líquor opcional, observação internada ou retorno garantido em 24 h',
+            meds:['Ampicilina', 'Cefotaxima'] },
+          { rotulo:'29 a 60 dias', texto:'*Urina e marcadores* (hemocultura recomendada)',
+            nota:'Tudo normal: alta sem antibiótico e reavaliação em 24 a 36 h. Só a urina alterada: tratar ITU sem líquor. Marcador alterado: considerar líquor e ceftriaxona',
+            meds:['Ceftriaxona'] },
+          { rotulo:'61 dias a 36 meses', cor:'ok', texto:'Avaliar estado geral e vacinação',
             nota:'Bom estado e vacinado: urina I e urocultura em quem tem risco de ITU; sintomático e retorno em 24 h' }
         ]},
         { tipo:'passo', rotulo:'Nunca esquecer', texto:'*Urina I e urocultura* — ITU é a bacteriana oculta mais comum',
           nota:'Colher por saco coletor só serve para triagem; cultura pede jato médio ou sondagem' },
         { tipo:'passo', rotulo:'Reavaliar', texto:'Examinar de novo depois que a febre ceder com antitérmico',
           nota:'A criança que continua prostrada sem febre preocupa muito' },
-        { tipo:'fim', rotulo:'Alta', texto:'Bom estado, vacinada, acima de 3 meses, com retorno em 24 horas garantido' }
+        { tipo:'fim', rotulo:'Alta', texto:'Bom estado, vacinada, marcadores normais quando indicados, com retorno em 24 horas garantido' }
       ]},
       { tipo:'doses', titulo:'Antitérmicos e antibióticos empíricos', itens:[
-        { droga:'Dipirona', dose:'10 a 15 mg/kg por dose', via:'VO ou EV', obs:'De 6/6 h. Gotas: 1 gota por kg, máximo de 40 gotas.' },
-        { droga:'Paracetamol', dose:'10 a 15 mg/kg por dose', via:'VO', obs:'De 6/6 h. Máximo de 75 mg/kg/dia.' },
-        { droga:'Ibuprofeno', dose:'5 a 10 mg/kg por dose', via:'VO', obs:'De 6/6 ou 8/8 h. Acima de 6 meses. Evitar se houver desidratação ou suspeita de dengue.' },
-        { droga:'Ampicilina + gentamicina', dose:'Ampicilina 50 mg/kg/dose', via:'EV', obs:'Esquema do neonato: cobre Listeria, estreptococo do grupo B e Gram negativos.' },
-        { droga:'Cefotaxima', dose:'50 mg/kg/dose', via:'EV', obs:'De 6/6 ou 8/8 h. Alternativa no neonato, associada à ampicilina.' },
-        { droga:'Ceftriaxona', dose:'50 a 75 mg/kg/dia', via:'EV ou IM', obs:'Acima de 1 mês. Evitar no neonato ictérico.' }
+        { droga:'Dipirona', dose:'10 a 15 mg/kg por dose', via:'VO ou EV', obs:'De 6/6 h, acima de 3 meses ou 5 kg (abaixo disso, paracetamol). Gotas 500 mg/mL: 1 gota a cada 2 kg, máximo de 40 gotas.' },
+        { droga:'Paracetamol', dose:'10 a 15 mg/kg por dose', via:'VO', obs:'De 6/6 h. Máximo de 75 mg/kg/dia. Gotas 200 mg/mL (Tylenol): 1 gota/kg, máximo de 35 gotas.' },
+        { droga:'Ibuprofeno', dose:'5 a 10 mg/kg por dose (máximo de 400 mg)', via:'VO', obs:'De 6/6 ou 8/8 h. Acima de 6 meses. Evitar se houver desidratação ou suspeita de dengue.' },
+        { droga:'Ampicilina', dose:'50 mg/kg/dose; dose meníngea 75 mg/kg/dose', via:'EV', obs:'De 6/6 h acima de 7 dias de vida (até 7 dias: 100 mg/kg de 8/8 h na meningite). Cobre Listeria e enterococo. Associar gentamicina ou cefotaxima.' },
+        { droga:'Gentamicina', dose:'4 a 5 mg/kg/dia', via:'EV', obs:'Dose única diária no lactente de 8 a 28 dias. Não atravessa bem o líquor: na suspeita de meningite, prefira cefotaxima.' },
+        { droga:'Cefotaxima', dose:'50 mg/kg/dose', via:'EV', obs:'De 6/6 h (8/8 h na primeira semana de vida). Escolha no neonato com suspeita de meningite, associada à ampicilina.' },
+        { droga:'Aciclovir', dose:'20 mg/kg/dose', via:'EV', obs:'De 8/8 h no recém-nascido com risco de herpes, até o resultado do PCR no líquor e no sangue.' },
+        { droga:'Ceftriaxona', dose:'50 a 75 mg/kg/dia (100 mg/kg/dia se meningite)', via:'EV ou IM', obs:'Acima de 28 dias. Evitar no neonato ictérico ou recebendo cálcio.' }
       ]},
       { tipo:'naofazer', titulo:'Não fazer', itens:[
-        'Dar alta a lactente febril abaixo de 1 mês, em qualquer circunstância.',
+        'Dar alta a lactente febril de até 21 dias, em qualquer circunstância.',
         'Alternar antitérmicos de rotina: aumenta erro de dose sem benefício claro.',
         'Antibiótico empírico em criança acima de 3 meses, vacinada e em bom estado.',
         'Considerar a urocultura de saco coletor como diagnóstica.',
         'Banho frio ou álcool para baixar a febre.'
       ]},
-      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Internar* todo menor de 1 mês, o lactente de 1 a 3 meses que não preenche critérios de baixo risco, e qualquer criança com aparência tóxica, hipoxemia, desidratação, petéquias, imunossupressão ou doença de base. *Alta* na criança acima de 3 meses, vacinada, em bom estado, hidratada, com foco ausente e retorno garantido em 24 horas, com os sinais de alarme explicados ao responsável.' },
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Internar* todo lactente de até 21 dias, o de 22 a 60 dias com marcador inflamatório alterado ou sem retorno garantido, e qualquer criança com aparência tóxica, hipoxemia, desidratação, petéquias, imunossupressão ou doença de base. *Alta* na criança acima de 3 meses, vacinada, em bom estado, hidratada, com foco ausente e retorno garantido em 24 horas, com os sinais de alarme explicados ao responsável. *Divergência:* a AAP (2021) permite observar em casa o lactente de 22 a 60 dias com marcadores normais; muitos serviços brasileiros ainda internam todo menor de 28 dias.' },
       { tipo:'dica', titulo:'Pega do plantão', itens:[
         'A febre em si não faz mal: o antitérmico é para conforto, não para prevenir convulsão.',
         'Registre o estado geral *após* o antitérmico — é o dado que mais orienta.',
@@ -7916,38 +7931,43 @@ const PROTOCOLOS = [
   { id:'convulsao-febril', titulo:'Crise febril', categoria:'pedia', gravidade:'urgencia',
     resumo:'Simples x complexa, quando investigar liquor e o que orientar aos pais.',
     tags:['convulsao febril','crise febril','simples','complexa','liquor','orientacao'],
-    fonte:'SBP — Sociedade Brasileira de Pediatria',
+    fonte:'SBP — Sociedade Brasileira de Pediatria / AAP — Febrile seizures (2011) / ESETT (2019)',
     secoes:[
       { tipo:'alerta', titulo:'Simples ou complexa?', itens:[
         '*Simples*: generalizada, menos de 15 minutos, episódio único em 24 horas, entre 6 meses e 5 anos, sem déficit residual.',
         '*Complexa*: focal, mais de 15 minutos, ou repetida em 24 horas. Merece investigação.',
-        'Punção lombar se houver sinal meníngeo, aparência tóxica, menor de 6 meses, ou uso recente de antibiótico que mascare.',
+        'Punção lombar se houver sinal meníngeo, aparência tóxica, menor de 6 meses, uso recente de antibiótico que mascare, e considerar entre 6 e 12 meses com vacinação incompleta (Haemophilus e pneumococo).',
         'Fora da faixa de 6 meses a 5 anos, não chame de convulsão febril: investigue.',
         'Crise com mais de 5 minutos é *estado de mal* — trate como tal.'
       ]},
       { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
         { tipo:'inicio', rotulo:'Entrada', texto:'Crise convulsiva em criança de 6 meses a 5 anos, com febre e sem infecção do sistema nervoso' },
         { tipo:'passo', rotulo:'Se ainda convulsionando', texto:'*Benzodiazepínico* e cronometrar',
-          nota:'Diazepam 0,2 a 0,5 mg/kg EV ou retal; midazolam 0,2 mg/kg IM ou nasal',
+          nota:'Diazepam 0,2 a 0,3 mg/kg EV (máximo de 10 mg) ou 0,5 mg/kg retal (máximo de 20 mg); midazolam 0,2 mg/kg IM ou nasal',
           meds:['Diazepam', 'Midazolam'] },
+        { tipo:'passo', rotulo:'Não cedeu com 2 doses', texto:'*Estado de mal*: segunda linha com levetiracetam, fenitoína ou fenobarbital',
+          nota:'Levetiracetam 60 mg/kg EV (máximo de 4,5 g) tem a mesma eficácia da fenitoína e menos efeito adverso',
+          meds:['Levetiracetam', 'Fenitoína', 'Fenobarbital'], ir:'estado-mal-pedia' },
         { tipo:'passo', rotulo:'Sempre', texto:'*Glicemia capilar*, temperatura e exame neurológico',
           nota:'Procurar o foco da febre: otite, amigdalite, virose, ITU' },
         { tipo:'decisao', texto:'Simples ou complexa?', ramos:[
           { rotulo:'Simples, criança bem', cor:'ok', texto:'*Sem exames de rotina* — nem EEG, nem imagem, nem líquor',
             nota:'Investigar apenas o foco da febre. Observação e alta' },
           { rotulo:'Complexa, ou aparência tóxica', texto:'*Investigar*: líquor, imagem e EEG conforme o caso' },
-          { rotulo:'Sinal meníngeo ou menor de 6 meses', cor:'perigo', texto:'*Punção lombar*' }
+          { rotulo:'Sinal meníngeo, menor de 6 meses, ou 6 a 12 meses sem vacinação completa', cor:'perigo', texto:'*Punção lombar*',
+            nota:'Entre 6 e 12 meses, a punção é considerada se Haemophilus ou pneumococo não estão em dia' }
         ]},
         { tipo:'passo', rotulo:'Orientar', texto:'Explicar à família que é benigno e não causa dano cerebral',
           nota:'Um terço recorre; risco de epilepsia é pouco maior que o da população geral' },
         { tipo:'fim', rotulo:'Alta', texto:'Criança acordada, sem déficit, com foco da febre identificado e família orientada' }
       ]},
       { tipo:'doses', titulo:'Medicações — por quilo', itens:[
-        { droga:'Diazepam', dose:'0,2 a 0,3 mg/kg EV (máximo de 10 mg)', via:'EV', obs:'Lento. Por via retal: 0,5 mg/kg, quando não há acesso.' },
+        { droga:'Diazepam', dose:'0,2 a 0,3 mg/kg EV (máximo de 10 mg)', via:'EV', obs:'Lento. Por via retal: 0,5 mg/kg (máximo de 20 mg), quando não há acesso.' },
         { droga:'Midazolam', dose:'0,2 mg/kg (máximo de 10 mg)', via:'IM ou nasal', obs:'Excelente quando não há acesso venoso.' },
-        { droga:'Fenitoína', dose:'20 mg/kg', via:'EV', obs:'Se a crise não ceder com duas doses de benzodiazepínico. Somente em SF 0,9%, no máximo 1 mg/kg/min.' },
+        { droga:'Levetiracetam', dose:'60 mg/kg (máximo de 4.500 mg)', via:'EV', obs:'Segunda linha se a crise não ceder com duas doses de benzodiazepínico. Em 10 a 15 minutos, sem necessidade de monitor cardíaco.' },
+        { droga:'Fenitoína', dose:'20 mg/kg', via:'EV', obs:'Segunda linha alternativa ao levetiracetam. Somente em SF 0,9%, no máximo 1 mg/kg/min.' },
         { droga:'Fenobarbital', dose:'20 mg/kg', via:'EV', obs:'Alternativa; escolha no lactente pequeno. Prepare a via aérea.' },
-        { droga:'Dipirona', dose:'10 a 15 mg/kg', via:'VO ou EV', obs:'Para conforto. Antitérmico NÃO previne recorrência.' },
+        { droga:'Dipirona', dose:'10 a 15 mg/kg', via:'VO ou EV', obs:'Para conforto, acima de 3 meses ou 5 kg. Gotas 500 mg/mL: 1 gota a cada 2 kg, máximo de 40 gotas. Antitérmico NÃO previne recorrência.' },
         { droga:'Glicose 10%', dose:'2 a 5 mL/kg', via:'EV', obs:'Se hipoglicemia.' }
       ]},
       { tipo:'naofazer', titulo:'Não fazer', itens:[
@@ -7968,7 +7988,7 @@ const PROTOCOLOS = [
   { id:'sepse-pediatrica', titulo:'Sepse na criança', categoria:'pedia', gravidade:'emergencia',
     resumo:'Reconhecimento pelos sinais de perfusão, volume em alíquotas e antibiótico na primeira hora.',
     tags:['sepse pediatrica','choque septico','crianca','expansao','20 ml/kg','antibiotico'],
-    fonte:'ILAS/SBP — Protocolo de sepse pediátrica',
+    fonte:'ILAS/SBP — Protocolo de sepse pediátrica / Surviving Sepsis Campaign pediátrica (2020)',
     secoes:[
       { tipo:'alerta', titulo:'Red flags', itens:[
         'Hipotensão na criança é sinal *tardio* — não espere por ela para diagnosticar choque.',
@@ -7981,11 +8001,12 @@ const PROTOCOLOS = [
         { tipo:'inicio', rotulo:'Reconhecer', texto:'Suspeita de infecção com sinal de má perfusão ou alteração do estado mental' },
         { tipo:'passo', rotulo:'0 a 5 min', texto:'Oxigênio, monitorização, *acesso venoso ou INTRAÓSSEO* e glicemia capilar',
           nota:'Não gaste mais que 90 segundos ou 2 tentativas tentando veia' },
-        { tipo:'passo', rotulo:'0 a 15 min', texto:'Culturas e *primeiro bolus de 10 a 20 mL/kg*',
-          nota:'Em 5 a 20 minutos, reavaliando perfusão, fígado e ausculta a cada bolus' },
+        { tipo:'passo', rotulo:'0 a 15 min', texto:'Culturas e *primeiro bolus de 10 a 20 mL/kg*, de preferência Ringer',
+          nota:'Em 5 a 20 minutos, reavaliando perfusão, fígado e ausculta a cada bolus. Teto de 40 a 60 mL/kg na 1ª hora',
+          meds:['Cristaloide'] },
         { tipo:'passo', rotulo:'Até 60 min', texto:'*ANTIBIÓTICO DE AMPLO ESPECTRO*',
-          nota:'Ceftriaxona 50 a 75 mg/kg. Não atrasar esperando cultura além de 45 minutos',
-          meds:['Ceftriaxona'] },
+          nota:'Ceftriaxona 100 mg/kg/dia (máximo de 4 g) na sepse sem foco ou com petéquias. Vancomicina se risco de MRSA ou dispositivo. Não atrasar esperando cultura',
+          meds:['Ceftriaxona', 'Vancomicina'] },
         { tipo:'decisao', texto:'Respondeu ao volume?', ramos:[
           { rotulo:'Sim', cor:'ok', texto:'Manter reavaliação frequente' },
           { rotulo:'Não, após 40 a 60 mL/kg', cor:'perigo', texto:'*Choque refratário a volume — iniciar droga vasoativa*',
@@ -7998,8 +8019,9 @@ const PROTOCOLOS = [
           meds:['Hidrocortisona'] }
       ]},
       { tipo:'doses', titulo:'Medicações — por quilo', itens:[
-        { droga:'Cristaloide (SF 0,9% ou Ringer lactato)', dose:'10 a 20 mL/kg por bolus', via:'EV ou IO', obs:'Em 5 a 20 minutos. Até 40 a 60 mL/kg na 1ª hora, reavaliando. Em desnutrido e cardiopata: 5 a 10 mL/kg.' },
-        { droga:'Ceftriaxona', dose:'50 a 75 mg/kg/dia (máximo de 2 g)', via:'EV', obs:'Primeira hora. Acima de 1 mês.' },
+        { droga:'Cristaloide (Ringer lactato preferido, ou SF 0,9%)', dose:'10 a 20 mL/kg por bolus', via:'EV ou IO', obs:'Balanceado é preferível ao SF (Surviving Sepsis 2020). Em 5 a 20 minutos, reavaliando a cada bolus; teto de 40 a 60 mL/kg na 1ª hora, parando se surgir sobrecarga. Em desnutrido e cardiopata: 5 a 10 mL/kg.' },
+        { droga:'Ceftriaxona', dose:'100 mg/kg/dia (máximo de 4 g)', via:'EV', obs:'Primeira hora, na sepse sem foco, com petéquias ou suspeita de meningite; pode ser dividida de 12/12 h. Foco definido sem meningite: 50 a 75 mg/kg/dia (máximo de 2 g). Acima de 1 mês.' },
+        { droga:'Vancomicina', dose:'15 mg/kg por dose (máximo de 1 g)', via:'EV', obs:'De 6/6 h, em 60 minutos. Associar se risco de MRSA, cateter ou outro dispositivo, foco cutâneo grave ou choque refratário.' },
         { droga:'Ampicilina + gentamicina ou cefotaxima', dose:'Ampicilina 50 mg/kg/dose', via:'EV', obs:'Neonato — cobrir Listeria e estreptococo do grupo B.' },
         { droga:'Adrenalina', dose:'0,05 a 0,3 mcg/kg/min', via:'EV ou IO', obs:'Bomba. Primeira droga no *choque frio*. Pode ser iniciada em veia periférica.' },
         { droga:'Noradrenalina', dose:'0,05 a 0,3 mcg/kg/min', via:'EV', obs:'Primeira droga no *choque quente*.' },
@@ -8023,9 +8045,9 @@ const PROTOCOLOS = [
     ] },
 
   { id:'ivas-pedia', titulo:'IVAS, otite e faringite', categoria:'pedia', gravidade:'rotina',
-    resumo:'Quem precisa de antibiótico de verdade, critérios de Centor e orientação de sinais de alarme.',
-    tags:['ivas','otite','faringite','amoxicilina','centor','resfriado'],
-    fonte:'SBP — Sociedade Brasileira de Pediatria',
+    resumo:'Quem precisa de antibiótico de verdade, confirmação do estreptococo e orientação de sinais de alarme.',
+    tags:['ivas','otite','faringite','amoxicilina','centor','resfriado','teste rapido','observacao vigilante'],
+    fonte:'SBP / AAP — Otite média aguda (2013) / IDSA — Faringite estreptocócica (2012)',
     secoes:[
       { tipo:'alerta', titulo:'Red flags', itens:[
         'Esforço respiratório, taquipneia, hipoxemia ou gemência: já não é só via aérea superior.',
@@ -8044,27 +8066,31 @@ const PROTOCOLOS = [
         { tipo:'decisao', texto:'Há critério para antibiótico?', ramos:[
           { rotulo:'Não — a imensa maioria', cor:'ok', texto:'*Sem antibiótico*',
             nota:'Explicar que o quadro dura 7 a 10 dias e a tosse pode passar de 2 semanas' },
-          { rotulo:'Otite média aguda com abaulamento', texto:'*Amoxicilina* 45 a 90 mg/kg/dia',
+          { rotulo:'Otite média aguda com abaulamento', texto:'*Amoxicilina* 80 a 90 mg/kg/dia, ou observação vigilante',
+            nota:'Observar 48 a 72 h sem antibiótico: 6 a 23 meses com otite unilateral não grave, ou 2 anos ou mais sem gravidade (otalgia leve há menos de 48 h e febre abaixo de 39 °C). Duração: 10 dias abaixo de 2 anos; 5 a 7 dias a partir de 2 anos',
             meds:['Amoxicilina'] },
-          { rotulo:'Faringite com Centor alto e sem sintoma viral', texto:'*Amoxicilina ou penicilina benzatina*',
-            meds:['Amoxicilina'] },
-          { rotulo:'Sinusite: 10 dias sem melhora, ou piora após melhora', texto:'*Amoxicilina-clavulanato*' }
+          { rotulo:'Faringite com suspeita de estreptococo', texto:'*Confirmar por teste rápido ou cultura* e tratar com amoxicilina ou penicilina benzatina',
+            nota:'Na criança, escore clínico (Centor ou McIsaac) não basta para prescrever. Abaixo de 3 anos, faringite estreptocócica é rara',
+            meds:['Amoxicilina', 'Penicilina benzatina'] },
+          { rotulo:'Sinusite: 10 dias sem melhora, ou piora após melhora', texto:'*Amoxicilina-clavulanato*',
+            meds:['Amoxicilina + clavulanato'] }
         ]},
         { tipo:'fim', rotulo:'Alta', texto:'Com lavagem nasal ensinada, sinais de alarme explicados e retorno se piorar' }
       ]},
       { tipo:'doses', titulo:'Medicações — por quilo', itens:[
         { droga:'Soro fisiológico 0,9% nasal', dose:'2 a 5 gotas ou 1 a 3 mL por narina', via:'NASAL', obs:'De 4/4 h e antes das mamadas. Aspirar em seguida no lactente. É o tratamento principal.' },
-        { droga:'Dipirona', dose:'10 a 15 mg/kg por dose', via:'VO', obs:'De 6/6 h, se febre ou dor. Gotas: 1 gota por kg.' },
+        { droga:'Dipirona', dose:'10 a 15 mg/kg por dose', via:'VO', obs:'De 6/6 h, se febre ou dor, acima de 3 meses ou 5 kg. Gotas 500 mg/mL: 1 gota a cada 2 kg, máximo de 40 gotas.' },
         { droga:'Paracetamol', dose:'10 a 15 mg/kg por dose', via:'VO', obs:'De 6/6 h. Máximo de 75 mg/kg/dia.' },
-        { droga:'Ibuprofeno', dose:'5 a 10 mg/kg por dose', via:'VO', obs:'De 6/6 ou 8/8 h, acima de 6 meses.' },
-        { droga:'Amoxicilina', dose:'45 a 90 mg/kg/dia', via:'VO', obs:'Dividido de 8/8 ou 12/12 h, por 10 dias. Otite e faringite estreptocócica.' },
+        { droga:'Ibuprofeno', dose:'5 a 10 mg/kg por dose (máximo de 400 mg)', via:'VO', obs:'De 6/6 ou 8/8 h, acima de 6 meses.' },
+        { droga:'Amoxicilina', dose:'80 a 90 mg/kg/dia na otite; 50 mg/kg/dia na faringite', via:'VO', obs:'Otite: de 12/12 h, por 10 dias abaixo de 2 anos e 5 a 7 dias a partir de 2 anos. Faringite estreptocócica confirmada: 50 mg/kg/dia (máximo de 1 g/dia) 1 vez ao dia ou de 12/12 h, por 10 dias.' },
+        { droga:'Penicilina benzatina', dose:'600.000 UI abaixo de 20 kg; 1.200.000 UI com 20 kg ou mais', via:'IM', obs:'Dose única. Faringite estreptocócica confirmada, sobretudo se a adesão ao oral for duvidosa.' },
         { droga:'Amoxicilina + clavulanato', dose:'45 a 90 mg/kg/dia de amoxicilina', via:'VO', obs:'De 12/12 h por 10 dias. Sinusite bacteriana ou falha da amoxicilina.' },
-        { droga:'Azitromicina', dose:'10 mg/kg/dia', via:'VO', obs:'Por 5 dias. Só em alergia à penicilina.' }
+        { droga:'Azitromicina', dose:'12 mg/kg/dia na faringite; 10 mg/kg/dia na otite', via:'VO', obs:'Só em alergia à penicilina. Faringite: 5 dias (máximo de 500 mg/dia). Otite: 10 mg/kg/dia por 3 dias, ou 10 mg/kg no 1º dia e 5 mg/kg do 2º ao 5º.' }
       ]},
       { tipo:'naofazer', titulo:'Não fazer', itens:[
         'Antibiótico para resfriado comum — é a prescrição desnecessária mais frequente na pediatria.',
         'Antitussígeno e descongestionante sistêmico abaixo de 6 anos: sem eficácia e com risco real.',
-        'Descongestionante nasal tópico por mais de 3 dias.',
+        'Descongestionante nasal tópico abaixo de 2 anos (nafazolina: abaixo de 12 anos, pela bula) — intoxicação por imidazolina é comum no Brasil. Acima disso, nunca por mais de 3 dias.',
         'Ácido acetilsalicílico em criança: síndrome de Reye.',
         'Corticoide sistêmico para quadro viral de vias aéreas superiores.'
       ]},
@@ -8079,7 +8105,7 @@ const PROTOCOLOS = [
   { id:'maus-tratos', titulo:'Suspeita de maus-tratos e violência', categoria:'pedia', gravidade:'urgencia',
     resumo:'Sinais de alerta, notificação compulsória e a documentação que protege a criança.',
     tags:['maus tratos','violencia','notificacao compulsoria','conselho tutelar','abuso'],
-    fonte:'SBP / Ministério da Saúde — Linha de cuidado para atenção a crianças em situação de violência',
+    fonte:'SBP / Ministério da Saúde — Linha de cuidado para atenção a crianças em situação de violência; ECA; Lei 14.344/2022; Portaria de Consolidação 4/2017',
     secoes:[
       { tipo:'alerta', titulo:'Sinais que devem levantar a suspeita', itens:[
         'História incompatível com a lesão, ou que muda a cada vez que é contada.',
@@ -8105,10 +8131,10 @@ const PROTOCOLOS = [
         { tipo:'fim', rotulo:'Depois', texto:'Serviço social, saúde mental e rede de proteção acionados' }
       ]},
       { tipo:'lista', titulo:'Obrigações legais', itens:[
-        'Notificação compulsória *imediata* de suspeita ou confirmação, conforme o Estatuto da Criança e do Adolescente e a Lei 13.431/2017.',
-        'Comunicação ao *Conselho Tutelar* — na ausência dele, à autoridade judiciária ou ao Ministério Público.',
+        'Notificação compulsória na ficha de violência do SINAN: *imediata, em até 24 horas*, na violência sexual (e na tentativa de suicídio); *semanal* nas demais violências.',
+        'Comunicação *imediata* ao *Conselho Tutelar* (ECA, arts. 13 e 245) — na ausência dele, à autoridade judiciária ou ao Ministério Público. Na violência doméstica, a Lei 14.344/2022 (Lei Henry Borel) reforça o dever de comunicar de imediato.',
         'A notificação é dever do profissional e independe de confirmação diagnóstica; a omissão é infração.',
-        'Não cabe ao médico investigar autoria: cabe proteger, documentar e notificar.',
+        'Não cabe ao médico investigar autoria: cabe proteger, documentar e notificar, com escuta protegida (Lei 13.431/2017).',
         'Em violência sexual, acionar também o protocolo específico: profilaxias em até 72 horas e serviço de referência.'
       ]},
       { tipo:'doses', titulo:'Investigação por idade', itens:[
@@ -10151,6 +10177,6502 @@ const PROTOCOLOS = [
         'Ácido tranexâmico junto com a ocitocina, não depois — cada 15 min de atraso reduz o benefício.',
         'Útero duro sangrando é trauma: pegue a valva e olhe o colo e a vagina.',
         'Anote a hora de cada droga e a perda estimada — a hora de ouro passa rápido.'
+      ]}
+    ] },
+
+  /* ===========================================================
+     GINECOLOGIA — dor pélvica, sangramento fora da gestação,
+     infecções genitais, violência sexual, mama.
+     Moram na área `obstetricia` (Gineco e Obstetrícia) para não
+     quebrar as rotas antigas. Base: FEBRASGO, PCDT IST 2022 e
+     PCDT PEP 2024 do Ministério da Saúde, UpToDate.
+     =========================================================== */
+
+  { id:'torcao-anexial', titulo:'Torção anexial', categoria:'obstetricia', gravidade:'emergencia',
+    resumo:'Dor pélvica súbita e unilateral com náusea e massa ovariana: laparoscopia sem esperar o Doppler confirmar, e destorcer preservando o ovário.',
+    tags:['torcao anexial','torção ovariana','torcao de ovario','torção de anexo','dor pelvica subita','cisto ovariano','teratoma','doppler','laparoscopia','destorcao'],
+    fonte:'FEBRASGO — Abdome agudo ginecológico e Massas anexiais · ACOG — Torção anexial em adolescentes (Committee Opinion 783, 2019) · UpToDate — Ovarian and fallopian tube torsion',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Dor pélvica *súbita, unilateral e intensa* com náusea ou vômito, sobretudo com cisto ou massa ovariana conhecida, gestação ou indução de ovulação.' },
+      { rotulo:'Prioridade',    valor:'Beta-HCG, ultrassom transvaginal com Doppler e *ginecologista cedo*. O diagnóstico definitivo é cirúrgico.' },
+      { rotulo:'Meta',          valor:'Destorcer a tempo de salvar o ovário — *Doppler com fluxo não exclui torção*.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Suspeita', texto:'Dor pélvica súbita e unilateral, com náusea ou vômito',
+          nota:'A dor pode ser intermitente (torce e destorce) e durar dias antes da consulta. Febre baixa aparece quando já há necrose' },
+        { tipo:'passo', rotulo:'Já', texto:'*Beta-HCG*, acesso, jejum, analgesia com opioide e antiemético',
+          nota:'Analgesia não atrasa nem esconde o diagnóstico',
+          meds:['Morfina', 'Ondansetrona', 'Dipirona'] },
+        { tipo:'decisao', texto:'Beta-HCG positivo?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Ectópica primeiro* — a torção também ocorre na gestação, mas a ectópica mata antes',
+            nota:'Torção na gestante: laparoscopia é segura em qualquer trimestre', ir:'sangramento-gestacao' },
+          { rotulo:'Não', texto:'Ultrassom transvaginal com Doppler' }
+        ]},
+        { tipo:'decisao', texto:'O que mostra o ultrassom?', ramos:[
+          { rotulo:'Ovário aumentado, edemaciado, massa ≥ 5 cm, folículos na periferia, sinal do redemoinho', cor:'perigo',
+            texto:'*Torção provável:* ginecologia e centro cirúrgico agora',
+            nota:'Fluxo presente ao Doppler NÃO exclui — a artéria e a veia podem estar parcialmente pérvias' },
+          { rotulo:'Exame duvidoso, mas clínica típica', cor:'perigo', texto:'*Laparoscopia diagnóstica* mesmo assim',
+            nota:'Esperar o exame "confirmar" é o que custa o ovário' },
+          { rotulo:'Ovários normais e outra causa clara', cor:'ok', texto:'Seguir o diferencial: cisto roto, DIP, apendicite, cólica renal',
+            ir:'cisto-ovariano-roto' }
+        ]},
+        { tipo:'passo', rotulo:'Cirurgia', texto:'*Laparoscopia com destorção* e preservação do ovário',
+          nota:'Ovário escuro ou violáceo recupera na maioria: não retirar pelo aspecto. Cistectomia na mesma hora ou depois' },
+        { tipo:'fim', rotulo:'Destino', texto:'Centro cirúrgico com a ginecologia · sem cirurgião: transferir pela regulação como emergência' }
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        'Dor pélvica súbita com vômito e massa anexial: *torção até prova em contrário*.',
+        'Doppler "normal" com clínica típica: não libera — ainda é torção possível.',
+        'Febre, leucocitose e peritonite: ovário já necrosando ou outro diagnóstico (abscesso, apendicite).',
+        'Gestante ou em indução de ovulação com dor súbita: os ovários grandes torcem mais.',
+        'Criança ou adolescente com dor pélvica súbita: torce também ovário normal.'
+      ]},
+
+      { tipo:'passos', titulo:'Conduta imediata', itens:[
+        'Colher exames: beta-HCG, hemograma, tipagem e urina tipo I.',
+        'Deixar em jejum e pegar acesso venoso.',
+        'Analgesiar com opioide titulado e antiemético.',
+        'Pedir ultrassom transvaginal com Doppler (via abdominal na virgem e na criança).',
+        'Chamar a ginecologia na suspeita, antes do resultado do exame.',
+        'Encaminhar para laparoscopia se a clínica for típica, mesmo com Doppler normal.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Morfina', dose:'2–4 mg (0,05–0,1 mg/kg), repetir a cada 5–10 min até controlar', via:'EV', obs:'A dor da torção é de isquemia: costuma precisar de opioide.' },
+        { droga:'Dipirona', dose:'1–2 g', via:'EV', obs:'Base da analgesia, junto com o opioide.' },
+        { droga:'Ondansetrona', dose:'4–8 mg', via:'EV', obs:'Náusea e vômito estão em cerca de 70% dos casos.' },
+        { droga:'Cetoprofeno', dose:'100 mg em 100 mL de SF 0,9%', via:'EV', obs:'Se não houver suspeita de sangramento e a função renal for normal.' }
+      ]},
+
+      { tipo:'tempo', titulo:'Linha do tempo', itens:[
+        { quando:'0–30 min', o_que:'Beta-HCG, analgesia, jejum e ginecologia acionada.' },
+        { quando:'Até 1–2 h', o_que:'Ultrassom com Doppler — sem deixar o exame segurar a decisão.' },
+        { quando:'O quanto antes', o_que:'Laparoscopia: a viabilidade do ovário cai com o tempo de isquemia.' }
+      ]},
+
+      { tipo:'lista', titulo:'Critérios diagnósticos', itens:[
+        '*Clínica:* dor súbita unilateral (muitas vezes após exercício ou relação), náusea ou vômito, massa anexial dolorosa.',
+        '*Ultrassom:* ovário aumentado e edemaciado, folículos deslocados para a periferia, massa (cisto, teratoma) quase sempre ≥ 5 cm, líquido livre, *sinal do redemoinho* no pedículo.',
+        '*Doppler:* ausência de fluxo venoso ou arterial sugere, mas fluxo presente *não exclui*.',
+        '*Confirmação:* só na cirurgia.',
+        '*Diferenciais:* gravidez ectópica, cisto roto, DIP e abscesso tubo-ovariano, apendicite, cólica renal, endometrioma roto.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Beta-HCG* em toda mulher em idade fértil.',
+        '*Hemograma, PCR, tipagem e Rh*, urina tipo I.',
+        '*Ultrassom transvaginal com Doppler* — via abdominal na criança e na mulher virgem.',
+        '*Tomografia ou ressonância* só se o ultrassom não esclarecer e a paciente estiver estável — não pode atrasar a cirurgia.'
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Descartar torção porque o Doppler mostrou fluxo.',
+        'Retirar o ovário só porque está escuro ou violáceo: a maioria recupera depois de destorcido.',
+        'Segurar a paciente em observação "esperando a dor definir" com clínica típica.',
+        'Dar alta sem analgesia eficaz e sem diagnóstico para dor pélvica súbita com vômito.'
+      ]},
+
+      { tipo:'texto', titulo:'Destino', conteudo:'Suspeita de torção vai para o *centro cirúrgico* com a ginecologia; serviço sem cirurgião transfere pela regulação como emergência. A conduta atual é *destorcer e preservar* o ovário, inclusive na criança e na gestante; ooforectomia fica para necrose com desintegração do tecido ou suspeita de malignidade na pós-menopausa. Ooforopexia é discutida na torção recorrente ou de ovário único. Depois da cirurgia: ultrassom de controle e acompanhamento ambulatorial da massa que causou a torção.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Pense em torção quando a dor pélvica vem com *vômito* — cólica renal e torção são as dores que mais fazem vomitar.',
+        'Escreva no pedido do ultrassom "suspeita de torção — Doppler": o examinador procura o redemoinho.',
+        'Ovário que torceu uma vez pode torcer de novo: oriente retorno imediato se a dor voltar.'
+      ]}
+    ] },
+
+  { id:'cisto-ovariano-roto', titulo:'Cisto ovariano roto ou hemorrágico', categoria:'obstetricia', gravidade:'urgencia',
+    resumo:'Dor pélvica súbita no meio ou fim do ciclo com líquido livre: estável observa e analgesia; instável ou hemoperitônio volumoso vai para laparoscopia.',
+    tags:['cisto ovariano','cisto hemorragico','corpo luteo','cisto roto','hemoperitonio','liquido livre','dor pelvica','anticoagulada'],
+    fonte:'FEBRASGO — Abdome agudo ginecológico · ACOG — Massas anexiais (Practice Bulletin 174, 2016) · UpToDate — Hemorrhagic ovarian cysts',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Dor pélvica súbita, unilateral, *na segunda metade do ciclo* ou logo após relação ou exercício, com beta-HCG negativo.' },
+      { rotulo:'Prioridade',    valor:'*Beta-HCG antes de tudo* (ectópica rota é o grande diferencial) e estabilidade hemodinâmica.' },
+      { rotulo:'Meta',          valor:'Separar quem observa com analgesia de quem tem hemoperitônio que precisa de cirurgia.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Dor pélvica súbita, beta-HCG pedido',
+          nota:'Corpo lúteo hemorrágico é o mais comum. Anticoagulada e com coagulopatia sangra mais' },
+        { tipo:'decisao', texto:'Beta-HCG?', ramos:[
+          { rotulo:'Positivo', cor:'perigo', texto:'*Ectópica até prova em contrário*', ir:'sangramento-gestacao' },
+          { rotulo:'Negativo', texto:'Avaliar estabilidade e fazer imagem' }
+        ]},
+        { tipo:'decisao', texto:'Está estável?', ramos:[
+          { rotulo:'Instável ou Hb em queda', cor:'perigo', texto:'*Ressuscitar e laparoscopia hemostática*',
+            nota:'Dois acessos, tipagem, FAST. Anticoagulada: reverter conforme a droga', ir:'choque-abordagem' },
+          { rotulo:'Estável', texto:'Ultrassom transvaginal' }
+        ]},
+        { tipo:'decisao', texto:'Quanto líquido livre?', ramos:[
+          { rotulo:'Pouco, restrito à pelve', cor:'ok', texto:'*Analgesia e alta* com retorno orientado',
+            nota:'Ultrassom de controle em 6–8 semanas: o cisto hemorrágico costuma sumir',
+            meds:['Dipirona', 'Paracetamol'] },
+          { rotulo:'Moderado, acima do fundo uterino', texto:'*Observar 12–24 h* com hemoglobina seriada',
+            nota:'Queda de Hb, piora da dor ou do líquido = cirurgia' },
+          { rotulo:'Volumoso, no espaço hepatorrenal', cor:'perigo', texto:'*Laparoscopia*', nota:'Mesmo com PA normal: a jovem compensa até desabar' }
+        ]},
+        { tipo:'fim', rotulo:'Destino', texto:'Alta com analgesia · observação com Hb seriada · centro cirúrgico' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        'Dor súbita e unilateral — após relação sexual, exercício ou esforço.',
+        'Segunda metade do ciclo (cisto de corpo lúteo).',
+        'Uso de anticoagulante ou coagulopatia conhecida.',
+        'Sinais de irritação peritoneal leves, sem febre.',
+        'Ultrassom com cisto de conteúdo "rendado" ou com coágulo e líquido livre ecogênico.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Beta-HCG positivo* com líquido livre: ectópica rota, não cisto.',
+        'Taquicardia, síncope ou hipotensão.',
+        'Líquido livre volumoso ou no espaço hepatorrenal ao FAST.',
+        'Queda de hemoglobina na reavaliação.',
+        'Febre com massa anexial: abscesso tubo-ovariano.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Beta-HCG* sempre.',
+        '*Hemograma* na entrada e repetido em 6 h se houver líquido moderado.',
+        '*Coagulograma* na anticoagulada ou com sangramento desproporcional.',
+        '*Tipagem e Rh* se houver líquido moderado ou volumoso.',
+        '*Ultrassom transvaginal* — e FAST à beira do leito se instável.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Dipirona', dose:'1–2 g', via:'EV', obs:'Base da analgesia.' },
+        { droga:'Morfina', dose:'2–4 mg, titular', via:'EV', obs:'Dor intensa.' },
+        { droga:'Paracetamol', dose:'750 mg de 6/6 h', via:'VO', obs:'Alta. Evitar anti-inflamatório enquanto houver suspeita de sangramento ativo.' },
+        { droga:'Ondansetrona', dose:'4–8 mg', via:'EV', obs:'Se náusea.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Chamar de cisto roto antes do beta-HCG.',
+        'Liberar com hemoperitônio moderado sem hemoglobina de controle.',
+        'Dar anti-inflamatório de rotina enquanto pode haver sangramento ativo.',
+        'Esquecer de reverter a anticoagulação na paciente que sangra.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Alta* com líquido restrito à pelve, dor controlada por via oral, hemoglobina estável e beta-HCG negativo — com analgesia, ultrassom de controle em 6 a 8 semanas e retorno se dor maior, tontura ou síncope. *Observação de 12 a 24 h* com hemoglobina seriada se o líquido passa do fundo uterino. *Cirurgia (laparoscopia)* se instabilidade, queda de hemoglobina, líquido volumoso ou dúvida com torção. Cisto que persiste ou tem aspecto complexo no controle vai para a ginecologia: na pós-menopausa, cisto novo é investigado como possível neoplasia.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'O cisto hemorrágico tem aspecto de "teia de aranha" no ultrassom — e some sozinho em semanas.',
+        'Pergunte por anticoagulante: é a paciente que transforma um cisto banal em hemoperitônio.',
+        'Recorrência em quem já sangrou antes: anticoncepcional hormonal bloqueia a ovulação e previne o próximo episódio.'
+      ]}
+    ] },
+
+  { id:'dip', titulo:'Doença inflamatória pélvica e abscesso tubo-ovariano', categoria:'obstetricia', gravidade:'urgencia',
+    resumo:'Dor pélvica com dor à mobilização do colo ou anexos: tratar na suspeita com ceftriaxona, doxiciclina e metronidazol por 14 dias; internar a gestante, o abscesso e quem não melhora em 72 h.',
+    tags:['dip','doenca inflamatoria pelvica','anexite','salpingite','endometrite','abscesso tubo-ovariano','fitz-hugh-curtis','ceftriaxona','doxiciclina','metronidazol','ist','dor pelvica'],
+    fonte:'Ministério da Saúde — PCDT IST (2022) · FEBRASGO — Doença inflamatória pélvica · CDC — STI Treatment Guidelines (2021) · UpToDate — Pelvic inflammatory disease',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Mulher sexualmente ativa com dor no baixo ventre e *dor à mobilização do colo ou à palpação dos anexos*, sem outra causa.' },
+      { rotulo:'Prioridade',    valor:'*Beta-HCG* e excluir emergência cirúrgica (ectópica, apendicite, torção). Na dúvida, *trate*.' },
+      { rotulo:'Meta',          valor:'Antibiótico no mesmo atendimento, parceiros tratados e reavaliação em 72 h.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Dor pélvica em mulher sexualmente ativa',
+          nota:'Critérios maiores: dor no hipogástrio, dor à palpação dos anexos, dor à mobilização do colo' },
+        { tipo:'decisao', texto:'Beta-HCG?', ramos:[
+          { rotulo:'Positivo', cor:'perigo', texto:'*Ectópica primeiro*. DIP na gestante é rara e sempre interna', ir:'sangramento-gestacao' },
+          { rotulo:'Negativo', texto:'Seguir com exame especular e toque' }
+        ]},
+        { tipo:'decisao', texto:'Tem os 3 critérios maiores + 1 menor, ou 1 critério elaborado?', ramos:[
+          { rotulo:'Sim', texto:'*DIP* — tratar já' },
+          { rotulo:'Quadro incompleto, sem outra causa', texto:'*Tratar mesmo assim*',
+            nota:'O custo de não tratar é infertilidade, ectópica e dor crônica' },
+          { rotulo:'Outra causa clara', cor:'ok', texto:'Seguir o diferencial (apendicite, ITU, cólica renal, torção)' }
+        ]},
+        { tipo:'decisao', texto:'Tem critério de internação?', ramos:[
+          { rotulo:'Abscesso, gestação, estado grave, vômitos, falha em 72 h, dúvida cirúrgica', cor:'perigo',
+            texto:'*Internar:* ceftriaxona 1 g EV + doxiciclina + metronidazol EV',
+            meds:['Ceftriaxona 1 g', 'Doxiciclina', 'Metronidazol EV'] },
+          { rotulo:'Não', cor:'ok', texto:'*Ambulatorial:* ceftriaxona 500 mg IM + doxiciclina + metronidazol por 14 dias',
+            meds:['Ceftriaxona 500 mg', 'Doxiciclina', 'Metronidazol 250 mg'] }
+        ]},
+        { tipo:'decisao', texto:'Abscesso tubo-ovariano no ultrassom?', ramos:[
+          { rotulo:'Roto (choque, peritonite difusa)', cor:'perigo', texto:'*Cirurgia de emergência* + pacote da sepse', ir:'sepse' },
+          { rotulo:'Íntegro, grande (≥ 7–8 cm) ou sem resposta em 48–72 h', texto:'*Drenagem* guiada por imagem ou cirurgia' },
+          { rotulo:'Íntegro, pequeno', cor:'ok', texto:'Antibiótico EV e ultrassom seriado' }
+        ]},
+        { tipo:'fim', rotulo:'Sempre', texto:'Tratar parceiros dos últimos 60 dias · testar HIV, sífilis e hepatites · reavaliar em 72 h',
+          meds:[{ droga:'Parceiro: ceftriaxona + azitromicina', dose:'500 mg IM + 1 g VO, dose única', via:'IM/VO' }] }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        'Dor no baixo ventre — geralmente bilateral, com dias de evolução.',
+        'Sintomas associados: corrimento, sangramento intermenstrual ou pós-coito, dispareunia.',
+        'Dor à mobilização do colo e à palpação dos anexos ao toque.',
+        'Febre e dor em hipocôndrio direito: peri-hepatite (Fitz-Hugh-Curtis).',
+        'Fatores: menos de 25 anos, parceiros novos ou múltiplos, IST prévia, sem preservativo, inserção de DIU nas últimas 3 semanas.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        'Beta-HCG positivo: ectópica até prova em contrário.',
+        'Massa anexial com febre: *abscesso tubo-ovariano*.',
+        'Peritonite difusa, choque ou sepse: abscesso roto — cirurgia.',
+        'Não consegue excluir apendicite ou torção: internar e investigar.',
+        'Sem melhora em 72 h de tratamento: rever o diagnóstico e internar.'
+      ]},
+
+      { tipo:'lista', titulo:'Critérios diagnósticos (PCDT 2022)', itens:[
+        '*Maiores:* dor no hipogástrio · dor à palpação dos anexos · dor à mobilização do colo.',
+        '*Menores:* temperatura axilar > 37,5 °C · secreção cervical ou vaginal anormal · massa pélvica · > 10 leucócitos por campo em material endocervical · leucocitose · PCR ou VHS elevadas · gonococo, clamídia ou micoplasma confirmados.',
+        '*Elaborados:* endometrite na histologia · abscesso tubo-ovariano ou no fundo de saco à imagem · laparoscopia com DIP.',
+        '*Diagnóstico:* 3 maiores + 1 menor, ou 1 elaborado.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Beta-HCG* sempre.',
+        '*Hemograma, PCR*, urina tipo I e urocultura.',
+        '*Pesquisa de gonococo e clamídia* (biologia molecular) no material endocervical, se disponível — não atrasa o tratamento.',
+        '*Testes rápidos* de HIV, sífilis e hepatites B e C.',
+        '*Ultrassom transvaginal* se houver massa, febre, quadro grave ou falha do tratamento.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Ceftriaxona 500 mg', dose:'500 mg dose única', via:'IM', obs:'*Ambulatorial*, 1ª opção. 2ª opção: cefotaxima 500 mg IM dose única.' },
+        { droga:'Doxiciclina', dose:'100 mg de 12/12 h por 14 dias', via:'VO', obs:'Ambulatorial e hospitalar (VO mesmo internada, se tolera). *Contraindicada na gestação.*' },
+        { droga:'Metronidazol 250 mg', dose:'2 comprimidos (500 mg) de 12/12 h por 14 dias', via:'VO', obs:'Cobertura de anaeróbios. Sem álcool até 24 h depois do fim.' },
+        { droga:'Ceftriaxona 1 g', dose:'1 g 1x/dia', via:'EV', obs:'*Hospitalar*, 1ª opção, com doxiciclina e metronidazol EV.' },
+        { droga:'Metronidazol EV', dose:'400–500 mg de 12/12 h', via:'EV', obs:'Hospitalar. O PCDT cita 400 mg; a bolsa disponível é de 500 mg/100 mL.' },
+        { droga:'Clindamicina', dose:'900 mg de 8/8 h', via:'EV', obs:'Hospitalar, 2ª opção, com gentamicina.' },
+        { droga:'Gentamicina', dose:'3–5 mg/kg 1x/dia', via:'EV/IM', obs:'Com a clindamicina. Ajustar pela função renal.' },
+        { droga:'Ampicilina + sulbactam', dose:'3 g de 6/6 h', via:'EV', obs:'Hospitalar, 3ª opção, com doxiciclina.' },
+        { droga:'Parceiro: ceftriaxona + azitromicina', dose:'500 mg IM + 1 g VO, dose única', via:'IM/VO', obs:'Parceiros dos últimos 60 dias, com ou sem sintomas.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Esperar o resultado de gonococo e clamídia para tratar.',
+        'Usar quinolona empírica: o gonococo é resistente no Brasil.',
+        'Tratar com antibiótico único — a DIP é polimicrobiana.',
+        'Retirar o DIU de rotina; se houver indicação, só depois de duas doses do antibiótico.',
+        'Dar alta sem tratar o parceiro e sem retorno marcado em 72 h.',
+        'Doxiciclina na gestante.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Internar* (PCDT 2022) se houver abscesso tubo-ovariano, gravidez, ausência de resposta após 72 h de antibiótico oral, intolerância ao oral ou dificuldade de seguimento, estado geral grave com náusea, vômito e febre, ou dificuldade de excluir emergência cirúrgica. O antibiótico parenteral é suspenso 24 h depois do fim dos sintomas e o tratamento segue por via oral até completar 14 dias. *Abscesso tubo-ovariano:* drenagem guiada por imagem ou cirurgia se for grande (≥ 7–8 cm) ou sem resposta em 48–72 h; abscesso roto é laparotomia de emergência. *Alta* com receita de 14 dias, abstinência sexual até a cura, parceiros tratados, sorologias pedidas e retorno em 72 h — sem melhora, interna. Adolescente não precisa ser internada só pela idade.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Dor no hipocôndrio direito em mulher jovem com dor pélvica: pense em Fitz-Hugh-Curtis antes de colecistite.',
+        'DIU não precisa sair: a DIP responde com ele no lugar.',
+        'A doxiciclina dá esofagite: tomar com um copo cheio de água e não deitar por 30 min.',
+        'Toda IST é evento-sentinela: ofereça teste de HIV, sífilis e hepatites e a vacina de hepatite B.'
+      ]}
+    ] },
+
+  { id:'dismenorreia', titulo:'Dismenorreia intensa e endometriose no PS', categoria:'obstetricia', gravidade:'rotina',
+    resumo:'Cólica menstrual que traz ao PS: anti-inflamatório como base, beta-HCG quando o padrão foge do habitual e encaminhar quem tem cara de endometriose.',
+    tags:['dismenorreia','colica menstrual','endometriose','dor pelvica','aine','ibuprofeno','acido mefenamico','adenomiose','dispareunia'],
+    fonte:'FEBRASGO — Dismenorreia e Endometriose (Protocolos 2021) · ACOG — Dismenorreia e endometriose na adolescente (Committee Opinion 760, 2018) · UpToDate — Dysmenorrhea in adult females',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Dor em cólica no baixo ventre que *começa com a menstruação* ou pouco antes e dura até 72 h, com o mesmo padrão de sempre.' },
+      { rotulo:'Prioridade',    valor:'Analgesia com *anti-inflamatório* e conferir se a dor é a de sempre — dor diferente pede beta-HCG e exame.' },
+      { rotulo:'Meta',          valor:'Aliviar no PS, prescrever o esquema certo e encaminhar a dismenorreia secundária.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Cólica menstrual intensa' },
+        { tipo:'decisao', texto:'A dor é igual às outras menstruações?', ramos:[
+          { rotulo:'Não: diferente, mais forte, com febre ou fora do período', cor:'perigo', texto:'*Beta-HCG e exame ginecológico* — tratar como dor pélvica aguda',
+            nota:'Ectópica, abortamento, DIP, torção e cisto roto se disfarçam de cólica', ir:'cisto-ovariano-roto' },
+          { rotulo:'Sim', texto:'Analgesia' }
+        ]},
+        { tipo:'passo', rotulo:'Analgesia', texto:'*Anti-inflamatório* + dipirona ± escopolamina',
+          nota:'O anti-inflamatório age na prostaglandina, que é a causa da dor',
+          meds:['Cetoprofeno', 'Dipirona', 'Escopolamina'] },
+        { tipo:'decisao', texto:'Tem cara de dismenorreia secundária (endometriose, adenomiose)?', ramos:[
+          { rotulo:'Sim', texto:'*Encaminhar à ginecologia*; pode iniciar bloqueio hormonal se não houver contraindicação',
+            nota:'Dor progressiva, dispareunia profunda, dor ao evacuar ou urinar no período, infertilidade, início após os 25 anos' },
+          { rotulo:'Não', cor:'ok', texto:'*Alta* com anti-inflamatório começando antes da menstruação' }
+        ]},
+        { tipo:'fim', rotulo:'Alta', texto:'Anti-inflamatório no esquema certo, orientação e ginecologia ambulatorial se não controlar' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        '*Primária:* começa 6 a 12 meses após a menarca, cólica nas primeiras 48–72 h, exame normal.',
+        '*Secundária:* começa depois dos 25 anos ou muda de padrão, piora a cada ciclo, dor fora do período.',
+        '*Endometriose:* dispareunia profunda, disquezia ou disúria cíclicas, infertilidade.',
+        '*Adenomiose:* útero aumentado e amolecido, sangramento menstrual volumoso, mais de 35–40 anos.',
+        '*Endometrioma roto:* dor súbita com peritonite e líquido livre — é abdome agudo, não cólica.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        'Atraso menstrual ou sangramento diferente do habitual: beta-HCG.',
+        'Febre, corrimento ou dor à mobilização do colo: DIP.',
+        'Dor súbita unilateral com vômito: torção ou cisto roto.',
+        'Dor que não cede com anti-inflamatório + dipirona + antiespasmódico: rever o diagnóstico.',
+        'Sangramento volumoso com anemia: sangramento uterino anormal.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Nenhum* na dismenorreia primária típica com exame normal.',
+        '*Beta-HCG* se o padrão mudou, se há atraso ou sangramento anormal.',
+        '*Urina tipo I* se houver queixa urinária.',
+        '*Ultrassom transvaginal* na suspeita de causa secundária — ambulatorial, salvo dor atípica.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Cetoprofeno', dose:'100 mg em 100 mL de SF 0,9%', via:'EV', obs:'No PS. Evitar em gestação, doença renal, úlcera e asma com sensibilidade a AINE.' },
+        { droga:'Dipirona', dose:'1–2 g', via:'EV', obs:'Associar ao anti-inflamatório.' },
+        { droga:'Escopolamina', dose:'20 mg', via:'EV', obs:'Antiespasmódico, benefício adicional modesto.' },
+        { droga:'Ibuprofeno', dose:'400–600 mg de 8/8 h', via:'VO', obs:'Alta. Começar 1–2 dias antes ou no 1º sinal da menstruação, por 2–3 dias.' },
+        { droga:'Naproxeno', dose:'500 mg de 12/12 h', via:'VO', obs:'Alternativa com tomada a cada 12 h.' },
+        { droga:'Ácido mefenâmico', dose:'500 mg de 8/8 h', via:'VO', obs:'Alternativa; reduz também o fluxo.' },
+        { droga:'Dienogeste', dose:'2 mg 1x/dia, contínuo', via:'VO', obs:'Suspeita de endometriose, começando com a ginecologia ou na alta se houver seguimento. Alternativa: anticoncepcional combinado contínuo.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Tratar como cólica uma dor que a paciente diz ser diferente das outras, sem beta-HCG.',
+        'Usar opioide como rotina na dismenorreia.',
+        'Prescrever o anti-inflamatório "se dor" — funciona muito melhor em horário fixo, começando antes.',
+        'Dar alta da dismenorreia progressiva sem encaminhar para investigar endometriose.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'Dismenorreia primária tem *alta* depois da analgesia, com anti-inflamatório em horário fixo começando 1 a 2 dias antes da menstruação, calor local e atividade física. Sem resposta em 3 ciclos ou com sinais de causa secundária: *ginecologia ambulatorial* — o tratamento de base é hormonal (anticoncepcional combinado contínuo, progestagênio como dienogeste ou o sistema intrauterino de levonorgestrel). *Internar* só quem tem dor refratária a analgesia escalonada ou suspeita de causa aguda (endometrioma roto, torção, DIP grave).' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'A pergunta que separa tudo: "esta dor é igual à das outras menstruações?"',
+        'O atraso médio do diagnóstico de endometriose é de anos — a consulta no PS pode ser o primeiro encaminhamento.',
+        'Adolescente que falta à escola todo mês por cólica merece investigação, não só receita.'
+      ]}
+    ] },
+
+  { id:'sangramento-uterino-anormal', titulo:'Sangramento uterino anormal agudo (fora da gestação)', categoria:'obstetricia', gravidade:'urgencia',
+    resumo:'Beta-HCG primeiro; instável recebe ácido tranexâmico EV, estrogênio em dose alta ou tamponamento com balão; estável sai com anticoncepcional ou progestagênio em dose de ataque.',
+    tags:['sangramento uterino anormal','sua','menorragia','hemorragia uterina','sangramento vaginal','palm-coein','acido tranexamico','anticoncepcional','medroxiprogesterona','von willebrand','pos-menopausa','mioma'],
+    fonte:'FEBRASGO — Sangramento uterino anormal (Protocolo 2021) · FIGO — PALM-COEIN (2018) · ACOG — Sangramento uterino anormal agudo (Committee Opinion 557, reafirmada) · UpToDate — Acute uterine bleeding',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Sangramento uterino volumoso, fora do período ou prolongado, *suficiente para exigir tratamento imediato*, em mulher não gestante.' },
+      { rotulo:'Prioridade',    valor:'*Beta-HCG*, estabilidade hemodinâmica e hemoglobina. O objetivo no PS é *parar o sangramento*; a causa se investiga depois.' },
+      { rotulo:'Meta',          valor:'Hemodinâmica estável, sangramento controlado em 24–48 h e esquema de manutenção definido na alta.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Sangramento vaginal volumoso ou prolongado',
+          nota:'Confirmar que vem do útero: exame especular afasta lesão de colo, vagina e trauma' },
+        { tipo:'decisao', texto:'Beta-HCG?', ramos:[
+          { rotulo:'Positivo', cor:'perigo', texto:'*Sangramento na gestação*', ir:'sangramento-gestacao' },
+          { rotulo:'Negativo', texto:'Avaliar estabilidade' }
+        ]},
+        { tipo:'decisao', texto:'Está instável ou com Hb muito baixa?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Internar:* 2 acessos, tipagem, sangue se Hb < 7 ou sintomática, ácido tranexâmico EV',
+            nota:'Se continuar sangrando: estrogênio em dose alta, balão de Foley intrauterino e ginecologia para curetagem',
+            meds:['Ácido tranexâmico 250 mg/5 mL', 'Estrogênios conjugados 0,625 mg'] },
+          { rotulo:'Não', texto:'Tratamento hormonal por via oral' }
+        ]},
+        { tipo:'decisao', texto:'Pode usar estrogênio?', ramos:[
+          { rotulo:'Sim', cor:'ok', texto:'*Anticoncepcional combinado 30 mcg* de 8/8 h por 7 dias, depois 1x/dia por 21 dias',
+            meds:['Etinilestradiol 30 mcg + levonorgestrel 150 mcg'] },
+          { rotulo:'Não (TEV, enxaqueca com aura, > 35 anos fumante, câncer de mama, HAS grave, hepatopatia)', texto:'*Progestagênio:* medroxiprogesterona 10 mg de 8/8 h por 7 dias, depois 1x/dia por 21 dias',
+            meds:['Medroxiprogesterona 10 mg'] }
+        ]},
+        { tipo:'passo', rotulo:'Junto', texto:'*Ácido tranexâmico VO* por até 5 dias e anti-inflamatório (se não houver contraindicação)',
+          nota:'Ferro na anemia. Tranexâmico + combinado juntos: risco teórico de trombose, reservar para falha',
+          meds:['Ácido tranexâmico 250 mg', 'Ibuprofeno'] },
+        { tipo:'fim', rotulo:'Alta', texto:'Esquema de manutenção por 3 meses e ginecologia com ultrassom transvaginal',
+          nota:'Pós-menopausa: todo sangramento vai para avaliação do endométrio' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        'Encharca mais de 1 absorvente por hora por várias horas, ou sangra com coágulos grandes.',
+        'Fluxo por mais de 8 dias, ou ciclos menores que 24 dias.',
+        'Sintomas de anemia: tontura, palidez, palpitação ou hemoglobina baixa.',
+        'Adolescente com sangramento volumoso desde a menarca: pensar em *doença de von Willebrand*.',
+        'Contexto: anticoagulante, mioma conhecido ou perimenopausa com ciclos anovulatórios.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        'Beta-HCG positivo — muda tudo: ectópica, abortamento, mola.',
+        'Taquicardia, síncope ou hipotensão.',
+        'Hemoglobina < 7 g/dL ou queda rápida.',
+        '*Sangramento na pós-menopausa*: câncer de endométrio até prova em contrário.',
+        'Sangramento em múltiplos sítios ou plaquetopenia: coagulopatia.'
+      ]},
+
+      { tipo:'lista', titulo:'Classificação (FIGO — PALM-COEIN)', itens:[
+        '*Estruturais (PALM):* pólipo, adenomiose, leiomioma, malignidade e hiperplasia.',
+        '*Não estruturais (COEIN):* coagulopatia, disfunção ovulatória, endometrial, iatrogênica (anticoagulante, hormônio, DIU), não classificada.',
+        '*Agudo:* volume que exige intervenção imediata. *Crônico:* alteração do volume, duração ou frequência por mais de 6 meses.',
+        'Na urgência, a causa não muda o tratamento inicial: o objetivo é parar o sangramento.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Beta-HCG* sempre.',
+        '*Hemograma, tipagem e Rh, coagulograma e fibrinogênio.*',
+        '*Ferritina*; TSH e prolactina na investigação ambulatorial.',
+        '*Rastreio de von Willebrand* na adolescente com sangramento volumoso, de preferência antes do estrogênio.',
+        '*Ultrassom transvaginal* (pélvico se virgem) — na urgência se instável ou sem resposta; senão ambulatorial.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Ácido tranexâmico 250 mg/5 mL', dose:'1 g (4 ampolas) de 8/8 h', via:'EV', obs:'Em 100 mL de SF 0,9%, em 10–20 min. Máximo 4 g/dia. Evitar com TEV ativo.' },
+        { droga:'Ácido tranexâmico 250 mg', dose:'1 g (4 comprimidos) de 8/8 h por até 5 dias', via:'VO', obs:'Durante os dias de sangramento intenso.' },
+        { droga:'Etinilestradiol 30 mcg + levonorgestrel 150 mcg', dose:'1 comprimido de 8/8 h por 7 dias, depois 1x/dia por 21 dias', via:'VO', obs:'Esquema FEBRASGO. Náusea é comum: dar antiemético junto.' },
+        { droga:'Medroxiprogesterona 10 mg', dose:'10 mg de 8/8 h por 7 dias, depois 1x/dia por 21 dias', via:'VO', obs:'Quando o estrogênio é contraindicado. Alternativa: noretisterona 10 mg 1x/dia por 10 dias.' },
+        { droga:'Estrogênios conjugados 0,625 mg', dose:'2,5 mg (4 comprimidos) de 6/6 h por 24 h', via:'VO', obs:'Sangramento grave na internação, depois seguir com progestagênio ou anticoncepcional. Alternativa: valerato de estradiol 4 mg de 4/4 h por 24 h.' },
+        { droga:'Ibuprofeno', dose:'600 mg de 8/8 h durante o sangramento', via:'VO', obs:'Reduz o fluxo em cerca de 30%. Evitar se plaquetopenia, coagulopatia ou anticoagulação.' },
+        { droga:'Ondansetrona', dose:'4–8 mg de 8/8 h', via:'VO/EV', obs:'Com o hormônio em dose alta.' },
+        { droga:'Sonda de Foley intrauterina', dose:'Balão com 10–30 mL de água destilada até sentir resistência', via:'Intrauterina', obs:'Tamponamento por 6–24 h enquanto o tratamento clínico age. Com a ginecologia.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Iniciar hormônio antes do beta-HCG.',
+        'Prescrever estrogênio a quem tem TEV, enxaqueca com aura, câncer de mama ou é fumante acima de 35 anos.',
+        'Dar alta da paciente da pós-menopausa sem encaminhar para avaliar o endométrio.',
+        'Esquecer o rastreio de coagulopatia na adolescente com sangramento volumoso.',
+        'Dar alta sem esquema de manutenção: o sangramento volta no ciclo seguinte.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Internar* se instável, hemoglobina abaixo de 7 g/dL ou em queda, sangramento que continua apesar do tratamento, ou impossibilidade de tratamento oral. Na falha clínica: tamponamento com balão e curetagem uterina (ou aspiração), histerectomia excepcionalmente. *Alta* com hemodinâmica estável e sangramento diminuindo, levando o esquema de ataque (7 dias) e manutenção por pelo menos 3 meses — anticoncepcional combinado ou progestagênio contínuo, ou sistema intrauterino de levonorgestrel com a ginecologia — mais ferro oral se houver anemia. Orientar retorno se encharcar mais de 1 absorvente por hora, tontura ou síncope. *Pós-menopausa:* encaminhar com prioridade para ultrassom e biópsia de endométrio (endométrio > 4 mm ou sangramento persistente).' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Na dose de ataque do anticoncepcional, a paciente costuma vomitar: mande o antiemético na mesma receita.',
+        'Escreva o esquema por dia ("dias 1 a 7: 1 comprimido de 8/8 h; dias 8 a 28: 1 por dia") — é o que garante a adesão.',
+        'Sangramento volumoso na adolescente: 1 em cada 5 tem coagulopatia.',
+        'Anticoagulada com sangramento uterino volumoso: o problema costuma ser o útero, não só a dose — ajuste os dois.'
+      ]}
+    ] },
+
+  { id:'corrimento-vaginal', titulo:'Corrimento vaginal e cervicite', categoria:'obstetricia', gravidade:'rotina',
+    resumo:'Exame especular, pH e teste das aminas separam candidíase, vaginose e tricomoníase; colo com mucopus é cervicite e trata gonococo e clamídia juntos.',
+    tags:['corrimento vaginal','vulvovaginite','candidiase','vaginose bacteriana','tricomoniase','cervicite','gonorreia','clamidia','fluconazol','metronidazol','miconazol','prurido vulvar','ist'],
+    fonte:'Ministério da Saúde — PCDT IST (2022) · FEBRASGO — Vulvovaginites (Protocolo 2021) · CDC — STI Treatment Guidelines (2021)',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Corrimento com cheiro, cor ou volume diferentes do habitual, prurido, ardor ou dor na relação.' },
+      { rotulo:'Prioridade',    valor:'*Olhar o colo:* mucopus ou colo friável é cervicite (IST); dor à mobilização é DIP.' },
+      { rotulo:'Meta',          valor:'Tratar o agente certo, tratar o parceiro só quando é IST e oferecer testagem.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta (PCDT 2022)', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Queixa de corrimento vaginal',
+          nota:'Anamnese com risco de IST, exame especular, pH vaginal (fita) e teste das aminas (KOH 10%)' },
+        { tipo:'decisao', texto:'Tem dor pélvica ou dor à mobilização do colo?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*DIP*', ir:'dip' },
+          { rotulo:'Não', texto:'Olhar o colo' }
+        ]},
+        { tipo:'decisao', texto:'Colo com mucopus, friável ou sangrando ao toque da espátula?', ramos:[
+          { rotulo:'Sim', texto:'*Cervicite:* ceftriaxona 500 mg IM + azitromicina 1 g VO, dose única',
+            nota:'Tratar o parceiro com o mesmo esquema',
+            meds:['Ceftriaxona 500 mg', 'Azitromicina 500 mg'] },
+          { rotulo:'Não', texto:'Classificar o corrimento' }
+        ]},
+        { tipo:'decisao', texto:'pH, aminas e aspecto?', ramos:[
+          { rotulo:'pH < 4,5, grumoso branco, prurido, aminas negativas', texto:'*Candidíase:* miconazol vaginal 7 noites ou fluconazol 150 mg dose única',
+            nota:'Gestante e lactante: só via vaginal',
+            meds:['Miconazol creme 2%', 'Fluconazol 150 mg'] },
+          { rotulo:'pH > 4,5, cinza homogêneo, odor de peixe, aminas positivas', texto:'*Vaginose bacteriana:* metronidazol 500 mg de 12/12 h por 7 dias',
+            nota:'Não é IST: parceiro não trata',
+            meds:['Metronidazol 250 mg'] },
+          { rotulo:'pH > 4,5, amarelo-esverdeado bolhoso, colo em framboesa', texto:'*Tricomoníase:* metronidazol 2 g dose única',
+            nota:'É IST: tratar o parceiro com o mesmo esquema',
+            meds:['Metronidazol 400 mg'] }
+        ]},
+        { tipo:'fim', rotulo:'Sempre', texto:'Oferecer testes rápidos de HIV, sífilis e hepatites · vacina de hepatite B e HPV conforme o calendário' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        '*Candidíase:* prurido intenso, ardor, corrimento branco grumoso, vulva hiperemiada e fissurada; piora antes da menstruação, com antibiótico, gestação e diabetes.',
+        '*Vaginose bacteriana:* corrimento fino, cinza, com odor de peixe que piora após a relação e na menstruação; pouco prurido.',
+        '*Tricomoníase:* corrimento abundante amarelo-esverdeado, bolhoso, com odor, ardor e disúria; colo com pontos vermelhos.',
+        '*Cervicite (gonococo, clamídia):* muitas vezes sem sintoma; mucopus no colo, sangramento pós-coito.',
+        '*Corpo estranho* (tampão esquecido): odor muito fétido e corrimento escuro.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        'Dor pélvica, febre ou dor à mobilização do colo: DIP.',
+        'Corrimento com febre, hipotensão e eritema difuso: *choque tóxico* — procurar e retirar tampão ou corpo estranho.',
+        'Corrimento em criança: pensar em abuso sexual e corpo estranho.',
+        'Lesão ulcerada, vegetante ou que sangra no colo ou na vulva: biópsia.',
+        'Candidíase de repetição (4 ou mais por ano): investigar diabetes e HIV.'
+      ]},
+
+      { tipo:'lista', titulo:'Critérios diagnósticos', itens:[
+        '*pH vaginal:* normal 3,8–4,5. Acima de 4,5 = vaginose ou tricomoníase; abaixo de 4,5 com sintomas = candidíase.',
+        '*Teste das aminas (KOH 10%):* odor de peixe = vaginose (às vezes tricomoníase).',
+        '*Microscopia a fresco:* clue cells (vaginose), hifas e esporos (candidíase), protozoário móvel (tricomoníase).',
+        '*Vaginose — Amsel:* 3 de 4 — corrimento homogêneo, pH > 4,5, aminas positivas, clue cells.',
+        'Sem microscopia nem pH, o PCDT orienta tratar pelo aspecto clínico.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*pH vaginal e teste das aminas* na consulta.',
+        '*Bacterioscopia ou microscopia a fresco* se disponível.',
+        '*Pesquisa de gonococo e clamídia* por biologia molecular na cervicite, se disponível.',
+        '*Testes rápidos* de HIV, sífilis e hepatites B e C sempre que houver IST.',
+        '*Glicemia* na candidíase de repetição.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Miconazol creme 2%', dose:'1 aplicador vaginal à noite por 7 dias', via:'Vaginal', obs:'*Candidíase*, 1ª opção do PCDT, inclusive gestante. Alternativa: nistatina 100.000 UI vaginal à noite por 14 dias.' },
+        { droga:'Fluconazol 150 mg', dose:'150 mg dose única', via:'VO', obs:'Candidíase, 2ª opção. *Contraindicado na gestação e lactação.* Alternativa: itraconazol 200 mg de 12/12 h por 1 dia.' },
+        { droga:'Fluconazol — candidíase recorrente', dose:'150 mg nos dias 1, 4 e 7; depois 150 mg 1x/semana por 6 meses', via:'VO', obs:'Indução e manutenção para 4 ou mais episódios por ano.' },
+        { droga:'Metronidazol 250 mg', dose:'2 comprimidos (500 mg) de 12/12 h por 7 dias', via:'VO', obs:'*Vaginose* (inclusive gestante e lactante). Também serve para tricomoníase. Sem álcool até 24 h após.' },
+        { droga:'Metronidazol gel vaginal 100 mg/g', dose:'1 aplicador vaginal à noite por 5 dias', via:'Vaginal', obs:'Vaginose, alternativa ao oral.' },
+        { droga:'Clindamicina', dose:'300 mg de 12/12 h por 7 dias', via:'VO', obs:'Vaginose, 2ª opção.' },
+        { droga:'Metronidazol 400 mg', dose:'5 comprimidos (2 g) dose única', via:'VO', obs:'*Tricomoníase*, 1ª opção (inclusive gestante). Tratar o parceiro igual.' },
+        { droga:'Ceftriaxona 500 mg', dose:'500 mg dose única', via:'IM', obs:'*Cervicite* — gonococo.' },
+        { droga:'Azitromicina 500 mg', dose:'2 comprimidos (1 g) dose única', via:'VO', obs:'Cervicite — clamídia. Alternativa: doxiciclina 100 mg de 12/12 h por 7 dias (não na gestante).' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Tratar o parceiro na candidíase ou na vaginose — não são IST (só parceiro sintomático).',
+        'Fluconazol oral na gestante ou lactante.',
+        'Dar metronidazol sem avisar sobre o álcool (efeito antabuse).',
+        'Ducha vaginal: piora a vaginose e aumenta o risco de DIP.',
+        'Tratar cervicite só com um antibiótico — gonococo e clamídia vão juntos.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'Corrimento vaginal é tratamento ambulatorial com *alta* da consulta. Manter o tratamento durante a menstruação e suspender as relações sexuais até o fim. Tricomoníase e cervicite exigem tratar as parcerias, de preferência presencialmente, com testagem para sífilis, HIV e hepatites. Retornar se os sintomas persistirem depois do tratamento. Vaginose recorrente: metronidazol por 10 a 14 dias e encaminhar. *Interna* apenas quem tem DIP com critério de internação ou choque tóxico.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'A fita de pH custa centavos e resolve metade do diagnóstico na hora.',
+        'Corrimento fétido e escuro: procure um tampão esquecido antes de prescrever antibiótico.',
+        'Tricomoníase pode alterar o preventivo: repetir a citologia em 3 meses se vier alterada.',
+        'Toda IST é evento-sentinela — ofereça os testes rápidos na mesma consulta.'
+      ]}
+    ] },
+
+  { id:'ulcera-genital', titulo:'Úlcera genital: sífilis, herpes e cancroide', categoria:'obstetricia', gravidade:'rotina',
+    resumo:'Fluxograma do PCDT: vesículas tratam herpes; úlcera sem laboratório trata sífilis e cancroide juntos; lesão com mais de 4 semanas vai para biópsia.',
+    tags:['ulcera genital','ferida genital','sifilis','cancro duro','herpes genital','cancroide','cancro mole','linfogranuloma venereo','donovanose','aciclovir','penicilina benzatina','azitromicina','ist'],
+    fonte:'Ministério da Saúde — PCDT IST (2022) · CDC — STI Treatment Guidelines (2021) · UpToDate — Approach to genital ulcers',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Qualquer ferida, erosão ou vesícula na genitália, períneo ou região anal, com ou sem íngua na virilha.' },
+      { rotulo:'Prioridade',    valor:'*Teste rápido de sífilis e HIV* na consulta. Sem laboratório, a úlcera é tratada como IST.' },
+      { rotulo:'Meta',          valor:'Tratar no mesmo atendimento, tratar a parceria e notificar a sífilis.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta (PCDT 2022)', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Queixa de úlcera genital',
+          nota:'Fatores de risco: menos de 30 anos, parcerias novas ou múltiplas, parceria com IST, IST prévia, preservativo irregular' },
+        { tipo:'decisao', texto:'IST é a causa provável?', ramos:[
+          { rotulo:'Não', texto:'Investigar outras causas: trauma, Behçet, Crohn, farmacodermia, câncer, úlcera de Lipschütz' },
+          { rotulo:'Sim', texto:'Seguir' }
+        ]},
+        { tipo:'decisao', texto:'A lesão tem mais de 4 semanas?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Biópsia* + tratar sífilis e cancroide, investigar donovanose e LGV',
+            meds:['Benzilpenicilina benzatina', 'Azitromicina 500 mg'] },
+          { rotulo:'Não', texto:'Olhar se há vesículas' }
+        ]},
+        { tipo:'decisao', texto:'Vesículas agrupadas ou lesões vesiculosas ativas?', ramos:[
+          { rotulo:'Sim', texto:'*Herpes genital:* aciclovir',
+            nota:'Primeiro episódio 7–10 dias; recidiva 5 dias, começando no pródromo',
+            meds:['Aciclovir 200 mg'] },
+          { rotulo:'Não', texto:'*Tratar sífilis e cancroide juntos*',
+            nota:'Penicilina benzatina 2,4 milhões UI IM + azitromicina 1 g VO, dose única. Com laboratório (campo escuro, Gram), tratar o agente achado',
+            meds:['Benzilpenicilina benzatina', 'Azitromicina 500 mg'] }
+        ]},
+        { tipo:'fim', rotulo:'Sempre', texto:'Testar HIV, sífilis e hepatites · tratar parcerias · notificar sífilis · retorno em 7 dias' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        '*Sífilis primária:* úlcera única, indolor, de bordas endurecidas e fundo limpo, com íngua indolor; some sozinha em semanas.',
+        '*Herpes:* vesículas agrupadas que viram erosões dolorosas, ardor e prurido antes; primo-infecção com febre, disúria e íngua dolorosa.',
+        '*Cancroide:* úlceras múltiplas, dolorosas, de fundo sujo e bordas moles; íngua dolorosa que pode fistulizar por orifício único.',
+        '*Linfogranuloma venéreo:* lesão inicial fugaz e, semanas depois, íngua volumosa que fistuliza por múltiplos orifícios; proctite no sexo anal.',
+        '*Donovanose:* úlcera vermelho-viva, indolor, que sangra fácil e cresce devagar.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        'Gestante com úlcera: sífilis até prova em contrário — penicilina benzatina na hora.',
+        'Retenção urinária ou cefaleia com rigidez de nuca no herpes primário: internar.',
+        'Lesão com mais de 4 semanas, vegetante ou em idosa: biópsia (câncer).',
+        'Imunossuprimida com herpes extenso: aciclovir EV.',
+        'Úlcera genital em criança: investigar abuso sexual.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Teste rápido de sífilis* (treponêmico) + VDRL para seguimento.',
+        '*Testes rápidos* de HIV e hepatites B e C.',
+        '*Microscopia de campo escuro* (sífilis) ou Gram (cancroide) se o serviço tiver.',
+        '*PCR para herpes* na dúvida, se disponível.',
+        '*Biópsia* se mais de 4 semanas ou aspecto atípico.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Benzilpenicilina benzatina', dose:'2,4 milhões UI (1,2 milhão em cada glúteo) dose única', via:'IM', obs:'Sífilis recente (primária, secundária, latente < 1 ano). Tardia: 2,4 milhões UI por semana por 3 semanas.' },
+        { droga:'Azitromicina 500 mg', dose:'2 comprimidos (1 g) dose única', via:'VO', obs:'*Cancroide*, 1ª opção. Alternativa: ceftriaxona 250 mg IM dose única ou ciprofloxacino 500 mg de 12/12 h por 3 dias (não na gestante).' },
+        { droga:'Aciclovir 200 mg', dose:'Primeiro episódio: 2 comprimidos (400 mg) de 8/8 h por 7–10 dias · recidiva: 400 mg de 8/8 h por 5 dias', via:'VO', obs:'Começar o mais cedo possível. Supressão (6 ou mais episódios/ano): 400 mg de 12/12 h por até 6 meses.' },
+        { droga:'Aciclovir EV', dose:'5–10 mg/kg de 8/8 h por 5–7 dias', via:'EV', obs:'Herpes extenso em imunossuprimida ou complicado (meningite, retenção).' },
+        { droga:'Doxiciclina', dose:'100 mg de 12/12 h por 21 dias', via:'VO', obs:'*Linfogranuloma venéreo*, 1ª opção. Na gestante: azitromicina 1 g 1x/semana por 3 semanas.' },
+        { droga:'Azitromicina — donovanose', dose:'1 g 1x/semana por pelo menos 3 semanas, até cicatrizar', via:'VO', obs:'Alternativa: doxiciclina 100 mg de 12/12 h por pelo menos 21 dias.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Esperar o resultado do exame para tratar quando a suspeita de IST é forte e não há laboratório.',
+        'Trocar a penicilina benzatina na gestante alérgica: o caminho é dessensibilizar.',
+        'Usar aciclovir tópico isolado — não funciona.',
+        'Esquecer de notificar a sífilis e de tratar a parceria.',
+        'Drenar com bisturi a íngua flutuante do cancroide ou do LGV: aspirar com agulha.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'Úlcera genital é tratamento ambulatorial, com *alta* da consulta e retorno em 7 dias para rever a lesão. Medidas locais: lavar com soro fisiológico ou água e sabão, analgesia oral. Sífilis: notificação compulsória e controle com VDRL trimestral (mensal na gestante); avisar sobre a reação de Jarisch-Herxheimer (febre e mal-estar nas primeiras 24 h, que não é alergia). Parcerias: tratar sempre no cancroide e no LGV, e na sífilis conforme o PCDT. *Internar* o herpes primário com retenção urinária, meningite ou disseminação, e a imunossuprimida com lesões extensas.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Úlcera indolor é sífilis até prova em contrário; úlcera dolorosa é herpes ou cancroide.',
+        'Toda úlcera genital aumenta muito o risco de pegar e passar HIV — teste na hora.',
+        'Herpes não causa câncer e a transmissão ocorre mesmo sem lesão: converse sobre isso, reduz a angústia.'
+      ]}
+    ] },
+
+  { id:'bartholinite', titulo:'Bartholinite e abscesso de Bartholin', categoria:'obstetricia', gravidade:'rotina',
+    resumo:'Abscesso doloroso no terço inferior do grande lábio: drenar com cateter de Word ou marsupialização; antibiótico só com celulite, febre ou imunossupressão.',
+    tags:['bartholin','bartholinite','abscesso de bartholin','cisto de bartholin','cateter de word','marsupializacao','drenagem','vulva','nodulo vulvar'],
+    fonte:'FEBRASGO — Afecções benignas da vulva · UpToDate — Bartholin gland masses and abscess · ACOG — Doenças vulvares',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Massa dolorosa, quente e flutuante na *posição de 4 ou 8 horas* do intróito, dificultando sentar e andar.' },
+      { rotulo:'Prioridade',    valor:'*Drenar* o abscesso; o cisto sem sintoma não precisa de nada.' },
+      { rotulo:'Meta',          valor:'Alívio na hora e menor chance de recidiva — por isso cateter de Word ou marsupialização.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Nódulo na parte inferior do grande lábio' },
+        { tipo:'decisao', texto:'É cisto ou abscesso?', ramos:[
+          { rotulo:'Cisto indolor', cor:'ok', texto:'*Não drenar*: banho de assento e ginecologia se crescer ou incomodar' },
+          { rotulo:'Abscesso: dor, calor, flutuação', texto:'*Drenagem*' }
+        ]},
+        { tipo:'passo', rotulo:'Drenagem', texto:'*Cateter de Word* (fica 4 semanas) ou marsupialização',
+          nota:'Anestesia local com lidocaína. Sem cateter: incisão na face mucosa, lavar a loja e encaminhar — a incisão simples recidiva muito',
+          meds:['Lidocaína 2% sem vasoconstritor'] },
+        { tipo:'decisao', texto:'Tem celulite ao redor, febre, gestação, imunossupressão ou recidiva?', ramos:[
+          { rotulo:'Sim', texto:'*Antibiótico* + cultura do pus e pesquisa de gonococo e clamídia',
+            meds:['Amoxicilina + clavulanato'] },
+          { rotulo:'Não', cor:'ok', texto:'Só analgesia e banho de assento' }
+        ]},
+        { tipo:'fim', rotulo:'Alta', texto:'Analgesia, banho de assento 2–3 vezes ao dia e retorno ginecológico',
+          nota:'Mais de 40 anos com massa nova ou endurecida: biópsia (carcinoma da glândula de Bartholin)' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        'Nódulo unilateral no terço inferior do grande lábio, entre 4 e 8 horas.',
+        'Dor que piora ao sentar e ao andar.',
+        'Pele vermelha e quente com flutuação; pode drenar sozinho.',
+        'Febre só quando há celulite associada.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        'Celulite que se espalha pela vulva ou períneo, crepitação ou dor desproporcional: *fasciíte necrotizante*.',
+        'Febre alta com toxemia, sobretudo em diabética.',
+        'Massa endurecida, fixa ou nova depois dos 40 anos: biópsia.',
+        'Recidivas frequentes: marsupialização ou exérese eletiva.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        'Diagnóstico clínico — nenhum exame é necessário no abscesso simples.',
+        '*Cultura do pus e pesquisa de gonococo e clamídia* se for usar antibiótico ou houver risco de IST.',
+        '*Glicemia* na recidiva ou com celulite.',
+        '*Biópsia* acima dos 40 anos ou se a massa for atípica.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Lidocaína 2% sem vasoconstritor', dose:'2–5 mL infiltrados na mucosa sobre o abscesso', via:'Infiltração', obs:'Anestesia local antes da incisão.' },
+        { droga:'Amoxicilina + clavulanato', dose:'875/125 mg de 12/12 h por 7 dias', via:'VO', obs:'Só com celulite, febre, gestação, imunossupressão ou recidiva. Risco de MRSA: sulfametoxazol + trimetoprima 800/160 mg de 12/12 h.' },
+        { droga:'Ibuprofeno', dose:'600 mg de 8/8 h por 3–5 dias', via:'VO', obs:'Analgesia.' },
+        { droga:'Dipirona', dose:'1 g de 6/6 h se dor', via:'VO', obs:'' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Drenar cisto assintomático.',
+        'Tratar abscesso só com antibiótico, sem drenar.',
+        'Fazer a incisão na face cutânea do lábio: a incisão é na mucosa, por dentro do anel himenal.',
+        'Dar alta de massa nova em mulher acima de 40 anos sem encaminhar para biópsia.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Alta* depois da drenagem, com analgesia, banho de assento 2 a 3 vezes ao dia a partir do dia seguinte e retorno ginecológico (retirada do cateter de Word em cerca de 4 semanas, ou marsupialização eletiva na recidiva). *Internar* se houver celulite extensa, sinais sistêmicos importantes, diabetes descompensado ou suspeita de fasciíte necrotizante.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'A incisão simples resolve a dor hoje, mas cerca de 1 em cada 3 volta — encaminhe para cateter ou marsupialização.',
+        'Se o serviço não tem cateter de Word, uma sonda de Foley fina com o balão cheio com 2–3 mL faz o mesmo papel.',
+        'Abscesso de Bartholin não é IST na maioria dos casos — mas, se houver risco, ofereça os testes.'
+      ]}
+    ] },
+
+  { id:'violencia-sexual', titulo:'Violência sexual: atendimento e profilaxias', categoria:'obstetricia', gravidade:'urgencia',
+    resumo:'Acolher sem exigir boletim de ocorrência; em até 72 h, PEP do HIV, profilaxia de IST, hepatite B e contracepção de emergência; notificar em 24 h e informar o direito ao aborto legal.',
+    tags:['violencia sexual','estupro','abuso sexual','pep','profilaxia pos-exposicao','hiv','levonorgestrel','contracepcao de emergencia','notificacao','aborto legal','ist','hepatite b','dolutegravir'],
+    fonte:'Ministério da Saúde — PCDT PEP (2024) e PCDT IST (2022) · Norma Técnica Prevenção e tratamento dos agravos resultantes da violência sexual (2012) · Lei 12.845/2013 · Lei 13.931/2019 · Decreto 7.958/2013',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Relato ou suspeita de violência sexual, em qualquer idade e gênero — inclusive quando a pessoa chega por outra queixa.' },
+      { rotulo:'Prioridade',    valor:'*Acolher, tratar lesões e iniciar as profilaxias* — a PEP do HIV é ideal nas primeiras 2 h e só vale até 72 h.' },
+      { rotulo:'Meta',          valor:'Nenhuma profilaxia perdida por exigência burocrática; notificação feita e seguimento marcado.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Pessoa em situação de violência sexual',
+          nota:'Sala reservada, escuta sem julgamento, consentimento para cada etapa. *Não exigir boletim de ocorrência*' },
+        { tipo:'passo', rotulo:'Primeiro', texto:'Tratar lesões graves e avaliar risco imediato',
+          nota:'Trauma genital com sangramento ativo: ginecologia. Risco de morte ou de voltar ao agressor: serviço social e rede de proteção' },
+        { tipo:'decisao', texto:'Quanto tempo desde a exposição?', ramos:[
+          { rotulo:'Até 72 h', cor:'perigo', texto:'*PEP do HIV* por 28 dias + profilaxia de IST + hepatite B + contracepção de emergência',
+            nota:'Testes rápidos antes da 1ª dose, sem atrasar o início',
+            meds:['Tenofovir 300 mg + lamivudina 300 mg', 'Dolutegravir 50 mg'] },
+          { rotulo:'72 h a 5 dias', texto:'Sem PEP do HIV · profilaxia de IST, hepatite B (até 14 dias) e contracepção de emergência',
+            meds:['Levonorgestrel 1,5 mg'] },
+          { rotulo:'Mais de 5 dias', texto:'Testagem, profilaxia de IST, vacinas e seguimento · beta-HCG se houver atraso' }
+        ]},
+        { tipo:'passo', rotulo:'Profilaxia de IST', texto:'*Penicilina benzatina + ceftriaxona + azitromicina + metronidazol*',
+          nota:'O metronidazol pode ser adiado se usar PEP e contracepção de emergência (náusea). Não usar no 1º trimestre',
+          meds:['Benzilpenicilina benzatina', 'Ceftriaxona 500 mg', 'Azitromicina 500 mg', 'Metronidazol 500 mg'] },
+        { tipo:'passo', rotulo:'Proteção legal', texto:'*Notificação compulsória imediata* (SINAN) e comunicação à polícia em 24 h na violência contra a mulher',
+          nota:'Criança e adolescente: conselho tutelar. Pessoa idosa: órgão de proteção. Informar o direito ao aborto legal' },
+        { tipo:'fim', rotulo:'Seguimento', texto:'Retorno em 2 semanas e testagem em 30 e 90 dias · saúde mental e serviço social' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        'Relato direto de violência sexual, inclusive por parceiro íntimo.',
+        'Lesão genital ou anal sem explicação coerente.',
+        'IST, gestação ou corrimento em criança ou adolescente.',
+        'Pessoa que chega com acompanhante que não deixa ela falar sozinha.',
+        'Amnésia ou rebaixamento após consumo de bebida ou droga oferecida por terceiros.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        'Mais de 72 h: a PEP do HIV não tem mais indicação — não perca a janela por burocracia.',
+        'Trauma genital ou anal com sangramento ou lesão profunda: avaliação cirúrgica.',
+        'Ideação suicida ou risco de nova violência: proteção imediata.',
+        'Criança ou adolescente: comunicação imediata ao conselho tutelar.',
+        'Rebaixamento após "boa noite, Cinderela": investigar intoxicação.'
+      ]},
+
+      { tipo:'lista', titulo:'O que a lei garante', itens:[
+        '*Lei 12.845/2013:* atendimento integral, imediato e obrigatório em todo hospital do SUS, incluindo profilaxias e contracepção de emergência.',
+        '*Boletim de ocorrência não é exigido* para atendimento nem para o aborto legal.',
+        '*Notificação compulsória imediata* (até 24 h) da violência sexual ao SINAN.',
+        '*Lei 13.931/2019:* casos de violência contra a mulher atendidos em serviço de saúde são comunicados à autoridade policial em 24 h.',
+        '*Aborto legal* (art. 128 do Código Penal): gravidez resultante de estupro, sem necessidade de boletim de ocorrência.',
+        '*Decreto 7.958/2013:* serviços de referência podem colher vestígios com consentimento, para a perícia.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Testes rápidos:* HIV, sífilis, hepatites B e C — na entrada, sem atrasar a PEP.',
+        '*Beta-HCG* na pessoa que pode engravidar.',
+        '*Anti-HBs* se houver dúvida sobre a vacinação de hepatite B.',
+        '*Função renal e hepática* se for usar PEP e houver doença prévia.',
+        '*Seguimento:* HIV em 30 e 90 dias; sífilis e hepatites conforme o PCDT.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Tenofovir 300 mg + lamivudina 300 mg', dose:'1 comprimido 1x/dia por 28 dias', via:'VO', obs:'PEP do HIV, até 72 h. Mesmo esquema na gestante.' },
+        { droga:'Dolutegravir 50 mg', dose:'1 comprimido 1x/dia por 28 dias', via:'VO', obs:'Junto com tenofovir + lamivudina. Liberado na gestação em qualquer idade gestacional (PCDT PEP 2024).' },
+        { droga:'Benzilpenicilina benzatina', dose:'2,4 milhões UI (1,2 milhão em cada glúteo) dose única', via:'IM', obs:'Sífilis. Abaixo de 45 kg: 50.000 UI/kg (máx. 2,4 milhões).' },
+        { droga:'Ceftriaxona 500 mg', dose:'500 mg dose única', via:'IM', obs:'Gonorreia. Abaixo de 45 kg: 125 mg IM.' },
+        { droga:'Azitromicina 500 mg', dose:'2 comprimidos (1 g) dose única', via:'VO', obs:'Clamídia (e gonorreia, com a ceftriaxona). Abaixo de 45 kg: 20 mg/kg (máx. 1 g).' },
+        { droga:'Metronidazol 500 mg', dose:'4 comprimidos (2 g) dose única', via:'VO', obs:'Tricomoníase. Pode ser adiado se em PEP e contracepção de emergência. *Não no 1º trimestre.* Abaixo de 45 kg: 15 mg/kg/dia em 3 doses por 7 dias.' },
+        { droga:'Levonorgestrel 1,5 mg', dose:'1 comprimido dose única (ou 2 de 0,75 mg juntos)', via:'VO', obs:'Até 5 dias, quanto antes melhor. Dispensável se usa método eficaz ou já está grávida.' },
+        { droga:'Vacina hepatite B', dose:'1ª dose (ou completar o esquema)', via:'IM', obs:'Não vacinada ou esquema incompleto.' },
+        { droga:'Imunoglobulina anti-hepatite B (IGHAHB)', dose:'0,06 mL/kg', via:'IM', obs:'Suscetível + agressor HBsAg reagente ou de alto risco. De preferência em 24 h, no máximo 14 dias. Em local diferente da vacina.' },
+        { droga:'Ondansetrona', dose:'4–8 mg de 8/8 h se náusea', via:'VO', obs:'A soma de PEP e levonorgestrel dá náusea com frequência.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Exigir boletim de ocorrência ou exame do IML antes de atender ou de dar as profilaxias.',
+        'Atrasar a PEP esperando resultado de exame do agressor ou da vítima.',
+        'Fazer perguntas que culpabilizam ("o que você estava vestindo", "por que estava lá").',
+        'Dar metronidazol no 1º trimestre da gestação.',
+        'Dar alta sem notificação, sem retorno marcado e sem rede de apoio acionada.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'A maioria tem *alta* no mesmo atendimento, com os 28 dias de PEP dispensados (ou o kit inicial e o encaminhamento ao serviço de referência), receita de antiemético, retorno em 2 semanas para adesão e efeitos adversos, testagem de HIV em 30 e 90 dias, vacina de hepatite B completada, vacina de HPV conforme o calendário do PNI, e encaminhamento para saúde mental e serviço social. *Internar* se houver trauma que exige cirurgia, intoxicação, risco de suicídio ou ausência de lugar seguro para ir. Gravidez resultante do estupro: encaminhar ao serviço de aborto legal se for o desejo da pessoa — não há exigência de boletim de ocorrência nem de autorização judicial.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Profilaxia primeiro, papelada depois: a PEP iniciada em 2 h vale mais que qualquer formulário.',
+        'Registre o relato com as palavras da pessoa, entre aspas, e descreva as lesões com tamanho e local.',
+        'Ofereça a coleta de vestígios antes do banho e da troca de roupa, se o serviço fizer — sem condicionar o atendimento a ela.',
+        'Ofereça a vacina de hepatite B a todos: muitos adultos não completaram o esquema.'
+      ]}
+    ] },
+
+  { id:'contracepcao-emergencia', titulo:'Contracepção de emergência', categoria:'obstetricia', gravidade:'rotina',
+    resumo:'Levonorgestrel 1,5 mg dose única até 5 dias após a relação, quanto antes melhor; o DIU de cobre até 5 dias é o método mais eficaz.',
+    tags:['contracepcao de emergencia','pilula do dia seguinte','levonorgestrel','diu de cobre','yuzpe','relacao desprotegida','preservativo rompido','anticoncepcao'],
+    fonte:'Ministério da Saúde — Protocolo para utilização do levonorgestrel e PCDT IST (2022) · FEBRASGO — Anticoncepção de emergência · FSRH — Emergency contraception (2017, atualização 2023)',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Relação sem método, preservativo rompido, esquecimento de pílulas, atraso da injeção, expulsão do DIU ou violência sexual.' },
+      { rotulo:'Prioridade',    valor:'*Dar na hora* — a eficácia cai a cada dia; não é preciso exame nem beta-HCG para prescrever.' },
+      { rotulo:'Meta',          valor:'Prevenir a gestação e sair com um método regular definido.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Relação desprotegida ou falha do método' },
+        { tipo:'decisao', texto:'Há quanto tempo?', ramos:[
+          { rotulo:'Até 5 dias (120 h)', texto:'*Levonorgestrel 1,5 mg dose única* agora',
+            nota:'Mais eficaz nas primeiras 72 h. DIU de cobre em até 5 dias é ainda mais eficaz (> 99%)',
+            meds:['Levonorgestrel 1,5 mg'] },
+          { rotulo:'Mais de 5 dias', cor:'ok', texto:'Sem indicação — beta-HCG se a menstruação atrasar' }
+        ]},
+        { tipo:'decisao', texto:'Violência sexual?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Pacote completo* de profilaxias', ir:'violencia-sexual' },
+          { rotulo:'Não', texto:'Oferecer testagem de IST e definir método regular' }
+        ]},
+        { tipo:'fim', rotulo:'Alta', texto:'Começar método regular no mesmo dia (com preservativo por 7 dias) · beta-HCG se atrasar mais de 7 dias' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando indicar', itens:[
+        'Relação sem nenhum método.',
+        'Preservativo que rompeu ou saiu.',
+        'Esquecimento de 2 ou mais pílulas combinadas na 1ª semana da cartela, ou atraso de mais de 3 h da minipílula.',
+        'Injetável mensal ou trimestral atrasado além do prazo de tolerância.',
+        'Expulsão do DIU ou violência sexual.'
+      ]},
+
+      { tipo:'alerta', titulo:'Atenção', itens:[
+        'Vomitou em até 3 h depois da dose: repetir.',
+        'Uso de indutor enzimático (carbamazepina, fenitoína, rifampicina, efavirenz): prefira o DIU de cobre.',
+        'Obesidade (IMC > 30): o levonorgestrel perde eficácia — DIU de cobre é a melhor opção.',
+        'Dor pélvica ou sangramento estranho depois: afastar gestação ectópica.',
+        'Uso repetido no mesmo ciclo diminui a eficácia: não é método de rotina.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Nenhum* é necessário para prescrever.',
+        '*Beta-HCG* só se houver atraso menstrual ou suspeita de gestação anterior — se positivo, o levonorgestrel não ajuda nem prejudica.',
+        '*Testes rápidos de IST* se a exposição foi de risco.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Levonorgestrel 1,5 mg', dose:'1 comprimido dose única', via:'VO', obs:'Até 5 dias. Alternativa do MS: 0,75 mg de 12/12 h (2 doses). Não é abortivo.' },
+        { droga:'DIU de cobre', dose:'Inserção em até 5 dias da relação', via:'Intrauterino', obs:'O mais eficaz e já fica como método. Disponível no SUS.' },
+        { droga:'Método de Yuzpe', dose:'4 comprimidos de 30 mcg EE + 150 mcg LNG, repetir em 12 h', via:'VO', obs:'Só se não houver levonorgestrel isolado: menos eficaz e mais náusea.' },
+        { droga:'Ondansetrona', dose:'4–8 mg', via:'VO', obs:'Se náusea.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Exigir beta-HCG, exame ginecológico ou autorização dos pais para a adolescente.',
+        'Recusar porque a paciente "já usou este mês".',
+        'Chamar de abortivo: o levonorgestrel atrasa a ovulação, não interrompe gestação.',
+        'Dar alta sem conversar sobre um método regular.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'Sempre *alta*, com a dose tomada na frente do profissional quando possível. Orientar: a próxima menstruação pode adiantar ou atrasar alguns dias; se atrasar mais de 7 dias, fazer beta-HCG. O método regular pode começar no mesmo dia (*quick start*), com preservativo por 7 dias. Adolescente tem direito ao atendimento e à prescrição sem a presença dos responsáveis. *Divergência:* a FSRH britânica sugere dobrar o levonorgestrel (3 mg) com peso acima de 70 kg ou IMC acima de 26 e com indutores enzimáticos; o Ministério da Saúde mantém 1,5 mg — nesses casos, ofereça o DIU de cobre.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Tenha o comprimido na unidade: dar na hora é melhor que mandar comprar.',
+        'Ofereça também os testes rápidos de IST — a mesma relação que pede contracepção de emergência pode ter transmitido infecção.',
+        'Quem precisou de contracepção de emergência é a candidata ideal a um método de longa duração (DIU ou implante).'
+      ]}
+    ] },
+
+  { id:'complicacoes-diu', titulo:'Complicações do DIU', categoria:'obstetricia', gravidade:'rotina',
+    resumo:'Fio que sumiu, dor, sangramento, DIU com gestação e DIU com DIP: beta-HCG, ultrassom e saber quando retirar e quando deixar.',
+    tags:['diu','diu de cobre','siu','mirena','fio do diu','perfuracao uterina','expulsao do diu','diu e gestacao','diu e dip','retirada do diu','actinomyces'],
+    fonte:'FEBRASGO — Dispositivo intrauterino (Manual de Anticoncepção) · Ministério da Saúde — Manual técnico para inserção de DIU (2018) · CDC — US Selected Practice Recommendations (2024) · UpToDate — Intrauterine contraception: management of side effects and complications',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Usuária de DIU de cobre ou SIU de levonorgestrel com fio não encontrado, dor pélvica, sangramento, febre ou atraso menstrual.' },
+      { rotulo:'Prioridade',    valor:'*Beta-HCG* em todas e *ultrassom transvaginal* para localizar o dispositivo.' },
+      { rotulo:'Meta',          valor:'Afastar gestação (inclusive ectópica), perfuração e DIP, e garantir contracepção enquanto isso.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Usuária de DIU com queixa' },
+        { tipo:'decisao', texto:'Beta-HCG?', ramos:[
+          { rotulo:'Positivo', cor:'perigo', texto:'*Ultrassom já:* afastar ectópica',
+            nota:'Gestação intrauterina com fio visível e < 12 semanas: retirar o DIU (reduz abortamento e infecção). Fio não visível: obstetra',
+            ir:'sangramento-gestacao' },
+          { rotulo:'Negativo', texto:'Seguir pela queixa' }
+        ]},
+        { tipo:'decisao', texto:'Qual a queixa?', ramos:[
+          { rotulo:'Fio não visível', texto:'*Ultrassom transvaginal*',
+            nota:'No útero: fio recolhido, mantém. Fora do útero: raio-X de abdome — perfuração, retirada por laparoscopia eletiva. Não achou em lugar nenhum: expulsão' },
+          { rotulo:'Dor + febre ou corrimento', cor:'perigo', texto:'*DIP:* tratar com o DIU no lugar', ir:'dip' },
+          { rotulo:'DIU no colo ou parcialmente expulso', texto:'*Retirar* e oferecer novo método',
+            nota:'Contracepção de emergência se houve relação nos últimos 5 dias' },
+          { rotulo:'Sangramento ou cólica sem outra causa', cor:'ok', texto:'Anti-inflamatório e reavaliar posição no ultrassom',
+            meds:['Ibuprofeno'] }
+        ]},
+        { tipo:'fim', rotulo:'Sempre', texto:'Preservativo ou outro método até confirmar a posição do DIU' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        '*Expulsão:* mais comum no 1º ano e nos primeiros meses; parceiro sente o fio ou a haste.',
+        '*Perfuração:* geralmente na inserção (1 a 2 em 1.000), com dor que não passa e fio sumido.',
+        '*DIP:* risco maior nas 3 primeiras semanas após a inserção.',
+        '*Gestação com DIU:* rara, mas com proporção maior de ectópica.',
+        '*Sangramento aumentado e cólica:* esperado nos primeiros meses do DIU de cobre.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        'Beta-HCG positivo em usuária de DIU: ectópica até prova em contrário.',
+        'Dor intensa com peritonite: perfuração com lesão de alça ou abscesso.',
+        'Febre com dor pélvica: DIP ou abortamento séptico.',
+        'Sangramento volumoso com anemia: sangramento uterino anormal.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Beta-HCG* sempre.',
+        '*Ultrassom transvaginal* para localizar o DIU.',
+        '*Raio-X de abdome* se o DIU não está no útero e não houve expulsão percebida.',
+        '*Hemograma e PCR* se houver febre ou dor.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Ibuprofeno', dose:'400–600 mg de 8/8 h por 5 dias', via:'VO', obs:'Cólica e sangramento aumentado do DIU de cobre.' },
+        { droga:'Levonorgestrel 1,5 mg', dose:'1 comprimido dose única', via:'VO', obs:'DIU expulso ou mal posicionado com relação nos últimos 5 dias.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Retirar o DIU de rotina na DIP leve a moderada — e, se for retirar, só depois de duas doses do antibiótico.',
+        'Tentar retirar com instrumento às cegas na cavidade quando o fio não aparece — ultrassom primeiro.',
+        'Retirar por achado de Actinomyces no preventivo em mulher sem sintomas.',
+        'Liberar sem método de apoio enquanto a posição do DIU não foi confirmada.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'Quase sempre *alta*, com preservativo até a confirmação da posição e retorno ginecológico. Retirada no PS: com o fio visível, pinçar com pinça de Cheron e tracionar de forma contínua. DIU perfurado fora do útero é retirado por laparoscopia eletiva, salvo complicação aguda. *Internar* se houver DIP com critério de internação, abortamento infectado ou abdome agudo por perfuração.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Fio que sumiu quase sempre está enrolado no canal: o ultrassom resolve antes de qualquer pinça.',
+        'O SIU de levonorgestrel costuma reduzir o sangramento; o DIU de cobre aumenta nos primeiros meses — explique antes de pensar em complicação.'
+      ]}
+    ] },
+
+  { id:'mastite', titulo:'Mastite e abscesso mamário', categoria:'obstetricia', gravidade:'rotina',
+    resumo:'Na lactante: manter a amamentação, gelo e ibuprofeno; antibiótico se não melhora em 24 h ou há sinal sistêmico; abscesso confirmado no ultrassom é puncionado.',
+    tags:['mastite','mastite puerperal','abscesso mamario','ingurgitamento','amamentacao','lactante','cefalexina','mama vermelha','carcinoma inflamatorio','mastite nao lactacional'],
+    fonte:'Academy of Breastfeeding Medicine — Protocolo 36: Espectro da mastite (2022) · Ministério da Saúde — Saúde da Criança: aleitamento materno (2015) · FEBRASGO — Mastites · UpToDate — Lactational mastitis',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Área dolorosa, vermelha e endurecida na mama, com ou sem febre, sobretudo nas primeiras semanas de amamentação.' },
+      { rotulo:'Prioridade',    valor:'*Não suspender a amamentação.* Separar inflamação (a maioria) de infecção e de abscesso.' },
+      { rotulo:'Meta',          valor:'Melhora em 48 h e amamentação preservada.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Mama dolorosa, vermelha e endurecida' },
+        { tipo:'decisao', texto:'Está amamentando?', ramos:[
+          { rotulo:'Não', cor:'perigo', texto:'*Mastite não lactacional:* tabagismo, periareolar, diabetes',
+            nota:'Sem resposta em 1–2 semanas ou pele em casca de laranja: mamografia e biópsia (carcinoma inflamatório)',
+            meds:['Amoxicilina + clavulanato'] },
+          { rotulo:'Sim', texto:'Seguir' }
+        ]},
+        { tipo:'passo', rotulo:'Todas', texto:'*Amamentar sob livre demanda*, gelo, ibuprofeno e ajuste da pega',
+          nota:'Sem massagem forte nem extração exagerada — pioram a inflamação',
+          meds:['Ibuprofeno'] },
+        { tipo:'decisao', texto:'Sinal sistêmico ou sem melhora em 12–24 h?', ramos:[
+          { rotulo:'Sim', texto:'*Antibiótico* por 10–14 dias',
+            meds:['Cefalexina'] },
+          { rotulo:'Não', cor:'ok', texto:'Só medidas de suporte e reavaliar em 24–48 h' }
+        ]},
+        { tipo:'decisao', texto:'Massa flutuante ou sem melhora em 48–72 h de antibiótico?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Ultrassom:* abscesso → punção aspirativa guiada (repetir se preciso) ou drenagem',
+            nota:'Mandar o pus para cultura. A amamentação continua na outra mama e, se a incisão estiver longe da aréola, também nesta' },
+          { rotulo:'Não', cor:'ok', texto:'Completar o tratamento' }
+        ]},
+        { tipo:'fim', rotulo:'Alta', texto:'Retorno em 48–72 h · internar se sepse ou sem resposta' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        'Área da mama vermelha e dolorosa em cunha — geralmente unilateral, na lactante.',
+        'Febre, calafrio e mal-estar "de gripe".',
+        'Gatilhos: fissura no mamilo, pega ruim, mamadas espaçadas ou desmame brusco.',
+        '*Abscesso:* massa flutuante, dor localizada intensa, febre que não cede com antibiótico.',
+        '*Não lactacional:* fumante, abscesso periareolar recorrente, fístula.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        'Sepse, hipotensão ou necrose de pele: internar com antibiótico EV.',
+        'Sem melhora em 48–72 h de antibiótico: abscesso ou germe resistente — ultrassom e cultura.',
+        'Mama vermelha e endurecida *sem* amamentação e sem resposta: carcinoma inflamatório.',
+        'Bilateral com febre alta: pensar em estreptococo.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        'Diagnóstico clínico na mastite simples.',
+        '*Cultura do leite* se não melhora com antibiótico, recorrência, internação ou risco de MRSA.',
+        '*Ultrassom de mama* na suspeita de abscesso ou sem resposta em 48–72 h.',
+        '*Hemograma e PCR* se houver sinal sistêmico.',
+        '*Mamografia e biópsia* na mastite não lactacional que não resolve.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Cefalexina', dose:'500 mg de 6/6 h por 10–14 dias', via:'VO', obs:'1ª opção na lactante. Compatível com a amamentação.' },
+        { droga:'Clindamicina', dose:'300 mg de 6/6 h por 10–14 dias', via:'VO', obs:'Alergia a betalactâmico ou risco de MRSA.' },
+        { droga:'Amoxicilina + clavulanato', dose:'875/125 mg de 12/12 h por 10–14 dias', via:'VO', obs:'Mastite não lactacional ou periareolar (cobre anaeróbios).' },
+        { droga:'Ibuprofeno', dose:'400–600 mg de 8/8 h', via:'VO', obs:'Anti-inflamatório compatível com a amamentação.' },
+        { droga:'Paracetamol', dose:'750 mg de 6/6 h se dor ou febre', via:'VO', obs:'' },
+        { droga:'Oxacilina', dose:'2 g de 4/4 h', via:'EV', obs:'Internada. Risco de MRSA ou sepse: vancomicina 15–20 mg/kg de 12/12 h.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Mandar suspender a amamentação: o esvaziamento é parte do tratamento e o leite não faz mal ao bebê.',
+        'Massagem vigorosa da mama ou bombear além do que o bebê mama.',
+        'Compressa quente prolongada — gelo funciona melhor para a inflamação.',
+        'Tratar abscesso só com antibiótico, sem punção ou drenagem.',
+        'Dar alta da mastite não lactacional sem seguimento: pode ser câncer.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Alta* com amamentação mantida, ajuste da pega, ibuprofeno e gelo, antibiótico quando indicado e retorno em 48 a 72 h. Encaminhar ao banco de leite ou à equipe de aleitamento. *Internar* se houver sepse, necrose, abscesso que exige drenagem cirúrgica, falha do antibiótico oral ou impossibilidade de cuidar do bebê. Na internação, mãe e bebê ficam juntos sempre que possível.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Mastite é mais doença de pega do que de bactéria: olhe uma mamada antes de prescrever.',
+        'O protocolo atual (2022) trocou "esvazie bem a mama e massageie" por "amamente normalmente, gelo e anti-inflamatório".',
+        'Abscesso hoje se trata com agulha guiada por ultrassom — muitas vezes sem bisturi.'
+      ]}
+    ] },
+
+  { id:'choque-toxico', titulo:'Síndrome do choque tóxico', categoria:'obstetricia', gravidade:'emergencia',
+    resumo:'Febre alta, eritrodermia e choque em quem usa tampão, coletor, tem ferida ou pós-parto: retirar o foco, ressuscitar e associar clindamicina ao betalactâmico e à vancomicina.',
+    tags:['choque toxico','sindrome do choque toxico','tampao','absorvente interno','coletor menstrual','estafilococo','estreptococo','eritrodermia','clindamicina','imunoglobulina','sepse'],
+    fonte:'CDC — Definição de caso de síndrome do choque tóxico (2011) · Surviving Sepsis Campaign (2021) · ILAS — Protocolo de sepse · UpToDate — Staphylococcal and streptococcal toxic shock syndrome',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Febre alta súbita, *eritema difuso tipo queimadura de sol*, vômito ou diarreia e hipotensão — em uso de tampão, coletor, diafragma, pós-parto, pós-aborto ou ferida.' },
+      { rotulo:'Prioridade',    valor:'*Procurar e retirar o foco* (tampão, corpo estranho, tampão nasal) junto com o pacote da sepse.' },
+      { rotulo:'Meta',          valor:'Foco retirado, antibiótico com clindamicina na 1ª hora e PAM ≥ 65.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Suspeita', texto:'Febre + eritrodermia + hipotensão',
+          nota:'A descamação das palmas e plantas só vem em 1–2 semanas: não espere por ela' },
+        { tipo:'passo', rotulo:'Já', texto:'*Exame especular* e retirada de tampão, coletor ou corpo estranho',
+          nota:'Também tampão nasal, ferida cirúrgica, queimadura, restos ovulares' },
+        { tipo:'passo', rotulo:'Sepse', texto:'Hemoculturas, lactato, *cristaloide 30 mL/kg* e noradrenalina para PAM ≥ 65',
+          meds:['Noradrenalina'], ir:'sepse' },
+        { tipo:'passo', rotulo:'Antibiótico', texto:'*Vancomicina + clindamicina + betalactâmico amplo* na 1ª hora',
+          nota:'A clindamicina corta a produção de toxina. Ajustar com a cultura: MSSA → oxacilina + clindamicina',
+          meds:['Vancomicina', 'Clindamicina', 'Piperacilina + tazobactam'] },
+        { tipo:'decisao', texto:'Foco de partes moles (dor desproporcional, crepitação, necrose)?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Cirurgia para desbridar* — estreptococo com fasciíte', ir:'fasciite-necrotizante' },
+          { rotulo:'Não', texto:'Manter tratamento e procurar o foco' }
+        ]},
+        { tipo:'decisao', texto:'Choque refratário?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Imunoglobulina EV* (sobretudo no estreptocócico)',
+            meds:['Imunoglobulina humana'] },
+          { rotulo:'Não', cor:'ok', texto:'Manter e descalonar com a cultura' }
+        ]},
+        { tipo:'fim', rotulo:'Destino', texto:'UTI' }
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        'Febre com hipotensão e eritema difuso em quem menstrua: pergunte pelo tampão e examine.',
+        'Dor desproporcional numa ferida ou membro: estreptococo com fasciíte — cirurgia.',
+        'Pós-parto ou pós-aborto com febre e choque: retenção de restos ou infecção uterina.',
+        'Confusão, oligúria e plaquetopenia: disfunção de múltiplos órgãos já instalada.',
+        'Piora rápida em horas: não espere hemocultura para agir.'
+      ]},
+
+      { tipo:'passos', titulo:'Conduta imediata', itens:[
+        'Examinar a vagina: retirar tampão, coletor ou corpo estranho.',
+        'Colher hemoculturas, lactato, hemograma, função renal e hepática, CPK e coagulograma.',
+        'Iniciar cristaloide 30 mL/kg se hipotensão ou lactato ≥ 4.',
+        'Administrar antibióticos na 1ª hora: vancomicina, clindamicina e betalactâmico amplo.',
+        'Iniciar noradrenalina para PAM ≥ 65 mmHg.',
+        'Acionar cirurgia se houver foco de partes moles ou restos uterinos.',
+        'Transferir para a UTI.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Clindamicina', dose:'900 mg de 8/8 h', via:'EV', obs:'*Antitoxina* — sempre junto, mesmo com germe sensível a outro antibiótico.' },
+        { droga:'Vancomicina', dose:'Ataque 25–30 mg/kg, depois 15–20 mg/kg de 8/8 ou 12/12 h', via:'EV', obs:'Cobre MRSA até a cultura. Ajustar pela função renal e nível sérico.' },
+        { droga:'Piperacilina + tazobactam', dose:'4,5 g de 6/6 h', via:'EV', obs:'Enquanto o foco não estiver definido (alternativa: meropenem 1 g de 8/8 h).' },
+        { droga:'Oxacilina', dose:'2 g de 4/4 h', via:'EV', obs:'Estafilococo sensível (MSSA), com a clindamicina.' },
+        { droga:'Imunoglobulina humana', dose:'1 g/kg no dia 1, depois 0,5 g/kg nos dias 2 e 3', via:'EV', obs:'Choque refratário, sobretudo estreptocócico.' },
+        { droga:'Noradrenalina', dose:'0,05–0,5 mcg/kg/min, titular', via:'EV BIC', obs:'PAM ≥ 65 mmHg.' }
+      ]},
+
+      { tipo:'tempo', titulo:'Linha do tempo', itens:[
+        { quando:'0–15 min', o_que:'Exame especular e retirada do foco; acesso, hemoculturas e lactato.' },
+        { quando:'Até 1 h', o_que:'Antibióticos (com clindamicina) e cristaloide; noradrenalina se não responder.' },
+        { quando:'Até 6 h', o_que:'Cirurgia do foco de partes moles; UTI.' },
+        { quando:'10–14 dias', o_que:'Duração do antibiótico, guiada pela cultura e pelo foco.' }
+      ]},
+
+      { tipo:'lista', titulo:'Critérios diagnósticos (CDC)', itens:[
+        '*Estafilocócico:* febre ≥ 38,9 °C · eritrodermia macular difusa · descamação 1–2 semanas depois · PAS ≤ 90 mmHg · comprometimento de 3 ou mais sistemas (vômito ou diarreia, CPK alta, hiperemia de mucosas, ureia ou creatinina altas, bilirrubina ou transaminases altas, plaquetas < 100.000, alteração de consciência).',
+        '*Estreptocócico:* estreptococo do grupo A isolado + hipotensão + 2 ou mais disfunções (renal, coagulopatia, hepática, SDRA, eritema descamativo, necrose de partes moles).',
+        'Hemocultura costuma ser negativa no estafilocócico e positiva no estreptocócico.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Hemoculturas* (2 pares) e cultura do tampão, da secreção vaginal ou da ferida.',
+        '*Lactato, gasometria*, hemograma, plaquetas, coagulograma.',
+        '*Função renal, hepática e CPK.*',
+        '*Beta-HCG* e ultrassom pélvico se pós-parto ou pós-aborto.'
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Tratar como sepse sem examinar a vagina e retirar o tampão.',
+        'Usar betalactâmico sem clindamicina.',
+        'Esperar a descamação para fazer o diagnóstico.',
+        'Adiar a cirurgia do foco de partes moles para "estabilizar antes".'
+      ]},
+
+      { tipo:'texto', titulo:'Destino', conteudo:'Toda síndrome do choque tóxico vai para a *UTI*. O antibiótico dura 10 a 14 dias (mais se houver bacteremia ou foco profundo), com a clindamicina mantida pelo menos nos primeiros dias. Na alta: não usar tampão nem coletor de novo (a recorrência é frequente) e notificar se houver surto. No estreptocócico invasivo, contactantes próximos de alto risco podem precisar de profilaxia — discutir com a infectologia.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Lembre do tampão: na mulher em choque séptico sem foco, o exame especular faz parte do exame físico.',
+        'Eritrodermia que some à pressão e mucosas muito vermelhas em paciente chocada: pense nisso antes de pensar em alergia.'
+      ]}
+    ] },
+
+  { id:'hiperestimulacao-ovariana', titulo:'Síndrome de hiperestimulação ovariana', categoria:'obstetricia', gravidade:'urgencia',
+    resumo:'Complicação da indução de ovulação: ascite, hemoconcentração e trombose; leve trata em casa, grave interna com cristaloide, albumina, paracentese e enoxaparina.',
+    tags:['hiperestimulacao ovariana','sho','ohss','fertilizacao in vitro','fiv','inducao de ovulacao','hcg','ascite','hemoconcentracao','paracentese','enoxaparina','reproducao assistida'],
+    fonte:'RCOG — Management of Ovarian Hyperstimulation Syndrome (Green-top 5, 2016) · ASRM — OHSS (2024) · FEBRASGO — Reprodução assistida · UpToDate — Ovarian hyperstimulation syndrome',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Distensão e dor abdominal, náusea e ganho de peso rápido *nos dias após o hCG* de um ciclo de FIV ou indução de ovulação.' },
+      { rotulo:'Prioridade',    valor:'Classificar a gravidade por *hematócrito, sódio, função renal, diurese e ascite*; avisar a equipe de reprodução.' },
+      { rotulo:'Meta',          valor:'Manter a perfusão sem encharcar, prevenir trombose e drenar a ascite que compromete.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Dor e distensão abdominal após indução de ovulação',
+          nota:'Precoce: 3–9 dias depois do hCG. Tardia: 10–17 dias, pelo hCG da gestação — mais grave e mais longa' },
+        { tipo:'passo', rotulo:'Avaliar', texto:'Peso, circunferência abdominal, diurese, hemograma, Na, K, creatinina, albumina, hepatograma e ultrassom',
+          nota:'Excluir torção, ectópica e sangramento — os ovários estão enormes' },
+        { tipo:'decisao', texto:'Qual a gravidade (RCOG)?', ramos:[
+          { rotulo:'Leve ou moderada: dor, distensão, ascite só no ultrassom', cor:'ok', texto:'*Ambulatorial:* paracetamol, beber pela sede, peso e diurese diários',
+            nota:'Considerar enoxaparina profilática. Retorno a cada 2–3 dias',
+            meds:['Paracetamol', 'Enoxaparina 40 mg'] },
+          { rotulo:'Grave: ascite clínica, oligúria, Ht > 45%, Na < 135, K > 5, albumina < 3', cor:'perigo', texto:'*Internar:* cristaloide pela diurese, enoxaparina, balanço rigoroso',
+            meds:['Enoxaparina 40 mg', 'Albumina humana 20%'] },
+          { rotulo:'Crítica: ascite tensa, Ht > 55%, anúria, TEV, SDRA', cor:'perigo', texto:'*UTI*', ir:'choque-abordagem' }
+        ]},
+        { tipo:'decisao', texto:'Ascite tensa, dispneia ou oligúria que não responde ao volume?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Paracentese guiada por ultrassom*', nota:'Melhora a diurese e a respiração', ir:'paracentese' },
+          { rotulo:'Não', texto:'Manter e reavaliar a cada 12–24 h' }
+        ]},
+        { tipo:'fim', rotulo:'Sempre', texto:'Equipe de reprodução ciente · sem exame bimanual · sem diurético no hipovolêmico' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        'Ciclo recente de FIV ou indução com gonadotrofinas e gatilho de hCG.',
+        'Sintomas: distensão e dor abdominal, náusea, vômito, ganho de mais de 1 kg por dia.',
+        'Sinais de gravidade: diurese diminuída e dispneia (ascite volumosa ou derrame pleural).',
+        'Fatores de risco: síndrome dos ovários policísticos, jovem, AMH alto, muitos folículos, gestação no ciclo.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        'Hematócrito > 45% ou leucócitos > 15.000: hemoconcentração grave.',
+        'Oligúria (< 300 mL/dia ou < 0,5 mL/kg/h) ou creatinina subindo.',
+        'Dispneia, derrame pleural ou SpO2 caindo.',
+        'Edema de membro ou sintoma neurológico: *trombose* (inclusive em local atípico, como jugular).',
+        'Dor súbita unilateral: torção do ovário aumentado.'
+      ]},
+
+      { tipo:'lista', titulo:'Classificação (RCOG 2016)', itens:[
+        '*Leve:* distensão e dor abdominal leves, ovários < 8 cm.',
+        '*Moderada:* dor moderada, náusea e vômito, ascite ao ultrassom, ovários 8–12 cm.',
+        '*Grave:* ascite clínica (às vezes hidrotórax), oligúria, Ht > 45%, Na < 135, K > 5, albumina < 3 g/dL, ovários > 12 cm.',
+        '*Crítica:* ascite tensa ou hidrotórax volumoso, Ht > 55%, leucócitos > 25.000, oligo-anúria, TEV, SDRA.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Hemograma* (hematócrito e leucócitos) — o melhor marcador de gravidade.',
+        '*Sódio, potássio, ureia, creatinina, albumina, hepatograma, coagulograma.*',
+        '*Beta-HCG* — a gestação prolonga e agrava o quadro.',
+        '*Ultrassom* de pelve e abdome (ascite, ovários, derrame pleural).',
+        '*Gasometria e raio-X de tórax* se houver dispneia.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Paracetamol', dose:'750 mg de 6/6 h', via:'VO', obs:'Analgesia. Opioide se precisar. *Evitar anti-inflamatório* (piora a função renal).' },
+        { droga:'Enoxaparina 40 mg', dose:'40 mg 1x/dia', via:'SC', obs:'Profilaxia de TEV em toda SHO internada; considerar na moderada ambulatorial. Manter conforme a equipe (até semanas se gestação).' },
+        { droga:'Cristaloide (Ringer lactato ou SF 0,9%)', dose:'Bolus de 500 mL, guiado pela diurese e pelo hematócrito', via:'EV', obs:'Objetivo: diurese ≥ 0,5 mL/kg/h. Excesso de volume vai para a ascite e o pulmão.' },
+        { droga:'Albumina humana 20%', dose:'25 g EV em 4 h, repetir conforme hematócrito e diurese', via:'EV', obs:'Hemoconcentração ou oligúria que não responde ao cristaloide.' },
+        { droga:'Ondansetrona', dose:'4–8 mg de 8/8 h', via:'EV/VO', obs:'Náusea e vômito.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Exame bimanual ou palpação vigorosa: o ovário aumentado rompe.',
+        'Diurético na paciente hipovolêmica e hemoconcentrada.',
+        'Restringir líquido "porque tem ascite" — nem hiper-hidratar.',
+        'Anti-inflamatório para a dor.',
+        'Esquecer a profilaxia de trombose.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Alta* na leve e moderada sem alteração laboratorial importante: paracetamol, beber pela sede (em geral 2 a 3 L/dia), peso e diurese anotados diariamente, retorno a cada 2 a 3 dias e imediato se piorar. *Internar* a grave: balanço hídrico e peso diários, hematócrito e eletrólitos a cada 12–24 h, cristaloide pela diurese, albumina na hemoconcentração refratária, paracentese guiada se ascite tensa ou oligúria, enoxaparina profilática. *UTI* na crítica. O quadro regride em 10 a 14 dias sem gestação; com gestação pode durar semanas. A equipe de reprodução assistida deve ser avisada já na entrada.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Pergunte pela data do hCG: o calendário da FIV explica o quadro.',
+        'Hematócrito é o "lactato" da SHO: subiu, piorou.',
+        'Trombose na SHO aparece em lugares estranhos — braço e pescoço.'
+      ]}
+    ] },
+
+  /* ==== expansão 02/10/2026: ORL, hemato, ambientais, tóxico, obstetrícia e pediatria ==== */
+  { id:'epistaxe', titulo:'Epistaxe', categoria:'orl', gravidade:'urgencia',
+    resumo:'Compressão contínua de 10–15 min, vasoconstritor tópico, cauterização do ponto anterior e tamponamento se não parar; sangue descendo pela garganta com tampão anterior bem feito é posterior e interna.',
+    tags:['epistaxe','sangramento nasal','sangue no nariz','nariz sangrando','kiesselbach','tamponamento nasal','merocel','sonda de foley','nitrato de prata','cauterizacao','cauterização','oximetazolina','acido tranexamico','ácido tranexâmico','anticoagulado','varfarina','hipertensao','hipertensão'],
+    fonte:'AAO-HNS — Clinical Practice Guideline: Nosebleed (Epistaxis) (2020) · ABORL-CCF — Tratado de Otorrinolaringologia, 3ª ed. (2018) · NoPAC — ácido tranexâmico EV na epistaxe (Health Technol Assess, 2021) · UpToDate — Approach to the adult with epistaxis',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Sangramento pelo nariz, ou sangue na orofaringe, hematêmese ou melena sem outra causa — *o sangue engolido engana*.' },
+      { rotulo:'Prioridade',    valor:'Estabilidade e via aérea, depois *compressão contínua de 10–15 min* com o paciente sentado e inclinado para a frente.' },
+      { rotulo:'Meta',          valor:'Achar o ponto, parar com o mínimo de trauma e separar o *posterior*, que interna.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Sangramento nasal ativo',
+          nota:'Sentado, tronco para a frente, cuspindo o sangue. Equipe de óculos e máscara. Perguntar por anticoagulante e antiagregante' },
+        { tipo:'decisao', texto:'Instável, sangramento volumoso ou via aérea ameaçada?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Dois acessos, hemograma, coagulograma, tipagem* e otorrino agora',
+            nota:'Proteger a via aérea se rebaixado ou aspirando sangue', ir:'choque-abordagem' },
+          { rotulo:'Não', texto:'*Compressão contínua das asas nasais contra o septo por 10–15 min*',
+            nota:'Sem soltar para espiar. Gelo na nuca não ajuda' }
+        ]},
+        { tipo:'passo', rotulo:'Preparar', texto:'Assoar ou aspirar os coágulos e deixar *algodão com vasoconstritor e anestésico* por 10 min',
+          nota:'Depois, rinoscopia anterior com boa luz e espéculo',
+          meds:['Oximetazolina 0,05%', 'Lidocaína 2% sem vasoconstritor'] },
+        { tipo:'decisao', texto:'Viu o ponto sangrante?', ramos:[
+          { rotulo:'Sim, anterior (septo, plexo de Kiesselbach)', cor:'ok', texto:'*Cauterizar com nitrato de prata*',
+            nota:'Mucosa seca, de fora para o centro, um lado do septo só',
+            meds:['Nitrato de prata (bastão)'] },
+          { rotulo:'Não vê o ponto ou não parou', texto:'*Tamponamento anterior* (Merocel ou gaze vaselinada)',
+            nota:'Embeber o tampão em ácido tranexâmico ajuda',
+            meds:['Ácido tranexâmico tópico'] }
+        ]},
+        { tipo:'alerta', rotulo:'Anticoagulado', texto:'*INR acima do alvo ou sangramento que não para:* reverter conforme a droga',
+          nota:'Sangramento controlado com medidas locais não obriga a suspender o anticoagulante', ir:'anticoagulado' },
+        { tipo:'decisao', texto:'Sangue continua descendo pela orofaringe com o tampão anterior bem colocado?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Posterior:* sonda de Foley + tamponamento anterior, internar e chamar o otorrino',
+            nota:'Monitorizar a saturação. Embolização ou ligadura arterial se falhar',
+            meds:['Morfina', 'Amoxicilina + clavulanato'] },
+          { rotulo:'Não, parou', cor:'ok', texto:'*Observar 30–60 min* e dar alta',
+            nota:'Com tampão: retirar em 48–72 h na unidade ou com o otorrino' }
+        ]},
+        { tipo:'fim', rotulo:'Destino', texto:'Alta com orientação e umidificação · tampão anterior: retorno em 48–72 h · posterior: internação' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        '*Anterior (cerca de 90%):* sangra por uma narina, ponto visível no septo anterior, para com compressão.',
+        '*Posterior:* idoso, hipertenso, aterosclerótico ou anticoagulado, sangue pelas duas narinas e pela orofaringe.',
+        '*Causas locais:* manipulação digital, ar seco, rinite, corticoide nasal, trauma, cirurgia recente, corpo estranho.',
+        '*Causas sistêmicas:* anticoagulante, antiagregante, plaquetopenia, hepatopatia, Rendu-Osler-Weber, leucemia.',
+        '*Tumor:* sangramento unilateral recorrente com obstrução nasal — nasoangiofibroma no adolescente masculino, neoplasia no adulto.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        'Taquicardia, hipotensão, síncope ou hemoglobina em queda.',
+        '*Sangue descendo pela orofaringe com tampão anterior adequado:* sangramento posterior.',
+        'Anticoagulado com INR alto ou sangramento em outros sítios (gengiva, equimoses): coagulopatia ou plaquetopenia.',
+        'Epistaxe maciça dias a semanas após trauma de face ou crânio: *pseudoaneurisma de carótida*.',
+        'Adolescente masculino com obstrução nasal e sangramento unilateral recorrente: nasoangiofibroma — não biopsiar.'
+      ]},
+
+      { tipo:'lista', titulo:'Técnica: cauterização e tamponamento', itens:[
+        '*Cauterização:* só funciona em mucosa seca e sem sangramento ativo — vasoconstritor antes. Tocar o nitrato de prata por 5–10 s ao redor do ponto e depois no centro.',
+        '*Nunca cauterizar os dois lados do septo na mesma área:* risco de perfuração. O outro lado só depois de 4–6 semanas.',
+        '*Tampão anterior (Merocel):* lubrificar com pomada ou gel, introduzir paralelo ao assoalho da fossa (não para cima) e hidratar com SF 0,9% para expandir.',
+        '*Gaze vaselinada:* camadas em "sanfona" do assoalho para o teto, até preencher a fossa.',
+        '*Tampão posterior com Foley (12–16 Fr):* passar pela narina até ver a ponta na orofaringe, insuflar 10–15 mL de água ou SF, tracionar até encaixar na coana e completar com tampão anterior.',
+        '*Fixar a Foley* com gaze entre a sonda e a narina: a pressão na columela necrosa em horas.',
+        '*Cateter de duplo balão* (anterior e posterior), quando houver, substitui a Foley.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Nenhum* no sangramento anterior pequeno que parou, sem anticoagulante.',
+        '*Hemograma, coagulograma e INR* se anticoagulado, sangramento volumoso, recorrente ou suspeita de coagulopatia.',
+        '*Tipagem* se instável ou sangramento posterior.',
+        '*Função hepática e renal* se houver suspeita de causa sistêmica.',
+        '*Nasofibroscopia ou TC de seios da face* (otorrino, ambulatorial) no sangramento unilateral recorrente ou suspeita de tumor.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Oximetazolina 0,05%', dose:'2–3 jatos na narina ou algodão embebido por 10 min', via:'Tópica nasal', obs:'Afrin adulto, Aturgyl. Alternativa: nafazolina 0,5 mg/mL. Criança: apresentação pediátrica 0,025%. Não usar em casa por mais de 3–5 dias.' },
+        { droga:'Lidocaína 2% sem vasoconstritor', dose:'2–4 mL no algodão, junto com o vasoconstritor', via:'Tópica nasal', obs:'Ou lidocaína spray 10% (10 mg por jato), 2–4 jatos. Somando tudo, não passar de 4,5 mg/kg.' },
+        { droga:'Nitrato de prata (bastão)', dose:'Tocar o ponto por 5–10 s', via:'Tópica', obs:'Só no ponto anterior visível, com mucosa seca. Um lado do septo por vez.' },
+        { droga:'Ácido tranexâmico tópico', dose:'500 mg (10 mL da ampola de 250 mg/5 mL) embebido no algodão ou no tampão', via:'Tópica nasal', obs:'Deixar o algodão 10–20 min antes do tampão. Útil também no anticoagulado e antiagregado. A via EV não reduziu necessidade de tamponamento (NoPAC 2021).' },
+        { droga:'Morfina', dose:'2–4 mg, titular (criança 0,05–0,1 mg/kg, máx. 4 mg por dose)', via:'EV', obs:'Dor do tamponamento posterior. Cuidado: o tampão posterior já reduz a saturação — monitorizar.' },
+        { droga:'Dipirona', dose:'1 g (criança 15–25 mg/kg, máx. 1 g)', via:'EV/VO', obs:'Analgesia. Evitar anti-inflamatório no sangramento ativo.' },
+        { droga:'Amoxicilina + clavulanato', dose:'875/125 mg de 12/12 h enquanto durar o tampão (criança 45 mg/kg/dia de amoxicilina de 12/12 h, máx. 875 mg por dose)', via:'VO', obs:'*Não é rotina* no tampão anterior curto (ver Divergência). Alergia à penicilina: clindamicina 300 mg de 6/6 h ou cefalexina 500 mg de 6/6 h se alergia não grave.' },
+        { droga:'Vaselina sólida', dose:'Fina camada na entrada da narina 2x/dia por 7–10 dias', via:'Tópica nasal', obs:'Umidificar após cauterização ou na mucosa ressecada. Soro fisiológico nasal várias vezes ao dia também ajuda.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Inclinar a cabeça para trás: o sangue vai para o estômago e a via aérea.',
+        'Comprimir a ponte óssea do nariz — a compressão é nas asas nasais.',
+        'Cauterizar os dois lados do septo na mesma sessão ou cauterizar às cegas sem ver o ponto.',
+        'Baixar a pressão de forma agressiva: tratar dor e ansiedade primeiro; anti-hipertensivo só com critério de emergência hipertensiva.',
+        'Dar alta com tampão posterior.',
+        'Suspender anticoagulante de rotina se o sangramento parou com medida local.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Alta* no sangramento anterior controlado, após 30 a 60 min de observação sem ressangrar, com orientações: não assoar com força nem fazer esforço por 7 a 10 dias, espirrar de boca aberta, umidificar a mucosa com soro e vaselina, evitar anti-inflamatório e compressão de 15 min se voltar. Com tampão anterior: retirar em 48 a 72 h. *Internar* tamponamento posterior (monitorizar saturação, sedação mínima, retirar em 48 a 72 h pelo otorrino), instabilidade, queda de hemoglobina, coagulopatia que precisa de reversão ou falha de dois tamponamentos (avaliar ligadura endoscópica da esfenopalatina ou embolização). A pressão alta na epistaxe costuma ser consequência da dor e da ansiedade; não há evidência de que baixar a PA rapidamente pare o sangramento. *Divergência:* a AAO-HNS (2020) não recomenda antibiótico profilático de rotina no tampão — não reduz infecção nem choque tóxico de forma comprovada; muitos otorrinos brasileiros ainda prescrevem amoxicilina-clavulanato no tampão posterior ou que fica mais de 48 h, e essa é a situação em que faz mais sentido. O ácido tranexâmico *tópico* tem ensaios a favor; o EV ou oral não mostrou benefício no NoPAC.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Antes de qualquer instrumento, 15 min de compressão contínua de verdade resolvem a maioria — cronometre.',
+        'Paciente que vomita sangue escuro após epistaxe: é sangue engolido, mas confira hemoglobina se o volume foi grande.',
+        'Explique ao paciente com Foley que a sonda na garganta incomoda e que ele não pode puxá-la — e prenda bem a fixação.'
+      ]}
+    ] },
+
+  { id:'olho-vermelho', titulo:'Olho vermelho: glaucoma agudo, uveíte, ceratite e conjuntivite', categoria:'orl', gravidade:'urgencia',
+    resumo:'Medir a acuidade visual e procurar dor, baixa visual, fotofobia e lente de contato: com red flag é glaucoma, ceratite, uveíte ou esclerite e vai ao oftalmo; sem red flag é quase sempre conjuntivite.',
+    tags:['olho vermelho','hiperemia ocular','conjuntivite','glaucoma agudo','glaucoma de angulo fechado','glaucoma de ângulo fechado','uveite','uveíte','irite','ceratite','ulcera de cornea','úlcera de córnea','lente de contato','pseudomonas','esclerite','hemorragia subconjuntival','timolol','acetazolamida','manitol','pilocarpina'],
+    fonte:'AAO — Preferred Practice Patterns: Primary Angle-Closure Disease (2020), Bacterial Keratitis (2023) e Conjunctivitis (2023) · Ministério da Saúde — PCDT IST (2022) · UpToDate — Evaluation of the red eye; Angle-closure glaucoma',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Todo olho vermelho: o que separa o benigno do grave é *dor de verdade, baixa visual, fotofobia, halos, pupila alterada e lente de contato*.' },
+      { rotulo:'Prioridade',    valor:'*Acuidade visual de cada olho* antes de tudo. Glaucoma agudo: baixar a pressão no PS enquanto chama o oftalmo.' },
+      { rotulo:'Meta',          valor:'Não perder glaucoma agudo, ceratite e uveíte — e *não prescrever corticoide colírio* sem oftalmologista.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Olho vermelho',
+          nota:'Medir acuidade visual (tabela ou contar dedos), olhar pupilas, córnea com luz e fluoresceína, palpar o globo por cima da pálpebra' },
+        { tipo:'decisao', texto:'Trauma ou produto químico no olho?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Química: irrigar já.* Trauma: protocolo próprio', ir:'trauma-ocular' },
+          { rotulo:'Não', texto:'Procurar as red flags' }
+        ]},
+        { tipo:'decisao', texto:'Tem red flag: dor intensa, baixa visual, fotofobia, halos, pupila alterada ou lente de contato?', ramos:[
+          { rotulo:'Dor intensa, halos, cefaleia e vômito, pupila média fixa, córnea turva, olho duro', cor:'perigo',
+            texto:'*Glaucoma agudo:* baixar a pressão agora e oftalmo urgente',
+            nota:'Timolol + brimonidina + acetazolamida; manitol se não cair ou vomitando; pilocarpina só depois que a pressão baixar',
+            meds:['Timolol 0,5%', 'Brimonidina 0,2%', 'Acetazolamida', 'Manitol 20%', 'Ondansetrona'] },
+          { rotulo:'Lente de contato, dor, opacidade ou úlcera na córnea', cor:'perigo',
+            texto:'*Ceratite:* quinolona colírio de hora em hora, sem oclusão, oftalmo em até 24 h',
+            nota:'Lente de contato = Pseudomonas e Acanthamoeba até prova em contrário',
+            meds:['Ciprofloxacino 0,3% colírio'] },
+          { rotulo:'Fotofobia, dor profunda, vermelho em volta da córnea, pupila pequena', cor:'perigo',
+            texto:'*Uveíte anterior:* oftalmo no mesmo dia', nota:'Fotofobia que piora ao iluminar o olho sadio (consensual) é típica' },
+          { rotulo:'Dor profunda que acorda à noite, vermelho-violáceo, globo dolorido ao toque', cor:'perigo',
+            texto:'*Esclerite:* oftalmo urgente e pesquisar doença reumatológica', nota:'Metade tem doença sistêmica (artrite reumatoide, vasculite)' },
+          { rotulo:'Sem red flag', cor:'ok', texto:'Seguir para o padrão benigno' }
+        ]},
+        { tipo:'decisao', texto:'Sem red flag: qual o padrão?', ramos:[
+          { rotulo:'Mancha vermelha lisa, sem dor, visão normal', cor:'ok', texto:'*Hemorragia subconjuntival:* tranquilizar, medir PA e checar anticoagulação',
+            nota:'Some em 2–3 semanas. Recorrente ou com outros sangramentos: coagulograma' },
+          { rotulo:'Secreção aquosa, linfonodo pré-auricular, quadro gripal', cor:'ok', texto:'*Conjuntivite viral:* compressa fria, lágrima artificial, higiene, sem antibiótico',
+            meds:['Carmelose 0,5% colírio'] },
+          { rotulo:'Secreção purulenta, pálpebras coladas', texto:'*Conjuntivite bacteriana:* antibiótico colírio 5–7 dias',
+            meds:['Tobramicina 0,3% colírio'] },
+          { rotulo:'Prurido intenso, bilateral, atopia', cor:'ok', texto:'*Conjuntivite alérgica:* anti-histamínico colírio e compressa fria',
+            meds:['Olopatadina 0,1% colírio'] },
+          { rotulo:'Pus abundante que volta logo após limpar, início em horas', cor:'perigo', texto:'*Hiperaguda — gonococo:* ceftriaxona e oftalmo no mesmo dia',
+            nota:'Perfura córnea em 24–48 h', meds:['Ceftriaxona'] }
+        ]},
+        { tipo:'fim', rotulo:'Destino', texto:'Red flag: oftalmo no mesmo dia (glaucoma e esclerite: urgente) · conjuntivite e hemorragia subconjuntival: alta com retorno se dor ou baixa visual' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        '*Glaucoma agudo:* hipermétrope, idoso, asiático, após midríase (cinema, colírio dilatador, anticolinérgico, topiramato) — dor ocular, cefaleia, náusea e halos coloridos.',
+        '*Ceratite:* usuário de lente de contato (dormir de lente, nadar com lente), trauma com vegetal, dor e fotofobia, mancha branca na córnea.',
+        '*Herpes ocular:* lesão dendrítica à fluoresceína, vesículas na pálpebra, zóster na ponta do nariz (sinal de Hutchinson).',
+        '*Uveíte anterior:* espondiloartrite, doença inflamatória intestinal, sarcoidose, toxoplasmose, sífilis, HIV.',
+        '*Conjuntivite:* sensação de areia e ardor, sem dor profunda, visão normal após piscar, pupila normal.',
+        '*Celulite orbitária:* dor à movimentação ocular, proptose, febre — não é conjuntivite.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Baixa de acuidade visual* que não melhora ao piscar.',
+        'Dor ocular intensa ou profunda (não é ardor), fotofobia, halos coloridos.',
+        'Pupila média fixa ou irregular, córnea turva, opacidade ou úlcera corada pela fluoresceína.',
+        'Usuário de lente de contato com olho vermelho e dor.',
+        'Proptose, dor à movimentação do olho ou febre: celulite orbitária.'
+      ]},
+
+      { tipo:'lista', titulo:'Padrões que separam', itens:[
+        '*Injeção conjuntival* (difusa, mais na periferia, móvel): conjuntivite.',
+        '*Injeção ciliar ou perilímbica* (anel vermelho em volta da córnea): ceratite, uveíte, glaucoma.',
+        '*Glaucoma agudo:* globo duro como pedra à palpação comparativa, pupila média e pouco reativa, córnea embaçada, PIO geralmente acima de 40 mmHg.',
+        '*Uveíte:* pupila miótica, fotofobia consensual, dor que piora com a acomodação, às vezes hipópio.',
+        '*Ceratite bacteriana:* infiltrado branco com defeito epitelial corado, secreção, às vezes hipópio.',
+        '*Esclerite:* vasos profundos violáceos que não empalidecem com fenilefrina, dor que irradia para a face.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Acuidade visual* de cada olho (com a correção do paciente).',
+        '*Fluoresceína* com luz azul: úlcera, dendrite, abrasão.',
+        '*Tonometria* se houver tonômetro; sem ele, palpação comparativa dos globos.',
+        '*Raspado e cultura da úlcera* pelo oftalmo antes do antibiótico, quando disponível — não atrasar o tratamento se não houver.',
+        '*Gram e cultura da secreção* na conjuntivite hiperaguda; teste de gonococo e clamídia.',
+        '*Glicemia e PA* em hemorragia subconjuntival recorrente; coagulograma se anticoagulado.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Timolol 0,5%', dose:'1 gota no olho afetado', via:'Colírio', obs:'Glaucoma agudo. Contraindicado em asma, DPOC grave, bradicardia e BAV.' },
+        { droga:'Brimonidina 0,2%', dose:'1 gota, 1 min depois do timolol', via:'Colírio', obs:'Glaucoma agudo. Apraclonidina é a opção clássica, mas é pouco disponível no Brasil. Evitar abaixo de 2 anos e com IMAO.' },
+        { droga:'Acetazolamida', dose:'500 mg (2 comprimidos de 250 mg), depois 250 mg de 6/6 h conforme o oftalmo', via:'VO', obs:'A forma EV raramente está disponível no Brasil. Evitar em alergia grave a sulfa, insuficiência renal, hipocalemia e doença falciforme.' },
+        { droga:'Manitol 20%', dose:'1–2 g/kg (5–10 mL/kg) em 30–45 min', via:'EV', obs:'Se a pressão não cai em 1 h ou o paciente vomita. Cuidado em insuficiência cardíaca e renal.' },
+        { droga:'Pilocarpina 2%', dose:'1 gota, repetir em 15 min', via:'Colírio', obs:'Só depois que a pressão começar a cair (cerca de 1 h): com o esfíncter isquêmico não funciona. Olho contralateral: profilaxia definida pelo oftalmo até a iridotomia.' },
+        { droga:'Ondansetrona', dose:'4–8 mg', via:'EV', obs:'Vômito do glaucoma agudo.' },
+        { droga:'Ciprofloxacino 0,3% colírio', dose:'1 gota de 1/1 h nas primeiras 24–48 h, inclusive à noite', via:'Colírio', obs:'Ceratite e úlcera em usuário de lente de contato. Alternativa: moxifloxacino 0,5% colírio. Suspender a lente.' },
+        { droga:'Tobramicina 0,3% colírio', dose:'1 gota de 4/4 h por 5–7 dias', via:'Colírio', obs:'Conjuntivite bacteriana. Pomada de tobramicina 3x/dia é opção na criança. Usuário de lente: quinolona.' },
+        { droga:'Olopatadina 0,1% colírio', dose:'1 gota de 12/12 h', via:'Colírio', obs:'Conjuntivite alérgica. Alternativa: cetotifeno 0,025% de 12/12 h.' },
+        { droga:'Carmelose 0,5% colírio', dose:'1 gota 4–6x/dia', via:'Colírio', obs:'Lágrima artificial: conjuntivite viral, alérgica e olho seco. Guardar na geladeira alivia mais.' },
+        { droga:'Ceftriaxona', dose:'1 g dose única', via:'IM', obs:'Conjuntivite gonocócica do adulto, com azitromicina 1 g VO dose única (clamídia), lavagem com SF e oftalmo.' },
+        { droga:'Aciclovir', dose:'400 mg 5x/dia por 7–10 dias', via:'VO', obs:'Ceratite herpética epitelial (dendrite), conduta confirmada pelo oftalmo. Zóster oftálmico: 800 mg 5x/dia por 7 dias.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        '*Prescrever corticoide colírio sem oftalmo:* piora herpes e fungo, perfura úlcera e causa glaucoma.',
+        'Dar colírio anestésico para casa.',
+        'Ocluir o olho do usuário de lente de contato com ceratite.',
+        'Usar antibiótico na conjuntivite viral.',
+        'Dilatar a pupila de quem tem suspeita de ângulo fechado.',
+        'Chamar de conjuntivite um olho vermelho com baixa visual ou dor intensa.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Glaucoma agudo*: tratamento iniciado no PS e oftalmologista no mesmo atendimento — o definitivo é a iridotomia a laser (nos dois olhos). Sem oftalmo no serviço, transferir pela regulação após iniciar os colírios e a acetazolamida. *Ceratite, uveíte e esclerite*: oftalmo no mesmo dia ou em até 24 h; ceratite grave, central ou que não responde em 48 h pode internar para colírio fortificado. *Conjuntivite viral, bacteriana e alérgica e hemorragia subconjuntival*: alta, com retorno se dor, fotofobia ou piora da visão. A conjuntivite viral transmite por 10 a 14 dias: lavar as mãos, toalha separada, afastamento de escola ou creche enquanto houver secreção. Usuário de lente de contato fica sem a lente até a cura e troca a lente e o estojo. *Divergência:* na conjuntivite bacteriana leve, o antibiótico apenas encurta a doença em 1 a 2 dias (Cochrane); a AAO aceita observar sem antibiótico, mas na prática brasileira e na exigência de creches costuma-se tratar.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Paciente com "enxaqueca e vômito" e um olho vermelho: palpe os dois globos — o duro é glaucoma agudo.',
+        'Colírio anestésico que tira toda a dor sugere doença de superfície; dor que não passa com ele é profunda (uveíte, glaucoma, esclerite).',
+        'Use a fluoresceína em todo olho vermelho: a dendrite herpética muda a conduta e contraindica corticoide.'
+      ]}
+    ] },
+
+  { id:'trauma-ocular', titulo:'Trauma ocular e queimadura química', categoria:'orl', gravidade:'emergencia',
+    resumo:'Química se irriga antes de examinar; globo aberto recebe escudo rígido sem pressão, jejum, antiemético, antibiótico e tétano; proptose tensa com baixa visual pede cantotomia lateral em até 90–120 min.',
+    tags:['trauma ocular','queimadura quimica','queimadura química','alcali','álcali','acido no olho','irrigacao ocular','globo aberto','perfuracao ocular','hifema','abrasao de cornea','abrasão de córnea','corpo estranho corneano','fluoresceina','fratura de orbita','blowout','hemorragia retrobulbar','cantotomia lateral','sindrome compartimental orbitaria'],
+    fonte:'ATLS — Advanced Trauma Life Support, 10ª ed. (2018) · AAO — EyeWiki e Preferred Practice Patterns (2023) · Ministério da Saúde — Guia de Vigilância em Saúde: tétano acidental (2023) · UpToDate — Open globe injuries; Topical chemical burns; Traumatic hyphema; Corneal abrasions',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Qualquer trauma de face ou órbita, produto respingado no olho, "algo entrou no olho" ao martelar, esmerilhar ou roçar.' },
+      { rotulo:'Prioridade',    valor:'*Química: irrigar agora*, antes da acuidade. Globo aberto: *escudo rígido e não tocar*. Proptose tensa: cantotomia.' },
+      { rotulo:'Meta',          valor:'pH neutro, olho protegido e oftalmo acionado no tempo de cada lesão.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Trauma ocular ou produto no olho',
+          nota:'Primeiro o ABCDE do trauma: lesão ocular não tem prioridade sobre via aérea e choque' },
+        { tipo:'decisao', texto:'Produto químico?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*IRRIGAR JÁ* com 1–2 L de Ringer ou SF por olho, com anestésico tópico',
+            nota:'Everter as pálpebras e tirar partículas. Medir pH 5–10 min após parar: repetir até 7,0–7,4. Álcali é pior que ácido',
+            meds:['Proximetacaína 0,5%', 'Ringer lactato'] },
+          { rotulo:'Não', texto:'*Acuidade visual* de cada olho e exame da superfície' }
+        ]},
+        { tipo:'decisao', texto:'Sinais de globo aberto?', ramos:[
+          { rotulo:'Sim ou dúvida', cor:'perigo', texto:'*Escudo rígido sem pressão, cabeceira a 30°, jejum, antiemético, antibiótico EV, tétano e TC*',
+            nota:'Não medir pressão, não colírio, não retirar objeto empalado. Oftalmo para cirurgia em até 24 h',
+            meds:['Ondansetrona', 'Levofloxacino', 'Morfina', 'Toxoide tetânico (dT)'] },
+          { rotulo:'Não', texto:'Procurar compressão orbitária' }
+        ]},
+        { tipo:'decisao', texto:'Proptose tensa, dor, baixa visual, defeito pupilar aferente ou PIO acima de 40?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Hemorragia retrobulbar: cantotomia lateral e cantólise inferior agora*',
+            nota:'Diagnóstico clínico: não esperar TC. Acetazolamida, manitol e timolol só enquanto prepara',
+            meds:['Lidocaína 2% com epinefrina', 'Acetazolamida', 'Manitol 20%'] },
+          { rotulo:'Não', texto:'Definir a lesão' }
+        ]},
+        { tipo:'decisao', texto:'Qual a lesão?', ramos:[
+          { rotulo:'Hifema', texto:'*Cabeceira a 30–45°, escudo, repouso, sem AAS e anti-inflamatório*, oftalmo no mesmo dia',
+            nota:'Negro ou pardo: teste de falcização. PIO alta: timolol',
+            meds:['Paracetamol', 'Timolol 0,5%'] },
+          { rotulo:'Abrasão (cora na fluoresceína)', cor:'ok', texto:'*Antibiótico tópico e analgesia oral*, sem oclusão e sem anestésico para casa',
+            meds:['Tobramicina 0,3% pomada', 'Ciprofloxacino 0,3% colírio'] },
+          { rotulo:'Corpo estranho na córnea', cor:'ok', texto:'*Remover* com anestésico, cotonete úmido ou agulha 25–27G de bisel para cima',
+            nota:'Anel de ferrugem: oftalmo em 24–48 h. Mecanismo de alta velocidade: TC para corpo estranho intraocular' },
+          { rotulo:'Fratura de órbita', texto:'*TC de órbitas*, não assoar o nariz, oftalmo e bucomaxilo',
+            nota:'Criança com bradicardia, náusea e olho branco que não sobe: músculo encarcerado — cirurgia urgente',
+            meds:['Amoxicilina + clavulanato'] }
+        ]},
+        { tipo:'fim', rotulo:'Destino', texto:'Química, globo aberto e retrobulbar: oftalmo urgente ou transferência · hifema: oftalmo no mesmo dia · abrasão e corpo estranho: alta e reavaliação em 24–48 h' }
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Queimadura por álcali* (cal, cimento, soda cáustica, alvejante, produto de limpeza pesada): penetra e continua lesando.',
+        '*Globo aberto:* pupila em gota, íris ou tecido escuro na ferida, Seidel positivo, câmara anterior rasa, hifema total, visão de vultos.',
+        '*Proptose tensa com baixa visual e defeito pupilar aferente:* hemorragia retrobulbar — perda visual em cerca de 90 min.',
+        'Trauma por martelo, esmeril ou projétil: corpo estranho intraocular até TC normal.',
+        'Diplopia com dor ao olhar para cima, bradicardia e vômito na criança: encarceramento muscular.'
+      ]},
+
+      { tipo:'passos', titulo:'Conduta imediata', itens:[
+        'Irrigar a queimadura química antes de qualquer exame, com anestésico tópico e pálpebras evertidas.',
+        'Medir a acuidade visual de cada olho assim que possível — é o principal dado prognóstico e médico-legal.',
+        'Proteger o globo aberto com escudo rígido (ou copo plástico cortado) apoiado nos ossos da órbita, sem curativo compressivo.',
+        'Prevenir vômito e Valsalva: antiemético, analgesia, jejum e cabeceira a 30°.',
+        'Iniciar antibiótico EV e atualizar a profilaxia do tétano no globo aberto.',
+        'Fazer cantotomia lateral na hemorragia retrobulbar sem esperar imagem.',
+        'Acionar o oftalmologista ou transferir pela regulação com o olho protegido.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Proximetacaína 0,5%', dose:'1–2 gotas, repetir se necessário', via:'Colírio', obs:'Anestalcon. Só na unidade, para irrigar e examinar. Alternativa: tetracaína 1%.' },
+        { droga:'Ringer lactato', dose:'1–2 L em cada olho, ou até pH 7,0–7,4', via:'Irrigação ocular', obs:'SF 0,9% serve; água limpa no local do acidente. Equipo aberto, com o paciente deitado e a cabeça de lado.' },
+        { droga:'Ondansetrona', dose:'4–8 mg (criança 0,15 mg/kg, máx. 4 mg)', via:'EV', obs:'Vômito aumenta a pressão e pode expulsar o conteúdo do globo aberto.' },
+        { droga:'Morfina', dose:'2–4 mg, titular (criança 0,05–0,1 mg/kg, máx. 4 mg)', via:'EV', obs:'Dor do globo aberto e da queimadura.' },
+        { droga:'Levofloxacino', dose:'750 mg 1x/dia', via:'EV/VO', obs:'Globo aberto: boa penetração no vítreo. Alternativa: vancomicina 15–20 mg/kg EV de 12/12 h + ceftazidima 1–2 g EV de 8/8 h. Criança: definir com o oftalmo.' },
+        { droga:'Toxoide tetânico (dT)', dose:'0,5 mL', via:'IM', obs:'Globo aberto e ferimentos: conforme histórico vacinal (MS). Esquema incerto ou ferimento de alto risco: associar imunoglobulina antitetânica 250 UI IM em outro local.' },
+        { droga:'Lidocaína 2% com epinefrina', dose:'1–2 mL no canto lateral', via:'SC', obs:'Antes da cantotomia lateral. Esmagar a pele com pinça hemostática por 1 min antes de cortar.' },
+        { droga:'Acetazolamida', dose:'500 mg', via:'VO', obs:'Adjuvante na hemorragia retrobulbar e no hifema com PIO alta — não substitui a cantotomia. Evitar na doença falciforme.' },
+        { droga:'Manitol 20%', dose:'1–2 g/kg em 30–45 min', via:'EV', obs:'Adjuvante. Evitar no hifema do falcêmico e na hipovolemia.' },
+        { droga:'Timolol 0,5%', dose:'1 gota de 12/12 h', via:'Colírio', obs:'Hifema ou retrobulbar com PIO alta. Contraindicado em asma e bradicardia. Não usar no globo aberto.' },
+        { droga:'Paracetamol', dose:'750 mg de 6/6 h (criança 15 mg/kg, máx. 750 mg)', via:'VO', obs:'Analgesia do hifema — sem AAS nem anti-inflamatório (ressangramento).' },
+        { droga:'Tobramicina 0,3% pomada', dose:'Faixa de 1 cm no fundo de saco 4x/dia por 3–5 dias', via:'Tópica ocular', obs:'Abrasão e após retirar corpo estranho, em quem não usa lente de contato.' },
+        { droga:'Ciprofloxacino 0,3% colírio', dose:'1 gota 4x/dia por 5 dias', via:'Colírio', obs:'Abrasão em *usuário de lente de contato* (cobertura de Pseudomonas). Sem lente até cicatrizar.' },
+        { droga:'Amoxicilina + clavulanato', dose:'875/125 mg de 12/12 h por 7 dias', via:'VO', obs:'Fratura de órbita com comunicação com seio paranasal — benefício incerto (ver Divergência). Alergia: clindamicina 300 mg de 6/6 h.' }
+      ]},
+
+      { tipo:'tempo', titulo:'Linha do tempo', itens:[
+        { quando:'Segundos', o_que:'Queimadura química: irrigar no local e de novo na chegada, antes de examinar.' },
+        { quando:'0–15 min', o_que:'Globo aberto: escudo rígido, antiemético, analgesia, jejum e antibiótico EV.' },
+        { quando:'Até 90–120 min', o_que:'Hemorragia retrobulbar: cantotomia lateral — depois disso a perda visual tende a ser definitiva.' },
+        { quando:'Até 24 h', o_que:'Globo aberto: reparo cirúrgico pelo oftalmo. Hifema e queimadura química: avaliação oftalmológica no mesmo dia.' },
+        { quando:'24–48 h', o_que:'Abrasão grande, usuário de lente ou anel de ferrugem: reavaliação.' }
+      ]},
+
+      { tipo:'lista', titulo:'Critérios diagnósticos', itens:[
+        '*Globo aberto:* ferida de espessura total na córnea ou esclera — pupila em gota, prolapso de úvea, Seidel positivo (fluoresceína "escorre" do ponto), câmara rasa, hemorragia subconjuntival 360° bolhosa, globo mole.',
+        '*Hemorragia retrobulbar:* proptose tensa, pálpebras endurecidas, dor, baixa visual, defeito pupilar aferente, oftalmoplegia, PIO acima de 40 mmHg.',
+        '*Hifema:* sangue em nível na câmara anterior; microhifema só se vê com lâmpada de fenda.',
+        '*Abrasão:* defeito epitelial que cora em verde com luz azul; arranhões verticais sugerem corpo estranho sob a pálpebra superior.',
+        '*Fratura de órbita (blowout):* diplopia, limitação do olhar vertical, enoftalmo, hipoestesia infraorbitária, enfisema palpebral.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Acuidade visual* e *reflexos pupilares* (defeito aferente) — documentar no prontuário.',
+        '*pH* com fita no fundo de saco, antes e 5–10 min após a irrigação.',
+        '*Fluoresceína* com luz azul (abrasão, Seidel) — não usar se o globo aberto for evidente.',
+        '*Pressão intraocular* só se o globo estiver comprovadamente fechado.',
+        '*TC de órbitas sem contraste com cortes finos:* globo aberto, corpo estranho intraocular, fratura. Ressonância é proibida se o corpo estranho puder ser metálico.',
+        '*Teste de falcização ou eletroforese* no hifema de paciente negro ou pardo.'
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Atrasar a irrigação para medir pH, acuidade ou esperar o oftalmo.',
+        'Tentar neutralizar ácido com base ou o contrário.',
+        'Comprimir, medir pressão, pingar colírio ou pomada no globo aberto, ou retirar objeto empalado.',
+        'Prescrever colírio anestésico para casa: retarda a cicatrização e mascara úlcera.',
+        'Ocluir a abrasão (não acelera a cura) e, no usuário de lente, nunca.',
+        'Esperar TC para fazer a cantotomia na hemorragia retrobulbar.',
+        'Dar AAS ou anti-inflamatório no hifema.'
+      ]},
+
+      { tipo:'texto', titulo:'Destino', conteudo:'*Queimadura química* por álcali ou com opacidade de córnea ou isquemia do limbo: oftalmo urgente; queimadura leve por ácido com pH normalizado e córnea transparente pode ter alta com antibiótico tópico e lubrificante e retorno em 24 h. *Globo aberto*: oftalmo para cirurgia em até 24 h — sem oftalmo, transferir com escudo, jejum e antibiótico iniciado. *Hemorragia retrobulbar*: cantotomia no PS e depois oftalmo. *Hifema*: oftalmo no mesmo dia; grandes, com PIO alta ou em falcêmico costumam internar. *Abrasão e corpo estranho superficial*: alta com antibiótico tópico, analgesia oral e retorno em 24 a 48 h se grande, central ou em usuário de lente. *Fratura de órbita* sem encarceramento: oftalmo e bucomaxilo ambulatoriais em 1 a 2 semanas, sem assoar o nariz. *Divergência:* o antibiótico profilático na fratura de órbita é prática comum, mas sem benefício demonstrado; e o cicloplégico na abrasão, antes indicado para dor, não mostrou alívio em ensaios — o colírio de AINE (cetorolaco) reduz a dor mas é prescrição do oftalmo.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Escudo improvisado: fundo de copo plástico descartável preso com esparadrapo na testa e na bochecha.',
+        'Corpo estranho "que já saiu" com sensação persistente: everta a pálpebra superior — costuma estar lá.',
+        'Cantotomia: corte horizontal de 1 cm no canto lateral até a borda da órbita, depois cortar o ramo inferior do tendão cantal "dedilhando" até a pálpebra inferior ficar solta.'
+      ]}
+    ] },
+
+  { id:'corpo-estranho-orl', titulo:'Corpo estranho em ouvido e nariz', categoria:'orl', gravidade:'rotina',
+    resumo:'Bateria de botão e ímãs no nariz são urgência; inseto vivo no ouvido se afoga antes de retirar; pressão positiva é a primeira tentativa no nariz; duas tentativas sem sucesso vão ao otorrino.',
+    tags:['corpo estranho','corpo estranho ouvido','corpo estranho nariz','inseto no ouvido','barata no ouvido','bateria de botao','bateria de botão','ima','ímã','beijo da mae','beijo da mãe','pressao positiva','lavagem de ouvido','rinorreia unilateral','crianca','criança'],
+    fonte:'ABORL-CCF — Tratado de Otorrinolaringologia, 3ª ed. (2018) · UpToDate — Diagnosis and management of foreign bodies of the outer ear; Diagnosis and management of intranasal foreign bodies (acesso em 2026)',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Criança que "colocou algo", adulto com inseto no ouvido, *rinorreia fétida unilateral* na criança, otalgia ou zumbido súbito com barulho no ouvido.' },
+      { rotulo:'Prioridade',    valor:'Perguntar *o que é*: bateria de botão ou dois ímãs = retirar em horas. O resto pode esperar a técnica certa.' },
+      { rotulo:'Meta',          valor:'Tirar sob visão direta, na primeira tentativa bem preparada, sem empurrar e sem lesar.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Objeto ou inseto no ouvido ou no nariz',
+          nota:'Olhar ouvidos e as duas narinas: quem coloca um, coloca outros. Corpo estranho engolido ou aspirado: outro protocolo' },
+        { tipo:'decisao', texto:'Bateria de botão, dois ímãs ou ímã com metal?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Urgência: retirar em horas* — otorrino se não sair na primeira tentativa',
+            nota:'Necrose e perfuração de septo ou tímpano em horas. Não irrigar, não pingar nada no ouvido', ir:'corpo-estranho-pedia' },
+          { rotulo:'Não', texto:'Definir o local' }
+        ]},
+        { tipo:'decisao', texto:'Onde está?', ramos:[
+          { rotulo:'Nariz', texto:'*Pressão positiva* após vasoconstritor: "beijo da mãe" na criança, assoar com a outra narina fechada no adulto',
+            nota:'Falhou: pinça, gancho ou sonda com balão',
+            meds:['Oximetazolina 0,05%'] },
+          { rotulo:'Ouvido, inseto vivo', cor:'perigo', texto:'*Afogar primeiro* com lidocaína ou óleo, depois retirar',
+            nota:'Inseto se debatendo lesa o tímpano. Lidocaína faz sair mais rápido',
+            meds:['Lidocaína 2% sem vasoconstritor', 'Óleo mineral'] },
+          { rotulo:'Ouvido, objeto', texto:'*Retirar sob visão:* pinça jacaré, gancho, cureta ou sucção',
+            nota:'Irrigar só se o objeto for liso, não vegetal, não bateria, com tímpano íntegro' }
+        ]},
+        { tipo:'decisao', texto:'Saiu em até 2 tentativas bem feitas?', ramos:[
+          { rotulo:'Sim', cor:'ok', texto:'*Revisar* o canal ou a fossa e o outro lado', nota:'Lesão do canal: gota otológica por 5–7 dias' },
+          { rotulo:'Criança não colabora', texto:'*Sedação* para uma tentativa definitiva, ou otorrino',
+            meds:['Cetamina'], ir:'sedacao-analgesia' },
+          { rotulo:'Não', texto:'*Otorrino*: em 24–48 h se inerte, no mesmo dia se bateria, vegetal que incha ou dor' }
+        ]},
+        { tipo:'fim', rotulo:'Alta', texto:'Orientar a família e retorno se otalgia, otorreia, sangramento ou rinorreia fétida' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        '*Nariz na criança:* rinorreia unilateral purulenta e fétida, epistaxe unilateral, obstrução de um lado.',
+        '*Ouvido:* otalgia, hipoacusia súbita, otorreia, sensação de algo se mexendo ou barulho (inseto).',
+        '*Bateria de botão:* criança com dor e secreção escura no nariz ou ouvido, brinquedo ou controle sem bateria.',
+        '*Ímãs:* dois ímãs em narinas opostas, ou um dentro e outro fora, prendendo o septo.',
+        '*Adulto:* algodão de cotonete, inseto, fragmento de tampão de ouvido, em psiquiátrico ou com deficiência intelectual.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Bateria de botão* em nariz ou ouvido: necrose em horas.',
+        '*Ímãs* prendendo o septo: perfuração.',
+        'Sangramento, vertigem, hipoacusia súbita ou paralisia facial após corpo estranho ou tentativa de retirada: lesão de tímpano ou ouvido médio.',
+        'Corpo estranho nasal que some na tentativa: pode ter ido para a via aérea — tosse, estridor ou sibilo pedem raio X.',
+        'Objeto posterior, impactado ou não visualizado.'
+      ]},
+
+      { tipo:'lista', titulo:'Técnicas de retirada', itens:[
+        '*Preparo:* boa luz (fotóforo), paciente contido com conforto (criança no colo do responsável, enrolada em lençol), material pronto.',
+        '*Pressão positiva:* fechar a narina livre e soprar rápido na boca da criança (o responsável), ou ambu com máscara só na boca. Adulto: fechar a narina livre e assoar com força.',
+        '*Sonda com balão:* Foley 5–8 Fr ou sonda de Fogarty, lubrificada, passada além do objeto, insuflar 2–3 mL de ar e puxar.',
+        '*Pinça jacaré:* objetos com borda (papel, espuma, algodão).',
+        '*Gancho ou cureta angulada:* objetos esféricos e lisos (contas, grãos) — passar por trás e puxar. Pinça empurra esférico para dentro.',
+        '*Irrigação:* água a 37 °C com seringa de 20–60 mL e cateter, jato dirigido à parede superior do canal.',
+        '*Sucção:* cânula fina para objetos leves e insetos mortos.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Nenhum* na maioria — o diagnóstico é a otoscopia ou a rinoscopia.',
+        '*Raio X* se houver suspeita de bateria ou ímã (duplo contorno da bateria) ou se o objeto sumiu da fossa (tórax e abdome).',
+        '*Otoscopia após a retirada:* integridade do tímpano e lesões do canal.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Oximetazolina 0,05%', dose:'2 jatos ou gotas na narina, aguardar 5 min', via:'Tópica nasal', obs:'Reduz o edema antes da pressão positiva ou da pinça. Criança: apresentação pediátrica 0,025%; evitar no lactente.' },
+        { droga:'Lidocaína 2% sem vasoconstritor', dose:'Encher o canal (cerca de 1 mL), aguardar 2–3 min', via:'Otológica', obs:'Inseto vivo. Também anestesia o canal. Não usar se houver perfuração conhecida (vertigem).' },
+        { droga:'Óleo mineral', dose:'Encher o canal', via:'Otológica', obs:'Alternativa para afogar o inseto. Não usar com perfuração.' },
+        { droga:'Lidocaína 10% spray', dose:'1–2 jatos na narina (10 mg por jato)', via:'Tópica nasal', obs:'Adulto e criança maior, antes da pinça. Máx. 4,5 mg/kg somando as vias.' },
+        { droga:'Cetamina', dose:'1–1,5 mg/kg EV ou 4 mg/kg IM', via:'EV/IM', obs:'Sedação na criança que não colabora, com monitorização e material de via aérea. Ver protocolo de sedação.' },
+        { droga:'Ciprofloxacino + hidrocortisona otológico', dose:'3 gotas de 12/12 h por 5–7 dias', via:'Otológica', obs:'Otociriax. Canal escoriado após a retirada ou otite externa associada, com tímpano íntegro.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        '*Irrigar* bateria (piora a corrosão), vegetal ou semente (incha), ouvido com perfuração ou tubo de ventilação.',
+        'Pingar gotas no ouvido com bateria.',
+        'Tentar pinça em objeto esférico — empurra para dentro.',
+        'Insistir além de 2 tentativas na criança agitada: o trauma do canal transforma rotina em cirurgia.',
+        'Esquecer de olhar o outro ouvido e a outra narina.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'Corpo estranho retirado sem lesão: *alta*, com orientação de guardar objetos pequenos, baterias e ímãs fora do alcance. Lesão do canal: gota otológica com antibiótico e corticoide por 5 a 7 dias e retorno se otorreia. Perfuração traumática do tímpano: manter o ouvido seco e otorrino ambulatorial (a maioria fecha sozinha). *Encaminhar ao otorrino no mesmo dia* bateria de botão ou ímãs que não saíram, vegetal impactado com dor, objeto posterior ou não visualizado, sangramento ou sinais de lesão de ouvido médio (vertigem, hipoacusia). Objeto inerte que não saiu em 2 tentativas pode ir ao otorrino em 24 a 48 h. Bateria retirada do nariz ou ouvido exige revisão pelo otorrino nos dias seguintes (necrose tardia).' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Explique o "beijo da mãe" antes: a mãe sela a boca da criança com a dela, fecha a narina livre com o dedo e dá um sopro curto e firme.',
+        'Inseto morto sai melhor com irrigação ou sucção depois de 2–3 min de lidocaína ou óleo.',
+        'Criança com "sinusite" unilateral fétida que não melhora com antibiótico: é corpo estranho até prova em contrário.'
+      ]}
+    ] },
+
+  { id:'otite-adulto', titulo:'Otalgia: otite média, otite externa e cerume', categoria:'orl', gravidade:'rotina',
+    resumo:'Otoscopia define: canal edemaciado e dor à tração é otite externa (gota de quinolona com corticoide); tímpano abaulado é otite média (amoxicilina); diabético idoso com dor intensa e granulação no canal é otite externa maligna e interna.',
+    tags:['otalgia','dor de ouvido','otite','otite media','otite média','otite externa','ouvido de nadador','otite externa maligna','otite necrotizante','furunculo','furúnculo','cerume','cera no ouvido','rolha de cera','lavagem de ouvido','mastoidite','otociriax','ciprofloxacino otologico'],
+    fonte:'AAO-HNS — Clinical Practice Guideline: Acute Otitis Externa (2014) e Cerumen Impaction (2017) · ABORL-CCF — Tratado de Otorrinolaringologia, 3ª ed. (2018) · Bulas Otociriax e Cerumin (Anvisa) · UpToDate — Acute otitis media in adults; Malignant (necrotizing) external otitis',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Dor de ouvido no adulto, com ou sem otorreia, hipoacusia ou sensação de ouvido tapado.' },
+      { rotulo:'Prioridade',    valor:'*Otoscopia dos dois lados* e dor à tração do pavilhão. Diabético ou imunossuprimido com dor intensa: pensar em otite maligna.' },
+      { rotulo:'Meta',          valor:'Tratar com a gota certa ou o antibiótico certo, sem lavar quem não pode e sem perder mastoidite ou otite maligna.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Otalgia no adulto',
+          nota:'Tracionar o pavilhão e pressionar o trago. Otoscopia normal com otalgia: dor referida (dente, ATM, faringe; no idoso tabagista, tumor de laringe ou faringe)' },
+        { tipo:'decisao', texto:'Diabético, idoso ou imunossuprimido com dor intensa, otorreia e granulação no assoalho do canal?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Otite externa maligna:* internar, antibiótico EV antipseudomonas, TC e otorrino',
+            nota:'Paralisia facial ou de outros pares = osteomielite da base do crânio',
+            meds:['Ciprofloxacino EV', 'Ceftazidima'] },
+          { rotulo:'Não', texto:'Procurar mastoidite' }
+        ]},
+        { tipo:'decisao', texto:'Dor, edema e hiperemia retroauricular, orelha em abano?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Mastoidite:* internar, TC com contraste, antibiótico EV e otorrino',
+            nota:'Cefaleia, rigidez de nuca ou rebaixamento: complicação intracraniana', ir:'meningite',
+            meds:['Ceftriaxona'] },
+          { rotulo:'Não', texto:'Definir pela otoscopia' }
+        ]},
+        { tipo:'decisao', texto:'O que a otoscopia mostra?', ramos:[
+          { rotulo:'Canal edemaciado e hiperemiado, dor à tração', texto:'*Otite externa difusa:* gota de quinolona com corticoide por 7 dias',
+            nota:'Canal fechado pelo edema: pavio (Merocel otológico ou gaze) para a gota entrar',
+            meds:['Ciprofloxacino + hidrocortisona otológico', 'Ibuprofeno'] },
+          { rotulo:'Pústula ou nódulo doloroso no terço externo', texto:'*Furúnculo:* calor local, cefalexina; drenar se flutuante',
+            meds:['Cefalexina'] },
+          { rotulo:'Tímpano abaulado, opaco, hiperemiado', texto:'*Otite média aguda:* amoxicilina 5–7 dias e analgesia',
+            nota:'Perfurou e drena: somar gota de quinolona sem aminoglicosídeo',
+            meds:['Amoxicilina 500 mg', 'Dipirona'] },
+          { rotulo:'Cerume ocluindo o canal', cor:'ok', texto:'*Ceruminolítico* e lavagem se não houver contraindicação',
+            meds:['Cerumin (ceruminolítico)'] }
+        ]},
+        { tipo:'fim', rotulo:'Alta', texto:'Gota ou antibiótico certo, ouvido seco, analgesia e retorno em 48–72 h se não melhorar' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        '*Otite externa:* dor forte à tração do pavilhão, após banho de mar ou piscina, uso de cotonete, aparelho auditivo.',
+        '*Otite média aguda:* dor profunda após resfriado, hipoacusia, febre; otorreia que alivia a dor (perfurou).',
+        '*Otite externa maligna:* diabético idoso, dor desproporcional e noturna, otorreia que não responde à gota.',
+        '*Otomicose:* prurido, plenitude, massa branca ou preta com hifas no canal após uso prolongado de gota.',
+        '*Herpes-zóster ótico:* vesículas na concha e no canal, otalgia intensa, paralisia facial.',
+        '*Dor referida:* otoscopia normal — dente, ATM, faringe, laringe, neuralgia.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Diabético ou imunossuprimido* com otalgia intensa e granulação no canal: otite externa maligna.',
+        'Edema retroauricular com orelha em abano: mastoidite.',
+        'Paralisia facial, vertigem intensa ou hipoacusia súbita.',
+        'Cefaleia intensa, rigidez de nuca, febre alta ou rebaixamento: complicação intracraniana.',
+        'Otalgia persistente com otoscopia normal em tabagista e etilista: tumor de cabeça e pescoço.'
+      ]},
+
+      { tipo:'lista', titulo:'Contraindicações da lavagem do ouvido', itens:[
+        '*Perfuração* conhecida ou suspeita do tímpano e tubo de ventilação.',
+        '*Cirurgia otológica prévia* e otite média crônica.',
+        '*Otite externa aguda* ativa.',
+        '*Diabético ou imunossuprimido:* risco de otite externa maligna — preferir remoção sob visão.',
+        '*Ouvido único funcionante*, radioterapia prévia da região, bateria ou vegetal no canal.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Nenhum* na otite externa, média e no cerume típicos.',
+        '*Glicemia* no diabético com otite externa e em quem tem otite externa grave sem fator de risco.',
+        '*Otite maligna:* hemograma, VHS, PCR, glicemia, função renal, cultura da secreção e *TC de ossos temporais*.',
+        '*Mastoidite:* hemograma, PCR e *TC de ossos temporais com contraste* (abscesso, trombose de seio, complicação).',
+        '*Cultura da secreção* na otorreia que não responde ao tratamento.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Ciprofloxacino + hidrocortisona otológico', dose:'3 gotas de 12/12 h por 7 dias', via:'Otológica', obs:'Otociriax (2 mg + 10 mg/mL). Deitar com o ouvido para cima por 30 s a 1 min. A bula contraindica com perfuração — nesse caso, colírio de ciprofloxacino 0,3%, 4 gotas no ouvido de 12/12 h.' },
+        { droga:'Polimixina B + neomicina + hidrocortisona', dose:'3–4 gotas 3–4x/dia por 7 dias', via:'Otológica', obs:'Otosporin. Alternativa mais barata, *só com tímpano íntegro* (neomicina é ototóxica). Neomicina causa dermatite de contato.' },
+        { droga:'Ibuprofeno', dose:'400–600 mg de 8/8 h por 3–5 dias', via:'VO', obs:'A dor da otite externa é intensa nos primeiros 2–3 dias.' },
+        { droga:'Dipirona', dose:'500 mg–1 g de 6/6 h', via:'VO', obs:'Associar ao anti-inflamatório se necessário.' },
+        { droga:'Amoxicilina 500 mg', dose:'500 mg de 8/8 h (ou 875 mg de 12/12 h) por 5–7 dias', via:'VO', obs:'Otite média aguda do adulto, 1ª escolha.' },
+        { droga:'Amoxicilina + clavulanato', dose:'875/125 mg de 12/12 h por 5–7 dias', via:'VO', obs:'Antibiótico nos últimos 30 dias, falha em 48–72 h ou otite média com conjuntivite.' },
+        { droga:'Doxiciclina', dose:'100 mg de 12/12 h por 5–7 dias', via:'VO', obs:'Alergia à penicilina. Alternativa: levofloxacino 500 mg 1x/dia. Macrolídeo tem resistência alta do pneumococo.' },
+        { droga:'Cefalexina', dose:'500 mg de 6/6 h por 7 dias', via:'VO', obs:'Furúnculo do canal (S. aureus). Suspeita de MRSA: sulfametoxazol + trimetoprima 800/160 mg de 12/12 h.' },
+        { droga:'Ciprofloxacino EV', dose:'400 mg de 8/8 h', via:'EV', obs:'Otite externa maligna. Depois VO 750 mg de 12/12 h por 6–8 semanas, conforme o otorrino. Ajustar à função renal.' },
+        { droga:'Ceftazidima', dose:'2 g de 8/8 h', via:'EV', obs:'Otite maligna grave ou com resistência a quinolona. Alternativas: cefepima 2 g de 8/8 h, piperacilina + tazobactam 4,5 g de 6/6 h.' },
+        { droga:'Ceftriaxona', dose:'2 g 1x/dia', via:'EV', obs:'Mastoidite aguda. Associar metronidazol 500 mg EV de 8/8 h se otite crônica ou colesteatoma. Drenagem pelo otorrino se abscesso.' },
+        { droga:'Cerumin (ceruminolítico)', dose:'5 gotas 3x/dia por 3–5 dias antes da lavagem', via:'Otológica', obs:'Deixar 5 min deitado. Alternativas: óleo mineral, glicerina ou SF morno. Não usar com perfuração ou otite externa.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Lavar ouvido com perfuração, tubo, cirurgia prévia, otite externa ativa ou diabético com otite.',
+        'Gota com aminoglicosídeo (neomicina, gentamicina) se o tímpano não for visto ou estiver perfurado.',
+        'Antibiótico oral na otite externa não complicada — a gota resolve.',
+        'Tratar como otite externa simples a otalgia intensa do diabético idoso que não melhora.',
+        'Cotonete no canal, durante e depois do tratamento.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Alta*: otite externa difusa (gota por 7 dias, ouvido seco — algodão com vaselina no banho, sem piscina por 7 a 10 dias, sem cotonete; retorno se não melhorar em 48 a 72 h), furúnculo, otite média aguda do adulto e cerume. A otite média aguda no adulto é menos comum que na criança: se recorrente ou com efusão persistente por mais de 3 meses, encaminhar ao otorrino para nasofibroscopia (tumor de rinofaringe). *Internar*: otite externa maligna (antibiótico antipseudomonas EV, controle glicêmico, otorrino e TC; o tratamento total dura 6 a 8 semanas), mastoidite aguda, otite com paralisia facial, vertigem incapacitante ou sinais de complicação intracraniana. *Divergência:* na otite média do adulto não há ensaio que defina duração; 5 a 7 dias segue a extrapolação das diretrizes de sinusite e da criança maior, enquanto alguns textos brasileiros usam 10 dias.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Puxe a orelha antes de olhar: se dói muito, é otite externa — e o espéculo deve ser o menor e mais delicado.',
+        'Paralisia facial com otite não é Bell: é complicação da otite até prova em contrário.',
+        'Ensine a pingar: deitado de lado, puxar a orelha para cima e para trás e apertar o trago algumas vezes.'
+      ]}
+    ] },
+
+  { id:'faringoamigdalite', titulo:'Dor de garganta: faringoamigdalite, abscesso periamigdaliano e epiglotite', categoria:'orl', gravidade:'urgencia',
+    resumo:'Primeiro a via aérea; depois trismo e voz de batata quente (abscesso); no restante, McIsaac e teste rápido separam o estreptococo — penicilina benzatina dose única ou amoxicilina 10 dias — da faringite viral, que não leva antibiótico.',
+    tags:['dor de garganta','faringite','amigdalite','faringoamigdalite','estreptococo','streptococcus pyogenes','centor','mcisaac','teste rapido','teste rápido','penicilina benzatina','benzetacil','amoxicilina','abscesso periamigdaliano','trismo','epiglotite','angina de ludwig','mononucleose','febre reumatica','febre reumática'],
+    fonte:'IDSA — Group A Streptococcal Pharyngitis (2012) · AHA — Prevenção da febre reumática (2009) · NICE NG84 — Sore throat (acute): antimicrobial prescribing (2018) · ABORL-CCF — Tratado de Otorrinolaringologia, 3ª ed. (2018) · UpToDate — Peritonsillar cellulitis and abscess; Epiglottitis in adults',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Dor de garganta e odinofagia, com ou sem febre. *Sialorreia, voz abafada, trismo ou estridor* mudam tudo.' },
+      { rotulo:'Prioridade',    valor:'*Via aérea primeiro*. Depois, procurar abscesso e só então decidir antibiótico pelo McIsaac e teste rápido.' },
+      { rotulo:'Meta',          valor:'Antibiótico só para o estreptococo, drenar o abscesso e nunca perder epiglotite ou Ludwig.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Dor de garganta',
+          nota:'Antes de abrir a boca do paciente: voz, saliva, respiração, posição e se consegue abrir a boca' },
+        { tipo:'decisao', texto:'Estridor, sialorreia, não engole a saliva, posição de tripé ou assoalho da boca endurecido?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Epiglotite ou angina de Ludwig:* sentado, oxigênio, sem abaixador de língua à força, otorrino e anestesista para a via aérea',
+            nota:'Intubação em ambiente controlado com cricotireoidostomia pronta. Antibiótico EV assim que tiver acesso',
+            meds:['Ceftriaxona', 'Ampicilina + sulbactam', 'Dexametasona'], ir:'via-aerea-dificil' },
+          { rotulo:'Não', texto:'Examinar a orofaringe' }
+        ]},
+        { tipo:'decisao', texto:'Trismo, voz de batata quente, abaulamento do palato e úvula desviada?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Abscesso periamigdaliano:* punção aspirativa ou drenagem + antibiótico + corticoide',
+            nota:'Só celulite (sem pus na punção): antibiótico e reavaliar em 24 h. Ultrassom intraoral ou TC se dúvida',
+            meds:['Amoxicilina + clavulanato', 'Clindamicina', 'Dexametasona', 'Lidocaína 10% spray'] },
+          { rotulo:'Não', texto:'Calcular o McIsaac' }
+        ]},
+        { tipo:'decisao', texto:'Escore de McIsaac', ramos:[
+          { rotulo:'0–1', cor:'ok', texto:'*Viral:* sintomáticos, sem antibiótico e sem teste',
+            meds:['Ibuprofeno', 'Dipirona'] },
+          { rotulo:'2–3', texto:'*Teste rápido para estreptococo* (ou cultura): positivo trata, negativo não',
+            nota:'Sem teste disponível, decidir com a clínica — ver Divergência' },
+          { rotulo:'4–5 ou teste positivo', texto:'*Estreptococo:* penicilina benzatina dose única ou amoxicilina por 10 dias',
+            meds:['Penicilina benzatina', 'Amoxicilina'] }
+        ]},
+        { tipo:'alerta', rotulo:'Mononucleose', texto:'*Adolescente ou adulto jovem* com linfonodos cervicais posteriores, esplenomegalia e fadiga: não dar amoxicilina',
+          nota:'Exantema em quase todos que recebem amoxicilina. Evitar esporte de contato por 3–4 semanas', ir:'exantematicas' },
+        { tipo:'fim', rotulo:'Destino', texto:'Faringite: alta · abscesso drenado que engole: alta com antibiótico VO · via aérea, Ludwig, toxemia ou não engole: internar' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        '*Estreptococo:* 5–15 anos, febre, exsudato, adenomegalia cervical anterior dolorosa, sem tosse nem coriza, petéquias no palato.',
+        '*Viral:* coriza, tosse, rouquidão, conjuntivite, aftas, diarreia — reduzem muito a chance de estreptococo.',
+        '*Mononucleose:* adolescente com fadiga intensa, exsudato acinzentado, linfonodos posteriores, esplenomegalia, edema palpebral.',
+        '*Abscesso periamigdaliano:* piora após dias de amigdalite, dor unilateral que irradia para o ouvido, trismo, sialorreia.',
+        '*Epiglotite no adulto:* dor de garganta desproporcional com orofaringe quase normal, odinofagia intensa, voz abafada.',
+        '*Outros:* difteria (pseudomembrana acinzentada aderente que sangra, não vacinado), gonococo (sexo oral), HIV agudo, síndrome de Lemierre (dor cervical e sepse após faringite).'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Estridor, sialorreia, voz abafada ou posição de tripé:* via aérea em risco.',
+        '*Trismo* e abaulamento do palato: abscesso periamigdaliano ou parafaríngeo.',
+        '*Assoalho da boca endurecido* com língua elevada após dor de dente: angina de Ludwig.',
+        'Dor de garganta intensa com orofaringe normal: epiglotite, abscesso retrofaríngeo ou causa cardíaca.',
+        'Torcicolo, rigidez cervical ou edema cervical unilateral com febre: abscesso profundo ou Lemierre.'
+      ]},
+
+      { tipo:'lista', titulo:'Escore de McIsaac (Centor modificado)', itens:[
+        '*Temperatura acima de 38 °C:* +1.',
+        '*Ausência de tosse:* +1.',
+        '*Adenomegalia cervical anterior dolorosa:* +1.',
+        '*Exsudato ou edema amigdaliano:* +1.',
+        '*Idade:* 3–14 anos +1 · 15–44 anos 0 · 45 anos ou mais −1.',
+        '*Leitura:* 0–1 sem teste e sem antibiótico · 2–3 teste rápido · 4–5 teste rápido ou tratar empiricamente se não houver teste.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Teste rápido para estreptococo* com swab das amígdalas e da parede posterior (especificidade alta; negativo na criança idealmente confirmado com cultura).',
+        '*Não testar* abaixo de 3 anos (estreptococo e febre reumática raros) nem com quadro claramente viral.',
+        '*Mononucleose:* hemograma (linfocitose atípica), anticorpo heterófilo ou sorologia VCA IgM para EBV.',
+        '*Abscesso ou infecção profunda:* hemograma, PCR; TC de pescoço com contraste se dúvida, trismo intenso ou suspeita parafaríngea.',
+        '*Epiglotite:* nasofibroscopia pelo otorrino no adulto estável; raio X lateral de pescoço (sinal do polegar) só se não atrasar a via aérea.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Penicilina benzatina', dose:'1.200.000 UI dose única (criança até 27 kg: 600.000 UI)', via:'IM', obs:'1ª escolha: dose única, adesão garantida, previne febre reumática. Dor local intensa.' },
+        { droga:'Amoxicilina', dose:'Adulto 500 mg de 8/8 h por 10 dias · criança 50 mg/kg/dia 1x/dia ou dividido de 12/12 h por 10 dias (máx. 1 g/dia)', via:'VO', obs:'Suspensão 250 mg/5 mL e 400 mg/5 mL. *10 dias* para erradicar e prevenir febre reumática.' },
+        { droga:'Cefalexina', dose:'Adulto 500 mg de 12/12 h · criança 20 mg/kg por dose de 12/12 h (máx. 500 mg por dose), por 10 dias', via:'VO', obs:'Alergia à penicilina *não anafilática*.' },
+        { droga:'Azitromicina', dose:'Criança 12 mg/kg 1x/dia por 5 dias (máx. 500 mg) · adulto 500 mg no 1º dia e 250 mg do 2º ao 5º', via:'VO', obs:'Alergia grave à penicilina. Há resistência do estreptococo a macrolídeos.' },
+        { droga:'Clindamicina', dose:'Faringite: adulto 300 mg de 8/8 h · criança 7 mg/kg por dose de 8/8 h (máx. 300 mg), por 10 dias · abscesso: 600 mg EV de 8/8 h', via:'VO/EV', obs:'Alergia à penicilina e abscesso periamigdaliano.' },
+        { droga:'Amoxicilina + clavulanato', dose:'875/125 mg de 12/12 h por 10–14 dias (internado: 1 g/200 mg EV de 8/8 h)', via:'VO/EV', obs:'Abscesso periamigdaliano, após a drenagem.' },
+        { droga:'Dexametasona', dose:'10 mg dose única (criança 0,6 mg/kg, máx. 10 mg)', via:'EV/IM', obs:'Abscesso periamigdaliano e dor intensa com dificuldade de engolir. Não usar na suspeita de mononucleose sem obstrução.' },
+        { droga:'Ceftriaxona', dose:'2 g 1x/dia (criança 50–100 mg/kg/dia, máx. 2 g)', via:'EV', obs:'Epiglotite. Grave ou suspeita de MRSA: somar vancomicina.' },
+        { droga:'Ampicilina + sulbactam', dose:'3 g de 6/6 h', via:'EV', obs:'Angina de Ludwig e infecção odontogênica profunda. Alergia: clindamicina 600 mg de 8/8 h + ceftriaxona 2 g/dia.' },
+        { droga:'Lidocaína 10% spray', dose:'2–4 jatos na loja amigdaliana', via:'Tópica', obs:'Antes da punção, seguido de infiltração com lidocaína 2% com epinefrina.' },
+        { droga:'Ibuprofeno', dose:'Adulto 400–600 mg de 8/8 h · criança 10 mg/kg por dose de 8/8 h (máx. 400 mg)', via:'VO', obs:'Sintomático de escolha.' },
+        { droga:'Dipirona', dose:'Adulto 1 g de 6/6 h · criança 15–25 mg/kg por dose (máx. 1 g)', via:'VO/EV', obs:'Gotas 500 mg/mL: 1 gota = 25 mg.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Abaixar a língua à força ou deitar o paciente com suspeita de epiglotite.',
+        'Dar amoxicilina na suspeita de mononucleose.',
+        'Prescrever antibiótico com McIsaac 0–1 ou quadro claramente viral.',
+        'Tratar estreptococo por menos de 10 dias com amoxicilina.',
+        'Puncionar lateralmente ou fundo: a carótida interna está atrás — agulha protegida, no máximo 1 cm.',
+        'Dar alta ao paciente com abscesso que não consegue engolir líquidos.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Alta*: faringite viral ou estreptocócica que engole líquidos, com retorno se trismo, sialorreia, piora da dor unilateral ou febre persistente após 48 a 72 h de antibiótico. *Abscesso periamigdaliano* drenado que engole e está bem hidratado pode ter alta com antibiótico VO e reavaliação em 24 h; recorrente indica amigdalectomia (otorrino). *Internar*: comprometimento da via aérea, epiglotite, Ludwig, abscesso parafaríngeo ou retrofaríngeo, desidratação ou incapacidade de engolir, toxemia, falha de drenagem ou imunossupressão. *Divergência:* a IDSA exige teste rápido ou cultura antes de tratar e não recomenda tratar empiricamente; o NICE (FeverPAIN/Centor) aceita antibiótico com escore alto sem teste. No Brasil, onde a febre reumática ainda existe e o teste nem sempre está disponível, tratar empiricamente McIsaac 4–5 é prática aceita. O corticoide em dose única para dor da faringite simples reduz a dor em adultos, mas não é rotina nas diretrizes.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Úvula desviada para um lado e voz de batata quente: abscesso — não é amigdalite comum.',
+        'Exantema maculopapular dias após amoxicilina em adolescente: pense em mononucleose, não em alergia à penicilina.',
+        'Dor de garganta muito forte com orofaringe "normal" no adulto: chame o otorrino para olhar a epiglote antes de dar alta.'
+      ]}
+    ] },
+
+  { id:'ait', titulo:'Ataque isquêmico transitório (AIT)', categoria:'neuro', gravidade:'urgencia',
+    resumo:'Déficit focal que resolveu sem infarto na imagem: glicemia, TC, angio-TC e ECG; AAS + clopidogrel por 21 dias no alto risco, estatina para todos, e investigação completa em até 24–48 h — o risco de AVC é maior nos primeiros dias.',
+    tags:['ait','ataque isquemico transitorio','ataque isquêmico transitório','avc transitorio','amaurose fugaz','abcd2','dupla antiagregacao','dupla antiagregação','aas','clopidogrel','point','chance','estatina','estenose carotidea','estenose carotídea','fibrilacao atrial','fibrilação atrial'],
+    fonte:'AHA/ASA — Prevenção secundária de AVC e AIT (2021) · AHA — Diagnosis and management of TIA in the ED (Scientific Statement, 2023) · ESO — Dupla antiagregação após AVC menor e AIT (2021) · NICE NG128 — Stroke and TIA (2019, atualizada 2022) · Ministério da Saúde — Manual de rotinas para atenção ao AVC (2013)',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Déficit neurológico *súbito e focal* (fraqueza, fala, perda visual monocular, ataxia) que *resolveu*, geralmente em menos de 1 h.' },
+      { rotulo:'Prioridade',    valor:'*Glicemia capilar*, NIHSS e TC. Se o déficit voltar ou persistir, é AVC: protocolo de reperfusão.' },
+      { rotulo:'Meta',          valor:'Antiagregação e estatina no PS e a causa (carótida, FA) definida em até 24–48 h.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Déficit neurológico focal súbito que já resolveu',
+          nota:'Anotar a hora do início e quanto durou. "Última vez visto bem" vale se o déficit voltar' },
+        { tipo:'passo', rotulo:'Já', texto:'*Glicemia capilar*, sinais vitais, NIHSS, ECG e *TC de crânio*' },
+        { tipo:'decisao', texto:'Ainda tem déficit ou ele voltou?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*AVC em curso:* protocolo de trombólise e trombectomia', ir:'avc-isquemico' },
+          { rotulo:'Não', texto:'Confirmar que é AIT' }
+        ]},
+        { tipo:'decisao', texto:'É AIT mesmo?', ramos:[
+          { rotulo:'Glicemia baixa', cor:'perigo', texto:'*Hipoglicemia* imita déficit focal', ir:'hipoglicemia' },
+          { rotulo:'Sintomas positivos em marcha (formigamento que caminha, luzes cintilantes) e cefaleia', cor:'ok',
+            texto:'Provável *enxaqueca com aura*', nota:'Primeiro episódio após os 50 anos: investigar como AIT' },
+          { rotulo:'Crise convulsiva testemunhada e fraqueza depois', cor:'ok', texto:'Provável *paralisia de Todd*' },
+          { rotulo:'Déficit negativo súbito em território vascular', texto:'*AIT:* seguir a investigação' }
+        ]},
+        { tipo:'passo', rotulo:'Investigar', texto:'*Angio-TC de crânio e pescoço* (ou Doppler de carótidas em 24 h), monitorização cardíaca e laboratório',
+          nota:'Ressonância com difusão, se disponível, mostra infarto em cerca de 1/3: aí é AVC menor' },
+        { tipo:'decisao', texto:'Qual o perfil?', ramos:[
+          { rotulo:'Fibrilação atrial ou outra fonte cardioembólica', texto:'*Anticoagular* (DOAC) — no AIT pode começar no dia seguinte',
+            ir:'fa-flutter', meds:['Apixabana', 'Rivaroxabana'] },
+          { rotulo:'Alto risco: ABCD2 ≥ 4, déficit motor ou de fala, AIT em crescendo, estenose sintomática', cor:'perigo',
+            texto:'*AAS + clopidogrel* com dose de ataque, em até 24 h, por 21 dias',
+            nota:'Depois, um antiagregante só',
+            meds:['AAS', 'Clopidogrel'] },
+          { rotulo:'Baixo risco', cor:'ok', texto:'*AAS isolado*', meds:['AAS'] }
+        ]},
+        { tipo:'passo', rotulo:'Para todos', texto:'*Estatina de alta potência* e controle de fatores de risco',
+          meds:['Atorvastatina'] },
+        { tipo:'decisao', texto:'Estenose de carótida de 50–99% do lado dos sintomas?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Cirurgia vascular:* endarterectomia ou stent em até 14 dias, idealmente na primeira semana' },
+          { rotulo:'Não', cor:'ok', texto:'Seguir com eco, Holter e prevenção secundária' }
+        ]},
+        { tipo:'fim', rotulo:'Destino', texto:'Alto risco ou investigação impossível em 24–48 h: internar · baixo risco com investigação rápida garantida: alta com antiagregante e retorno' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        '*Carotídeo:* fraqueza ou dormência de face, braço ou perna de um lado, afasia, amaurose fugaz (cortina descendo em um olho).',
+        '*Vertebrobasilar:* diplopia, disartria, ataxia, vertigem com outro sinal de tronco, perda visual bilateral, fraqueza alternada.',
+        '*Início súbito*, máximo desde o começo, sintomas "negativos" (perda de função).',
+        '*Duração* típica de minutos; a maioria resolve em menos de 1 h.',
+        '*Isolados* (vertigem, síncope, confusão, amnésia) raramente são AIT.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Déficit que volta ou persiste:* AVC em evolução — reperfusão.',
+        '*AIT em crescendo:* 2 ou mais episódios em 7 dias.',
+        'Estenose carotídea sintomática ou fibrilação atrial nova.',
+        'Cefaleia intensa ou dor cervical com o déficit: dissecção arterial ou hemorragia.',
+        'AIT em uso de anticoagulante ou com sopro carotídeo novo.'
+      ]},
+
+      { tipo:'lista', titulo:'Escore ABCD2 (0–7)', itens:[
+        '*A — Idade* ≥ 60 anos: 1.',
+        '*B — PA* ≥ 140/90 mmHg na avaliação inicial: 1.',
+        '*C — Clínica:* fraqueza unilateral 2 · distúrbio de fala sem fraqueza 1.',
+        '*D — Duração:* ≥ 60 min 2 · 10–59 min 1.',
+        '*D — Diabetes:* 1.',
+        '*Leitura:* 0–3 baixo · 4–5 moderado · 6–7 alto. *Limitação:* não detecta FA nem estenose carotídea — paciente com ABCD2 baixo e uma delas é alto risco.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Glicemia capilar* imediata; hemograma, coagulograma, eletrólitos, função renal, glicemia e HbA1c, perfil lipídico.',
+        '*ECG* de 12 derivações e *monitorização cardíaca*; Holter de 24 h ou mais se o ECG não mostrar FA.',
+        '*TC de crânio* sem contraste na chegada; *ressonância com difusão* se disponível.',
+        '*Angio-TC de vasos do pescoço e intracranianos* no PS, ou Doppler de carótidas e vertebrais em até 24 h.',
+        '*Ecocardiograma* transtorácico; transesofágico no jovem sem causa ou com suspeita de forame oval.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'AAS', dose:'Ataque 160–300 mg, depois 100 mg 1x/dia', via:'VO', obs:'Após TC sem hemorragia. Alto risco: junto com clopidogrel por 21 dias, depois manter um dos dois.' },
+        { droga:'Clopidogrel', dose:'Ataque 300 mg (CHANCE) ou 600 mg (POINT), depois 75 mg 1x/dia', via:'VO', obs:'Dupla antiagregação por 21 dias no AIT de alto risco ou AVC menor (NIHSS ≤ 3), iniciada em até 24 h, sem indicação de anticoagular.' },
+        { droga:'Ticagrelor', dose:'Ataque 180 mg, depois 90 mg de 12/12 h por 30 dias, com AAS', via:'VO', obs:'Alternativa ao clopidogrel (THALES, CHANCE-2 em portadores de CYP2C19 com perda de função). Mais sangramento.' },
+        { droga:'Atorvastatina', dose:'40–80 mg 1x/dia', via:'VO', obs:'Para todo AIT aterotrombótico. Alternativa: rosuvastatina 20 mg. Alvo de LDL abaixo de 70 mg/dL.' },
+        { droga:'Apixabana', dose:'5 mg de 12/12 h', via:'VO', obs:'FA. 2,5 mg de 12/12 h se 2 de: ≥ 80 anos, ≤ 60 kg, creatinina ≥ 1,5 mg/dL. Não somar antiagregante de rotina.' },
+        { droga:'Rivaroxabana', dose:'20 mg 1x/dia com refeição', via:'VO', obs:'FA. 15 mg se clearance de creatinina de 15–49 mL/min.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Dar alta por ABCD2 baixo sem olhar ECG e carótidas.',
+        'Dar antiagregante antes da TC excluir hemorragia.',
+        'Manter a dupla antiagregação além de 21–30 dias sem indicação: o sangramento supera o benefício.',
+        'Somar AAS ao anticoagulante na FA sem outra indicação.',
+        'Baixar a PA de forma agressiva no PS: o tratamento anti-hipertensivo de longo prazo começa após a fase aguda.',
+        'Chamar de AIT a síncope, a tontura isolada ou a confusão sem sinal focal.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'O risco de AVC após AIT chega a 5% em 2 dias e se concentra na primeira semana: a investigação é urgente. *Internar ou observar 24 h* quem tem AIT em crescendo, ABCD2 de 4 ou mais, déficit motor ou de fala prolongado, estenose carotídea sintomática, FA nova, AIT já em uso de antiagregante ou anticoagulante, ou quando não há como completar angio-TC ou Doppler, ECG prolongado e avaliação neurológica em 24 a 48 h — o que, na realidade de muitos serviços brasileiros, significa internar. *Alta* para clínica de AIT em 24 a 48 h é aceitável no baixo risco com imagem vascular e ECG normais feitos no PS, já com antiagregante e estatina e orientação clara: voltar imediatamente e chamar o SAMU (192) se qualquer sintoma retornar. Não dirigir até a avaliação neurológica. *Divergência:* o NICE (2019) desaconselha usar o ABCD2 para decidir e manda tratar todo AIT suspeito com AAS e avaliação especializada em 24 h; a AHA mantém o escore como uma das ferramentas, sempre junto com a imagem vascular. O POINT usou dupla antiagregação por 90 dias e o CHANCE por 21: a análise combinada mostrou benefício concentrado nas 3 primeiras semanas, por isso 21 dias é o consenso atual. O INSPIRES (2023) estendeu a janela de início para até 72 h na doença aterosclerótica.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'O AIT é a melhor chance de evitar um AVC: o paciente que "já está bem" é exatamente o que mais se beneficia da conduta.',
+        'Amaurose fugaz é AIT de retina: pede carótida no mesmo dia como qualquer outro.',
+        'Prescreva a primeira dose de AAS e clopidogrel no PS — não deixe para a farmácia de amanhã.'
+      ]}
+    ] },
+
+  { id:'paralisia-facial', titulo:'Paralisia facial periférica (Bell)', categoria:'neuro', gravidade:'rotina',
+    resumo:'Paralisia de toda a hemiface instalada em até 72 h: testa poupada é central (AVC); periférica sem red flag é Bell — prednisona em até 72 h e proteção do olho; vesículas no ouvido são Ramsay Hunt e levam antiviral.',
+    tags:['paralisia facial','paralisia de bell','bell','boca torta','nervo facial','vii par','paralisia facial periferica','paralisia facial periférica','ramsay hunt','zoster otico','zóster ótico','prednisona','valaciclovir','aciclovir','lagoftalmo','protecao ocular','proteção ocular'],
+    fonte:'AAO-HNS — Clinical Practice Guideline: Bell Palsy (2013) · AAN — Steroids and antivirals for Bell palsy (2012) · Cochrane — Corticosteroids for Bell palsy (2016) e Antiviral treatment for Bell palsy (2019) · UpToDate — Bell palsy: treatment and prognosis in adults',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Fraqueza de *toda a hemiface* (testa, olho e boca) instalada em horas a 3 dias, muitas vezes ao acordar, com dor retroauricular.' },
+      { rotulo:'Prioridade',    valor:'Testar a *testa*: se o paciente franze a testa do lado afetado, é central. Depois procurar red flags.' },
+      { rotulo:'Meta',          valor:'Prednisona nas primeiras 72 h e *córnea protegida* — a úlcera de córnea é a complicação que dá para evitar.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Boca torta ou olho que não fecha',
+          nota:'Pedir para franzir a testa, fechar os olhos com força, mostrar os dentes e encher as bochechas' },
+        { tipo:'decisao', texto:'Consegue franzir a testa do lado afetado?', ramos:[
+          { rotulo:'Sim, testa poupada', cor:'perigo', texto:'*Paralisia central:* AVC até prova em contrário',
+            nota:'Procurar fraqueza de braço, disartria. Hora de início define reperfusão', ir:'avc-isquemico' },
+          { rotulo:'Não, hemiface toda', texto:'*Periférica:* procurar red flags' }
+        ]},
+        { tipo:'decisao', texto:'Tem red flag?', ramos:[
+          { rotulo:'Vesículas na orelha ou no palato, otalgia intensa, vertigem ou hipoacusia', texto:'*Ramsay Hunt:* antiviral + prednisona e otorrino',
+            meds:['Valaciclovir', 'Prednisona'] },
+          { rotulo:'Otite, massa parotídea, trauma, bilateral, outros pares, fraqueza de membros, progressão além de 72 h', cor:'perigo',
+            texto:'*Não é Bell:* investigar causa (TC ou RM, otorrino ou neuro)', ir:'otite-adulto' },
+          { rotulo:'Nenhuma', cor:'ok', texto:'*Bell*' }
+        ]},
+        { tipo:'passo', rotulo:'Até 72 h', texto:'*Prednisona* 60 mg por 5 dias com desmame em mais 5',
+          nota:'Antiviral só na paralisia completa ou grave — ver Divergência. Diabético: controlar a glicemia',
+          meds:['Prednisona'] },
+        { tipo:'passo', rotulo:'Olho', texto:'*Lubrificante de dia, gel à noite e oclusão* com a pálpebra fechada',
+          meds:['Carmelose 0,5% colírio', 'Gel lubrificante oftálmico'] },
+        { tipo:'fim', rotulo:'Alta', texto:'Reavaliar em 1–2 semanas · otorrino ou neuro ambulatorial · sem melhora em 3–4 meses: imagem' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        '*Bell:* instalação em até 72 h, unilateral, testa incluída, dor retroauricular, hiperacusia, alteração do paladar.',
+        '*Sinal de Bell:* ao tentar fechar o olho, o globo sobe e a córnea fica exposta.',
+        '*Ramsay Hunt:* vesículas na concha, canal auditivo ou palato, otalgia intensa, vertigem e hipoacusia.',
+        '*Gestante, diabético e após infecção viral* têm mais Bell.',
+        '*Central:* testa poupada, outros sinais focais, fala alterada.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Testa poupada* ou outro sinal neurológico: AVC.',
+        '*Bilateral:* Guillain-Barré, sarcoidose, HIV, leucemia, meningite carcinomatosa.',
+        'Outros pares cranianos, fraqueza de membros ou instalação progressiva por mais de 3 semanas.',
+        'Otite, otorreia, colesteatoma, massa parotídea ou cervical, trauma de crânio (fratura de temporal).',
+        'Recorrência do mesmo lado ou sem nenhuma melhora em 3–4 meses: tumor até prova em contrário.'
+      ]},
+
+      { tipo:'lista', titulo:'Gravidade (House-Brackmann)', itens:[
+        '*I* normal · *II* leve, só ao exame próximo.',
+        '*III* moderada: assimetria evidente, mas fecha o olho com esforço.',
+        '*IV* moderadamente grave: *não fecha o olho* completamente.',
+        '*V* grave: movimento mínimo · *VI* paralisia total.',
+        '*Prognóstico:* cerca de 70% recuperam totalmente sem tratamento; com prednisona, mais de 80%. Paralisia completa recupera menos.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Nenhum* na paralisia de Bell típica.',
+        '*Glicemia* no diabético ou com sintomas de hiperglicemia (antes do corticoide).',
+        '*Otoscopia* sempre: otite e vesículas.',
+        '*TC ou RM* se red flag, atípica ou sem melhora em 3–4 meses; *TC de crânio* se dúvida de causa central.',
+        '*Sorologias* (HIV, sífilis) na bilateral ou atípica. *Eletroneuromiografia* (ambulatorial) na paralisia completa, entre 3 e 14 dias.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Prednisona', dose:'60 mg 1x/dia pela manhã por 5 dias, depois reduzir 10 mg por dia em 5 dias (ou 1 mg/kg/dia, máx. 60–80 mg, por 7–10 dias)', via:'VO', obs:'Iniciar em até 72 h. Comprimidos de 5 e 20 mg. Criança: 1 mg/kg/dia (máx. 60 mg) por 5–7 dias, evidência fraca. Diabético: monitorar glicemia.' },
+        { droga:'Valaciclovir', dose:'1 g de 8/8 h por 7 dias', via:'VO', obs:'Ramsay Hunt e Bell grave (House-Brackmann V–VI), *sempre com* prednisona. Ajustar à função renal.' },
+        { droga:'Aciclovir', dose:'Bell: 400 mg 5x/dia por 10 dias · Ramsay Hunt: 800 mg 5x/dia por 7–10 dias', via:'VO', obs:'Alternativa mais barata ao valaciclovir (disponível no SUS).' },
+        { droga:'Carmelose 0,5% colírio', dose:'1 gota de 1/1 h a 2/2 h acordado', via:'Colírio', obs:'Lágrima artificial sem conservante se uso muito frequente.' },
+        { droga:'Gel lubrificante oftálmico', dose:'Faixa no fundo de saco ao deitar', via:'Tópica ocular', obs:'Carbômero ou pomada lubrificante sem antibiótico. Fechar a pálpebra e fixar com fita microporosa; óculos ou câmara úmida de dia se não fecha.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Chamar de Bell a paralisia com testa poupada.',
+        'Dar antiviral sem corticoide: sozinho não funciona.',
+        'Esquecer a proteção ocular de quem não fecha o olho.',
+        'Ocluir com gaze diretamente sobre o olho aberto — a gaze arranha a córnea.',
+        'Prescrever corticoide sem olhar a orelha (otite e vesículas mudam a conduta).',
+        'Atribuir à Bell uma paralisia que não melhora em 3–4 meses sem pedir imagem.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'Bell é *alta*: prednisona, proteção ocular, explicação de que a maioria recupera em semanas a 3 meses, e retorno em 1 a 2 semanas ou antes se dor ocular, olho vermelho ou baixa visual (encaminhar ao oftalmo). Encaminhar ao otorrino ou neurologista ambulatorial; paralisia completa: eletroneuromiografia e otorrino com prioridade. *Internar ou avaliar com especialista no dia* causa central, bilateral, paralisia com otite média ou mastoidite (é complicação, não Bell), outros pares cranianos ou Ramsay Hunt com vertigem incapacitante. Gestante: prednisona pode ser usada; controlar glicemia e PA. A doença de Lyme clássica, causa frequente nos EUA, não é relevante no Brasil (existe a rara síndrome de Baggio-Yoshinari) — não pedir sorologia de rotina. *Divergência:* a AAO-HNS (2013) considera opcional somar antiviral, a AAN (2012) diz que o benefício, se existe, é pequeno, e a Cochrane (2019) sugere menos sequela (sincinesia) com a associação, com evidência fraca — por isso o antiviral fica reservado para a paralisia completa ou grave, sempre com prednisona.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'A testa decide: o córtex de cada lado comanda a testa dos dois lados, por isso o AVC poupa a testa e a Bell não.',
+        'Olhe a orelha e o palato de todo paciente com paralisia facial — Ramsay Hunt tem prognóstico pior e precisa de antiviral.',
+        'Ensine a fechar o olho com o dedo várias vezes ao dia e a usar óculos na rua: vento e poeira na córnea exposta causam úlcera.'
+      ]}
+    ] },
+
+  { id:'pac-pedia', titulo:'Pneumonia na criança', categoria:'pedia', gravidade:'urgencia',
+    resumo:'Taquipneia para a idade é o sinal-chave; amoxicilina VO por 5 a 7 dias na leve, internação com penicilina ou ampicilina EV na grave, e estafilococo quando há pneumatocele.',
+    tags:['pneumonia','pac','pneumonia comunitaria','pneumonia na crianca','taquipneia','tiragem','amoxicilina','penicilina cristalina','ceftriaxona','oxacilina','azitromicina','mycoplasma','derrame pleural','empiema','pneumatocele'],
+    fonte:'SBP — Pneumonia adquirida na comunidade na infância (2018) · Ministério da Saúde / OMS — AIDPI · IDSA/PIDS — Pediatric CAP (2011) · BTS — CAP in children (2011) · UpToDate — Community-acquired pneumonia in children',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Febre e tosse com *taquipneia para a idade* (OMS), com ou sem estertores localizados.' },
+      { rotulo:'Prioridade',    valor:'Separar quem tem *sinal de gravidade* (tiragem subcostal, SpO2 < 92%, recusa alimentar, letargia, < 2 meses) e interna.' },
+      { rotulo:'Meta',          valor:'Amoxicilina no mesmo atendimento na leve, reavaliação em *48 a 72 h* e busca ativa de derrame quando a febre não cede.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Febre e tosse com *taquipneia para a idade*',
+          nota:'OMS: < 2 meses ≥ 60 · 2 a 11 meses ≥ 50 · 1 a 4 anos ≥ 40 irpm. Contar 1 minuto inteiro, com a criança calma e sem febre alta' },
+        { tipo:'decisao', texto:'Tem sinal de gravidade?', ramos:[
+          { rotulo:'Tiragem subcostal, SpO2 < 92%, gemência, letargia, recusa alimentar, vômitos, < 2 meses', cor:'perigo',
+            texto:'*Internar*: oxigênio, RX de tórax e antibiótico EV',
+            nota:'Vacinada: penicilina cristalina ou ampicilina. Não vacinada (pneumo/Hib) ou muito grave: ceftriaxona',
+            meds:['Penicilina G cristalina', 'Ampicilina', 'Ceftriaxona'] },
+          { rotulo:'Sem sinal de gravidade', cor:'ok', texto:'*Tratamento domiciliar* com amoxicilina VO por 5 a 7 dias',
+            nota:'RX não é obrigatório na pneumonia leve típica tratada em casa',
+            meds:['Amoxicilina'] }
+        ]},
+        { tipo:'decisao', texto:'O quadro sugere outro agente?', ramos:[
+          { rotulo:'Acima de 5 anos, início arrastado, tosse seca, sibilos, mialgia, cefaleia', texto:'*Atípico* (Mycoplasma): macrolídeo',
+            nota:'Isolado se o quadro é típico de atípico; associado ao betalactâmico se grave ou na dúvida',
+            meds:['Azitromicina'] },
+          { rotulo:'Lactente de 1 a 3 meses, afebril, tosse em acessos', texto:'*Chlamydia ou coqueluche*: azitromicina',
+            meds:['Azitromicina'], ir:'coqueluche' },
+          { rotulo:'Pneumatocele, abscesso, pós-varicela, lesão de pele', cor:'perigo', texto:'*Staphylococcus aureus*: oxacilina',
+            nota:'Associar à ceftriaxona até a cultura. Necrotizante grave: pensar em MRSA comunitário',
+            meds:['Oxacilina', 'Clindamicina'] }
+        ]},
+        { tipo:'decisao', texto:'Febre persiste após 48 a 72 h de antibiótico?', ramos:[
+          { rotulo:'Sim, ou piora', cor:'perigo', texto:'*Procurar derrame pleural* (RX e USG de tórax)',
+            nota:'Derrame moderado ou grande, ou loculado: toracocentese e drenagem', ir:'derrame-pleural' },
+          { rotulo:'Não, melhorando', cor:'ok', texto:'Completar o tratamento VO' }
+        ]},
+        { tipo:'fim', rotulo:'Destino', texto:'Alta com amoxicilina e retorno em 48 a 72 h · internação · UTI se SpO2 < 92% com O2, exaustão ou choque' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        'Contar a frequência respiratória por 1 minuto inteiro — taquipneia é o sinal mais sensível (OMS).',
+        'Procurar tiragem subcostal, batimento de asa, gemência e SpO2: definem a gravidade.',
+        'Auscultar estertores localizados, sopro tubário ou murmúrio diminuído — ausculta normal não exclui.',
+        'Suspeitar de pneumonia de base na febre alta com dor abdominal ou rigidez de nuca: o lobo inferior engana.',
+        'Pensar em atípico: acima de 5 anos, tosse seca persistente, sibilos, mialgia ou manifestação extrapulmonar.',
+        'Separar a sibilância difusa viral — bronquiolite e asma não pedem antibiótico.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Menor de 2 meses* com pneumonia: sempre interna.',
+        'SpO2 < 92%, cianose, gemência, apneia ou tiragem subcostal.',
+        'Letargia, convulsão, recusa alimentar ou vômitos que impedem o antibiótico VO.',
+        'Febre que persiste ou volta após 48 a 72 h: derrame, empiema, abscesso ou pneumonia necrotizante.',
+        'Pneumatocele ou lesão de pele infectada: estafilococo, que piora rápido.'
+      ]},
+
+      { tipo:'lista', titulo:'Critérios de gravidade e internação', itens:[
+        '*Taquipneia (OMS)*: < 2 meses ≥ 60 · 2 a 11 meses ≥ 50 · 1 a 4 anos ≥ 40 irpm · ≥ 5 anos sem corte OMS (na prática ≥ 30 irpm).',
+        '*Internar*: < 2 meses, tiragem subcostal, SpO2 < 92% em ar ambiente, gemência, apneia, cianose.',
+        '*Internar também*: recusa alimentar ou vômitos, desidratação, letargia ou convulsão, derrame ou abscesso.',
+        '*Internar por contexto*: comorbidade (cardiopatia, pneumopatia, imunossupressão, desnutrição grave), falha do tratamento VO em 48 a 72 h, família sem condição de retorno.',
+        '*UTI*: SpO2 < 92% com FiO2 ≥ 50%, exaustão, apneias, hipercapnia, choque.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Nenhum exame* é obrigatório na pneumonia leve tratada em casa.',
+        '*RX de tórax (PA e perfil)*: na internação, na dúvida diagnóstica, na hipoxemia e na falha após 48 a 72 h.',
+        '*USG de tórax*: melhor que o RX para quantificar e ver loculação do derrame.',
+        '*Hemograma, PCR e hemocultura*: no internado (hemocultura positiva em menos de 10%).',
+        '*Líquido pleural*: pH, glicose, DHL, Gram e cultura; pH < 7,2, glicose < 40 mg/dL ou pus indicam drenagem.',
+        '*Pesquisa viral e Mycoplasma*: quando muda conduta (isolamento, suspeita de atípico grave).'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações — por quilo', itens:[
+        { droga:'Amoxicilina', dose:'50 mg/kg/dia de 8/8 h ou 12/12 h (máximo de 1 g por dose)', via:'VO', obs:'SBP. 5 a 7 dias. Suspensão 250 mg/5 mL ou 400 mg/5 mL; cápsula 500 mg.' },
+        { droga:'Amoxicilina em dose alta', dose:'90 mg/kg/dia de 12/12 h (máximo de 2 g por dose; 4 g/dia)', via:'VO', obs:'IDSA/AAP. Considerar se usou betalactâmico nos últimos 30 dias, frequenta creche ou região com pneumococo resistente.' },
+        { droga:'Amoxicilina + clavulanato', dose:'50 mg/kg/dia de amoxicilina de 12/12 h (máximo de 875 mg por dose)', via:'VO', obs:'Suspensão 400 mg + 57 mg/5 mL. Falha da amoxicilina, pós-influenza, Hib não vacinado.' },
+        { droga:'Azitromicina', dose:'10 mg/kg no 1º dia (máximo de 500 mg), depois 5 mg/kg/dia do 2º ao 5º dia (máximo de 250 mg)', via:'VO', obs:'Suspensão 200 mg/5 mL. Atípicos. Coqueluche abaixo de 6 meses: 10 mg/kg/dia por 5 dias.' },
+        { droga:'Claritromicina', dose:'15 mg/kg/dia de 12/12 h (máximo de 500 mg por dose)', via:'VO', obs:'Alternativa à azitromicina, por 7 a 10 dias. Suspensão 125 ou 250 mg/5 mL.' },
+        { droga:'Penicilina G cristalina', dose:'200.000 UI/kg/dia de 4/4 h ou 6/6 h (máximo de 4 milhões UI por dose)', via:'EV', obs:'Primeira escolha EV na criança vacinada (SBP). Frasco 5 milhões UI.' },
+        { droga:'Ampicilina', dose:'150 a 200 mg/kg/dia de 6/6 h (máximo de 2 g por dose)', via:'EV', obs:'Alternativa à penicilina. Abaixo de 2 meses: associar gentamicina.' },
+        { droga:'Gentamicina', dose:'5 a 7,5 mg/kg/dia em dose única', via:'EV', obs:'Só no lactente abaixo de 2 meses, junto com a ampicilina.' },
+        { droga:'Ceftriaxona', dose:'50 a 100 mg/kg/dia em 1 ou 2 doses (máximo de 2 g por dose)', via:'EV ou IM', obs:'Não vacinada para pneumococo e Hib, grave ou UTI, derrame complicado. Evitar no RN ictérico.' },
+        { droga:'Oxacilina', dose:'150 a 200 mg/kg/dia de 6/6 h (máximo de 2 g por dose)', via:'EV', obs:'Pneumatocele, abscesso, pós-varicela, foco cutâneo. Frasco 500 mg.' },
+        { droga:'Clindamicina', dose:'30 a 40 mg/kg/dia de 6/6 h ou 8/8 h (máximo de 600 mg por dose)', via:'EV', obs:'Suspeita de MRSA comunitário (necrotizante). Grave: vancomicina 15 mg/kg/dose de 6/6 h.' },
+        { droga:'Dipirona', dose:'15 mg/kg/dose de 6/6 h (máximo de 1 g por dose)', via:'VO ou EV', obs:'Febre e dor pleurítica. Gotas 500 mg/mL: 1 gota por kg (máximo de 40 gotas).' },
+        { droga:'Oxigênio', dose:'Titular para SpO2 ≥ 92%', via:'Cateter ou máscara', obs:'Cânula nasal de alto fluxo se esforço persistente.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Antibiótico para sibilância difusa viral (bronquiolite, asma) sem foco.',
+        'RX de controle na criança que melhorou: a imagem demora semanas para normalizar.',
+        'Macrolídeo isolado no lactente com pneumonia típica: o pneumococo é o principal agente.',
+        'Dar alta a menor de 2 meses com pneumonia.',
+        'Manter o mesmo antibiótico sem reavaliar a criança que segue febril após 72 h.',
+        'Xarope para tosse, mucolítico ou fisioterapia de rotina.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Alta* com amoxicilina VO na criança sem sinal de gravidade, SpO2 ≥ 92%, aceitando líquidos e com família capaz de retornar: reavaliação em 48 a 72 h e sinais de alarme por escrito (respiração rápida ou com esforço, gemência, lábios roxos, recusa de líquidos, sonolência). *Internar* pelos critérios acima. No internado, trocar para VO quando afebril há 24 a 48 h e aceitando dieta. Derrame: USG; derrame pequeno segue com antibiótico; moderado ou grande com desconforto, ou loculado, vai para toracocentese e drenagem (fibrinolítico ou videotoracoscopia no empiema loculado). *Divergência:* a SBP recomenda amoxicilina 50 mg/kg/dia; IDSA/AAP usam 90 mg/kg/dia para cobrir pneumococo com resistência intermediária. Quanto à duração, os estudos recentes (CAP-IT, SCOUT-CAP) mostram que 5 dias equivalem a 10 na pneumonia não complicada; diretrizes antigas ainda falam em 7 a 10 dias.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Conte a frequência respiratória depois do antitérmico: a febre sozinha acelera a respiração.',
+        'Febre alta com dor abdominal e ausculta pobre: peça RX de tórax antes de pensar em apendicite.',
+        'Confira a caderneta: criança sem pneumocócica e Hib muda a escolha para ceftriaxona.'
+      ]}
+    ] },
+
+  { id:'itu-pedia', titulo:'ITU febril na criança', categoria:'pedia', gravidade:'urgencia',
+    resumo:'Urina colhida do jeito certo antes do antibiótico; VO na criança bem, EV no toxemiado e no < 2 meses, 7 a 10 dias, e USG após o primeiro episódio febril.',
+    tags:['itu','infeccao urinaria','infecção urinária','pielonefrite','urocultura','sondagem vesical','saco coletor','cefalexina','cefuroxima','ceftriaxona','refluxo vesicoureteral','uretrocistografia'],
+    fonte:'SBP — Infecção do trato urinário (Departamento de Nefrologia, 2021) · AAP — UTI 2 a 24 meses (2011, reafirmada 2016) · NICE — UTI under 16s (NG224, 2022) · UpToDate — Urinary tract infections in infants and children',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Febre sem foco abaixo de 2 anos, ou febre com disúria, dor lombar ou urina com cheiro forte. Lactente: irritabilidade, vômito, recusa alimentar.' },
+      { rotulo:'Prioridade',    valor:'*Colher urina por sondagem* (sem controle esfincteriano) ou jato médio, e só então antibiótico.' },
+      { rotulo:'Meta',          valor:'Antibiótico certo no mesmo dia, reavaliação em 48 h e USG de rins e vias urinárias após o 1º episódio febril.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Febre sem foco no lactente, ou febre com sintomas urinários',
+          nota:'Abaixo de 2 anos a ITU é a infecção bacteriana grave mais comum e quase nunca tem sintoma urinário' },
+        { tipo:'decisao', texto:'Como colher?', ramos:[
+          { rotulo:'Sem controle esfincteriano', texto:'*Sondagem vesical* ou punção suprapúbica',
+            nota:'Saco coletor serve só para triagem: negativo exclui, positivo não confirma' },
+          { rotulo:'Com controle esfincteriano', cor:'ok', texto:'*Jato médio* após higiene' }
+        ]},
+        { tipo:'passo', rotulo:'Já', texto:'*Urina I, Gram de gota e urocultura* antes do antibiótico',
+          nota:'Leucocitúria com nitrito ou bactéria no Gram: tratar sem esperar a cultura' },
+        { tipo:'decisao', texto:'Onde tratar?', ramos:[
+          { rotulo:'Menor de 2 meses', cor:'perigo', texto:'*Internar*: ampicilina + gentamicina EV',
+            nota:'Hemocultura; líquor no < 1 mês e no toxemiado', meds:['Ampicilina', 'Gentamicina'], ir:'febre-sem-foco' },
+          { rotulo:'Toxemia, vômitos, desidratação ou sem aceitar VO', cor:'perigo', texto:'*Antibiótico EV* e internação',
+            nota:'Trocar para VO após 24 a 48 h afebril, guiado pelo antibiograma', meds:['Ceftriaxona'] },
+          { rotulo:'Bom estado, aceita VO', cor:'ok', texto:'*Antibiótico VO por 7 a 10 dias*',
+            nota:'Escolha pela resistência local; ajustar pelo antibiograma', meds:['Cefuroxima axetil', 'Amoxicilina + clavulanato', 'Cefalexina'] }
+        ]},
+        { tipo:'passo', rotulo:'48 h', texto:'*Reavaliar*: febre deve ceder em 48 a 72 h',
+          nota:'Sem melhora: conferir antibiograma e fazer USG atrás de abscesso ou obstrução' },
+        { tipo:'fim', rotulo:'Seguimento', texto:'*USG de rins e vias urinárias* após o 1º episódio febril · uretrocistografia só se USG alterada ou recorrência' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        'Pedir urina em todo lactente com febre sem foco, sobretudo menina, menino não circuncidado e < 12 meses.',
+        'Suspeitar diante de febre ≥ 39 °C há mais de 48 h sem outra causa.',
+        'Valorizar vômito, irritabilidade, recusa alimentar e baixo ganho de peso no lactente.',
+        'Perguntar por disúria, urgência, incontinência nova e dor lombar na criança maior.',
+        'Investigar antecedente de ITU, malformação urinária, constipação e disfunção miccional.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Menor de 2 meses* febril com urina alterada: interna e investiga sepse.',
+        'Toxemia, má perfusão ou hipotensão: urosepse.',
+        'Jato urinário fraco, bexiga palpável ou massa abdominal: uropatia obstrutiva (válvula de uretra posterior no menino).',
+        'Creatinina elevada ou hipertensão arterial.',
+        'Febre que não cede em 48 a 72 h de antibiótico adequado.'
+      ]},
+
+      { tipo:'lista', titulo:'Critérios diagnósticos', itens:[
+        '*Diagnóstico*: urina sugestiva (leucocitúria ou esterase, nitrito, bactérias no Gram) *e* urocultura positiva colhida corretamente.',
+        '*Punção suprapúbica*: qualquer crescimento de Gram-negativo.',
+        '*Sondagem vesical*: ≥ 50.000 UFC/mL de um único uropatógeno (alguns serviços aceitam ≥ 10.000).',
+        '*Jato médio*: ≥ 100.000 UFC/mL.',
+        '*Saco coletor*: urina normal exclui; urina alterada exige nova coleta por sondagem antes do antibiótico.',
+        '*ITU atípica (NICE)*: sepse, jato fraco, massa, creatinina alta, falha em 48 h ou germe que não é E. coli.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Urina I + Gram de gota + urocultura* com antibiograma, sempre antes do antibiótico.',
+        '*Hemograma, PCR e hemocultura*: no < 2 meses, no toxemiado e no internado.',
+        '*Ureia, creatinina e eletrólitos*: se desidratado, vomitando ou com ITU atípica.',
+        '*Líquor*: no < 1 mês febril e no lactente toxemiado.',
+        '*USG de rins e vias urinárias*: após o 1º episódio febril abaixo de 2 anos; na internação se falha ou ITU atípica.',
+        '*Uretrocistografia miccional*: USG com hidronefrose, cicatriz ou ureter dilatado, ITU febril recorrente ou ITU atípica — fora da fase aguda.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações — por quilo', itens:[
+        { droga:'Cefuroxima axetil', dose:'30 mg/kg/dia de 12/12 h (máximo de 500 mg por dose)', via:'VO', obs:'Suspensão 250 mg/5 mL. Boa opção VO para pielonefrite.' },
+        { droga:'Amoxicilina + clavulanato', dose:'40 a 50 mg/kg/dia de amoxicilina de 12/12 h (máximo de 875 mg por dose)', via:'VO', obs:'Suspensão 400 mg + 57 mg/5 mL.' },
+        { droga:'Cefalexina', dose:'50 a 100 mg/kg/dia de 6/6 h (máximo de 1 g por dose)', via:'VO', obs:'Suspensão 250 mg/5 mL. Muito usada no Brasil; conferir a resistência local da E. coli.' },
+        { droga:'Sulfametoxazol + trimetoprima', dose:'6 a 12 mg/kg/dia de trimetoprima de 12/12 h (máximo de 160 mg de TMP por dose)', via:'VO', obs:'Só se sensível no antibiograma (resistência alta). Evitar abaixo de 2 meses.' },
+        { droga:'Ceftriaxona', dose:'50 a 75 mg/kg/dia em dose única (máximo de 2 g)', via:'EV ou IM', obs:'Acima de 28 dias. Evitar no RN ictérico e junto com cálcio EV.' },
+        { droga:'Gentamicina', dose:'5 a 7,5 mg/kg/dia em dose única', via:'EV ou IM', obs:'Alternativa à ceftriaxona; no < 2 meses, com ampicilina. Evitar se creatinina alterada.' },
+        { droga:'Ampicilina', dose:'50 mg/kg/dose de 6/6 h (máximo de 2 g por dose)', via:'EV', obs:'Abaixo de 2 meses: cobre enterococo e Listeria. Na 1ª semana de vida, de 8/8 h.' },
+        { droga:'Dipirona', dose:'15 mg/kg/dose de 6/6 h (máximo de 1 g por dose)', via:'VO ou EV', obs:'Febre e dor.' },
+        { droga:'Paracetamol', dose:'10 a 15 mg/kg/dose de 6/6 h (máximo de 750 mg por dose)', via:'VO', obs:'Gotas 200 mg/mL. Máximo de 75 mg/kg/dia.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Usar urocultura de saco coletor para confirmar ITU.',
+        'Iniciar antibiótico antes de colher a urocultura.',
+        'Tratar ITU febril com nitrofurantoína: não atinge o parênquima renal.',
+        'Pedir urocultura de controle na criança que melhorou.',
+        'Tratar bacteriúria assintomática.',
+        'Profilaxia antibiótica de rotina após o 1º episódio.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Internar* o menor de 2 meses, o toxemiado, quem vomita ou não aceita VO, desidratado, com uropatia conhecida, imunossupressão, falha em 48 a 72 h ou família sem condição de retorno. *Alta* com antibiótico VO por 7 a 10 dias, antitérmico, hidratação, retorno em 48 h com a urocultura, e USG de rins e vias urinárias agendada. Na criança maior, tratar constipação e disfunção miccional, que são a principal causa de recorrência. *Quando investigar refluxo*: uretrocistografia se USG alterada, segunda ITU febril ou ITU atípica. *Divergência:* AAP fala em 7 a 14 dias e o estudo SCOUT (2023) mostrou que 5 dias bastam em quem melhora rápido; a SBP mantém 7 a 10. Profilaxia antibiótica (estudo RIVUR) reduz recorrência mas não cicatriz: fica para refluxo de alto grau, a critério do nefrologista.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Lactente febril sem foco: a urina é o exame que mais acha doença.',
+        'Menino com jato fraco ou bexiga palpável: USG antes da alta — válvula de uretra posterior.',
+        'Adolescente sexualmente ativa com disúria: pense em IST e peça beta-HCG.'
+      ]}
+    ] },
+
+  { id:'tce-pedia', titulo:'TCE na criança (PECARN)', categoria:'pedia', gravidade:'urgencia',
+    resumo:'Glasgow 14 ou 15: PECARN por idade decide TC, observação ou alta; lactente com hematoma e história que não fecha é maus-tratos até provar o contrário.',
+    tags:['tce','trauma cranioencefalico','traumatismo craniano','pecarn','bateu a cabeca','queda','tomografia','glasgow pediatrico','hematoma de couro cabeludo','concussao','manitol','salina hipertonica','maus-tratos'],
+    fonte:'PECARN — Kuppermann et al., Lancet (2009) · Brain Trauma Foundation — Pediatric severe TBI (2019) · SBP — Traumatismo cranioencefálico na infância · ATLS 11ª ed. · UpToDate — Minor head trauma in infants and children',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Toda criança com trauma de crânio: queda, acidente, agressão — e lactente com hematoma de couro cabeludo sem história clara.' },
+      { rotulo:'Prioridade',    valor:'Glasgow pediátrico; se 14 ou 15, aplicar *PECARN da faixa etária* (< 2 anos ou ≥ 2 anos).' },
+      { rotulo:'Meta',          valor:'TC para quem precisa, observação de 4 a 6 h para o risco intermediário e menos radiação para o resto.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Trauma de crânio em criança',
+          nota:'ABCDE primeiro, com proteção da coluna cervical se mecanismo importante', ir:'atendimento-trauma' },
+        { tipo:'decisao', texto:'Glasgow pediátrico?', ramos:[
+          { rotulo:'≤ 13, piora, déficit focal, anisocoria', cor:'perigo', texto:'*TC de crânio já* e neurocirurgia',
+            nota:'Glasgow ≤ 8: intubar. Sinais de herniação: salina 3% ou manitol',
+            meds:['Salina hipertônica 3%', 'Manitol 20%'], ir:'hipertensao-intracraniana' },
+          { rotulo:'14 ou 15', texto:'Aplicar o *PECARN* da faixa etária' }
+        ]},
+        { tipo:'paralelo', colunas:[
+          { tipo:'passo', rotulo:'Menor de 2 anos — alto risco', texto:'Glasgow 14, outro sinal de alteração mental ou *fratura de crânio palpável*',
+            nota:'Intermediário: hematoma occipital, parietal ou temporal; perda de consciência ≥ 5 s; mecanismo grave; não age normalmente segundo os pais' },
+          { tipo:'passo', rotulo:'2 anos ou mais — alto risco', texto:'Glasgow 14, outro sinal de alteração mental ou *sinal de fratura de base*',
+            nota:'Intermediário: qualquer perda de consciência; vômitos; mecanismo grave; cefaleia intensa' }
+        ]},
+        { tipo:'decisao', texto:'Qual o risco PECARN?', ramos:[
+          { rotulo:'Alto', cor:'perigo', texto:'*TC de crânio sem contraste*', nota:'Risco de lesão clinicamente importante em torno de 4%' },
+          { rotulo:'Intermediário', texto:'*Observar 4 a 6 h* do trauma ou TC',
+            nota:'Favorece TC: vários achados, piora na observação, < 3 meses, preferência dos pais após conversa' },
+          { rotulo:'Nenhum critério', cor:'ok', texto:'*Sem TC*: alta com orientação', nota:'Risco < 0,02% (< 2 anos) e < 0,05% (≥ 2 anos)' }
+        ]},
+        { tipo:'alerta', rotulo:'Sempre perguntar', texto:'*História compatível com a lesão e com o desenvolvimento?*',
+          nota:'Lactente que não anda com hematoma ou fratura, demora em procurar atendimento, versões diferentes: maus-tratos', ir:'maus-tratos' },
+        { tipo:'fim', rotulo:'Alta', texto:'Glasgow 15, sem vômito, comportamento normal, adulto responsável por 24 h e sinais de alarme por escrito' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar de lesão', itens:[
+        'Calcular o Glasgow pediátrico na chegada e repetir na observação.',
+        'Palpar todo o couro cabeludo do lactente: hematoma mole e grande (fora da testa) sugere fratura.',
+        'Perguntar perda de consciência, vômitos, cefaleia, convulsão e se a criança está agindo como sempre.',
+        'Estimar o mecanismo: altura da queda, colisão, atropelamento, objeto de alto impacto.',
+        'Procurar sinais de base: hemotímpano, olhos de guaxinim, Battle, otorreia ou rinorreia.',
+        'Examinar a fontanela, as pupilas e a marcha (na criança que anda).',
+        'Confrontar a história com a idade e as lesões — e examinar a pele inteira.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        'Glasgow ≤ 13, queda de 2 pontos ou mais, anisocoria, déficit focal.',
+        'Tríade de Cushing (bradicardia, hipertensão, respiração irregular): herniação.',
+        'Fontanela abaulada, vômitos repetidos ou convulsão após o trauma.',
+        'Lactente abaixo de 3 meses com qualquer hematoma de couro cabeludo.',
+        'Lesão sem história compatível, equimoses em lactente que não anda, demora em procurar ajuda.'
+      ]},
+
+      { tipo:'lista', titulo:'PECARN — critérios exatos', itens:[
+        '*< 2 anos, alto risco (TC)*: Glasgow 14; outros sinais de alteração do estado mental (agitação, sonolência, perguntas repetitivas, resposta lenta); fratura de crânio palpável.',
+        '*< 2 anos, intermediário (observar ou TC)*: hematoma de couro cabeludo occipital, parietal ou temporal; perda de consciência ≥ 5 segundos; mecanismo grave; não está agindo normalmente segundo os pais.',
+        '*≥ 2 anos, alto risco (TC)*: Glasgow 14; outros sinais de alteração do estado mental; sinais de fratura de base de crânio.',
+        '*≥ 2 anos, intermediário (observar ou TC)*: qualquer perda de consciência; vômitos; mecanismo grave; cefaleia intensa.',
+        '*Mecanismo grave*: colisão com ejeção, morte de outro ocupante ou capotamento; pedestre ou ciclista sem capacete atingido por veículo; queda > 0,9 m (< 2 anos) ou > 1,5 m (≥ 2 anos); cabeça atingida por objeto de alto impacto.',
+        '*Sem nenhum critério*: não fazer TC.'
+      ]},
+
+      { tipo:'lista', titulo:'Glasgow pediátrico (< 2 anos, resposta verbal adaptada)', itens:[
+        '*Abertura ocular*: 4 espontânea · 3 ao chamado · 2 à dor · 1 nenhuma.',
+        '*Verbal*: 5 balbucia, sorri, segue objetos · 4 choro irritado, consolável · 3 choro à dor, inconsolável · 2 gemido à dor · 1 nenhuma.',
+        '*Motora*: 6 movimentos espontâneos · 5 retira ao toque · 4 retira à dor · 3 flexão anormal · 2 extensão · 1 nenhuma.',
+        '*Interpretação*: 13 a 15 leve · 9 a 12 moderado · ≤ 8 grave (proteger via aérea).'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*TC de crânio sem contraste*: pelos critérios do PECARN ou Glasgow ≤ 13.',
+        '*RX de crânio*: não substitui a TC; não usar para decidir.',
+        '*Coluna cervical*: imobilizar e avaliar por critério clínico; TC cervical só se alto risco.',
+        '*Glicemia capilar*: em toda criança com alteração de consciência.',
+        '*Suspeita de maus-tratos*: TC de crânio no lactente, inventário ósseo, fundo de olho, hemograma, coagulograma e transaminases.',
+        '*TCE grave*: tipagem, coagulograma, gasometria, sódio.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações — por quilo', itens:[
+        { droga:'Salina hipertônica 3%', dose:'2 a 5 mL/kg em 10 a 20 min (máximo de 250 mL)', via:'EV', obs:'Hipertensão intracraniana ou herniação. Preparo: 89 mL de SF 0,9% + 11 mL de NaCl 20%. Alvo de Na até 160 mEq/L.' },
+        { droga:'Manitol 20%', dose:'0,5 a 1 g/kg = 2,5 a 5 mL/kg em 20 min (máximo de 1 g/kg por dose)', via:'EV', obs:'Alternativa à salina; evitar se hipotensão ou hipovolemia (diurético osmótico). Sonda vesical.' },
+        { droga:'Dipirona', dose:'15 mg/kg/dose de 6/6 h (máximo de 1 g por dose)', via:'VO ou EV', obs:'Cefaleia.' },
+        { droga:'Paracetamol', dose:'10 a 15 mg/kg/dose de 6/6 h (máximo de 750 mg por dose)', via:'VO', obs:'Alternativa. Evitar AINE nas primeiras 24 h.' },
+        { droga:'Ondansetrona', dose:'0,15 mg/kg (máximo de 4 mg)', via:'VO ou EV', obs:'Vômito isolado. Vômitos repetidos pedem TC, não só antiemético.' },
+        { droga:'Midazolam', dose:'0,2 mg/kg (máximo de 10 mg)', via:'IM ou intranasal', obs:'Se convulsão: seguir o protocolo de estado de mal.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'TC para todo trauma de crânio "por segurança": a radiação aumenta o risco de câncer na criança.',
+        'RX de crânio para decidir se precisa de TC.',
+        'Dar alta sem confrontar a história com a idade e as lesões.',
+        'Hiperventilar de rotina no TCE grave (só na herniação, por pouco tempo).',
+        'Mandar a família acordar a criança de hora em hora a noite toda: não é necessário após TC normal ou PECARN negativo.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Alta* com PECARN sem critérios, ou após 4 a 6 h de observação no risco intermediário com a criança assintomática, ou com TC normal: adulto responsável por 24 h, analgesia simples, repouso relativo e retorno imediato se vômitos repetidos, sonolência excessiva, convulsão, cefaleia que piora, comportamento estranho, fraqueza, alteração da fala ou da marcha, saída de líquido pelo nariz ou ouvido, choro inconsolável ou fontanela abaulada. Na concussão, 24 a 48 h de repouso físico e cognitivo relativo, retorno gradual à escola e nada de esporte de contato até liberação. *Internar* se TC alterada, Glasgow < 15 persistente, vômitos que não cedem, convulsão, suspeita de maus-tratos (notificar ao Conselho Tutelar) ou família sem condição de observar. *Neurocirurgia* em toda lesão na TC. *Divergência:* outras regras (CATCH, CHALICE) são usadas no Canadá e no Reino Unido; o PECARN é a mais validada e a que menos indica TC.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'No lactente, hematoma de testa é quase sempre benigno; o de região parietal, mole e grande, é que esconde fratura.',
+        'Observação bem feita substitui muita TC: reavalie depois de 4 a 6 h do trauma, não da chegada.',
+        'Registre a altura da queda, o mecanismo e quem viu: protege a criança e você.'
+      ]}
+    ] },
+
+  { id:'estado-mal-pedia', titulo:'Crise convulsiva e estado de mal na criança', categoria:'pedia', gravidade:'emergencia',
+    resumo:'Crise ≥ 5 min: benzodiazepínico (até 2 doses), depois levetiracetam, fenitoína ou valproato aos 20 min e intubação com infusão contínua aos 40 min — com glicemia e causa em paralelo.',
+    tags:['estado de mal epileptico','estado de mal','status epilepticus','crise convulsiva','convulsao','convulsão','midazolam','diazepam','levetiracetam','fenitoina','fenobarbital','valproato','primeira crise','crise afebril','esett'],
+    fonte:'AES — Convulsive status epilepticus in children and adults (2016) · ESETT — Kapur et al., NEJM (2019) · AHA — PALS (2025) · NICE — Epilepsies (NG217, 2022) · SBP — Estado de mal epiléptico · AAN/AAP — Primeira crise não provocada',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Crise com *5 minutos ou mais*, ou crises repetidas sem recuperar a consciência entre elas. Chegou convulsionando = já passou de 5 min.' },
+      { rotulo:'Prioridade',    valor:'ABC, glicemia capilar e *benzodiazepínico já*, pela via que estiver à mão (IM, nasal, bucal, EV).' },
+      { rotulo:'Meta',          valor:'Crise cessada em até 40 min, causa tratada (hipoglicemia, Na, Ca, infecção) e via aérea segura.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'0 a 5 min', texto:'Crise convulsiva ≥ 5 min — *cronometrar*',
+          nota:'ABC, O2, decúbito lateral, monitor, glicemia capilar, acesso (2 tentativas; senão intraósseo)' },
+        { tipo:'decisao', texto:'Glicemia capilar?', ramos:[
+          { rotulo:'≤ 60 mg/dL', cor:'perigo', texto:'*Glicose 10% já*', meds:['Glicose 10%'] },
+          { rotulo:'> 60 mg/dL', texto:'Seguir para o benzodiazepínico' }
+        ]},
+        { tipo:'decisao', texto:'5 a 20 min — tem acesso venoso?', ramos:[
+          { rotulo:'Sim', texto:'*Diazepam EV* ou *midazolam EV*', meds:['Diazepam EV', 'Midazolam EV'] },
+          { rotulo:'Não', texto:'*Midazolam IM, intranasal ou bucal* (ou diazepam retal)',
+            nota:'Midazolam IM é tão bom quanto benzodiazepínico EV e mais rápido de dar',
+            meds:['Midazolam IM', 'Midazolam intranasal', 'Midazolam bucal', 'Diazepam retal'] }
+        ]},
+        { tipo:'passo', rotulo:'Após 5 min', texto:'Persistiu: *repetir o benzodiazepínico 1 vez*',
+          nota:'No máximo 2 doses, contando a do pré-hospitalar. A 3ª só deprime a respiração' },
+        { tipo:'passo', rotulo:'20 a 40 min — 2ª linha', texto:'*Levetiracetam, fenitoína ou valproato* — eficácia igual (ESETT)',
+          nota:'Levetiracetam é a escolha mais segura. Valproato: evitar < 2 anos e doença metabólica. RN: fenobarbital',
+          meds:['Levetiracetam', 'Fenitoína', 'Valproato', 'Fenobarbital'] },
+        { tipo:'alerta', rotulo:'> 40 min — refratário', texto:'*Intubar* e infusão contínua: midazolam; cetamina ou tiopental',
+          nota:'UTI pediátrica e EEG contínuo. Antes de anestesiar, pode tentar outra droga de 2ª linha',
+          meds:['Midazolam contínuo', 'Cetamina', 'Tiopental'], ir:'sequencia-rapida-intubacao' },
+        { tipo:'passo', rotulo:'Em paralelo', texto:'*Procurar e tratar a causa*: Na, Ca, Mg, febre, trauma, intoxicação',
+          nota:'Febre + meningismo ou criança que não acorda: antibiótico e aciclovir sem esperar punção',
+          meds:['Ceftriaxona', 'Aciclovir', 'Cloreto de sódio 3%', 'Gluconato de cálcio 10%'], ir:'meningite' },
+        { tipo:'fim', rotulo:'Destino', texto:'Estado de mal: UTI pediátrica · crise breve com recuperação total: ver crise febril ou 1ª crise afebril',
+          ir:'convulsao-febril' }
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Mais de 2 doses de benzodiazepínico*: risco de apneia sem ganho — passe para a 2ª linha.',
+        'Criança que não recupera a consciência entre as crises, ou crise sutil (desvio ocular, nistagmo) após a convulsão "parar".',
+        'Febre, rigidez de nuca, petéquias ou fontanela abaulada: infecção do SNC.',
+        'Trauma, lactente com hematoma ou história incoerente: TCE e maus-tratos.',
+        'Hiponatremia (gastroenterite com água pura, diluição de fórmula), hipocalcemia (RN, raquitismo), intoxicação.'
+      ]},
+
+      { tipo:'passos', titulo:'Conduta imediata', itens:[
+        'Posicionar em decúbito lateral, aspirar, oferecer O2 e monitorizar SpO2, FC e PA.',
+        'Medir a glicemia capilar e corrigir se ≤ 60 mg/dL.',
+        'Dar o benzodiazepínico em até 5 min pela via disponível; repetir uma vez após 5 min.',
+        'Calcular a dose de 2ª linha pelo peso enquanto corre o 1º benzodiazepínico.',
+        'Colher Na, K, Ca iônico, Mg, gasometria e nível de anticonvulsivante (se em uso).',
+        'Iniciar ceftriaxona e aciclovir se houver suspeita de meningite ou encefalite.',
+        'Chamar UTI e preparar intubação se a crise passar de 30 a 40 min.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações — por quilo', itens:[
+        { droga:'Midazolam IM', dose:'0,2 mg/kg (máximo de 10 mg)', via:'IM', obs:'Ampola 5 mg/mL. AES: 13 a 40 kg = 5 mg; acima de 40 kg = 10 mg.' },
+        { droga:'Midazolam intranasal', dose:'0,2 mg/kg (máximo de 10 mg)', via:'Intranasal', obs:'Ampola 5 mg/mL, metade em cada narina, com atomizador se houver (máximo de 1 mL por narina).' },
+        { droga:'Midazolam bucal', dose:'0,3 mg/kg (máximo de 10 mg)', via:'Bucal', obs:'Ampola 5 mg/mL entre a gengiva e a bochecha. Boa opção para a família ter em casa.' },
+        { droga:'Midazolam EV', dose:'0,1 a 0,2 mg/kg (máximo de 10 mg)', via:'EV ou IO', obs:'Em 1 a 2 min. Pode repetir 1 vez em 5 min.' },
+        { droga:'Diazepam EV', dose:'0,15 a 0,3 mg/kg (máximo de 10 mg)', via:'EV ou IO', obs:'Ampola 5 mg/mL, sem diluir, em 2 min. Pode repetir 1 vez em 5 min. Não usar IM (absorção errática).' },
+        { droga:'Diazepam retal', dose:'0,5 mg/kg (máximo de 10 mg; 20 mg no adolescente)', via:'Retal', obs:'Ampola 5 mg/mL com seringa sem agulha ou sonda curta. Lorazepam EV não é comercializado no Brasil.' },
+        { droga:'Levetiracetam', dose:'60 mg/kg (máximo de 4.500 mg) em 10 a 15 min', via:'EV', obs:'Solução 100 mg/mL; diluir em SF ou SG. Sem efeito cardiovascular. Conferir disponibilidade no serviço.' },
+        { droga:'Fenitoína', dose:'20 mg/kg (máximo de 1.500 mg)', via:'EV', obs:'50 mg/mL. Só em SF 0,9%, até 1 mg/kg/min (máximo de 50 mg/min), em monitor. Hipotensão, bradicardia e arritmia. Evitar na intoxicação por bloqueador de sódio.' },
+        { droga:'Valproato', dose:'40 mg/kg (máximo de 3.000 mg) em 10 min', via:'EV', obs:'Disponibilidade EV restrita no Brasil. Evitar abaixo de 2 anos, hepatopatia, doença mitocondrial ou metabólica e plaquetopenia.' },
+        { droga:'Fenobarbital', dose:'20 mg/kg (máximo de 1.000 mg) em 20 min', via:'EV', obs:'1ª escolha no RN. Ampola 100 mg/mL (conferir se a apresentação é liberada para EV) diluída. Deprime a respiração: via aérea pronta.' },
+        { droga:'Midazolam contínuo', dose:'Ataque 0,2 mg/kg (máximo de 10 mg), depois 0,1 mg/kg/h, subindo até 1 a 2 mg/kg/h', via:'EV', obs:'Estado de mal refratário, intubado, titulando pelo EEG.' },
+        { droga:'Cetamina', dose:'1 a 2 mg/kg em bolus, depois 1 a 5 mg/kg/h', via:'EV', obs:'Refratário; não derruba a PA. Evidência pediátrica limitada.' },
+        { droga:'Tiopental', dose:'2 a 5 mg/kg em bolus, depois 1 a 5 mg/kg/h', via:'EV', obs:'Só intubado e na UTI; hipotensão importante — vasopressor pronto.' },
+        { droga:'Glicose 10%', dose:'2 a 5 mL/kg (0,2 a 0,5 g/kg)', via:'EV ou IO', obs:'Se glicemia ≤ 60 mg/dL. RN: 2 mL/kg. Repetir a glicemia em 15 min.' },
+        { droga:'Cloreto de sódio 3%', dose:'2 a 5 mL/kg em 10 a 20 min (máximo de 100 mL por bolus)', via:'EV', obs:'Crise com Na < 125 mEq/L. Repetir até a crise ceder (até 3 bolus). Não subir mais que 8 a 10 mEq/L em 24 h.' },
+        { droga:'Gluconato de cálcio 10%', dose:'0,5 a 1 mL/kg (máximo de 20 mL) em 10 min', via:'EV', obs:'Hipocalcemia (RN, raquitismo, hipoparatireoidismo). Monitor; extravasamento necrosa.' },
+        { droga:'Sulfato de magnésio', dose:'25 a 50 mg/kg (máximo de 2 g) em 20 min', via:'EV', obs:'Hipomagnesemia confirmada.' },
+        { droga:'Piridoxina', dose:'100 mg em dose única', via:'EV', obs:'Lactente < 2 anos com estado de mal refratário sem causa: dependência de piridoxina. Pode causar apneia. Conferir disponibilidade.' },
+        { droga:'Ceftriaxona', dose:'100 mg/kg/dia de 12/12 h (máximo de 2 g por dose)', via:'EV', obs:'Suspeita de meningite. Abaixo de 1 mês: ampicilina + cefotaxima.' },
+        { droga:'Aciclovir', dose:'20 mg/kg/dose abaixo de 3 meses; 10 a 15 mg/kg/dose acima (8/8 h)', via:'EV', obs:'Suspeita de encefalite herpética: crise focal, febre, alteração de comportamento.' }
+      ]},
+
+      { tipo:'tempo', titulo:'Linha do tempo', itens:[
+        { quando:'0–5 min', o_que:'Estabilizar: via aérea, O2, monitor, glicemia capilar, acesso. Cronometrar.' },
+        { quando:'5–20 min', o_que:'Benzodiazepínico; repetir 1 vez após 5 min se persistir.' },
+        { quando:'20–40 min', o_que:'2ª linha: levetiracetam, fenitoína ou valproato (fenobarbital no RN ou se nada disso).' },
+        { quando:'> 40 min', o_que:'Refratário: intubação, midazolam contínuo ou cetamina/tiopental, UTI e EEG contínuo.' }
+      ]},
+
+      { tipo:'lista', titulo:'Critérios', itens:[
+        '*Estado de mal convulsivo*: crise tônico-clônica ≥ 5 min, ou crises repetidas sem recuperar a consciência (ILAE).',
+        '*Crise focal com alteração de consciência*: tratar como estado de mal a partir de 10 min.',
+        '*Refratário*: persiste após benzodiazepínico e uma droga de 2ª linha.',
+        '*Super-refratário*: persiste ou volta após 24 h de anestésico.',
+        '*Estado de mal não convulsivo*: criança que não acorda após a crise — só o EEG confirma.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Glicemia capilar* na chegada, sempre.',
+        '*Na, K, Ca iônico, Mg, gasometria, hemograma, ureia e creatinina*; nível sérico do anticonvulsivante em uso.',
+        '*Toxicológico* se adolescente, ingestão possível ou crise sem causa.',
+        '*TC de crânio urgente*: trauma, déficit focal novo, não volta ao basal, sinais de hipertensão intracraniana, derivação ventricular, coagulopatia.',
+        '*Punção lombar*: febre com meningismo, < 6 meses febril, não recupera a consciência, imunossuprimido, pré-tratado com antibiótico — só após estabilizar e sem sinal de HIC.',
+        '*1ª crise afebril que voltou ao basal*: glicemia e Na (se vômito, diarreia ou desidratação); EEG ambulatorial; RM eletiva se focal ou < 1 ano.'
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Dar 3ª dose de benzodiazepínico em vez de partir para a 2ª linha.',
+        'Diluir fenitoína em soro glicosado ou correr acima de 1 mg/kg/min.',
+        'Diazepam IM.',
+        'Atrasar antibiótico esperando TC ou punção na suspeita de meningite.',
+        'Usar bloqueador neuromuscular de longa duração sem EEG: esconde a crise.',
+        'Colocar objeto na boca ou conter a criança durante a crise.'
+      ]},
+
+      { tipo:'texto', titulo:'Destino', conteudo:'*UTI pediátrica* para todo estado de mal refratário, intubado, ou com causa grave (meningite, encefalite, TCE, distúrbio metabólico). *Internação* para estado de mal que cedeu com 1ª ou 2ª linha, crise com sonolência prolongada, < 6 meses, ou causa ainda não esclarecida. *Primeira crise afebril* com criança de volta ao basal, exame neurológico normal e família orientada: *alta* com encaminhamento ao neuropediatra, EEG ambulatorial e RM eletiva quando indicada — não se inicia anticonvulsivante após crise única isolada. Orientar: deitar de lado, cronometrar, não conter, chamar socorro se passar de 5 min; nada de banho de banheira ou piscina sem supervisão. Considerar prescrever midazolam bucal ou nasal para a família na criança com crises prolongadas. *Divergência:* ESETT mostrou eficácia igual entre levetiracetam, fosfenitoína e valproato (cerca de 50%); muitos protocolos brasileiros ainda colocam fenitoína como 2ª linha padrão por disponibilidade. Fenobarbital como 2ª linha é escolha no neonato e alternativa quando as outras faltam.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Chegou convulsionando: já são 5 minutos — não espere acesso para dar o 1º benzodiazepínico.',
+        'Pergunte quantas doses foram dadas antes de chegar: contam no limite de 2.',
+        'Crise que "parou" mas a criança não acorda em 20 a 30 min: pense em estado de mal não convulsivo.'
+      ]}
+    ] },
+
+  { id:'cad-pedia', titulo:'Cetoacidose diabética na criança', categoria:'pedia', gravidade:'emergencia',
+    resumo:'ISPAD 2022: bolus de 10 a 20 mL/kg, déficit reposto em 24 a 48 h, insulina regular 0,05 a 0,1 UI/kg/h sem bolus após 1 h de fluido, potássio no soro, glicose quando cair e vigilância horária de edema cerebral.',
+    tags:['cetoacidose','cad','cetoacidose diabetica','diabetes tipo 1','debut','insulina regular','edema cerebral','manitol','potassio','ispad','hiperglicemia','crianca'],
+    fonte:'ISPAD — Clinical Practice Consensus Guidelines 2022: DKA and HHS · PECARN FLUID — Kuppermann et al., NEJM (2018) · BSPED — DKA guideline (2021) · SBD — Diretriz 2024 · UpToDate — DKA in children',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Criança com vômito, dor abdominal, desidratação e *respiração rápida e profunda*, ou poliúria, polidipsia e perda de peso. Glicemia capilar em todas.' },
+      { rotulo:'Prioridade',    valor:'*Bolus de cristaloide*, potássio antes de mais nada, e insulina contínua só após 1 h de fluido — sem bolus.' },
+      { rotulo:'Meta',          valor:'Corrigir acidose e cetose devagar (24 a 48 h) sem edema cerebral, hipocalemia ou hipoglicemia.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Suspeita', texto:'Vômito, dor abdominal, Kussmaul, desidratação, poliúria, perda de peso',
+          nota:'Lactente e pré-escolar: o diagnóstico de diabetes costuma vir já com CAD' },
+        { tipo:'decisao', texto:'Critérios ISPAD 2022?', ramos:[
+          { rotulo:'Glicemia > 200 + pH < 7,3 ou bic < 18 + cetonemia ≥ 3', cor:'perigo', texto:'*CAD*: classificar a gravidade',
+            nota:'Leve pH < 7,3 · moderada < 7,2 · grave < 7,1' },
+          { rotulo:'Hiperglicemia sem acidose', cor:'ok', texto:'*Não é CAD*: hidratação VO, insulina SC e endocrinologia',
+            nota:'Glicemia > 600 com osmolalidade > 320 sem acidose: estado hiperosmolar', ir:'estado-hiperosmolar' }
+        ]},
+        { tipo:'decisao', texto:'Está em choque?', ramos:[
+          { rotulo:'Choque (raro)', cor:'perigo', texto:'*SF 0,9% 20 mL/kg rápido*, repetir até perfundir',
+            meds:[{droga:'Soro fisiológico 0,9%', dose:'20 mL/kg em bolus', via:'EV'}] },
+          { rotulo:'Sem choque', texto:'*Bolus de 10 a 20 mL/kg em 20 a 30 min*', meds:['Soro fisiológico 0,9%'] }
+        ]},
+        { tipo:'passo', rotulo:'Reposição', texto:'*Déficit de 5 a 10% + manutenção* em 24 a 48 h',
+          nota:'SF 0,9% ou Ringer lactato, depois 0,45 a 0,9%. Na prática 1,5 a 2 vezes a manutenção', meds:['Reposição'] },
+        { tipo:'decisao', texto:'Potássio?', ramos:[
+          { rotulo:'< 3,5 mEq/L', cor:'perigo', texto:'*Repor K já*, antes da insulina', meds:['Cloreto de potássio 19,1%'], ir:'hipocalemia' },
+          { rotulo:'3,5 a 5,5 mEq/L', texto:'*40 mEq/L no soro* junto com a insulina', meds:['Cloreto de potássio 19,1%'] },
+          { rotulo:'> 5,5 mEq/L', cor:'ok', texto:'Esperar diurese e queda do K para acrescentar' }
+        ]},
+        { tipo:'passo', rotulo:'Após 1 h de fluido', texto:'*Insulina regular contínua 0,05 a 0,1 UI/kg/h* — sem bolus',
+          meds:['Insulina regular'] },
+        { tipo:'passo', rotulo:'Glicemia < 250–300', texto:'*Glicose 5% (até 10%) no soro* — não reduzir a insulina enquanto houver acidose',
+          meds:['Soro glicosado'] },
+        { tipo:'alerta', rotulo:'Edema cerebral', texto:'Cefaleia, bradicardia com hipertensão, queda do Glasgow, vômito recorrente',
+          nota:'Tratar antes da TC. Reduzir o soro em um terço e elevar a cabeceira',
+          meds:['Manitol 20%', 'Salina hipertônica 3%'] },
+        { tipo:'fim', rotulo:'Resolução', texto:'pH > 7,3, bic > 18, cetonemia < 1 e aceitando VO: *insulina SC*, desligar a bomba 15 a 30 min depois (ultrarrápida)' }
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Edema cerebral*: cefaleia, irritabilidade, queda do Glasgow, bradicardia, hipertensão, incontinência — típico nas primeiras 12 h.',
+        'Risco maior de edema: < 5 anos, debut, pH < 7,1, pCO2 baixa, ureia alta, uso de bicarbonato, Na que não sobe enquanto a glicemia cai.',
+        'Hipocalemia ou hipercalemia: ECG e monitor.',
+        'Choque ou alteração de consciência na chegada.',
+        'Febre: a CAD não dá febre — procurar infecção.'
+      ]},
+
+      { tipo:'passos', titulo:'Conduta imediata', itens:[
+        'Pesar a criança (ou estimar) e calcular manutenção e déficit pelo peso.',
+        'Pegar 2 acessos e colher glicemia, gasometria venosa, eletrólitos, cetonemia, ureia, creatinina, Ca, P, Mg.',
+        'Fazer o bolus de 10 a 20 mL/kg de SF 0,9% em 20 a 30 min.',
+        'Ver o K antes da insulina: repor antes se < 3,5 mEq/L.',
+        'Iniciar insulina regular em bomba 1 h após o começo do fluido, sem bolus.',
+        'Registrar glicemia, sinais vitais, Glasgow e balanço hídrico de hora em hora.',
+        'Acionar UTI pediátrica nos casos graves e na criança < 5 anos.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações — por quilo', itens:[
+        { droga:'Soro fisiológico 0,9%', dose:'10 a 20 mL/kg em 20 a 30 min', via:'EV', obs:'Bolus inicial; pode repetir após reavaliar. Choque: 20 mL/kg rápido. Ringer lactato é alternativa.' },
+        { droga:'Reposição', dose:'Manutenção (Holliday-Segar) + déficit de 5 a 10% do peso em 24 a 48 h', via:'EV', obs:'Descontar os bolus. SF 0,9% ou Ringer nas primeiras horas, depois 0,45 a 0,9%. Não ultrapassar 2 vezes a manutenção.' },
+        { droga:'Insulina regular', dose:'0,05 a 0,1 UI/kg/h, sem bolus', via:'EV em bomba', obs:'50 UI em 50 mL de SF = 1 UI/mL (lactente: 0,1 UI/mL). 0,05 em < 5 anos ou CAD leve. Iniciar após 1 h de fluido e manter até resolver a acidose.' },
+        { droga:'Cloreto de potássio 19,1%', dose:'40 mEq/L no soro (20 a 60 mEq/L)', via:'EV', obs:'2,5 mEq/mL. Máximo de 0,5 mEq/kg/h. Com a insulina se K normal e diurese presente; antes da insulina se K < 3,5.' },
+        { droga:'Soro glicosado 5 a 10%', dose:'Glicose a 5% no soro; até 10% a 12,5% se preciso', via:'EV', obs:'Quando glicemia < 250 a 300 mg/dL ou queda > 90 mg/dL/h. Alvo de 150 a 250 mg/dL. Sistema de 2 bolsas facilita.' },
+        { droga:'Manitol 20%', dose:'0,5 a 1 g/kg (2,5 a 5 mL/kg) em 10 a 15 min', via:'EV', obs:'Edema cerebral. Pode repetir em 30 min se não houver resposta.' },
+        { droga:'Salina hipertônica 3%', dose:'2,5 a 5 mL/kg em 10 a 15 min', via:'EV', obs:'Alternativa ao manitol no edema cerebral.' },
+        { droga:'Fosfato de potássio', dose:'Substituir metade do KCl por fosfato de potássio', via:'EV', obs:'Só se fosfato < 1 mg/dL, fraqueza muscular, insuficiência respiratória ou hemólise. Monitorar Ca.' },
+        { droga:'Bicarbonato de sódio 8,4%', dose:'1 a 2 mEq/kg em 60 min', via:'EV', obs:'Quase nunca: só pH < 6,9 com instabilidade hemodinâmica ou hipercalemia com risco de vida. Aumenta edema cerebral.' },
+        { droga:'Ondansetrona', dose:'0,15 mg/kg (máximo de 4 mg)', via:'EV', obs:'Vômito.' }
+      ]},
+
+      { tipo:'tempo', titulo:'Linha do tempo', itens:[
+        { quando:'0–30 min', o_que:'Peso, acessos, exames, bolus de 10 a 20 mL/kg, K na mão.' },
+        { quando:'1 h', o_que:'Insulina regular contínua 0,05 a 0,1 UI/kg/h, sem bolus; K no soro.' },
+        { quando:'De hora em hora', o_que:'Glicemia capilar, sinais vitais, Glasgow, balanço hídrico, sinais de edema cerebral.' },
+        { quando:'2/2 a 4/4 h', o_que:'Gasometria venosa, eletrólitos, cetonemia; Na corrigido deve subir.' },
+        { quando:'24–48 h', o_que:'Déficit reposto, acidose resolvida, transição para insulina SC.' }
+      ]},
+
+      { tipo:'lista', titulo:'Critérios diagnósticos e gravidade (ISPAD 2022)', itens:[
+        '*CAD*: glicemia > 200 mg/dL + pH venoso < 7,3 ou bicarbonato < 18 mEq/L + cetonemia (beta-hidroxibutirato) ≥ 3 mmol/L ou cetonúria moderada a grave.',
+        '*Leve*: pH < 7,3 ou bic < 18 · *moderada*: pH < 7,2 ou bic < 10 · *grave*: pH < 7,1 ou bic < 5.',
+        '*Na corrigido* = Na + 2 × (glicemia − 100) ÷ 100. Deve subir à medida que a glicemia cai.',
+        '*Edema cerebral (Muir)*: diagnóstico com 1 critério diagnóstico, 2 maiores, ou 1 maior + 2 menores.',
+        '*Diagnósticos*: resposta anormal à dor, postura de decorticação ou descerebração, paralisia de III, IV ou VI par, padrão respiratório anormal.',
+        '*Maiores*: consciência alterada ou flutuante, queda sustentada da FC (> 20 bpm) sem outra causa, incontinência inadequada para a idade. *Menores*: vômito, cefaleia, letargia, PA diastólica > 90, idade < 5 anos.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Glicemia capilar* de hora em hora.',
+        '*Gasometria venosa, Na, K, Cl* de 2/2 h nas primeiras 6 h, depois 4/4 h; ânion gap.',
+        '*Cetonemia capilar* (beta-hidroxibutirato) de 2/2 h se disponível — melhor que cetonúria.',
+        '*Ureia, creatinina, Ca, P, Mg, hemograma* (leucocitose é da própria CAD), osmolalidade.',
+        '*ECG* na chegada: onda T apiculada ou achatada orienta o K.',
+        '*Culturas e RX de tórax* só se febre ou foco; HbA1c e anticorpos no debut.'
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Bolus de insulina ou insulina na primeira hora.',
+        'Bicarbonato para "corrigir o pH".',
+        'Desligar ou reduzir a insulina porque a glicemia caiu: acrescentar glicose.',
+        'Insulina sem saber o potássio.',
+        'Passar para insulina SC antes de resolver a acidose.',
+        'Esperar TC para tratar edema cerebral.'
+      ]},
+
+      { tipo:'texto', titulo:'Destino', conteudo:'*UTI pediátrica*: CAD grave, < 5 anos, alteração de consciência ou sinais de edema cerebral, choque, distúrbio eletrolítico grave, ou serviço sem condição de monitorização horária. *Enfermaria* com equipe treinada para CAD leve a moderada em criança maior. Na transição, oferecer dieta e aplicar insulina SC (esquema basal-bolus definido com a endocrinologia), desligando a bomba 15 a 30 min após a ultrarrápida ou 1 a 2 h após a regular. Debut: educação da família antes da alta. *Divergência:* ISPAD 2022 estima déficit de 5 a 10%; o protocolo britânico (BSPED) usa 5% se pH ≥ 7,1 e 10% se pH < 7,1. O estudo PECARN FLUID mostrou que velocidade de infusão e uso de SF 0,9% ou 0,45% não mudam o risco de lesão cerebral, por isso as diretrizes atuais aceitam reposição mais liberal que as antigas. Dose de insulina 0,05 x 0,1 UI/kg/h: eficácia semelhante; 0,05 tem menos hipoglicemia e hipocalemia.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Taquipneia com pulmão limpo e vômito: glicemia capilar antes de chamar de gastroenterite ou pneumonia.',
+        'Use o peso real (ou estimado) em todas as contas e escreva a conta na folha.',
+        'Cefaleia nova durante o tratamento é edema cerebral até prova em contrário: manitol à beira do leito.'
+      ]}
+    ] },
+
+  { id:'dor-abdominal-pedia', titulo:'Dor abdominal na criança: invaginação e apendicite', categoria:'pedia', gravidade:'urgencia',
+    resumo:'Primeiro excluir o cirúrgico (vômito bilioso, invaginação, apendicite, hérnia, testículo) e o que vem de fora do abdome (CAD, pneumonia, PHS); depois tratar constipação, a causa mais comum.',
+    tags:['dor abdominal','invaginacao','invaginação intestinal','intussuscepcao','apendicite','volvo','ma rotacao','vomito bilioso','hernia encarcerada','constipacao','purpura de henoch','pas','alvarado pediatrico','geleia de framboesa'],
+    fonte:'SBP / CIPE — Abdome agudo na criança · ACR Appropriateness Criteria — Suspected appendicitis in children (2023) · Samuel — Pediatric Appendicitis Score (2002) · ESPGHAN/NASPGHAN · UpToDate — Intussusception in children; Acute appendicitis in children',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Toda dor abdominal aguda em criança: examinar *abdome, testículos, região inguinal e pulmões*, e medir glicemia capilar se vomita e respira rápido.' },
+      { rotulo:'Prioridade',    valor:'*Vômito bilioso no lactente* e cólica intermitente com letargia (invaginação) são emergência cirúrgica.' },
+      { rotulo:'Meta',          valor:'USG primeiro (invaginação e apendicite), analgesia logo, cirurgião cedo e alta só com reavaliação garantida.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Criança com dor abdominal aguda',
+          nota:'Analgesiar já: não mascara o diagnóstico', meds:['Dipirona', 'Morfina'] },
+        { tipo:'decisao', texto:'Sinal de alarme cirúrgico?', ramos:[
+          { rotulo:'Vômito bilioso (verde) no lactente', cor:'perigo', texto:'*Volvo até prova em contrário*: cirurgia pediátrica agora',
+            nota:'Jejum, SNG aberta, SF 20 mL/kg se má perfusão; seriografia ou direto para o centro cirúrgico se instável',
+            meds:['Soro fisiológico 0,9%'] },
+          { rotulo:'Cólica intermitente + letargia, 3 meses a 3 anos', cor:'perigo', texto:'*Invaginação*: USG (sinal do alvo)',
+            nota:'Sem peritonite ou choque: redução hidrostática ou pneumática com o cirurgião ciente' },
+          { rotulo:'Dor migrou para fossa ilíaca direita, anorexia, febre', texto:'*Apendicite*: PAS + USG',
+            nota:'Abaixo de 5 anos perfura mais e é atípica', ir:'apendicite' },
+          { rotulo:'Massa inguinal ou escroto doloroso', cor:'perigo', texto:'*Hérnia encarcerada ou torção*', ir:'escroto-agudo' }
+        ]},
+        { tipo:'decisao', texto:'Sem alarme cirúrgico — causa de fora do abdome ou clínica?', ramos:[
+          { rotulo:'Febre, tosse, taquipneia', texto:'*Pneumonia de base*: RX de tórax', ir:'pac-pedia' },
+          { rotulo:'Glicemia > 200, Kussmaul, desidratação', cor:'perigo', texto:'*CAD*', ir:'cad-pedia' },
+          { rotulo:'Púrpura em membros inferiores, artralgia', texto:'*PHS*: urina, PA; USG se dor forte (invaginação)', ir:'febre-petequias' },
+          { rotulo:'Fezes endurecidas, dor periumbilical, criança bem', cor:'ok', texto:'*Constipação*', ir:'lactente-gastro' }
+        ]},
+        { tipo:'passo', rotulo:'Na dúvida', texto:'*Observar e reexaminar* em 4 a 6 h (ou reavaliação em 12 a 24 h)',
+          nota:'O mesmo examinador, de preferência. A evolução define mais que o exame isolado' },
+        { tipo:'fim', rotulo:'Alta', texto:'Dor controlada, sem alarme, tolerando VO e retorno garantido; orientar vômito verde, dor que piora, febre, sangue nas fezes' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        'Suspeitar de invaginação no lactente com choro súbito, encolhe as pernas, fica pálido e depois letárgico entre as crises.',
+        'Procurar massa em salsicha no hipocôndrio direito e fezes em geleia de framboesa (sinal tardio).',
+        'Pensar em apendicite: dor periumbilical que migra para a fossa ilíaca direita, anorexia, febre baixa, dor ao pular ou tossir.',
+        'Tratar vômito verde no lactente como volvo por má rotação até prova em contrário.',
+        'Examinar sempre testículos e canais inguinais: torção e hérnia se apresentam como dor abdominal.',
+        'Medir glicemia capilar e contar a frequência respiratória: CAD e pneumonia doem na barriga.',
+        'Procurar púrpura nas pernas e nádegas: a dor da PHS pode vir antes da pele.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Vômito bilioso* em qualquer lactente: emergência cirúrgica.',
+        'Letargia desproporcional, palidez e choro intermitente: invaginação.',
+        'Abdome distendido e doloroso, defesa ou peritonite, choque.',
+        'Sangue vivo ou em geleia nas fezes.',
+        'Lesões que não combinam com a história: trauma abdominal por maus-tratos.'
+      ]},
+
+      { tipo:'lista', titulo:'Escore de apendicite pediátrica (PAS, Samuel)', itens:[
+        '*2 pontos cada*: dor à tosse, percussão ou pulo na fossa ilíaca direita · dor à palpação da fossa ilíaca direita.',
+        '*1 ponto cada*: anorexia · febre ≥ 38 °C · náusea ou vômito · migração da dor · leucócitos > 10.000 · neutrófilos > 7.500.',
+        '*≤ 3*: baixo risco — observar ou alta com reavaliação.',
+        '*4 a 6*: risco intermediário — USG e cirurgião.',
+        '*≥ 7*: alto risco — cirurgião; imagem se ainda houver dúvida.',
+        '*Invaginação*: tríade clássica (dor em cólica, massa, fezes em geleia) aparece em menos de 25% — não esperar por ela.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*USG de abdome* primeiro: alvo ou pseudorrim na invaginação; apêndice > 6 mm não compressível na apendicite; ovário e líquido livre.',
+        '*Hemograma e PCR*: entram no PAS; normais não excluem apendicite precoce.',
+        '*Urina I*: ITU e hematúria da PHS; leucocitúria leve também ocorre na apendicite pélvica.',
+        '*Beta-HCG* em toda adolescente.',
+        '*Glicemia capilar, eletrólitos e gasometria* se vômitos, desidratação ou taquipneia.',
+        '*RX de abdome*: obstrução, pneumoperitônio, corpo estranho. *RX de tórax* se febre e taquipneia.',
+        '*Seriografia (EED)* no vômito bilioso estável; *RM sem contraste ou TC* se USG inconclusiva.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações — por quilo', itens:[
+        { droga:'Dipirona', dose:'15 a 25 mg/kg/dose de 6/6 h (máximo de 1 g por dose)', via:'EV ou VO', obs:'Base da analgesia.' },
+        { droga:'Morfina', dose:'0,05 a 0,1 mg/kg (máximo de 4 mg por dose)', via:'EV', obs:'Dor intensa; repetir a cada 15 a 30 min titulando. Não atrapalha o exame.' },
+        { droga:'Paracetamol', dose:'10 a 15 mg/kg/dose de 6/6 h (máximo de 750 mg por dose)', via:'VO', obs:'Alta.' },
+        { droga:'Ondansetrona', dose:'0,15 mg/kg (máximo de 4 mg)', via:'EV ou VO', obs:'Vômito. Não usar para "segurar" vômito bilioso.' },
+        { droga:'Soro fisiológico 0,9%', dose:'10 a 20 mL/kg em bolus', via:'EV', obs:'Desidratação ou má perfusão; antes da redução da invaginação.' },
+        { droga:'Ceftriaxona', dose:'50 a 75 mg/kg/dia em dose única (máximo de 2 g)', via:'EV', obs:'Apendicite: com metronidazol, na indução anestésica (não complicada) ou mantido (perfurada).' },
+        { droga:'Metronidazol', dose:'30 mg/kg/dia de 8/8 h (máximo de 500 mg por dose)', via:'EV', obs:'Bolsa 500 mg/100 mL (5 mg/mL). Alternativa: 30 mg/kg 1 vez ao dia (máximo de 1,5 g).' },
+        { droga:'Prednisolona', dose:'1 a 2 mg/kg/dia (máximo de 60 mg)', via:'VO', obs:'PHS com dor abdominal intensa, após excluir invaginação. Solução 3 mg/mL.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Segurar analgesia "para não mascarar".',
+        'Dar alta a lactente com vômito bilioso sem avaliação cirúrgica.',
+        'Lavagem intestinal ou laxante na dor abdominal sem diagnóstico (pode ser apendicite).',
+        'Tentar redução da invaginação com peritonite, perfuração ou choque.',
+        'Deixar de examinar os testículos no menino com dor abdominal.',
+        'TC como primeiro exame na criança: USG primeiro.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Invaginação*: redução por enema hidrostático ou pneumático guiado por imagem resolve 80 a 90%; após o sucesso, observar algumas horas (recidiva de cerca de 10%, maior nas primeiras 24 h) e liberar com dieta aceita. Falha, peritonite ou perfuração: cirurgia. Acima de 3 anos ou recidivas: procurar ponto de tração (divertículo de Meckel, pólipo, linfoma, PHS). *Apendicite*: cirurgia; PAS baixo com USG normal permite alta com reavaliação em 12 a 24 h. *Hérnia inguinal encarcerada* sem sinais de estrangulamento: redução manual com analgesia e sedação e herniorrafia em 24 a 48 h; com estrangulamento, cirurgia. *Volvo*: centro cirúrgico. *Divergência:* PAS e Alvarado pediátrico têm desempenho parecido e nenhum confirma sozinho; tratamento só com antibiótico na apendicite não complicada é aceito em alguns centros, mas não é conduta padrão no Brasil. Redução pneumática x hidrostática: eficácia semelhante, escolha conforme a experiência do serviço.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'O lactente com invaginação pode chegar só "molinho" e pálido, sem dor evidente: pense nela na letargia sem explicação.',
+        'Dor abdominal com febre e taquipneia: ausculte e peça RX de tórax.',
+        'Constipação é a causa mais comum, mas é diagnóstico de exclusão no PS: examine tudo antes.'
+      ]}
+    ] },
+
+  { id:'febre-petequias', titulo:'Febre com petéquias', categoria:'pedia', gravidade:'emergencia',
+    resumo:'Criança febril com petéquias que parece doente recebe ceftriaxona antes de qualquer exame; a que parece bem faz hemograma e observa — PTI, PHS, leucemia e dengue são os diferenciais.',
+    tags:['febre com petequias','petequias','púrpura','purpura','meningococcemia','doenca meningococica','ceftriaxona','rifampicina','quimioprofilaxia','pti','purpura de henoch-schonlein','vasculite por iga','leucemia','dengue'],
+    fonte:'Ministério da Saúde — Guia de Vigilância em Saúde: doença meningocócica (2024) · NICE — Meningitis (bacterial) and meningococcal disease (NG240, 2024) · ASH — Immune thrombocytopenia (2019) · AHA — PALS (2025) · SBP — Doença meningocócica · UpToDate',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Febre com *petéquias ou púrpura que não somem à digitopressão* (teste do copo).' },
+      { rotulo:'Prioridade',    valor:'Parece doente ou a lesão espalha: *ceftriaxona em minutos*, antes de exame, punção ou transferência.' },
+      { rotulo:'Meta',          valor:'Antibiótico na 1ª hora, choque revertido e contatos íntimos com quimioprofilaxia em até 48 h.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Febre + petéquias ou púrpura que não clareiam à pressão',
+          nota:'Isolamento por gotículas desde a chegada' },
+        { tipo:'decisao', texto:'Está doente ou a lesão espalha?', ramos:[
+          { rotulo:'Toxemia, TEC > 3 s, extremidades frias, púrpura > 2 mm, rebaixamento, rigidez de nuca', cor:'perigo',
+            texto:'*Ceftriaxona AGORA*, antes de qualquer exame',
+            nota:'Hemocultura só se não atrasar. Sem acesso: IM ou intraósseo', meds:['Ceftriaxona'] },
+          { rotulo:'Criança bem, lesões poucas e estáveis', texto:'*Hemograma, PCR, coagulograma, hemocultura* e observar 4 a 6 h',
+            nota:'Piorou ou PCR/leucócitos alterados: tratar como meningococo' }
+        ]},
+        { tipo:'passo', rotulo:'Se choque', texto:'*Cristaloide 10 a 20 mL/kg* reavaliando a cada bolus; *adrenalina* cedo',
+          nota:'Choque refratário a catecolamina: hidrocortisona', meds:['Soro fisiológico 0,9%', 'Adrenalina', 'Hidrocortisona'], ir:'sepse-pediatrica' },
+        { tipo:'decisao', texto:'O hemograma mostra?', ramos:[
+          { rotulo:'Plaquetopenia isolada, criança bem, sem visceromegalia', cor:'ok', texto:'*PTI provável*: observar; tratar só sangramento mucoso',
+            nota:'Sem AINE e sem IM', meds:['Prednisolona (PTI)', 'Imunoglobulina humana'] },
+          { rotulo:'Bi ou pancitopenia, blastos, visceromegalia, dor óssea', cor:'perigo', texto:'*Leucemia*: hematologia urgente', ir:'lise-tumoral' },
+          { rotulo:'Plaquetas normais, púrpura palpável em pernas e nádegas', texto:'*PHS*: urina, PA e creatinina' },
+          { rotulo:'Plaquetopenia + hemoconcentração, época de epidemia', texto:'*Dengue*', ir:'dengue-pedia' },
+          { rotulo:'Normal, petéquias só acima da linha dos mamilos após tosse ou vômito', cor:'ok', texto:'*Causa mecânica*: alta após observação' }
+        ]},
+        { tipo:'fim', rotulo:'Meningococo', texto:'Gotículas por 24 h de antibiótico, *notificação imediata* e quimioprofilaxia dos contatos íntimos',
+          meds:['Rifampicina'] }
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Púrpura* (lesões > 2 mm), lesões que aumentam em minutos, necrose central.',
+        'TEC > 3 s, extremidades frias, dor nas pernas, taquicardia — choque compensado; hipotensão é tardia.',
+        'Rebaixamento, irritabilidade, rigidez de nuca ou fontanela abaulada.',
+        'Palidez, hepatoesplenomegalia, adenomegalia generalizada ou dor óssea: leucemia.',
+        'Sangramento de mucosa ou plaquetas < 10.000 com sangramento: risco hemorrágico.'
+      ]},
+
+      { tipo:'passos', titulo:'Conduta imediata', itens:[
+        'Isolar por gotículas e usar máscara cirúrgica ao examinar.',
+        'Dar ceftriaxona em minutos se a criança parece doente — antes de exame ou punção.',
+        'Colher hemocultura, hemograma, PCR, coagulograma, lactato, gasometria e glicemia, se não atrasar o antibiótico.',
+        'Tratar o choque com bolus de 10 a 20 mL/kg e adrenalina precoce, reavaliando a cada bolus.',
+        'Marcar as bordas das lesões com caneta para ver se espalham.',
+        'Notificar imediatamente a vigilância epidemiológica na suspeita de doença meningocócica.',
+        'Indicar quimioprofilaxia aos contatos íntimos.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações — por quilo', itens:[
+        { droga:'Ceftriaxona', dose:'100 mg/kg/dia em 1 ou 2 doses (máximo de 4 g/dia; 2 g por dose se dividido)', via:'EV ou IM', obs:'1ª dose imediata. Infundir EV em 30 min. 7 dias na doença meningocócica. Neonato: cefotaxima com ampicilina.' },
+        { droga:'Penicilina G cristalina', dose:'300.000 UI/kg/dia de 4/4 h (máximo de 24 milhões UI/dia)', via:'EV', obs:'Só com meningococo sensível confirmado. Nesse caso o paciente-índice precisa de rifampicina antes da alta.' },
+        { droga:'Soro fisiológico 0,9%', dose:'10 a 20 mL/kg em 5 a 10 min', via:'EV ou IO', obs:'PALS 2025. Repetir até 40 a 60 mL/kg na 1ª hora, parando se estertores ou hepatomegalia.' },
+        { droga:'Adrenalina', dose:'0,05 a 0,3 mcg/kg/min, titulando até 1 mcg/kg/min', via:'EV ou IO', obs:'Choque frio refratário a volume. Pode começar diluída em acesso periférico.' },
+        { droga:'Noradrenalina', dose:'0,05 a 0,3 mcg/kg/min, titulando', via:'EV', obs:'Choque quente (vasodilatado).' },
+        { droga:'Hidrocortisona', dose:'2 mg/kg (máximo de 100 mg), depois 1 mg/kg de 6/6 h', via:'EV', obs:'Choque refratário a catecolamina; suspeita de insuficiência adrenal (Waterhouse-Friderichsen).' },
+        { droga:'Prednisolona (PTI)', dose:'2 a 4 mg/kg/dia (máximo de 120 mg/dia) por 5 a 7 dias', via:'VO', obs:'Solução 3 mg/mL. Só sangramento mucoso ou risco. Não estender por semanas.' },
+        { droga:'Imunoglobulina humana', dose:'0,8 a 1 g/kg em dose única', via:'EV', obs:'PTI com sangramento ou necessidade de subir plaquetas rápido. Infusão lenta no início.' },
+        { droga:'Metilprednisolona', dose:'30 mg/kg/dia (máximo de 1 g) por 1 a 3 dias', via:'EV', obs:'PTI com sangramento grave (SNC, digestivo), junto com imunoglobulina e transfusão de plaquetas.' },
+        { droga:'Prednisolona (PHS)', dose:'1 a 2 mg/kg/dia (máximo de 60 mg)', via:'VO', obs:'PHS com dor abdominal intensa ou edema escrotal, após excluir invaginação.' },
+        { droga:'Paracetamol', dose:'10 a 15 mg/kg/dose de 6/6 h (máximo de 750 mg por dose)', via:'VO', obs:'Antitérmico preferido na plaquetopenia; dipirona também serve. Nada de AINE.' },
+        { droga:'Rifampicina', dose:'10 mg/kg/dose de 12/12 h por 2 dias (máximo de 600 mg por dose); < 1 mês: 5 mg/kg/dose', via:'VO', obs:'Suspensão 20 mg/mL. Adulto: 600 mg de 12/12 h por 2 dias. Urina e lágrima alaranjadas; reduz o anticoncepcional. Não usar na gestante.' },
+        { droga:'Profilaxia alternativa: ceftriaxona IM', dose:'125 mg (< 12 anos) ou 250 mg (≥ 12 anos) em dose única', via:'IM', obs:'Gestante ou quem não pode tomar rifampicina. Adulto não gestante: ciprofloxacino 500 mg VO dose única.' }
+      ]},
+
+      { tipo:'tempo', titulo:'Linha do tempo', itens:[
+        { quando:'0–15 min', o_que:'Isolar, reconhecer o choque, ceftriaxona na criança que parece doente.' },
+        { quando:'Até 1 h', o_que:'Bolus reavaliados, adrenalina se refratário, exames, UTI acionada.' },
+        { quando:'4–6 h', o_que:'Criança bem: reavaliar lesões marcadas, hemograma e PCR antes de decidir alta.' },
+        { quando:'Até 48 h', o_que:'Quimioprofilaxia dos contatos íntimos (vale até 10 dias, mas cai a eficácia).' }
+      ]},
+
+      { tipo:'lista', titulo:'Diferenciais', itens:[
+        '*Meningococcemia*: febre, toxemia, púrpura que progride, dor nas pernas, extremidades frias; pode não ter meningite.',
+        '*PTI*: 2 a 5 anos, pós-viral, petéquias e equimoses em criança bem, sem febre alta e sem visceromegalia; plaquetopenia isolada, resto do hemograma normal.',
+        '*Púrpura de Henoch-Schönlein (vasculite por IgA)*: púrpura palpável em membros inferiores e nádegas, plaquetas normais, artrite ou artralgia, dor abdominal (invaginação), nefrite (hematúria, proteinúria, hipertensão).',
+        '*Leucemia*: palidez, febre prolongada, dor óssea, hepatoesplenomegalia, adenomegalia, bi ou pancitopenia ou blastos.',
+        '*Dengue*: prova do laço positiva, plaquetopenia com hematócrito subindo; sinais de alarme na defervescência.',
+        '*Benignas*: petéquias só acima da linha dos mamilos (território da cava superior) após tosse, vômito ou choro; viroses (enterovírus, adenovírus); faringite estreptocócica (palato).'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Hemograma com esfregaço*, PCR, coagulograma (TP, TTPa, fibrinogênio).',
+        '*Hemocultura* antes do antibiótico só se não atrasar; *PCR para meningococo* no sangue ou líquor aumenta o diagnóstico mesmo após o antibiótico.',
+        '*Lactato, gasometria, glicemia, eletrólitos, ureia, creatinina* no doente.',
+        '*Líquor*: só depois de estabilizar; contraindicado com choque, coagulopatia, plaquetas < 50.000, sinais de HIC ou insuficiência respiratória.',
+        '*Urina I e PA* na suspeita de PHS; *sorologia ou NS1* na suspeita de dengue.'
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Atrasar a ceftriaxona por exame, punção, imagem ou transferência.',
+        'Punção lombar na criança em choque ou com coagulopatia.',
+        'AINE, AAS ou injeção IM na criança com plaquetopenia.',
+        'Corticoide na suspeita de PTI sem afastar leucemia pelo hemograma e esfregaço.',
+        'Liberar criança febril com petéquias sem hemograma e sem observar a evolução das lesões.'
+      ]},
+
+      { tipo:'texto', titulo:'Destino', conteudo:'*UTI pediátrica* para meningococcemia com choque, coagulopatia ou rebaixamento; transferir já com a 1ª dose de ceftriaxona. *Internar* toda suspeita de doença meningocócica, PTI com sangramento mucoso ou plaquetas muito baixas sem condição de seguimento, PHS com dor abdominal intensa, sangramento digestivo, nefrite ou hipertensão, e toda suspeita de leucemia. *Alta* da criança bem com hemograma normal e lesões estáveis após 4 a 6 h, da PTI só com petéquias (independente da contagem, segundo a ASH) com orientação e retorno, e da PHS leve com urina e PA de controle semanal no 1º mês e por 6 meses. *Quimioprofilaxia* para contatos íntimos: moradores do domicílio, contatos de creche ou escola do mesmo ambiente e profissional de saúde exposto a secreção sem proteção (intubação, aspiração); paciente-índice tratado com ceftriaxona não precisa. *Divergência:* a ASH (2019) dispensa mielograma antes do corticoide na PTI típica; muitos hematologistas brasileiros ainda preferem fazê-lo antes de iniciar corticoide para não mascarar leucemia.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'A meningococcemia pode começar com poucas petéquias e criança "não tão mal": marque as lesões e reavalie em 1 h.',
+        'Dor nas pernas e mãos frias com febre são sinais precoces de sepse meningocócica.',
+        'Petéquias só no rosto e pescoço depois de vômito ou tosse, em criança bem: causa mecânica.'
+      ]}
+    ] },
+
+  { id:'corpo-estranho-pedia', titulo:'Corpo estranho na criança: aspiração, bateria e ímã', categoria:'pedia', gravidade:'urgencia',
+    resumo:'Engasgo presenciado é aspiração até a broncoscopia dizer o contrário; bateria de botão no esôfago sai em menos de 2 h; dois ímãs ou ímã com metal vão para endoscopia ou cirurgião.',
+    tags:['corpo estranho','aspiracao','aspiração de corpo estranho','engasgo','desengasgo','heimlich','bateria de botao','pilha','ima','imã','moeda','ingestao de corpo estranho','broncoscopia','endoscopia','mel','sucralfato'],
+    fonte:'AHA — PALS e BLS (2025) · ESPGHAN — Ingested foreign bodies in children (2021) · NASPGHAN — Button battery and magnet ingestion (2015, 2021) · National Capital Poison Center (NCPC) — Button battery triage (2018) · SBP · UpToDate',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'*Engasgo presenciado*, tosse súbita, sibilo unilateral, ou criança que "engoliu algo" com sialorreia, disfagia ou vômito.' },
+      { rotulo:'Prioridade',    valor:'Obstrução total: *desengasgo por idade*. Ingestão: *RX AP e perfil* para achar bateria (halo duplo) e ímãs.' },
+      { rotulo:'Meta',          valor:'Bateria fora do esôfago em *menos de 2 h*, broncoscopia na história de aspiração e alta segura dos objetos rombos.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Engasgo presenciado ou criança que engoliu objeto',
+          nota:'Pico de 1 a 3 anos. Sementes e amendoim são aspirados; moeda, bateria e ímã são engolidos' },
+        { tipo:'decisao', texto:'Respira e tosse?', ramos:[
+          { rotulo:'Não tosse, não fala, cianose (obstrução total)', cor:'perigo',
+            texto:'*Desengasgo*: < 1 ano 5 golpes nas costas + 5 compressões torácicas; ≥ 1 ano 5 golpes nas costas + 5 compressões abdominais',
+            nota:'Inconsciente: RCP, olhar a boca antes de ventilar, laringoscopia e pinça de Magill', ir:'pcr-pediatrica' },
+          { rotulo:'Tosse eficaz', cor:'ok', texto:'*Não intervir*: deixar tossir, O2 e posição de conforto' }
+        ]},
+        { tipo:'decisao', texto:'Aspirou ou engoliu?', ramos:[
+          { rotulo:'Aspiração: tosse súbita, sibilo unilateral, murmúrio diminuído', cor:'perigo',
+            texto:'*RX inspiração e expiração* (ou decúbito lateral) e *broncoscopia rígida*',
+            nota:'História convincente = broncoscopia mesmo com RX normal' },
+          { rotulo:'Ingestão', texto:'*RX AP e perfil* do pescoço ao abdome' }
+        ]},
+        { tipo:'decisao', texto:'O que mostra o RX?', ramos:[
+          { rotulo:'Bateria de botão no esôfago (halo duplo)', cor:'perigo', texto:'*Endoscopia em menos de 2 h*',
+            nota:'≥ 1 ano e < 12 h da ingestão: mel no caminho; sucralfato no hospital enquanto prepara', meds:['Mel', 'Sucralfato'] },
+          { rotulo:'Dois ou mais ímãs, ou ímã + metal', cor:'perigo', texto:'*Endoscopia urgente* se no esôfago ou estômago; além disso, cirurgião' },
+          { rotulo:'Pontiagudo ou longo', cor:'perigo', texto:'*Endoscopia urgente* se no esôfago; no estômago ou duodeno, retirar por endoscopia' },
+          { rotulo:'Moeda no esôfago, assintomática', texto:'*Retirar em até 24 h*', nota:'Sintomática (sialorreia, desconforto respiratório): urgente' },
+          { rotulo:'Rombo no estômago, assintomático', cor:'ok', texto:'*Alta*: observar fezes; RX se não eliminar em 2 a 4 semanas' }
+        ]},
+        { tipo:'fim', rotulo:'Destino', texto:'Broncoscopia ou endoscopia no centro de referência · alta com orientação nos objetos rombos além do esôfago' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        'Valorizar o engasgo presenciado: é o dado mais sensível de aspiração.',
+        'Suspeitar de aspiração na tosse persistente, sibilo unilateral ou pneumonia de repetição no mesmo lobo.',
+        'Pensar em bateria na criança com sialorreia, vômito, recusa alimentar, tosse ou hematêmese sem causa.',
+        'Perguntar por controle remoto, balança, brinquedo luminoso, relógio e aparelho auditivo com tampa aberta.',
+        'Considerar ingestão não presenciada em criança pequena com disfagia ou estridor de início súbito.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Bateria de botão no esôfago*: queima a mucosa em 2 h e pode perfurar ou fistulizar para a aorta.',
+        'Dois ou mais ímãs: necrose e fístula entre alças.',
+        'Desconforto respiratório, estridor ou cianose.',
+        'Hematêmese após ingestão de bateria (sangramento sentinela de fístula aortoesofágica).',
+        'Dor abdominal, febre ou peritonite após ingestão de objeto pontiagudo ou ímã.'
+      ]},
+
+      { tipo:'lista', titulo:'Conduta por objeto', itens:[
+        '*Bateria no esôfago*: endoscopia em < 2 h, mesmo sem jejum. Após retirar, risco de perfuração e fístula por semanas.',
+        '*Bateria no estômago*: retirar se < 5 anos e ≥ 20 mm, sintomas ou ímã junto; senão, RX em 7 a 14 dias.',
+        '*Ímãs*: um só sem metal, conduta expectante com RX seriado; dois ou mais, ou ímã com metal, endoscopia urgente se alcançável, cirurgião se além.',
+        '*Moeda*: no esôfago, retirar em até 24 h (urgente se sintomática); no estômago, alta.',
+        '*Pontiagudos* (alfinete, osso, palito) e longos (> 5 cm; > 3 cm no lactente): endoscopia urgente se esôfago, retirar se alcançável.',
+        '*Bolinhas de gel que expandem*: podem obstruir; avaliação com cirurgião.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*RX AP e perfil* do pescoço ao abdome em toda ingestão de objeto radiopaco.',
+        '*Halo duplo* (contorno duplo) no AP e degrau no perfil = bateria; moeda tem borda única.',
+        '*Moeda no esôfago* aparece de face no AP; na traqueia, de perfil.',
+        '*RX inspiração e expiração* (criança colaborativa) ou *decúbitos laterais* (lactente): aprisionamento aéreo do lado afetado.',
+        '*RX normal não exclui aspiração*: a maioria dos objetos aspirados é radiotransparente.',
+        '*TC de tórax* de baixa dose em casos selecionados; *broncoscopia rígida* diagnostica e trata.'
+      ]},
+
+      { tipo:'doses', titulo:'Medidas e medicações', itens:[
+        { droga:'Mel', dose:'10 mL a cada 10 min, até 6 doses', via:'VO', obs:'NCPC: só ≥ 1 ano, ingestão de bateria há < 12 h, sem suspeita de perfuração ou sepse. Não atrasar a endoscopia.' },
+        { droga:'Sucralfato', dose:'1 g a cada 10 min, até 3 doses', via:'VO', obs:'No hospital, antes da endoscopia, com os mesmos critérios do mel. Conferir a concentração (suspensão 2 g/10 mL: 5 mL por dose).' },
+        { droga:'Oxigênio', dose:'Titular para SpO2 ≥ 92%', via:'Máscara', obs:'Na aspiração com desconforto.' },
+        { droga:'Dipirona', dose:'15 mg/kg/dose de 6/6 h (máximo de 1 g por dose)', via:'VO ou EV', obs:'Analgesia.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Varredura com o dedo às cegas na boca: empurra o objeto.',
+        'Compressão abdominal em lactente abaixo de 1 ano.',
+        'Induzir vômito ou dar laxante para "empurrar" o objeto.',
+        'Esperar jejum para retirar bateria do esôfago.',
+        'Dar mel a menor de 1 ano (botulismo) ou a quem tem suspeita de perfuração.',
+        'Dar alta a história de engasgo com RX normal sem avaliação para broncoscopia.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Alta* com objeto rombo, pequeno, já no estômago ou além, criança assintomática: dieta normal, observar fezes, retorno se dor abdominal, vômito, febre ou sangue nas fezes, e RX se não eliminar em 2 a 4 semanas. *Internar ou transferir* para broncoscopia (história de aspiração), endoscopia (bateria no esôfago, ímãs múltiplos, pontiagudos, moeda esofágica) ou cirurgia. Após retirada de bateria do esôfago, a equipe define imagem de controle e vigilância de perfuração, estenose e fístula aortoesofágica nas semanas seguintes. Prevenção: guardar baterias e ímãs fora do alcance, tampas de compartimento com parafuso. *Divergência:* a AHA 2025 passou a recomendar ciclos de 5 golpes nas costas e 5 compressões abdominais para a criança ≥ 1 ano (antes só compressões abdominais). O mel e o sucralfato vêm do NCPC norte-americano; a ESPGHAN 2021 aceita o uso desde que não atrase a endoscopia, e no Brasil a prática ainda é pouco difundida.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Bateria e moeda se confundem no AP: peça sempre o perfil e procure o halo duplo.',
+        'Pneumonia que não resolve no mesmo lobo, em criança pequena: pergunte de novo por engasgo.',
+        'Ligue para o endoscopista enquanto o RX ainda está sendo feito se a história for de bateria.'
+      ]}
+    ] },
+
+  { id:'ingestao-acidental', titulo:'Ingestão acidental na criança', categoria:'pedia', gravidade:'urgencia',
+    resumo:'Calcular a dose máxima possível, ligar para o CIATox, saber quais drogas matam com um comprimido e quanto tempo observar; carvão ativado só até 1 h e nunca induzir vômito.',
+    tags:['ingestao acidental','intoxicacao','intoxicação infantil','envenenamento','uma pilula pode matar','nafazolina','imidazolina','clonidina','sulfonilureia','carvao ativado','ciatox','ferro','paracetamol','domissanitario','salicilato de metila','canfora'],
+    fonte:'CIATox / Renaciat — Disque-Intoxicação 0800 722 6001 · AAP — Poisoning in children · AACT/EAPCCT — Position paper on single-dose activated charcoal (2005, revisão) · Michael e Sztajnkrycer — Deadly pediatric poisons (2004) · UpToDate — Approach to the child with occult toxic exposure',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Criança de 1 a 4 anos que pode ter ingerido remédio, produto de limpeza ou planta — ou sonolência, convulsão ou hipoglicemia sem explicação.' },
+      { rotulo:'Prioridade',    valor:'ABC, glicemia capilar, *dose máxima possível* por kg e *CIATox 0800 722 6001*.' },
+      { rotulo:'Meta',          valor:'Observar pelo tempo certo de cada droga, carvão só quando ajuda e proteger a criança de novo acidente.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Ingestão possível ou confirmada',
+          nota:'Calcular a pior hipótese: comprimidos que faltam × mg por comprimido ÷ peso' },
+        { tipo:'passo', rotulo:'Ligar', texto:'*CIATox 0800 722 6001* (24 h, gratuito)',
+          nota:'Ter em mãos nome do produto, concentração, quantidade, horário e peso' },
+        { tipo:'decisao', texto:'Está instável?', ramos:[
+          { rotulo:'Rebaixamento, convulsão, bradicardia, hipotensão, hipoglicemia, apneia', cor:'perigo',
+            texto:'*ABC, glicemia, monitor e ECG*; antídoto conforme a síndrome',
+            nota:'Miose + depressão respiratória: naloxona. Hipoglicemia: glicose', meds:['Naloxona', 'Glicose 10%'], ir:'intoxicado-abordagem' },
+          { rotulo:'Estável', texto:'Identificar substância e dose' }
+        ]},
+        { tipo:'decisao', texto:'O que foi ingerido?', ramos:[
+          { rotulo:'Droga da lista "uma pílula pode matar"', cor:'perigo', texto:'*Observar com monitor* pelo tempo da droga (6 a 24 h)',
+            nota:'Sulfonilureia, metadona e liberação prolongada: 24 h' },
+          { rotulo:'Produto de limpeza, cáustico, solvente', texto:'*Sem carvão e sem vômito*', ir:'causticos' },
+          { rotulo:'Paracetamol ≥ 150 mg/kg', cor:'perigo', texto:'*Nível sérico com 4 h* e acetilcisteína', meds:['Acetilcisteína'], ir:'paracetamol' },
+          { rotulo:'Ferro elementar ≥ 40 mg/kg', cor:'perigo', texto:'*Ferro sérico em 4 a 6 h*, RX de abdome; desferroxamina se grave', meds:['Desferroxamina'] },
+          { rotulo:'Dose abaixo da tóxica, produto de baixo risco', cor:'ok', texto:'*Alta com orientação*' }
+        ]},
+        { tipo:'decisao', texto:'Carvão ativado?', ramos:[
+          { rotulo:'Até 1 h, via aérea protegida, substância adsorvível e dose perigosa', texto:'*Carvão 1 g/kg*', meds:['Carvão ativado'] },
+          { rotulo:'Cáustico, hidrocarboneto, ferro, lítio, álcool, rebaixado sem intubação', cor:'perigo', texto:'*Não dar*' }
+        ]},
+        { tipo:'alerta', rotulo:'Sempre perguntar', texto:'*Negligência ou maus-tratos?*',
+          nota:'Lactente que não pega objetos, ingestões repetidas, droga ilícita, história que muda', ir:'maus-tratos' },
+        { tipo:'fim', rotulo:'Alta', texto:'Assintomática após o tempo de observação, orientação de prevenção e Conselho Tutelar se houver suspeita' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        'Pensar em ingestão diante de sonolência, ataxia ou coma súbito em criança previamente bem.',
+        'Suspeitar de imidazolina (nafazolina) na criança sonolenta, bradicárdica, hipotérmica e com miose após uso de descongestionante nasal.',
+        'Suspeitar de sulfonilureia em hipoglicemia sem causa, inclusive à noite, em casa com idoso diabético.',
+        'Perguntar quem mora ou visitou a casa e quais remédios usam: avós são fonte clássica.',
+        'Procurar odores, manchas na boca, embalagens e blister vazios trazidos pela família.',
+        'Tratar adolescente com ingestão como tentativa de suicídio até prova em contrário.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Drogas que matam com 1 comprimido ou 1 colher*: não liberar sem observar o tempo certo.',
+        'Hipoglicemia, convulsão, bradicardia, hipotensão, QRS largo ou depressão respiratória.',
+        'Ingestão de liberação prolongada: os sintomas começam tarde.',
+        'Produto desconhecido em criança sintomática: tratar pela síndrome.',
+        'Ingestão repetida, lactente pequeno ou droga ilícita: negligência.'
+      ]},
+
+      { tipo:'lista', titulo:'"Uma pílula pode matar" — e quanto tempo observar', itens:[
+        '*Imidazolinas* (nafazolina, oximetazolina — descongestionante nasal e colírio): sonolência, bradicardia, hipotermia, miose. Muito comum no Brasil. Observar 6 h.',
+        '*Clonidina*: igual às imidazolinas. Observar 6 a 12 h.',
+        '*Sulfonilureias* (glibenclamida, glicazida, glimepirida): hipoglicemia tardia. Observar *24 h* com glicemia de 1/1 a 2/2 h.',
+        '*Bloqueador de canal de cálcio e betabloqueador*: bradicardia, hipotensão, hiperglicemia (BCC). 6 h na liberação imediata; *24 h* na prolongada.',
+        '*Opioides* (codeína, tramadol, metadona, buprenorfina, adesivo de fentanil): 6 h; metadona e buprenorfina 24 h.',
+        '*Tricíclicos* (amitriptilina, imipramina), cloroquina e hidroxicloroquina: QRS largo, arritmia, convulsão. Observar 6 h com ECG seriado.',
+        '*Salicilato de metila* (pomadas e óleo de gaultéria) e *cânfora* (pomadas mentoladas): salicilismo e convulsão. Observar 6 h; salicilemia seriada.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Glicemia capilar* na chegada e seriada nas drogas hipoglicemiantes.',
+        '*ECG* em toda ingestão de droga cardiotóxica: QRS, QTc, bloqueios.',
+        '*Paracetamolemia com 4 h* se ingestão desconhecida, intencional ou acima de 150 mg/kg.',
+        '*Ferro sérico em 4 a 6 h* e *RX de abdome* (comprimidos radiopacos) na ingestão de ferro.',
+        '*Salicilemia seriada*, gasometria e eletrólitos no salicilato.',
+        '*Gasometria, eletrólitos, função renal e hepática* na criança sintomática; toxicológico de urina tem valor limitado.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações — por quilo', itens:[
+        { droga:'Carvão ativado', dose:'1 g/kg (máximo de 50 g)', via:'VO ou SNG', obs:'Até 1 h da ingestão, via aérea protegida. Misturar com água ou suco. Não adsorve ferro, lítio, álcool, cáusticos, hidrocarbonetos.' },
+        { droga:'Naloxona', dose:'0,1 mg/kg (máximo de 2 mg)', via:'EV, IM, IO ou intranasal', obs:'Ampola 0,4 mg/mL. Repetir a cada 2 a 3 min. Meia-vida curta: observar 4 a 6 h após a última dose. Clonidina e imidazolina: resposta variável.' },
+        { droga:'Glicose 10%', dose:'2 a 5 mL/kg (0,2 a 0,5 g/kg)', via:'EV', obs:'Hipoglicemia. Na sulfonilureia, tratar a hipoglicemia, não prevenir: glicose profilática estimula insulina.' },
+        { droga:'Octreotida', dose:'1 mcg/kg de 6/6 h a 8/8 h (máximo de 50 mcg por dose)', via:'SC ou EV', obs:'Hipoglicemia por sulfonilureia que recorre após glicose. Ampola 0,1 mg/mL.' },
+        { droga:'Acetilcisteína', dose:'150 mg/kg em 1 h, depois 50 mg/kg em 4 h e 100 mg/kg em 16 h', via:'EV', obs:'Paracetamol acima da linha do nomograma ou dose ≥ 150 mg/kg sem nível disponível em 8 h. Volumes de diluição ajustados ao peso na criança.' },
+        { droga:'Desferroxamina', dose:'15 mg/kg/h em infusão contínua', via:'EV', obs:'Ferro sérico > 500 mcg/dL ou toxicidade sistêmica (acidose, choque, rebaixamento). Frasco 500 mg. Urina cor de vinho. Geralmente até 24 h.' },
+        { droga:'Gluconato de cálcio 10%', dose:'0,6 mL/kg (60 mg/kg; máximo de 30 mL)', via:'EV', obs:'Bloqueador de canal de cálcio com hipotensão, em 10 a 20 min. Seguir a conduta específica.' },
+        { droga:'Bicarbonato de sódio 8,4%', dose:'1 a 2 mEq/kg (1 a 2 mL/kg) em bolus', via:'EV', obs:'Tricíclico com QRS > 100 ms ou arritmia; alcalinização no salicilato. Diluir 1:1 no lactente.' },
+        { droga:'Atropina', dose:'0,02 mg/kg (mínimo de 0,1 mg; máximo de 0,5 mg)', via:'EV', obs:'Bradicardia sintomática por betabloqueador, BCC ou imidazolina.' },
+        { droga:'Midazolam', dose:'0,2 mg/kg (máximo de 10 mg)', via:'IM ou intranasal', obs:'Convulsão por cânfora, tricíclico ou outra droga.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Induzir vômito (xarope de ipeca, dedo na garganta, água com sal).',
+        'Dar leite, óleo ou "neutralizante" caseiro.',
+        'Carvão ativado em cáustico, hidrocarboneto, ferro, lítio ou criança rebaixada sem via aérea protegida.',
+        'Glicose profilática na ingestão de sulfonilureia em criança com glicemia normal.',
+        'Liberar antes do tempo de observação da droga, mesmo com a criança assintomática.',
+        'Liberar adolescente sem avaliação de risco de suicídio.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Alta* quando a dose máxima possível está abaixo da tóxica (confirmar com o CIATox) ou após o tempo de observação da droga com criança assintomática, exames normais e família orientada sobre prevenção: remédios trancados e no alto, embalagem original, nunca chamar remédio de "docinho", produtos de limpeza fora de garrafa de refrigerante. *Internar* ou observar com monitor toda ingestão de droga da lista "uma pílula pode matar" pelo tempo indicado, a criança sintomática e quem precisa de antídoto. *Hidrocarboneto* (querosene, gasolina, thinner): sem carvão e sem vômito; observar 6 h e RX de tórax se tosse ou desconforto (pneumonite química). Suspeita de negligência, maus-tratos ou ingestão de droga ilícita: notificar ao Conselho Tutelar. *Divergência:* AACT e EAPCCT limitam o carvão ativado à 1ª hora; alguns toxicologistas estendem para drogas de liberação prolongada ou anticolinérgicas. O tempo de observação da sulfonilureia varia de 12 a 24 h nas referências; o CIATox costuma orientar 24 h.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Descongestionante nasal com nafazolina é a intoxicação "boba" que leva lactente à UTI: pergunte sempre.',
+        'Peça para a família trazer a embalagem e contar os comprimidos: a pior hipótese é a que vale.',
+        'Ligue para o CIATox antes de decidir alta: é gratuito e registra o caso.'
+      ]}
+    ] },
+
+  { id:'causticos', titulo:'Ingestão de cáusticos e domissanitários', categoria:'toxico', gravidade:'urgencia',
+    resumo:'Soda, desentupidor, ácido muriático, água sanitária: proteger a via aérea, não provocar vômito nem neutralizar, e endoscopia em 12–24 h no sintomático ou na ingestão intencional.',
+    tags:['caustico','cáustico','soda caustica','soda cáustica','desentupidor','acido muriatico','ácido muriático','agua sanitaria','água sanitária','hipoclorito','alcali','álcali','acido','ácido','domissanitario','domissanitário','esofagite caustica','endoscopia','zargar','acido fluoridrico','ácido fluorídrico','detergente','sabao em capsula','sabão em cápsula'],
+    fonte:'CIATox/ABRACIT — Domissanitários e cáusticos · ESGE — Ingestão de cáusticos e corpos estranhos (2020) · WSES — Caustic ingestion (2019) · UpToDate — Caustic esophageal injury in adults e in children (2025)',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Ingestão de produto de limpeza, desentupidor, alisante, ácido de bateria ou removedor — acidental na criança, *intencional no adulto*.' },
+      { rotulo:'Prioridade',    valor:'*Via aérea* (estridor, rouquidão, sialorreia) e sinais de *perfuração*. Ligar para o CIATox 0800 722 6001 com o rótulo na mão.' },
+      { rotulo:'Meta',          valor:'Endoscopia em 12–24 h em quem tem sintoma ou ingeriu de propósito; alta segura da criança assintomática com produto fraco.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Ingestão de cáustico ou domissanitário',
+          nota:'Pedir o frasco ou foto do rótulo: nome, concentração, pH. Quantidade, horário e se foi intencional' },
+        { tipo:'passo', rotulo:'Primeiro', texto:'*Jejum*, cabeceira elevada, lavar boca e pele, retirar roupa contaminada, analgesia',
+          nota:'NÃO provocar vômito, NÃO neutralizar, NÃO dar carvão, NÃO passar sonda às cegas, NÃO dar leite ou água em volume',
+          meds:['Morfina', 'Dipirona', 'Omeprazol'] },
+        { tipo:'decisao', texto:'Via aérea ameaçada?', ramos:[
+          { rotulo:'Estridor, rouquidão, dispneia, edema de orofaringe', cor:'perigo', texto:'*Intubação precoce* pelo mais experiente, preparado para via aérea difícil',
+            nota:'Preferir fibroscopia ou videolaringoscópio. Evitar ventilação com bolsa vigorosa e máscara laríngea. Ter cricotireoidostomia à mão',
+            ir:'via-aerea-dificil' },
+          { rotulo:'Não', texto:'Avaliar perfuração e gravidade' }
+        ]},
+        { tipo:'decisao', texto:'Sinais de perfuração ou necrose transmural?', ramos:[
+          { rotulo:'Dor torácica ou abdominal intensa, enfisema subcutâneo, peritonite, choque, acidose', cor:'perigo',
+            texto:'*TC de tórax e abdome com contraste EV* e cirurgia agora',
+            nota:'Ressuscitar, antibiótico de amplo espectro, cirurgião geral ou torácico. Endoscopia contraindicada com perfuração', ir:'choque-abordagem' },
+          { rotulo:'Não', texto:'Classificar o risco' }
+        ]},
+        { tipo:'decisao', texto:'Quem precisa de endoscopia?', ramos:[
+          { rotulo:'Sintomático, intencional, produto forte ou grande volume', cor:'perigo', texto:'*Endoscopia em 12–24 h* e classificação de Zargar',
+            nota:'Até 48 h é aceitável. Evitar entre o 5º e o 15º dia (parede mais frágil). TC com contraste é alternativa se não houver endoscopia' },
+          { rotulo:'Criança assintomática, acidental, pequena quantidade de produto doméstico fraco', cor:'ok',
+            texto:'*Observar 4–6 h*: se aceita líquido, sem sialorreia, sem lesão oral e sem dor → alta com orientação',
+            nota:'Água sanitária comum, detergente de louça e sabão de mão costumam ser leves', ir:'ingestao-acidental' }
+        ]},
+        { tipo:'fim', rotulo:'Destino', texto:'Alta (Zargar 0–2a) · enfermaria com nutrição por sonda passada na endoscopia (2b–3a) · cirurgia (3b com necrose extensa, perfuração)' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        '*Álcali (pH > 11–12):* soda cáustica, desentupidor, alisante de cabelo, detergente de máquina de lavar louça — necrose de liquefação, lesa mais o *esôfago*, penetra fundo.',
+        '*Ácido (pH < 2):* ácido muriático, "água de bateria" (sulfúrico), limpa-piso e removedor de ferrugem — necrose de coagulação, lesa mais o *estômago*, dá acidose e hemólise.',
+        '*Água sanitária comum (hipoclorito 2–2,5%):* quase sempre leve; preocupa só em volume grande ou intencional, ou na versão concentrada.',
+        '*Ácido fluorídrico (removedor de ferrugem, limpa-alumínio):* hipocalcemia, hipomagnesemia, hipercalemia e arritmia mesmo com pouca lesão visível.',
+        '*Cápsula de sabão para roupa:* vômito, sonolência, estridor e lesão ocular em criança pequena.',
+        '*Sintomas:* sialorreia, odinofagia, disfagia, vômito, hematêmese, dor retroesternal ou epigástrica, estridor, rouquidão.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Estridor, rouquidão ou dispneia*: edema de glote progride em horas — intubar cedo.',
+        'Dor torácica intensa, enfisema subcutâneo, febre, peritonite ou choque: *perfuração*.',
+        'Acidose metabólica, lactato alto, hipotensão: necrose transmural (sobretudo ácido).',
+        '*3 ou mais sintomas* (vômito, sialorreia, estridor, dor): forte preditor de lesão grave.',
+        'Boca sem lesão *não exclui* lesão grave no esôfago ou no estômago.'
+      ]},
+
+      { tipo:'lista', titulo:'Classificação endoscópica de Zargar', itens:[
+        '*Grau 0:* mucosa normal — dieta e alta.',
+        '*Grau 1:* edema e hiperemia — dieta e alta.',
+        '*Grau 2a:* erosões, úlceras superficiais, exsudato — dieta líquida, observação curta, alta.',
+        '*Grau 2b:* 2a + úlceras profundas ou circunferenciais — internar; alto risco de estenose.',
+        '*Grau 3a:* necrose focal — internar, nutrição enteral por sonda posicionada na endoscopia.',
+        '*Grau 3b:* necrose extensa — alto risco de perfuração e morte; discutir cirurgia.',
+        '*Grau 4:* perfuração — cirurgia.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Gasometria com lactato, eletrólitos, função renal* — acidose sugere lesão grave.',
+        '*Cálcio iônico, magnésio, potássio e ECG* no ácido fluorídrico.',
+        '*Hemograma, coagulograma, tipagem* no grave; *beta-HCG* na mulher em idade fértil.',
+        '*Radiografia de tórax e abdome em pé:* pneumomediastino, ar livre, derrame.',
+        '*TC de tórax e abdome com contraste EV:* suspeita de perfuração e, em centros com experiência, alternativa à endoscopia para decidir cirurgia.',
+        '*Endoscopia digestiva alta em 12–24 h:* sintomático, intencional, produto forte; com cuidado, sem retrovisão forçada.',
+        '*Nasofibrolaringoscopia* se houver sintoma respiratório e via aérea estável.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Morfina', dose:'Adulto 2–4 mg, titular · criança 0,05–0,1 mg/kg (máx. 4 mg/dose)', via:'EV', obs:'A dor da queimadura cáustica é intensa.' },
+        { droga:'Dipirona', dose:'Adulto 1 g · criança 15–25 mg/kg (máx. 1 g/dose)', via:'EV', obs:'Associar ao opioide.' },
+        { droga:'Omeprazol', dose:'Adulto 40 mg 1x/dia (até 12/12 h) · criança 1 mg/kg (máx. 40 mg)', via:'EV', obs:'Uso comum para reduzir dano ácido sobre a mucosa lesada; evidência fraca.' },
+        { droga:'Ondansetrona', dose:'Adulto 4–8 mg · criança 0,15 mg/kg (máx. 4 mg)', via:'EV', obs:'Vômito re-expõe a mucosa ao produto: tratar.' },
+        { droga:'Gluconato de cálcio 10%', dose:'Adulto 10–30 mL · criança 0,5–1 mL/kg (máx. 20 mL)', via:'EV lento', obs:'Ácido fluorídrico com hipocalcemia ou alteração no ECG. Repetir guiado por cálcio iônico. Na pele: gel de gluconato de cálcio 2,5% (manipulado).' },
+        { droga:'Ceftriaxona + metronidazol', dose:'Ceftriaxona 2 g 1x/dia + metronidazol 500 mg de 8/8 h', via:'EV', obs:'Só na perfuração ou necrose transmural — não como profilaxia de rotina.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        '*Provocar vômito* ou lavagem gástrica: re-expõe esôfago e boca ao cáustico.',
+        '*Neutralizar* (vinagre no álcali, bicarbonato no ácido): reação exotérmica piora a queimadura.',
+        '*Carvão ativado*: não adsorve cáustico e atrapalha a endoscopia.',
+        '*Sonda nasogástrica às cegas*: risco de perfuração — se precisar, passar sob visão endoscópica.',
+        '*Corticoide* para prevenir estenose: sem benefício e aumenta infecção (ver divergência).'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Pele e olho:* irrigação abundante com água corrente ou soro por 15–30 minutos antes de qualquer outra coisa; no olho, irrigar até pH 7–7,5 e chamar a oftalmologia (ver trauma ocular). *Alta:* criança assintomática com ingestão acidental de pequena quantidade de produto doméstico fraco (água sanitária comum, detergente, sabão), que após 4–6 h aceita líquido sem dor, sem sialorreia e sem lesão em boca — orientar retorno se recusar alimento, babar, vomitar ou tiver febre ou dor; ou endoscopia Zargar 0–1–2a. *Internação:* toda ingestão intencional, todo sintomático, produto forte (soda, desentupidor, ácido concentrado), Zargar 2b ou mais, ácido fluorídrico. Zargar 3 e sinais de perfuração vão para centro com cirurgia e UTI. Ingestão intencional precisa de avaliação psiquiátrica antes da alta. Estenose aparece em 3 semanas a meses: seguimento com gastroenterologia e endoscopia programada; risco de câncer de esôfago décadas depois. *Divergência:* a ESGE e a WSES não recomendam corticoide; alguns pediatras usam dexametasona curta no Zargar 2b com base em ensaio pequeno (Usta 2014) — não é conduta padrão. A TC com contraste como substituta da endoscopia é proposta por grupos franceses para predizer necrose transmural, mas a endoscopia segue padrão no Brasil. Criança assintomática com produto fraco: a maioria das diretrizes dispensa endoscopia; com álcali forte, alguns serviços fazem mesmo assim.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Peça o frasco: "água sanitária" e "cloro de piscina" ou "soda" são mundos diferentes.',
+        'Ligue para o CIATox (0800 722 6001): eles têm a composição dos produtos comerciais.',
+        'Ausência de lesão na boca não exclui esôfago queimado, e lesão na boca não garante que haja.',
+        'Pilha de botão engolida não é cáustico comum: é emergência endoscópica em horas (ver corpo estranho na criança).'
+      ]}
+    ] },
+
+  { id:'cumarinicos', titulo:'Raticida cumarínico (superwarfarina)', categoria:'toxico', gravidade:'urgencia',
+    resumo:'Raticida legal no Brasil é anticoagulante de longa duração: INR em 24 e 48 h, vitamina K1 só se coagulopatia — em dose alta e por semanas a meses —, e CCP se sangrar.',
+    tags:['raticida','cumarinico','cumarínico','superwarfarina','brodifacoum','bromadiolona','difetialona','cumatetralil','veneno de rato','vitamina k','fitomenadiona','inr alargado','ccp','chumbinho'],
+    fonte:'CIATox/ABRACIT — Raticidas · AAPCC — Long-acting anticoagulant rodenticide ingestion: out-of-hospital management guideline (Caravati, 2007) · UpToDate — Anticoagulant rodenticide (superwarfarin) poisoning (2025)',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Ingestão de "veneno de rato" em bloco, isca ou pó, ou *sangramento com INR muito alto sem uso de varfarina*.' },
+      { rotulo:'Prioridade',    valor:'Separar *chumbinho* (carbamato, sintomas colinérgicos em minutos) do cumarínico (assintomático por 1–3 dias). Sangramento ativo: reverter já.' },
+      { rotulo:'Meta',          valor:'INR em 24 e 48 h; vitamina K1 só com INR alterado, mantida até o INR ficar estável sem ela.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Ingestão de raticida',
+          nota:'Pedir a embalagem: princípio ativo e concentração. Sem embalagem, ligar para o CIATox 0800 722 6001' },
+        { tipo:'decisao', texto:'Qual produto?', ramos:[
+          { rotulo:'Chumbinho: grânulos cinza-escuros, sem embalagem, vendido ilegal', cor:'perigo',
+            texto:'*Carbamato ou organofosforado* — miose, sialorreia, broncorreia, bradicardia', ir:'organofosforado' },
+          { rotulo:'Bloco, isca peletizada ou pó com anticoagulante', texto:'Cumarínico — seguir abaixo' }
+        ]},
+        { tipo:'decisao', texto:'Está sangrando?', ramos:[
+          { rotulo:'Sangramento grave ou em local crítico', cor:'perigo', texto:'*CCP + vitamina K1 EV* agora',
+            nota:'Sem CCP: plasma fresco congelado. Intracraniano: neurocirurgia', meds:['Complexo protrombínico (CCP)', 'Vitamina K1 EV', 'Plasma fresco congelado'],
+            ir:'anticoagulado' },
+          { rotulo:'Não', texto:'INR basal e repetir em *24 e 48 h*',
+            nota:'O INR só sobe após 24–48 h: INR normal na chegada não exclui. Carvão só se < 1–2 h e grande volume intencional' }
+        ]},
+        { tipo:'decisao', texto:'INR em 48 h?', ramos:[
+          { rotulo:'Normal', cor:'ok', texto:'*Coagulopatia improvável* — alta com orientação',
+            nota:'Intencional: alta clínica depois da avaliação psiquiátrica' },
+          { rotulo:'Alterado sem sangramento', texto:'*Vitamina K1 VO em dose alta*, ajustada pelo INR',
+            nota:'Superwarfarina dura semanas a meses: o tratamento também', meds:['Vitamina K1 VO'] }
+        ]},
+        { tipo:'fim', rotulo:'Seguimento', texto:'INR a cada 2–3 dias no início, depois semanal · suspender a vitamina K só com INR estável, e checar INR 2–3 e 5–7 dias após parar' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        '*Ingestão relatada* de raticida legal: no Brasil quase todos são anticoagulantes de 2ª geração (brodifacoum, bromadiolona, difetialona) — meia-vida de semanas.',
+        '*1ª geração (cumatetralil, varfarina):* duração de dias, como a varfarina terapêutica.',
+        '*Sangramento inexplicado* (gengiva, hematúria, equimoses, menorragia) com INR > 10 em quem não usa anticoagulante: ingestão oculta, intencional ou criminosa.',
+        '*Criança pequena* que "provou" uma isca: quantidade quase sempre mínima.',
+        '*Chumbinho* é outra coisa: carbamato (aldicarbe) ou organofosforado, com quadro colinérgico em minutos a horas.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        'Cefaleia, rebaixamento ou déficit focal com INR alto: *hemorragia intracraniana* — TC e reversão imediata.',
+        'Hematêmese, melena, hemoptise, hematúria franca ou queda de hemoglobina.',
+        '*INR normal na chegada não tranquiliza*: o efeito aparece em 24–48 h.',
+        'Ingestão intencional ou repetida: grande quantidade e risco de nova tentativa.',
+        'Suspender a vitamina K cedo demais: o INR volta a subir dias depois.'
+      ]},
+
+      { tipo:'lista', titulo:'Quem precisa de INR', itens:[
+        '*Ingestão intencional ou de grande quantidade:* INR basal, 24 h e 48 h (alguns serviços repetem em 72 h).',
+        '*Criança com ingestão acidental de pequena quantidade (lambeu ou mordeu uma isca):* risco muito baixo — pode ir para casa; INR em 24–48 h se a quantidade for incerta, se houver ingestões repetidas ou se não houver como observar sangramento (ver divergência).',
+        '*Qualquer sinal de sangramento:* INR, hemograma e TTPa na hora.',
+        '*INR normal em 48 h* sem vitamina K: coagulopatia significativa é improvável.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*TP/INR* — o exame que guia tudo.',
+        '*TTPa e hemograma*: TTPa pode alargar; plaquetas e fibrinogênio normais.',
+        '*Tipagem* se sangramento.',
+        '*Urina tipo I* (hematúria microscópica) e pesquisa de sangue oculto se clínica sugerir.',
+        '*TC de crânio sem contraste* se cefaleia, alteração neurológica ou trauma com INR alto.',
+        '*Dosagem sérica de brodifacoum:* raramente disponível no Brasil; não é necessária para conduzir.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Vitamina K1 VO', dose:'Adulto 25–50 mg de 6/6 a 12/12 h (pode chegar a 100–400 mg/dia) · criança 0,4 mg/kg/dose', via:'VO', obs:'Fitomenadiona. Sem comprimido de 10 mg no mercado: dar a ampola de 10 mg/mL (Kanakion MM) por via oral ou manipular cápsulas. Ajustar pelo INR; duração média de 1 a 6 meses na superwarfarina.' },
+        { droga:'Vitamina K1 EV', dose:'Adulto 10 mg · criança 0,25–0,3 mg/kg (máx. 10 mg)', via:'EV lento', obs:'Diluir em 50–100 mL de SF e correr em 20–30 min (reação anafilactoide). Só com sangramento ou INR muito alto com risco; depois passar para VO.' },
+        { droga:'Complexo protrombínico (CCP)', dose:'25–50 UI/kg (INR 2–4: 25 · 4–6: 35 · > 6: 50 UI/kg)', via:'EV', obs:'Sangramento grave ou em local crítico. Efeito em minutos; associar sempre vitamina K1, porque o CCP dura horas e o veneno, semanas.' },
+        { droga:'Plasma fresco congelado', dose:'10–15 mL/kg', via:'EV', obs:'Só se não houver CCP. Volume grande, efeito parcial.' },
+        { droga:'Carvão ativado', dose:'1 g/kg (máx. 50 g)', via:'VO', obs:'Só em ingestão intencional volumosa nas primeiras 1–2 h, com via aérea protegida.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        '*Vitamina K profilática* sem INR alterado: mascara a coagulopatia e obriga a vigiar por mais tempo.',
+        'Dar alta da ingestão intencional com INR normal na chegada, sem repetir em 24–48 h.',
+        'Usar a dose de vitamina K da varfarina (1–2,5 mg): na superwarfarina não segura o INR.',
+        'Injeção intramuscular com INR alto.',
+        'Confundir com chumbinho: atropina não tem papel no cumarínico, e vitamina K não tem papel no chumbinho.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Alta:* criança com ingestão acidental pequena, sem sangramento, com responsável orientado sobre sinais (equimose, sangramento de gengiva ou nariz, urina escura ou vermelha, fezes pretas); adulto com INR normal em 48 h. *Internação:* sangramento, INR > 10, ingestão intencional até a avaliação psiquiátrica, ou impossibilidade de seguimento. Com INR alterado sem sangramento, o tratamento pode ser ambulatorial com vitamina K1 VO e INR a cada 2–3 dias, se houver adesão. Ingestão intencional = notificação e avaliação psiquiátrica; sangramento sem explicação em criança ou idoso = pensar também em envenenamento criminoso. CIATox: 0800 722 6001. *Divergência:* a diretriz norte-americana (AAPCC 2007) dispensa INR na ingestão acidental pequena em criança, com observação domiciliar; muitos serviços brasileiros ainda colhem INR em 36–48 h — os dois caminhos são aceitáveis se houver orientação clara. As doses de vitamina K1 na superwarfarina vêm de séries de casos e variam muito; titular pelo INR.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'INR > 10 em quem jura não usar anticoagulante: pense em raticida e pergunte de novo, a sós.',
+        'A vitamina K VO custa muitas ampolas por dia por meses: acione o serviço social e a farmácia antes da alta.',
+        'Peça a embalagem: "veneno de rato" pode ser cumarínico (legal) ou chumbinho (ilegal) — conduta oposta.'
+      ]}
+    ] },
+
+  { id:'digoxina', titulo:'Intoxicação digitálica', categoria:'toxico', gravidade:'emergencia',
+    resumo:'Náusea, confusão e arritmia em quem usa digoxina, ou ingestão aguda: potássio é prognóstico, anticorpo antidigoxina (Fab) se arritmia grave ou K > 5 — disponibilidade limitada no Brasil.',
+    tags:['digoxina','digital','digitalico','digitálico','intoxicacao digitalica','intoxicação digitálica','fab','digifab','anticorpo antidigoxina','tv bidirecional','hipercalemia','xantopsia','bav'],
+    fonte:'CIATox/ABRACIT — Cardiotóxicos · AHA — Focused update on cardiac arrest in toxicology (2023) · UpToDate — Digitalis (cardiac glycoside) poisoning (2025) · Levine et al. — Calcium in digoxin toxicity (J Emerg Med, 2011)',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Usuário de digoxina com *náusea, vômito, confusão, visão amarela* ou arritmia — sobretudo idoso com piora da função renal, hipocalemia ou droga nova (amiodarona, verapamil, macrolídeo).' },
+      { rotulo:'Prioridade',    valor:'Monitor, ECG, *potássio* e digoxinemia. Arritmia grave ou K > 5 na aguda = anticorpo antidigoxina (Fab).' },
+      { rotulo:'Meta',          valor:'Ritmo estável, K corrigido, Fab acionado cedo pelo CIATox (0800 722 6001) — a busca pelo frasco demora.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Suspeita', texto:'Usuário de digoxina com sintoma GI, neurológico ou arritmia, ou ingestão aguda',
+          nota:'Comprimido de 0,25 mg; elixir 0,05 mg/mL. Também plantas: espirradeira, chapéu-de-napoleão, dedaleira' },
+        { tipo:'passo', rotulo:'Já', texto:'Monitor, acesso, ECG de 12 derivações, *K, Mg, creatinina e digoxina sérica*',
+          nota:'Suspender a digoxina. Carvão ativado se aguda < 1–2 h e via aérea protegida', meds:['Carvão ativado'] },
+        { tipo:'decisao', texto:'Indicação de Fab?', ramos:[
+          { rotulo:'Arritmia com risco de vida, K > 5 na aguda, choque, ingestão > 10 mg (criança > 4 mg ou > 0,1 mg/kg), digoxina > 10–15 ng/mL', cor:'perigo',
+            texto:'*Anticorpo antidigoxina (Fab)* — calcular frascos',
+            nota:'Sem Fab disponível: suporte abaixo enquanto o CIATox localiza', meds:['Anticorpo antidigoxina (Fab) — aguda empírica', 'Anticorpo antidigoxina (Fab) — crônica empírica'] },
+          { rotulo:'Sem critério', cor:'ok', texto:'Suspender a droga, corrigir K e Mg, monitor por 12–24 h' }
+        ]},
+        { tipo:'decisao', texto:'Qual o ritmo?', ramos:[
+          { rotulo:'Bradicardia ou BAV sintomático', texto:'*Atropina*; se refratária, marca-passo transcutâneo',
+            nota:'Marca-passo transvenoso irrita o miocárdio digitalizado: só se não houver Fab', meds:['Atropina'], ir:'bradiarritmia' },
+          { rotulo:'Extrassístoles frequentes, TV, TV bidirecional', cor:'perigo', texto:'*Magnésio* e lidocaína',
+            nota:'Cardioversão elétrica com a menor energia efetiva, só se instável', meds:['Sulfato de magnésio', 'Lidocaína'] },
+          { rotulo:'FV ou TV sem pulso', cor:'perigo', texto:'*RCP e desfibrilação* habituais + Fab em bolus',
+            nota:'Manter a RCP por mais tempo depois do Fab', ir:'pcr-adulto' }
+        ]},
+        { tipo:'decisao', texto:'Potássio?', ramos:[
+          { rotulo:'Alto', cor:'perigo', texto:'*Fab* é o tratamento; insulina com glicose enquanto isso',
+            nota:'Cálcio não é proibido (ver divergência)', meds:['Insulina regular + glicose'], ir:'hipercalemia' },
+          { rotulo:'Baixo (comum na crônica)', texto:'*Repor K até 4–5* e magnésio', nota:'Hipocalemia piora a toxicidade' }
+        ]},
+        { tipo:'fim', rotulo:'Destino', texto:'UTI ou unidade coronariana com monitor contínuo · Fab: vigiar volta da ICC, FA rápida e hipocalemia' }
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Potássio > 5,5 na intoxicação aguda*: mortalidade altíssima antes do Fab — é indicação de antídoto.',
+        '*TV bidirecional* ou taquicardia atrial com BAV: quase patognomônicas.',
+        'Idoso com IRA, vômitos e confusão em uso de digoxina: crônica até prova em contrário, mesmo com nível "pouco" alto.',
+        'Arritmia ventricular ou bradicardia que não responde a atropina.',
+        'Ingestão de planta (espirradeira, chapéu-de-napoleão): a digoxinemia subestima, mas o Fab funciona.'
+      ]},
+
+      { tipo:'passos', titulo:'Conduta imediata', itens:[
+        'Monitorizar e colher K, Mg, creatinina, glicemia e digoxina sérica.',
+        'Suspender a digoxina e as drogas que elevam o nível (amiodarona, verapamil, claritromicina).',
+        'Ligar para o CIATox (0800 722 6001) cedo: localizar o Fab leva tempo.',
+        'Dar carvão ativado na ingestão aguda recente com via aérea protegida.',
+        'Tratar a bradicardia com atropina e a ectopia ventricular com magnésio e lidocaína.',
+        'Corrigir hipocalemia e hipomagnesemia na crônica; tratar hipercalemia na aguda.',
+        'Administrar Fab se houver critério, com o cálculo de frascos abaixo.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Anticorpo antidigoxina (Fab) — cálculo por dose ingerida', dose:'Frascos = mg ingeridos × 0,8 ÷ 0,5 (≈ 1,6 frasco por mg)', via:'EV', obs:'Cada frasco de 40 mg liga 0,5 mg de digoxina. Mesmo cálculo na criança. Arredondar para cima.' },
+        { droga:'Anticorpo antidigoxina (Fab) — cálculo por nível', dose:'Frascos = digoxina (ng/mL) × peso (kg) ÷ 100', via:'EV', obs:'Nível colhido ≥ 6 h após a ingestão ou a última dose.' },
+        { droga:'Anticorpo antidigoxina (Fab) — aguda empírica', dose:'10 frascos (até 20 na PCR)', via:'EV', obs:'Dose e nível desconhecidos. Reconstituir 40 mg em 4 mL de água destilada, diluir em SF e correr em 30 min; em bolus na PCR. Sem registro no Brasil: importação excepcional, poucos hospitais têm — CIATox informa onde há.' },
+        { droga:'Anticorpo antidigoxina (Fab) — crônica empírica', dose:'Adulto 3–6 frascos · criança 1–2 frascos', via:'EV', obs:'Na crônica, metade da dose calculada costuma bastar; repetir se não houver resposta em 1 h.' },
+        { droga:'Atropina', dose:'Adulto 0,5–1 mg a cada 3–5 min (máx. 3 mg) · criança 0,02 mg/kg (mín. 0,1 mg, máx. 0,5 mg)', via:'EV', obs:'Bradicardia e BAV.' },
+        { droga:'Sulfato de magnésio', dose:'Adulto 2 g em 10–20 min · criança 25–50 mg/kg (máx. 2 g)', via:'EV', obs:'Ectopia e TV. Evitar se houver BAV avançado ou insuficiência renal com Mg alto.' },
+        { droga:'Lidocaína', dose:'1–1,5 mg/kg em bolus, depois 1–4 mg/min', via:'EV', obs:'TV e ectopia ventricular. Evitar amiodarona e procainamida, que deprimem a condução.' },
+        { droga:'Insulina regular + glicose', dose:'10 UI + glicose 50% 50 mL (criança 0,1 UI/kg + glicose 0,5 g/kg)', via:'EV', obs:'Hipercalemia enquanto o Fab não chega.' },
+        { droga:'Carvão ativado', dose:'1 g/kg (máx. 50 g)', via:'VO ou SNG', obs:'Ingestão aguda < 1–2 h, via aérea protegida.' }
+      ]},
+
+      { tipo:'tempo', titulo:'Linha do tempo', itens:[
+        { quando:'0–15 min', o_que:'Monitor, ECG, K e Mg, suspender digoxina, CIATox acionado.' },
+        { quando:'≥ 6 h da ingestão', o_que:'Digoxina sérica confiável (antes disso, superestima a toxicidade).' },
+        { quando:'30–60 min após o Fab', o_que:'Melhora da arritmia e queda do K — vigiar hipocalemia e volta da FA rápida.' },
+        { quando:'Após o Fab', o_que:'Não repetir digoxina total: o laboratório mede o complexo e o valor fica falsamente alto.' }
+      ]},
+
+      { tipo:'lista', titulo:'Critérios diagnósticos', itens:[
+        '*Aguda:* vômito precoce, bradicardia, BAV, *hipercalemia*; nível muito alto.',
+        '*Crônica:* idoso, IRA, hipocalemia, interação medicamentosa; náusea, anorexia, confusão, xantopsia; arritmia com nível às vezes só discretamente alto (> 2 ng/mL).',
+        '*Arritmias típicas:* extrassístoles ventriculares e bigeminismo, TV bidirecional, taquicardia atrial com BAV, ritmo juncional acelerado, FA com resposta lenta e regular, bradicardia sinusal e BAV.',
+        '*Infradesnível de ST "em colher"* é efeito do digital, não intoxicação.',
+        '*Potássio:* na aguda, 5–5,5 e > 5,5 marcam risco progressivo de morte; na crônica, o K costuma estar baixo.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*ECG seriado* e monitor contínuo.',
+        '*Potássio* na entrada e a cada 2–4 h na aguda.',
+        '*Magnésio, cálcio, creatinina, ureia, glicemia.*',
+        '*Digoxina sérica* ≥ 6 h após a ingestão ou a última dose (terapêutico 0,5–0,9 ng/mL na ICC).',
+        '*Troponina* se dor torácica ou instabilidade.'
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        '*Hemodiálise para retirar digoxina*: não remove (volume de distribuição grande). Só dialisar por hipercalemia ou IRA.',
+        'Amiodarona, procainamida, betabloqueador ou verapamil para a arritmia digitálica.',
+        'Cardioversão com energia alta como rotina: pode precipitar FV — menor energia e só se instável.',
+        'Repetir digoxina total depois do Fab e se assustar com o valor.',
+        'Esperar a digoxinemia para dar Fab em arritmia com risco de vida.'
+      ]},
+
+      { tipo:'texto', titulo:'Destino', conteudo:'Toda intoxicação com arritmia, hipercalemia ou indicação de Fab vai para *UTI ou unidade coronariana*. Crônica leve (só sintomas GI, sem arritmia, K normal) pode ficar em observação com monitor por 12–24 h, suspensão da droga e correção de K, Mg e função renal. *Fab no Brasil:* o DigiFab não tem registro na Anvisa e chega por importação excepcional; poucos hospitais de referência mantêm estoque — o CIATox (0800 722 6001) orienta onde buscar, e a decisão de transferir pode ser melhor que esperar. Após o Fab, o paciente com ICC pode descompensar e a FA pode voltar a ficar rápida; na insuficiência renal, o complexo é eliminado devagar e pode haver rebote em 24–72 h. Reintrodução da digoxina só com ajuste pela função renal, se ainda indicada. Ingestão intencional = avaliação psiquiátrica. *Divergência:* o cálcio na hipercalemia digitálica foi contraindicado por décadas pelo risco teórico de "coração de pedra"; séries retrospectivas recentes (Levine 2011) não mostraram aumento de mortalidade, e a AHA 2023 não o proíbe — se não há Fab e há alteração eletrocardiográfica por hipercalemia, pode ser dado lentamente. O Fab segue sendo o tratamento de escolha.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Idoso com "gastroenterite" e IRA em uso de digoxina: peça digoxinemia e ECG antes de culpar o vírus.',
+        'Ligue para o CIATox na primeira hora: a parte demorada do Fab é encontrá-lo.',
+        'FA que ficou regular e lenta em usuário de digoxina é sinal de intoxicação, não de reversão.'
+      ]}
+    ] },
+
+  { id:'bb-bcc', titulo:'Intoxicação por betabloqueador e bloqueador de canal de cálcio', categoria:'toxico', gravidade:'emergencia',
+    resumo:'Bradicardia e choque após ingestão de propranolol, atenolol, verapamil, diltiazem ou anlodipino: cálcio, insulina em alta dose, vasopressor e glucagon; liberação prolongada observa 24 h.',
+    tags:['betabloqueador','propranolol','atenolol','metoprolol','carvedilol','sotalol','bloqueador de canal de calcio','bcc','verapamil','diltiazem','anlodipino','nifedipino','bradicardia','choque cardiogenico','insulina alta dose','hiet','glucagon','emulsao lipidica','emulsão lipídica'],
+    fonte:'CIATox/ABRACIT — Cardiotóxicos · St-Onge et al. — Experts consensus recommendations for the management of calcium channel blocker poisoning (Crit Care Med, 2017) · AHA — Focused update on cardiac arrest and life-threatening toxicity (2023) · UpToDate — Beta blocker poisoning e Calcium channel blocker poisoning (2025)',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'*Bradicardia com hipotensão* após ingestão intencional ou acidental; criança que pegou comprimido de anti-hipertensivo; BCC também dá *hiperglicemia*.' },
+      { rotulo:'Prioridade',    valor:'Monitor, glicemia, ECG, cálcio, e iniciar *insulina em alta dose* cedo se houver disfunção miocárdica. CIATox 0800 722 6001.' },
+      { rotulo:'Meta',          valor:'PAM ≥ 65 mmHg com perfusão adequada (diurese, lactato caindo) — a frequência cardíaca importa menos que a perfusão.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Suspeita', texto:'Ingestão de betabloqueador ou bloqueador de canal de cálcio',
+          nota:'Verapamil e diltiazem são os mais letais; propranolol e sotalol os piores entre os betabloqueadores' },
+        { tipo:'passo', rotulo:'Já', texto:'Monitor, 2 acessos, ECG, *glicemia*, eletrólitos, cálcio iônico, lactato, gasometria',
+          nota:'Carvão se < 1–2 h e via aérea protegida. Liberação prolongada: irrigação intestinal total com PEG',
+          meds:['Carvão ativado', 'Polietilenoglicol (irrigação intestinal total)'] },
+        { tipo:'decisao', texto:'Hipotenso ou bradicárdico com má perfusão?', ramos:[
+          { rotulo:'Não', cor:'ok', texto:'*Observar com monitor*: 6 h na liberação imediata, *24 h* na prolongada',
+            nota:'Sotalol: QT longo e torsades — observar 12 h ou mais' },
+          { rotulo:'Sim', cor:'perigo', texto:'Cristaloide 500–1000 mL, *atropina*, *cálcio EV*',
+            meds:['Atropina', 'Gluconato de cálcio 10%', 'Cloreto de cálcio 10%'] }
+        ]},
+        { tipo:'passo', rotulo:'Choque', texto:'*Insulina em alta dose* (HIET) com glicose e potássio + *noradrenalina*',
+          nota:'Insulina demora 15–60 min para agir: começar cedo, com POCUS para ver a contratilidade',
+          meds:['Insulina regular — bolus', 'Insulina regular — infusão', 'Glicose', 'Noradrenalina'] },
+        { tipo:'decisao', texto:'Qual droga?', ramos:[
+          { rotulo:'Betabloqueador', texto:'Acrescentar *glucagon*',
+            nota:'Vômito é frequente: ondansetrona antes. QRS largo com propranolol: bicarbonato', meds:['Glucagon — bolus', 'Bicarbonato de sódio 8,4%'] },
+          { rotulo:'BCC', texto:'Repetir *cálcio* e subir a insulina',
+            nota:'Anlodipino: vasoplegia predomina — vasopressor é o pilar' }
+        ]},
+        { tipo:'decisao', texto:'Refratário?', ramos:[
+          { rotulo:'Choque persistente', cor:'perigo', texto:'Adrenalina, *marca-passo*, emulsão lipídica, azul de metileno',
+            nota:'Marca-passo captura mal no BCC', meds:['Adrenalina', 'Emulsão lipídica 20% — bolus', 'Azul de metileno'] },
+          { rotulo:'PCR ou choque extremo', cor:'perigo', texto:'*ECMO venoarterial* em centro que tenha', ir:'pcr-adulto' }
+        ]},
+        { tipo:'fim', rotulo:'Destino', texto:'UTI · alta só após observação completa sem alteração, e avaliação psiquiátrica se intencional' }
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Liberação prolongada* (verapamil, diltiazem, nifedipino, metoprolol): pode ficar assintomático por 6–12 h e desabar depois.',
+        '*Hiperglicemia* em intoxicação por BCC: marca gravidade (falta de insulina e de entrada de glicose no miocárdio).',
+        'QRS largo, convulsão ou rebaixamento: propranolol (bloqueio de sódio, lipossolúvel).',
+        'QT longo e torsades: sotalol.',
+        'Uma dose de verapamil de liberação prolongada ou de propranolol pode matar criança pequena.'
+      ]},
+
+      { tipo:'passos', titulo:'Conduta imediata', itens:[
+        'Monitorizar, pegar 2 acessos e medir glicemia capilar na hora.',
+        'Dar carvão ativado na ingestão recente com via aérea protegida.',
+        'Repor volume com 500–1000 mL de cristaloide (criança 10–20 mL/kg), com cuidado se houver congestão.',
+        'Dar cálcio EV e repetir conforme resposta e cálcio iônico.',
+        'Iniciar insulina em alta dose com glicose e potássio se houver hipotensão ou disfunção ao POCUS.',
+        'Associar noradrenalina ou adrenalina para PAM ≥ 65 mmHg.',
+        'Acionar CIATox e UTI; pensar em marca-passo, emulsão lipídica e ECMO no refratário.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Gluconato de cálcio 10%', dose:'Adulto 30–60 mL (3–6 g) · criança 0,6 mL/kg (máx. 30 mL)', via:'EV em 5–10 min', obs:'Repetir a cada 10–20 min até 3–4 vezes, ou infusão de 0,6–1,2 mL/kg/h. Alvo de cálcio iônico até ~2× o normal.' },
+        { droga:'Cloreto de cálcio 10%', dose:'Adulto 10–20 mL (1–2 g) · criança 0,2 mL/kg (máx. 10 mL)', via:'EV central', obs:'Três vezes mais cálcio que o gluconato. Necrose se extravasar: preferir acesso central.' },
+        { droga:'Insulina regular — bolus', dose:'1 UI/kg', via:'EV', obs:'Insulina em alta dose (HIET). Dar glicose junto se glicemia < 250 mg/dL.' },
+        { droga:'Insulina regular — infusão', dose:'0,5–1 UI/kg/h, subindo a cada 15–30 min até 10 UI/kg/h se necessário', via:'EV', obs:'Preparar concentrada (ex.: 1 UI/mL a 10 UI/mL) para não sobrecarregar volume. Efeito em 15–60 min.' },
+        { droga:'Glicose', dose:'Bolus de 25 g (glicose 50% 50 mL; criança 0,5 g/kg como glicose 25%) e infusão de 0,5 g/kg/h', via:'EV', obs:'Alvo de glicemia 100–250 mg/dL. Glicemia capilar a cada 15–30 min na 1ª hora, depois horária. Glicose a 10–50% conforme acesso.' },
+        { droga:'Cloreto de potássio', dose:'Repor se K < 3,5 (alvo 3,5–4,5)', via:'EV', obs:'Insulina joga K para dentro da célula: K a cada 1–2 h. Não precisa normalizar totalmente.' },
+        { droga:'Noradrenalina', dose:'0,05–1 mcg/kg/min, titular', via:'EV', obs:'Vasopressor de 1ª escolha com vasoplegia (anlodipino, nifedipino).' },
+        { droga:'Adrenalina', dose:'0,05–1 mcg/kg/min, titular', via:'EV', obs:'Bradicardia com baixo débito.' },
+        { droga:'Atropina', dose:'Adulto 0,5–1 mg a cada 3–5 min (máx. 3 mg) · criança 0,02 mg/kg (mín. 0,1 mg, máx. 0,5 mg)', via:'EV', obs:'Costuma falhar no grave, mas é rápida.' },
+        { droga:'Glucagon — bolus', dose:'Adulto 3–5 mg (até 10 mg) · criança 50 mcg/kg (máx. 5 mg)', via:'EV em 1–2 min', obs:'Betabloqueador. Se responder, infusão da dose que funcionou por hora (2–5 mg/h). Frascos de 1 mg: a dose consome o estoque do hospital — confira antes. Vômito: ondansetrona prévia.' },
+        { droga:'Bicarbonato de sódio 8,4%', dose:'1–2 mEq/kg (1–2 mL/kg) em bolus', via:'EV', obs:'QRS > 120 ms com propranolol. Repetir até estreitar; alvo de pH 7,45–7,55.' },
+        { droga:'Emulsão lipídica 20% — bolus', dose:'1,5 mL/kg em 1 min, depois 0,25 mL/kg/min por 30–60 min', via:'EV', obs:'Resgate no choque refratário ou PCR, mais com propranolol e verapamil (lipossolúveis). Máx. ~10 mL/kg na 1ª hora. Interfere em exames.' },
+        { droga:'Azul de metileno', dose:'1–2 mg/kg em 20–60 min', via:'EV', obs:'Vasoplegia refratária (resgate, evidência fraca). Evitar em deficiência de G6PD e com serotoninérgicos.' },
+        { droga:'Carvão ativado', dose:'1 g/kg (máx. 50 g)', via:'VO ou SNG', obs:'< 1–2 h, ou mais tarde na liberação prolongada; só com via aérea protegida.' },
+        { droga:'Polietilenoglicol (irrigação intestinal total)', dose:'Adulto 1,5–2 L/h · criança 25 mL/kg/h (máx. 1,5–2 L/h)', via:'SNG', obs:'Liberação prolongada em paciente estável, sem íleo, até efluente claro. Não fazer no instável.' }
+      ]},
+
+      { tipo:'tempo', titulo:'Linha do tempo', itens:[
+        { quando:'0–15 min', o_que:'Monitor, glicemia, ECG, carvão se cabível, cristaloide, atropina e cálcio.' },
+        { quando:'15–30 min', o_que:'POCUS: contratilidade ruim ou PAM baixa → insulina em alta dose + vasopressor.' },
+        { quando:'1 h', o_que:'Sem resposta: subir insulina, adrenalina, glucagon (BB), marca-passo, chamar ECMO.' },
+        { quando:'6 h / 24 h', o_que:'Fim da observação na liberação imediata / prolongada, se assintomático e ECG normal.' }
+      ]},
+
+      { tipo:'lista', titulo:'Critérios diagnósticos', itens:[
+        '*Betabloqueador:* bradicardia, hipotensão, BAV, *hipoglicemia* (sobretudo criança), broncoespasmo; propranolol: QRS largo, convulsão, coma.',
+        '*BCC não di-hidropiridínico (verapamil, diltiazem):* bradicardia, BAV, choque cardiogênico e vasoplégico, *hiperglicemia*, consciência relativamente preservada.',
+        '*BCC di-hidropiridínico (anlodipino, nifedipino):* vasodilatação com *taquicardia reflexa*; bradicardia só em dose maciça; edema pulmonar não cardiogênico tardio com anlodipino.',
+        '*Diferencial:* digoxina, clonidina, organofosforado, hipercalemia, IAM inferior, hipotermia.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Glicemia capilar* seriada — base do diagnóstico diferencial e do manejo da insulina.',
+        '*Potássio, cálcio iônico, magnésio, creatinina, lactato, gasometria.*',
+        '*ECG seriado* (PR, QRS, QT).',
+        '*POCUS cardíaco* para separar choque cardiogênico de vasoplégico.',
+        '*Paracetamol e salicilato séricos* na ingestão intencional; *beta-HCG* na mulher em idade fértil.',
+        '*Radiografia de tórax* se hipoxemia (edema pulmonar não cardiogênico com anlodipino).'
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Dar alta de liberação prolongada antes de 24 h só porque o paciente está bem.',
+        'Esperar a falha de tudo para começar insulina em alta dose: ela leva até 1 h para agir.',
+        'Corrigir a hiperglicemia do BCC com insulina "habitual" e parar ali — ela é o tratamento em dose alta.',
+        'Lavagem gástrica de rotina ou carvão com via aérea desprotegida.',
+        'Hiper-hidratar o paciente com choque cardiogênico (edema pulmonar).'
+      ]},
+
+      { tipo:'texto', titulo:'Destino', conteudo:'Sintomático vai para *UTI*. Assintomático com liberação imediata observa 6 h (sotalol 12 h); com liberação prolongada, *24 h com monitor*, mesmo assintomático. Criança que pode ter ingerido 1 comprimido de verapamil, diltiazem, nifedipino ou propranolol: observar internada pelo mesmo tempo, com glicemia seriada. ECMO venoarterial é o resgate quando o choque não responde — se o hospital não tem, discutir transferência cedo, antes de ficar instável demais. CIATox: 0800 722 6001. Ingestão intencional = avaliação psiquiátrica antes da alta. *Divergência:* o consenso de 2017 para BCC coloca a insulina em alta dose como 1ª linha junto com cálcio e vasopressor, e rebaixa o glucagon; no betabloqueador, o glucagon segue citado, mas a insulina em alta dose tem mais dados. Emulsão lipídica e azul de metileno têm evidência só de relatos de caso — usar como resgate. A dose máxima de insulina varia entre referências (até 10 UI/kg/h).' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Bradicardia com choque + *hiperglicemia* = pense em BCC; com *hipoglicemia* = pense em betabloqueador.',
+        'Escreva a hora da ingestão e o tipo de comprimido (AP, LP, SR, retard, CR): define 6 h ou 24 h de observação.',
+        'A glicose da insulina em alta dose pesa em volume: use solução concentrada em acesso central.'
+      ]}
+    ] },
+
+  { id:'abelhas', titulo:'Múltiplas picadas de abelha e vespa', categoria:'toxico', gravidade:'urgencia',
+    resumo:'Separar reação local, anafilaxia e envenenamento por múltiplas picadas: retirar ferrões, hidratar e vigiar rabdomiólise, hemólise e lesão renal por 24–72 h.',
+    tags:['abelha','vespa','marimbondo','maribondo','picada de abelha','enxame','africanizada','apis','envenenamento','rabdomiolise','rabdomiólise','hemolise','hemólise','soro antiapilico','soro antiapílico','anafilaxia'],
+    fonte:'Ministério da Saúde — Manual de diagnóstico e tratamento de acidentes por animais peçonhentos (2ª ed.) e Guia de Animais Peçonhentos do Brasil (2024) · CEVAP-Unesp/Instituto Vital Brazil — Soro antiapílico, ensaio clínico (2025–2026) · UpToDate — Bee, yellow jacket, wasp, and other Hymenoptera stings (2025)',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Ataque por enxame (abelha africanizada), em geral *dezenas a centenas de picadas*, ou qualquer picada com sintoma sistêmico.' },
+      { rotulo:'Prioridade',    valor:'*Anafilaxia primeiro* (adrenalina IM). Depois contar picadas, retirar ferrões e começar hidratação.' },
+      { rotulo:'Meta',          valor:'Diurese ≥ 1–2 mL/kg/h e vigilância de CK, hemoglobina, creatinina e potássio por 24–72 h.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Picada de abelha ou vespa',
+          nota:'Estimar o número de picadas e o peso. Vespa e marimbondo não deixam ferrão e picam várias vezes' },
+        { tipo:'decisao', texto:'Tem anafilaxia?', ramos:[
+          { rotulo:'Urticária difusa, edema de glote, broncoespasmo, hipotensão, vômito', cor:'perigo',
+            texto:'*Adrenalina IM agora*', nota:'Acontece com 1 picada só, em sensibilizado', meds:['Adrenalina'], ir:'anafilaxia' },
+          { rotulo:'Não', texto:'Avaliar a carga de veneno' }
+        ]},
+        { tipo:'decisao', texto:'Quantas picadas?', ramos:[
+          { rotulo:'Poucas, só reação local', cor:'ok', texto:'Retirar ferrão, gelo, analgésico e anti-histamínico VO',
+            nota:'Reação local extensa (> 10 cm, dura dias): pode associar prednisona curta', meds:['Dipirona', 'Loratadina', 'Prednisona'] },
+          { rotulo:'Adulto > 50–100, criança ou idoso com dezenas, ou qualquer sintoma sistêmico', cor:'perigo',
+            texto:'*Envenenamento por múltiplas picadas*: internar',
+            nota:'Dose letal estimada ~ 20 picadas/kg; criança e cardiopata toleram muito menos' }
+        ]},
+        { tipo:'passo', rotulo:'Envenenamento', texto:'*Raspar os ferrões* com lâmina ou cartão, cristaloide EV, analgesia, anti-histamínico e corticoide',
+          nota:'Retirar rápido importa mais que a técnica', meds:['Soro fisiológico 0,9%', 'Difenidramina', 'Hidrocortisona'] },
+        { tipo:'decisao', texto:'Exames de 6–12 h?', ramos:[
+          { rotulo:'CK alta, urina escura, Hb caindo, creatinina subindo', cor:'perigo', texto:'*Rabdomiólise e hemólise*: hidratação vigorosa, K seriado, nefrologia',
+            nota:'Diálise se hipercalemia, acidose ou oligúria refratária', ir:'rabdomiolise' },
+          { rotulo:'Normais', cor:'ok', texto:'Repetir em 24 h; alta se estável e sem sintomas' }
+        ]},
+        { tipo:'fim', rotulo:'Destino', texto:'Alta (reação local) · observação 24 h (dezenas de picadas) · UTI (sistêmico, LRA, SDRA, choque) · notificar' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        '*Reação local:* dor, eritema e edema no ponto da picada, melhora em horas.',
+        '*Reação local extensa:* edema > 10 cm, contíguo, pico em 48 h, dura até 1 semana — não é infecção.',
+        '*Anafilaxia:* minutos após 1 ou poucas picadas — urticária, angioedema, broncoespasmo, hipotensão.',
+        '*Envenenamento tóxico:* dezenas a centenas de picadas — vômito, diarreia, cefaleia, hipotensão, depois urina escura (hemoglobina ou mioglobina), oligúria, icterícia, dispneia.',
+        '*Complicações tardias (12–72 h):* rabdomiólise, hemólise, LRA, hepatite, miocardite, SDRA, convulsão.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        'Estridor, chiado, hipotensão ou vômito minutos após a picada: *anafilaxia*.',
+        '*Urina escura ou avermelhada*: rabdomiólise ou hemólise — risco de LRA.',
+        'Picadas na boca ou na língua: edema de via aérea mesmo sem alergia.',
+        'Criança, idoso, cardiopata ou gestante com dezenas de picadas.',
+        'Dispneia ou dor torácica horas depois: SDRA ou miocardite.'
+      ]},
+
+      { tipo:'lista', titulo:'Critérios de gravidade', itens:[
+        '*Número de picadas:* adulto > 50 já merece observação e exames; > 100–200 tem risco real de LRA; > 500 é potencialmente letal.',
+        '*Por peso:* dose letal estimada ~ 20 picadas/kg — uma criança de 10 kg está em risco com poucas dezenas.',
+        '*Sistêmico:* vômito, diarreia, hipotensão, rebaixamento, urina escura.',
+        '*Laboratório:* CK alta, hemólise (Hb caindo, bilirrubina indireta e DHL altas), creatinina e K subindo.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Nenhum* na reação local simples.',
+        '*Envenenamento:* hemograma, CK, DHL, bilirrubinas, TGO/TGP, creatinina, ureia, sódio, potássio, gasometria, coagulograma, urina tipo I (hemoglobinúria ou mioglobinúria).',
+        '*Repetir em 6–12 h e em 24 h*: as alterações podem aparecer tardiamente.',
+        '*ECG e troponina* se dor torácica, arritmia ou idoso.',
+        '*Radiografia de tórax* se dispneia.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Adrenalina', dose:'0,01 mg/kg (máx. 0,5 mg adulto · 0,3 mg criança)', via:'IM (vasto lateral)', obs:'Ampola 1 mg/mL. Repetir a cada 5–15 min se precisar. Anafilaxia.' },
+        { droga:'Soro fisiológico 0,9%', dose:'Adulto 1–2 L na 1ª hora, depois 200–300 mL/h · criança 20 mL/kg e manutenção 1,5–2×', via:'EV', obs:'Alvo de diurese 1–2 mL/kg/h (adulto 200–300 mL/h se rabdomiólise). Cuidado em cardiopata e com SDRA.' },
+        { droga:'Difenidramina', dose:'Adulto 25–50 mg · criança 1 mg/kg (máx. 50 mg)', via:'EV ou IM', obs:'Prurido e urticária. Alternativa: prometazina 25 mg IM (evitar EV e em < 2 anos).' },
+        { droga:'Hidrocortisona', dose:'Adulto 200 mg · criança 4–5 mg/kg (máx. 200 mg)', via:'EV', obs:'Envenenamento sistêmico e reação extensa; não substitui adrenalina.' },
+        { droga:'Dipirona', dose:'Adulto 1 g · criança 15–25 mg/kg (máx. 1 g)', via:'EV ou VO', obs:'Dor local.' },
+        { droga:'Loratadina', dose:'Adulto 10 mg 1x/dia · criança > 30 kg 10 mg, 2–12 anos < 30 kg 5 mg', via:'VO', obs:'Alta, por 3–5 dias.' },
+        { droga:'Prednisona', dose:'Adulto 40 mg 1x/dia por 3–5 dias · criança 1 mg/kg (máx. 40 mg)', via:'VO', obs:'Reação local extensa.' },
+        { droga:'Bicarbonato de sódio 8,4%', dose:'Ver divergência', via:'EV', obs:'Alcalinização urinária não é rotina; não usar com hipocalcemia ou alcalose.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Pinçar o ferrão pela bolsa de veneno: espreme mais veneno — raspar de lado (mas não atrasar a retirada procurando lâmina).',
+        'Dar alta de quem levou dezenas de picadas sem exames e sem repetir em 24 h.',
+        'Tratar anafilaxia só com anti-histamínico e corticoide.',
+        'Hidratar sem medir diurese, ou hidratar vigorosamente o oligúrico sem reavaliar.',
+        'Antibiótico de rotina para a reação local extensa (não é celulite).'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Alta:* reação local, ou poucas picadas em adulto saudável sem sintoma sistêmico após observação curta; anafilaxia tratada após 4–6 h de observação (mais se grave ou bifásica), com receita de anti-histamínico e encaminhamento ao alergista para imunoterapia com veneno — prescrever adrenalina autoinjetável quando disponível. *Observação de 24 h* com exames seriados: adulto com > 50 picadas, criança, idoso ou cardiopata com dezenas. *UTI:* hipotensão, LRA, hemólise importante, SDRA, miocardite. Notificação compulsória (SINAN, acidente por animal peçonhento) e contato com o CIATox (0800 722 6001). *Soro antiapílico:* desenvolvido pelo CEVAP-Unesp com o Instituto Vital Brazil, ainda em ensaio clínico em 2026 (fase final, sem registro na Anvisa) — não está disponível na rede; só dentro de protocolo de pesquisa, e o CIATox informa se há centro participante. *Divergência:* alcalinização urinária com bicarbonato na rabdomiólise e hemólise é recomendada em textos brasileiros antigos, mas não mostrou benefício sobre a hidratação isolada e não é recomendada pelas revisões atuais; corticoide e anti-histamínico no envenenamento tóxico são usados por consenso, sem prova de que mudem o desfecho. A raspagem do ferrão foi ensinada por décadas, mas estudos mostram que a rapidez da retirada pesa mais que o método.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Conte as picadas (ou os ferrões) e escreva no prontuário: é o que define observar ou liberar.',
+        'O paciente chega bem e piora no dia seguinte: a rabdomiólise e a hemólise são tardias.',
+        'Quem teve anafilaxia por picada tem indicação de imunoterapia — encaminhe, ela evita a próxima.'
+      ]}
+    ] },
+
+  { id:'lonomia', titulo:'Acidente por lagarta (Lonomia)', categoria:'toxico', gravidade:'urgencia',
+    resumo:'Contato com taturana seguido de sangramento ou incoagulabilidade: tempo de coagulação, classificar e dar soro antilonômico (5 ou 10 ampolas); sangue e plasma antes do soro pioram.',
+    tags:['lonomia','taturana','lagarta','oruga','mandarová','erucismo','soro antilonomico','soro antilonômico','salon','tempo de coagulacao','tempo de coagulação','sindrome hemorragica','síndrome hemorrágica','fibrinogenio','fibrinogênio','lagarta de fogo'],
+    fonte:'Ministério da Saúde — Manual de diagnóstico e tratamento de acidentes por animais peçonhentos (2ª ed.) e Guia de Animais Peçonhentos do Brasil (2024) · Instituto Butantan — Bula do soro antilonômico · CIATox/ABRACIT',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Contato com lagarta (taturana) em árvore — *Sul e Sudeste* (L. obliqua) e Norte (L. achelous) — com dor em queimação e, horas a dias depois, *sangramento*.' },
+      { rotulo:'Prioridade',    valor:'*Tempo de coagulação (TC)* na chegada e classificar. Sangramento ou TC alterado = soro antilonômico.' },
+      { rotulo:'Meta',          valor:'Coagulação normalizada em 12–24 h após o soro; TC seriado até 24–48 h em quem chegou com coagulação normal.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Contato com lagarta',
+          nota:'Lonomia: verde-acastanhada, espinhos ramificados "em pinheirinho", em colônia no tronco. Se possível, trazer o animal' },
+        { tipo:'passo', rotulo:'Local', texto:'Lavar com água fria, *compressa fria*, analgesia, infiltração com lidocaína se dor intensa',
+          meds:['Lidocaína 2% sem vasoconstritor', 'Dipirona'] },
+        { tipo:'passo', rotulo:'Coagulação', texto:'*TC na hora*, + TP, TTPa, fibrinogênio, plaquetas, hemograma, creatinina, urina tipo I',
+          nota:'Sem laboratório: o TC à beira do leito decide. Normal até 10 min · prolongado 10–30 min · incoagulável > 30 min' },
+        { tipo:'decisao', texto:'Classificação (MS)', ramos:[
+          { rotulo:'Leve', cor:'ok', texto:'Só quadro local, *coagulação normal*, sem sangramento',
+            nota:'Sem soro. Repetir TC em 12 e 24 h (Lonomia identificada ou não descartada)' },
+          { rotulo:'Moderado', cor:'perigo', texto:'*Coagulação alterada* ± sangramento em pele e mucosas (gengiva, equimose, hematúria)',
+            meds:['Soro antilonômico — moderado'] },
+          { rotulo:'Grave', cor:'perigo', texto:'Coagulação alterada + *sangramento visceral* (hematêmese, SNC, pulmão) ou LRA',
+            nota:'UTI. Hemorragia intracraniana é a principal causa de morte', meds:['Soro antilonômico — grave'] }
+        ]},
+        { tipo:'passo', rotulo:'Soro', texto:'*Soro antilonômico EV* diluído, em 30–60 min, monitorizado e com adrenalina à mão',
+          nota:'Sangue e plasma só depois do soro: antes, viram substrato para o veneno e pioram' },
+        { tipo:'fim', rotulo:'Depois', texto:'TC e fibrinogênio 12 e 24 h após o soro · vigiar função renal · notificação compulsória' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        '*Erucismo (qualquer lagarta):* dor em queimação, eritema, edema, às vezes adenomegalia — reação só local.',
+        '*Lonomia:* além do local, cefaleia, náusea, mal-estar e, de horas até 72 h depois, *equimoses, gengivorragia, hematúria, sangramento de feridas*.',
+        '*Sangramento sem explicação* em morador ou trabalhador rural do Sul (RS, SC, PR) ou de áreas de mata, mesmo sem relato claro de contato.',
+        '*Laboratório:* fibrinogênio baixo ou indetectável, TP e TTPa prolongados, plaquetas quase sempre normais — padrão de consumo.',
+        '*Outras lagartas* (lagarta-de-fogo, megalopigídeos): dor muito intensa, mas sem coagulopatia.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        'Cefaleia intensa, vômito, rebaixamento ou déficit focal: *hemorragia intracraniana*.',
+        'Hematêmese, melena, hemoptise ou sangramento vaginal volumoso.',
+        '*Oligúria ou creatinina subindo*: LRA, principal complicação tardia.',
+        'Contato com *muitas lagartas* ou atendimento tardio (> 24 h) com sangramento.',
+        'TC normal na chegada não exclui: a coagulopatia pode surgir em até 48–72 h.'
+      ]},
+
+      { tipo:'lista', titulo:'Classificação de gravidade (MS)', itens:[
+        '*Leve:* quadro local, coagulação normal, sem sangramento — sem soro, observar.',
+        '*Moderado:* coagulação alterada (TC prolongado ou incoagulável, fibrinogênio baixo), com ou sem sangramento em pele e mucosas — 5 ampolas.',
+        '*Grave:* coagulação alterada com sangramento em vísceras, instabilidade hemodinâmica ou insuficiência renal — 10 ampolas.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Tempo de coagulação (Lee-White)* na chegada — exame que decide onde não há laboratório.',
+        '*TP/INR, TTPa, fibrinogênio, plaquetas, hemograma.*',
+        '*Creatinina, ureia, potássio* e *urina tipo I* (hematúria).',
+        '*TC de crânio sem contraste* se cefaleia importante ou alteração neurológica.',
+        '*Repetir TC e fibrinogênio* 12 e 24 h após o soro, ou a cada 12 h por 24–48 h no leve.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Soro antilonômico — moderado', dose:'5 ampolas', via:'EV', obs:'Diluir em 250 mL de SF 0,9% e correr em 30–60 min. Mesma dose para adulto e criança. Fornecido pelo MS (Butantan) em centros de referência.' },
+        { droga:'Soro antilonômico — grave', dose:'10 ampolas', via:'EV', obs:'Mesma diluição e tempo. UTI.' },
+        { droga:'Adrenalina, hidrocortisona e anti-histamínico', dose:'Preparados à beira do leito', via:'—', obs:'Para reação ao soro heterólogo. Não fazer pré-medicação de rotina.' },
+        { droga:'Lidocaína 2% sem vasoconstritor', dose:'2–4 mL infiltrados no local (criança até 4 mg/kg)', via:'SC local', obs:'Dor intensa do erucismo. Evitar se a coagulação estiver muito alterada.' },
+        { droga:'Dipirona', dose:'Adulto 1 g · criança 15–25 mg/kg (máx. 1 g)', via:'EV ou VO', obs:'Analgesia. Evitar anti-inflamatório.' },
+        { droga:'Loratadina', dose:'Adulto 10 mg 1x/dia · criança 2–12 anos < 30 kg 5 mg', via:'VO', obs:'Prurido local, por 3–5 dias.' },
+        { droga:'Concentrado de hemácias', dose:'Conforme Hb', via:'EV', obs:'Anemia grave, *depois* do soro. Plasma e crioprecipitado só após o soro, se sangramento persistir.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        '*Sangue total, plasma ou crioprecipitado antes do soro*: fornecem fibrinogênio para o veneno consumir e podem agravar o quadro.',
+        'Anti-inflamatório, AAS ou heparina.',
+        'Injeção intramuscular ou punção arterial com coagulação alterada.',
+        'Dar alta do contato com Lonomia sem TC de controle em 12–24 h.',
+        'Chamar de "só lagarta" quem tem sangramento — pergunte o contato ativamente.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Alta:* contato com lagarta que não é Lonomia (reconhecida pelo paciente, por foto ou pelo animal trazido), com quadro só local — compressa fria, analgésico, anti-histamínico VO e, se dor intensa, infiltração local. Na dúvida se era Lonomia, ou Lonomia com coagulação normal: *observar 24 h com TC em 12 e 24 h* (ou orientar retorno para o exame, se o paciente for confiável e morar perto). *Internação:* todo caso moderado ou grave — o grave em UTI. Após o soro, a coagulação costuma normalizar em 12–24 h e o fibrinogênio em 24–72 h; se não houver melhora em 24 h ou o sangramento persistir, discutir dose adicional com o CIATox (0800 722 6001). Vigiar creatinina por pelo menos 72 h. *Notificação compulsória* (SINAN, acidente por animal peçonhento). O soro antilonômico é produzido pelo Butantan e distribuído pelo MS a polos de referência — saiba qual é o do seu município.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'O TC à beira do leito (tubo de vidro seco, 37 °C, 1 mL de sangue) resolve onde o laboratório não tem fibrinogênio.',
+        'Sangramento + fibrinogênio indetectável + plaquetas normais em área rural do Sul: pense em Lonomia antes de CIVD.',
+        'A dose de soro não depende do peso: criança recebe as mesmas ampolas.'
+      ]}
+    ] },
+
+  { id:'animais-aquaticos', titulo:'Água-viva, caravela e arraia', categoria:'toxico', gravidade:'rotina',
+    resumo:'Queimadura por água-viva ou caravela: água do mar ou vinagre, nunca água doce. Ferroada de arraia, bagre ou peixe-pedra: água quente a 45 °C, explorar a ferida, RX e antibiótico se profunda.',
+    tags:['agua viva','água-viva','caravela','physalia','cnidario','cnidário','queimadura de agua viva','vinagre','arraia','raia','bagre','peixe-pedra','peixe escorpiao','mangangá','niquim','ouriço','ourico','ourico do mar','ouriço-do-mar','praia','agua quente'],
+    fonte:'Ministério da Saúde — Guia de Animais Peçonhentos do Brasil (2024) · Haddad Jr. V. — Animais aquáticos de importância médica no Brasil (Rev Soc Bras Med Trop) · ILCOR/AHA — First Aid Guidelines (2020/2024) · UpToDate — Jellyfish stings e Marine envenomations from fish (2025)',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Dor em queimação com *lesões lineares* após banho de mar (cnidário), ou *ferida puntiforme muito dolorosa* no pé após pisar em arraia, bagre, peixe-pedra ou ouriço.' },
+      { rotulo:'Prioridade',    valor:'Descartar *anafilaxia* e choque; tratar a dor (é a queixa principal); procurar corpo estranho na ferida.' },
+      { rotulo:'Meta',          valor:'Dor controlada, ferida limpa sem fragmento retido, tétano atualizado e alta com sinais de infecção explicados.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Acidente com animal marinho ou de rio',
+          nota:'Perguntar: mar ou rio, pisou ou encostou, o animal foi visto' },
+        { tipo:'decisao', texto:'Sinais sistêmicos graves?', ramos:[
+          { rotulo:'Urticária difusa, broncoespasmo, hipotensão, edema de glote', cor:'perigo', texto:'*Anafilaxia*: adrenalina IM',
+            meds:['Adrenalina'], ir:'anafilaxia' },
+          { rotulo:'Não', texto:'Qual o mecanismo?' }
+        ]},
+        { tipo:'decisao', texto:'Encostou ou pisou?', ramos:[
+          { rotulo:'Água-viva ou caravela (lesões lineares)', texto:'*Lavar com água do mar ou vinagre*, retirar tentáculos com pinça, *compressa fria*',
+            nota:'NUNCA água doce, álcool, urina ou esfregar areia: disparam os nematocistos', meds:['Dipirona', 'Loratadina'] },
+          { rotulo:'Arraia, bagre, peixe-pedra (ferroada)', cor:'ok', texto:'*Água quente a ~45 °C por 30–90 min* (até a dor ceder), depois explorar e lavar',
+            nota:'Testar a água no membro sadio de quem está tratando para não queimar', meds:['Lidocaína 2% sem vasoconstritor', 'Dipirona'] },
+          { rotulo:'Ouriço (espinhos)', texto:'Água quente para a dor e *retirar os espinhos acessíveis*',
+            nota:'Espinho em articulação ou palma: ortopedia ou cirurgia de mão' }
+        ]},
+        { tipo:'passo', rotulo:'Ferida', texto:'*Radiografia ou ultrassom* se ferroada profunda ou dor persistente — procurar ferrão ou espinho retido',
+          nota:'Não suturar primariamente a ferida de arraia. Antitetânica conforme vacinação', ir:'ferimentos-sutura' },
+        { tipo:'decisao', texto:'Antibiótico?', ramos:[
+          { rotulo:'Ferida profunda, retida, mão ou pé, imunossuprimido, sinais de infecção', texto:'*Ciprofloxacino ou doxiciclina* (cobrir Vibrio e Aeromonas)',
+            meds:['Ciprofloxacino', 'Doxiciclina'] },
+          { rotulo:'Superficial e limpa', cor:'ok', texto:'Sem antibiótico; retorno se sinais de infecção' }
+        ]},
+        { tipo:'fim', rotulo:'Alta', texto:'Analgesia, cuidado da ferida, antibiótico se indicado e retorno em 48–72 h se ferida profunda' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        '*Água-viva:* placas eritematosas lineares ou em "chicote", ardor intenso, prurido; mais no verão.',
+        '*Caravela (Physalia):* "bexiga" azul flutuante, tentáculos longos — dor muito forte, lesões em colar de contas, às vezes náusea, cãibras, dispneia.',
+        '*Arraia:* pisou no raso, ferida puntiforme ou lacerada no pé ou tornozelo, *dor desproporcional*; arraia de rio (Centro-Oeste e Norte) dá necrose e úlcera arrastada.',
+        '*Bagre e peixe-pedra (mangangá):* ferroada ao manusear o peixe ou pisar — dor intensa, edema.',
+        '*Ouriço-do-mar:* pontos negros na sola, dor, espinhos que quebram na pele.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        'Urticária generalizada, chiado ou hipotensão: *anafilaxia*.',
+        'Ferroada de arraia no *tórax ou abdome*: trauma penetrante — tratar como tal.',
+        'Dor que volta ou piora após dias, febre, celulite em expansão: fragmento retido ou infecção (Vibrio, Aeromonas).',
+        'Caravela com dispneia, dor torácica, arritmia ou rebaixamento.',
+        'Espinho de ouriço dentro de articulação: artrite e sinovite crônica.'
+      ]},
+
+      { tipo:'lista', titulo:'Critérios de gravidade', itens:[
+        '*Leve:* dor e lesões locais, sem sintoma sistêmico — alta após tratamento.',
+        '*Moderado:* dor refratária, ferida profunda, fragmento retido, lesão extensa por cnidário.',
+        '*Grave:* anafilaxia, sintomas sistêmicos (vômito, cãibras, dispneia, hipotensão), trauma penetrante em cavidade, infecção grave.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Nenhum* na queimadura por cnidário sem sinal sistêmico.',
+        '*Radiografia* da área na ferroada profunda: o ferrão de arraia e espinhos de ouriço podem aparecer (pedir partes moles).',
+        '*Ultrassom de partes moles* para fragmento não visto no RX.',
+        '*Hemograma, PCR, cultura da secreção* se infecção.',
+        '*ECG e eletrólitos* se caravela com sintoma sistêmico.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Vinagre doméstico (ácido acético 4–6%)', dose:'Lavar ou compressa por 30 s a alguns minutos', via:'Tópica', obs:'Água-viva. Na caravela é divergente (ver texto); água do mar é a alternativa segura.' },
+        { droga:'Lidocaína 2% sem vasoconstritor', dose:'Infiltração local ou bloqueio regional, até 4 mg/kg (máx. 300 mg)', via:'SC / perineural', obs:'Dor refratária da ferroada de arraia ou peixe.' },
+        { droga:'Dipirona', dose:'Adulto 1 g · criança 15–25 mg/kg (máx. 1 g)', via:'EV ou VO', obs:'Associar à água quente.' },
+        { droga:'Tramadol', dose:'Adulto 50–100 mg', via:'EV ou VO', obs:'Dor intensa que não cede.' },
+        { droga:'Loratadina', dose:'Adulto 10 mg 1x/dia · criança 2–12 anos < 30 kg 5 mg', via:'VO', obs:'Prurido após cnidário, 3–5 dias.' },
+        { droga:'Hidrocortisona creme 1%', dose:'Fina camada 2x/dia por 5–7 dias', via:'Tópica', obs:'Dermatite tardia ou recorrente após água-viva.' },
+        { droga:'Ciprofloxacino', dose:'500 mg de 12/12 h por 5–7 dias', via:'VO', obs:'Ferida marinha ou de rio profunda ou infectada. Adulto.' },
+        { droga:'Doxiciclina', dose:'100 mg de 12/12 h por 5–7 dias', via:'VO', obs:'Alternativa; cobre Vibrio. Pode ser usada em curso curto na criança (2,2 mg/kg de 12/12 h, máx. 100 mg).' },
+        { droga:'Sulfametoxazol-trimetoprima', dose:'Criança 4–6 mg/kg de TMP de 12/12 h (máx. 160 mg TMP)', via:'VO', obs:'Alternativa pediátrica (suspensão 200/40 mg por 5 mL).' },
+        { droga:'Adrenalina', dose:'0,01 mg/kg (máx. 0,5 mg adulto · 0,3 mg criança)', via:'IM', obs:'Anafilaxia.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        '*Água doce, álcool, urina ou esfregar areia ou toalha* na queimadura de cnidário.',
+        'Arrancar tentáculos com a mão desprotegida.',
+        '*Suturar primariamente* a ferida de arraia ou de peixe — fecha bactéria e fragmento.',
+        'Água fervendo ou sem testar: queimadura grave em pé anestesiado pela dor.',
+        'Escavar às cegas atrás de espinho de ouriço profundo — pedir imagem e especialista.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'Quase todos têm *alta* após controle da dor. *Internação:* anafilaxia grave, sintomas sistêmicos da caravela, trauma penetrante em tórax ou abdome, infecção extensa (celulite rápida, fasciite — Vibrio em cirrótico ou imunossuprimido), fragmento retido em articulação ou tendão. Ferida de arraia profunda: retorno em 48–72 h e orientar que a dor que volta ou piora é sinal de corpo estranho ou infecção. Tétano conforme a história vacinal. CIATox (0800 722 6001) para dúvidas e notificação de casos graves. *Divergência:* o vinagre inativa nematocistos da maioria das águas-vivas e é recomendado pelo ILCOR; na caravela (Physalia), estudos antigos mostraram disparo de nematocistos com vinagre, e estudos mais recentes mostraram o contrário — Haddad (Brasil) recomenda água do mar gelada e vinagre, várias referências preferem só água do mar na caravela. Imersão em água quente (cerca de 45 °C) também alivia a dor de cnidários e é aceita pela ILCOR; a compressa fria é a medida tradicional brasileira — as duas são aceitáveis. Antibiótico profilático na ferida marinha superficial não tem benefício comprovado.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'A dor da arraia cede com água quente em minutos — se não cedeu, pense em fragmento retido.',
+        'Ensine o arrastar dos pés no raso: espanta a arraia e é a melhor prevenção.',
+        'Peça foto do animal ao banhista ou ao salva-vidas: separa caravela de água-viva e arraia de bagre.'
+      ]}
+    ] },
+
+  { id:'fraturas-comuns', titulo:'Fraturas comuns e imobilização', categoria:'trauma', gravidade:'rotina',
+    resumo:'Exame neurovascular antes e depois, analgesia de verdade, tala que pegue a articulação acima e abaixo e radiografia em duas incidências; saber quais fraturas não podem ir para casa.',
+    tags:['fratura','fraturas','imobilizacao','imobilização','tala gessada','gesso','radio distal','rádio distal','colles','smith','escafoide','tabaqueira anatomica','clavicula','clavícula','costela','mallet','dedo em martelo','boxeador','quinto metacarpo','5º metacarpo','tornozelo','supracondiliana','fratura de quadril','colo do femur','colo do fêmur','bloqueio de hematoma','fascia iliaca','fáscia ilíaca','ortopedia'],
+    fonte:'SBOT — Fraturas no pronto-socorro · ATLS (10ª ed., 2018) — Trauma musculoesquelético · AAOS — Distal radius fractures CPG (2020) · NICE NG38 — Fractures non-complex (2016) e CG124 — Hip fracture (atualizada 2023) · UpToDate — Distal radius, scaphoid, clavicle, metacarpal and supracondylar fractures',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Trauma de membro com *dor óssea localizada*, edema, deformidade ou perda de função — e no idoso que caiu e *não consegue apoiar*.' },
+      { rotulo:'Prioridade',    valor:'*Exame neurovascular distal* antes e depois de qualquer manobra, analgesia e tala provisória antes da radiografia.' },
+      { rotulo:'Meta',          valor:'Imobilizar certo, reconhecer o que precisa de ortopedia hoje e dar alta com orientação de gesso e retorno.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Trauma de membro com dor óssea, edema, deformidade ou incapacidade funcional',
+          nota:'Antes de mexer: pulso, enchimento capilar, cor, temperatura, sensibilidade e motricidade distais — anotar no prontuário' },
+        { tipo:'decisao', texto:'Ameaça ao membro?', ramos:[
+          { rotulo:'Ferida sobre a fratura', cor:'perigo', texto:'*Fratura exposta* — antibiótico e ortopedia', ir:'fratura-exposta' },
+          { rotulo:'Sem pulso, déficit novo ou pele tensa e isquêmica', cor:'perigo', texto:'*Realinhar com tração suave* no eixo, imobilizar e reavaliar o pulso; ortopedia de urgência',
+            nota:'Luxação associada: ver luxações. Pele esticada e branca sobre o osso vira exposta em horas' },
+          { rotulo:'Não', texto:'Analgesia e tala provisória' }
+        ]},
+        { tipo:'passo', rotulo:'Analgesia', texto:'*Dipirona + anti-inflamatório* e opioide titulado se dor intensa; bloqueio regional quando couber',
+          nota:'Bloqueio de hematoma no rádio distal; bloqueio da fáscia ilíaca no quadril do idoso',
+          meds:['Dipirona', 'Cetoprofeno', 'Morfina'] },
+        { tipo:'passo', rotulo:'Imagem', texto:'*Radiografia em duas incidências* (frente e perfil) incluindo as articulações acima e abaixo',
+          nota:'Escafoide: incidências próprias. Criança: suspeitar de lesão da fise mesmo com RX "normal"' },
+        { tipo:'decisao', texto:'Qual a fratura?', ramos:[
+          { rotulo:'Supracondiliana na criança com desvio ou mão sem pulso', cor:'perigo', texto:'*Tala em 20–30° de flexão*, sem forçar, e ortopedia de urgência',
+            nota:'Mão pálida e sem pulso = redução em horas. Mão rosada sem pulso = urgência, com observação de perto' },
+          { rotulo:'Colo ou transtrocantérica do fêmur no idoso', cor:'perigo', texto:'*Internar*, bloqueio da fáscia ilíaca e cirurgia em 24–48 h',
+            meds:['Bupivacaína 0,25%'] },
+          { rotulo:'Rádio distal', texto:'*Tala gessada antebraquiopalmar*; reduzir sob bloqueio de hematoma se critério de redução',
+            meds:['Lidocaína 1%'] },
+          { rotulo:'Dor na tabaqueira com RX normal', texto:'*Tala com polegar* assim mesmo e nova imagem em 10–14 dias' },
+          { rotulo:'Tornozelo', texto:'Ottawa; estável: bota ou tala; bi ou trimaleolar e luxada: *tala suropodálica e ortopedia*', ir:'entorse-tornozelo' },
+          { rotulo:'Clavícula, costela, dedos, 5º metacarpo', cor:'ok', texto:'Tipoia, analgesia, tala digital ou ulnar e ambulatório' }
+        ]},
+        { tipo:'decisao', texto:'Depois de imobilizar: dor desproporcional, dor ao estiramento passivo ou parestesia?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Afrouxar ou abrir a tala* até a pele, membro na altura do coração e pensar em síndrome compartimental',
+            ir:'sindrome-compartimental' },
+          { rotulo:'Não', cor:'ok', texto:'Exame neurovascular de novo, anotado, e alta orientada' }
+        ]},
+        { tipo:'fim', rotulo:'Alta', texto:'Tala, membro elevado, analgesia em horário fixo, orientação de gesso e ortopedia em 5–7 dias' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        '*Dor óssea à palpação* em ponto fixo, não só dor difusa de partes moles.',
+        '*Deformidade, crepitação ou mobilidade anormal* no foco.',
+        '*Incapacidade de apoiar ou usar o membro* logo depois do trauma.',
+        '*Queda da própria altura no idoso* com dor na virilha e membro encurtado e em rotação externa: quadril.',
+        '*Queda com a mão espalmada:* rádio distal (Colles no idoso, desvio dorsal; Smith, desvio volar), escafoide no jovem, supracondiliana na criança.',
+        '*Soco em superfície dura:* fratura do colo do 5º metacarpo (boxeador).',
+        '*Bola ou batida na ponta do dedo* com a falange distal caída: dedo em martelo (mallet).'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Ferida no foco da fratura*, mesmo puntiforme: exposta até prova em contrário.',
+        '*Pulso ausente, mão ou pé frio, déficit motor ou sensitivo* novo: realinhar e chamar ortopedia agora.',
+        '*Dor que piora depois da tala*, dor ao estender passivamente os dedos, parestesia: síndrome compartimental.',
+        '*Supracondiliana com desvio* (Gartland II e III) ou com mão sem pulso: ortopedia de urgência.',
+        '*Fratura em criança que ainda não anda* ou história que não explica a lesão: pensar em maus-tratos.'
+      ]},
+
+      { tipo:'lista', titulo:'Fratura por fratura', itens:[
+        '*Princípios:* exame neurovascular antes e depois · tala acolchoada, *nunca gesso circular fechado* na fratura aguda · imobilizar a articulação acima e a abaixo · posição funcional · membro elevado.',
+        '*Rádio distal (Colles e Smith):* tala gessada antebraquiopalmar (ou em pinça de confeiteiro se instável). Reduzir se encurtamento radial > 3 mm, inclinação dorsal > 10° ou degrau articular > 2 mm (AAOS 2020) — no idoso pouco ativo, aceita-se mais desvio. Ortopedia em até 1 semana.',
+        '*Escafoide:* dor na tabaqueira anatômica, no tubérculo do escafoide ou à compressão axial do polegar. Tala com polegar incluído *mesmo com RX normal* e nova radiografia (ou ressonância) em 10–14 dias — o terço proximal tem risco de necrose avascular.',
+        '*Clavícula:* tipoia por 2–4 semanas e movimento do cotovelo e da mão desde o início. Ortopedia precoce se encurtamento > 2 cm, desvio de 100%, pele tensa sobre o fragmento, terço distal desviado ou lesão neurovascular.',
+        '*Costelas:* tratar a dor (é ela que causa a pneumonia) e espirometria de incentivo. Pensar em órgão abaixo: 1ª e 2ª costela = alta energia e lesão vascular; 9ª a 12ª = baço, fígado e rim. Idoso com 3 ou mais costelas fraturadas: internar.',
+        '*Dedo em martelo (mallet):* tala só na interfalângica distal em extensão contínua por 6–8 semanas — dobrar uma vez recomeça a contagem. Fragmento ósseo > 1/3 da superfície articular ou subluxação: ortopedia.',
+        '*Boxeador (colo do 5º metacarpo):* conferir *rotação* pedindo para fechar a mão — dedos não podem cruzar. Tala ulnar com metacarpofalângicas a 70–90° e interfalângicas livres ou em extensão. Rotação, angulação acima de 40–70° (varia entre serviços) ou ferida de "mordida de briga" no dorso: ortopedia.',
+        '*Tornozelo:* regras de Ottawa decidem o RX. Maléolo lateral isolado abaixo da sindesmose (Weber A) e sem alargamento medial: bota imobilizadora com carga. Bi ou trimaleolar, Weber C ou luxação: reduzir, tala suropodálica e ortopedia.',
+        '*Supracondiliana na criança:* Gartland I (sem desvio) = tala axilopalmar a 90° e ambulatório; II e III = ortopedia de urgência. Examinar nervos interósseo anterior (fazer "OK" com polegar e indicador), radial e ulnar e o pulso radial.',
+        '*Quadril no idoso:* encurtamento e rotação externa. RX normal com dor ao apoiar: tomografia ou ressonância. Analgesia com bloqueio da fáscia ilíaca, profilaxia de TEV, prevenção de delirium e cirurgia em até 48 h — a demora aumenta a mortalidade.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Radiografia em duas incidências* (frente e perfil), incluindo as articulações acima e abaixo.',
+        '*Escafoide:* série de punho com incidências oblíquas e com desvio ulnar.',
+        '*Mão:* frente, perfil e oblíqua; dedo isolado em perfil verdadeiro.',
+        '*Quadril:* bacia de frente + quadril em perfil. Clínica de fratura com RX normal: tomografia ou ressonância.',
+        '*Costelas:* radiografia de tórax para pneumotórax e contusão — a série de costelas raramente muda a conduta.',
+        '*Idoso com fratura de quadril:* hemograma, função renal, eletrólitos, coagulograma, tipagem e ECG para a cirurgia.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Dipirona', dose:'1–2 g (criança: 15–25 mg/kg, máximo 1 g por dose)', via:'EV', obs:'Base da analgesia. Alta: 500 mg–1 g VO de 6/6 h.' },
+        { droga:'Cetoprofeno', dose:'100 mg em 100 mL de SF 0,9%', via:'EV', obs:'Evitar em idoso com doença renal, úlcera, anticoagulado e gestante.' },
+        { droga:'Morfina', dose:'2–4 mg (0,05–0,1 mg/kg, máximo 4 mg por dose na criança), a cada 5–10 min até controlar', via:'EV', obs:'Dor de fratura com deformidade costuma precisar de opioide. Idoso: metade da dose.' },
+        { droga:'Fentanil intranasal', dose:'1,5 mcg/kg (máximo 100 mcg), dividir entre as narinas', via:'IN', obs:'Criança sem acesso venoso. Ampola de 50 mcg/mL sem diluir, com atomizador.' },
+        { droga:'Lidocaína 1% sem vasoconstritor', dose:'10–15 mL no foco (máximo 4,5 mg/kg)', via:'Infiltração', obs:'*Bloqueio de hematoma* no rádio distal: aspirar sangue antes de injetar, aguardar 5–10 min. Lidocaína 2% diluída 1:1 em SF dá 1%.' },
+        { droga:'Bupivacaína 0,25% sem vasoconstritor', dose:'20–30 mL (máximo 2 mg/kg)', via:'Perineural', obs:'*Bloqueio da fáscia ilíaca* na fratura de quadril, de preferência guiado por ultrassom. Monitorizar e ter emulsão lipídica disponível.' },
+        { droga:'Ibuprofeno', dose:'600 mg de 8/8 h por 5 dias (criança: 10 mg/kg, máximo 600 mg, de 6/6 a 8/8 h)', via:'VO', obs:'Alta. Suspensão 100 mg/mL ou 50 mg/mL (gotas) na criança.' },
+        { droga:'Paracetamol', dose:'750 mg de 6/6 h', via:'VO', obs:'Idoso, gestante e quem não pode usar anti-inflamatório.' },
+        { droga:'Tramadol', dose:'50 mg de 6/6 h se dor forte', via:'VO', obs:'Poucos dias. Náusea, tontura e queda no idoso; evitar com antidepressivo serotoninérgico.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Gesso circular fechado em fratura aguda com edema: tala, e o gesso fechado fica para a ortopedia.',
+        'Manipular ou imobilizar sem exame neurovascular antes e depois, anotado.',
+        'Liberar dor na tabaqueira anatômica sem tala só porque o RX veio normal.',
+        'Enfaixar o tórax na fratura de costela: piora a ventilação e favorece pneumonia.',
+        'Tentar reduzir supracondiliana desviada no PS ou imobilizar em flexão maior que 90°.',
+        'Mandar para casa o idoso que não consegue apoiar o peso, mesmo com RX normal.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Ortopedia no mesmo atendimento:* fratura exposta, comprometimento neurovascular, síndrome compartimental, luxação associada, supracondiliana com desvio, fratura de quadril, fratura articular desviada, falha de redução e pele em risco. *Internar:* fratura de quadril ou de pelve no idoso, 3 ou mais costelas no idoso ou com reserva pulmonar ruim, dor não controlada por via oral, idoso que não tem como ficar em casa. *Alta* com tala acolchoada, analgesia em horário fixo e retorno à ortopedia em 5 a 7 dias (rádio distal, escafoide, tornozelo instável e 5º metacarpo com desvio em até 1 semana). Orientações do gesso: manter o membro elevado acima do coração nas primeiras 48 a 72 h, mexer os dedos, não molhar, não colocar objetos por dentro, e *voltar já* se dor que aumenta, dedos frios, roxos, inchados ou dormentes, ou gesso apertado. Criança com fratura sem mecanismo compatível: notificar e seguir o fluxo de maus-tratos.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Palpe a tabaqueira anatômica em toda queda sobre a mão do adulto jovem: a fratura do escafoide é a que mais passa.',
+        'No boxeador, procure ferida no dorso da mão: corte de dente é mordedura humana e pede antibiótico.',
+        'Fratura do quadril pode ter RX normal: se o idoso não apoia, não vai para casa.',
+        'Criança com fratura de clavícula, punho ou supracondiliana: examine o outro lado e pergunte o mecanismo.',
+        'Escreva o exame neurovascular depois da tala — é o que protege você e o paciente.'
+      ]}
+    ] },
+
+  { id:'hipertermia', titulo:'Insolação e hipertermia', categoria:'trauma', gravidade:'emergencia',
+    resumo:'Temperatura acima de 40 °C com alteração neurológica é insolação: resfriar imediatamente, antes de qualquer exame ou transporte. Antitérmico não funciona.',
+    tags:['insolacao','insolação','intermacao','intermação','hipertermia','golpe de calor','heat stroke','exaustao pelo calor','exaustão pelo calor','caibra','cãibra','onda de calor','imersao em agua fria','imersão em água fria','resfriamento','rabdomiolise','esforco','maratona'],
+    fonte:'ACSM — Expert Consensus Statement on Exertional Heat Illness (2023) · Wilderness Medical Society — Heat illness (atualização 2024) · Bouchama A et al. — Classic and exertional heatstroke (Nat Rev Dis Primers, 2022) · UpToDate — Severe nonexertional and exertional heatstroke',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'*Temperatura central > 40 °C* com confusão, convulsão ou coma após esforço no calor (atleta, militar, trabalhador) ou em idoso, acamado ou em uso de anticolinérgico durante onda de calor.' },
+      { rotulo:'Prioridade',    valor:'*Resfriar primeiro, transportar depois* — imersão em água gelada no de esforço; resfriamento evaporativo no clássico.' },
+      { rotulo:'Meta',          valor:'Abaixo de 39 °C em até 30 minutos, parando o resfriamento ativo em 38,5–39 °C.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Suspeita', texto:'Exposição ao calor ou esforço intenso com alteração do estado mental',
+          nota:'Medir *temperatura retal* (ou esofágica): axilar, oral e timpânica subestimam e atrasam o tratamento' },
+        { tipo:'decisao', texto:'Temperatura central e SNC?', ramos:[
+          { rotulo:'> 40 °C com confusão, convulsão ou coma', cor:'perigo', texto:'*Insolação* — resfriar agora' },
+          { rotulo:'Até 40 °C, consciência normal, fraqueza, náusea, tontura', cor:'ok', texto:'*Exaustão pelo calor:* sombra, deitar, hidratar VO ou EV e observar',
+            meds:[{ droga:'Soro de reidratação oral', dose:'À vontade', via:'VO' }] },
+          { rotulo:'Só cãibras após esforço', cor:'ok', texto:'*Cãibras pelo calor:* repouso, alongamento e reposição de sal e líquido' }
+        ]},
+        { tipo:'paralelo', colunas:[
+          { tipo:'passo', rotulo:'De esforço (jovem)', texto:'*Imersão em água com gelo* até o pescoço, mexendo a água',
+            nota:'Cool first, transport second: resfriar no local por até 30 min antes de remover' },
+          { tipo:'passo', rotulo:'Clássica (idoso, frágil)', texto:'*Evaporativo:* despir, borrifar água morna e ventilar; gelo em pescoço, axilas e virilhas',
+            nota:'Imersão também serve se o paciente tolerar e der para monitorizar' }
+        ]},
+        { tipo:'passo', rotulo:'Junto', texto:'ABC, O₂, monitor, glicemia capilar, 2 acessos e *cristaloide gelado*; benzodiazepínico para tremor ou convulsão',
+          nota:'Hipotensão costuma melhorar com o resfriamento: no idoso, bolus pequenos de 250–500 mL',
+          meds:['Diazepam', 'Cristaloide gelado'] },
+        { tipo:'decisao', texto:'Temperatura retal chegou a 38,5–39 °C?', ramos:[
+          { rotulo:'Sim', cor:'ok', texto:'*Parar o resfriamento ativo* e retirar da água', nota:'Continuar medindo: há rebote e também hipotermia de exagero' },
+          { rotulo:'Não', texto:'Manter o resfriamento e medir a cada 5 min' }
+        ]},
+        { tipo:'decisao', texto:'Não responde ao resfriamento ou a história não fecha?', ramos:[
+          { rotulo:'Rigidez, clônus, droga nova', cor:'perigo', texto:'*Serotoninérgica, neuroléptica maligna, anticolinérgica, simpaticomimética*',
+            ir:'sindrome-serotoninergica' },
+          { rotulo:'Febre com foco, rigidez de nuca', cor:'perigo', texto:'*Sepse ou meningite* — colher culturas e iniciar antibiótico', ir:'sepse' },
+          { rotulo:'Bócio, taquiarritmia', texto:'*Crise tireotóxica*', ir:'crise-tireotoxica' }
+        ]},
+        { tipo:'fim', rotulo:'Destino', texto:'Insolação: UTI ou semi-intensiva por pelo menos 24–48 h · exaustão pelo calor: observação e alta' }
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Confusão, convulsão ou coma* com temperatura alta após calor ou esforço: insolação até prova em contrário.',
+        '*Termômetro axilar "normal"* em atleta confuso: medir a temperatura retal.',
+        '*Urina escura, CPK alta, oligúria:* rabdomiólise e lesão renal.',
+        '*Sangramento em punções, petéquias, plaquetas caindo:* CIVD.',
+        '*Hipotensão que não melhora* com resfriamento e volume: outra causa ou falência orgânica.'
+      ]},
+
+      { tipo:'passos', titulo:'Conduta imediata', itens:[
+        'Medir a temperatura retal e manter um termômetro contínuo, se houver.',
+        'Iniciar o resfriamento antes de exames, tomografia ou transferência.',
+        'Imergir o atleta em água com gelo (1–15 °C) até o pescoço; no idoso, despir, borrifar e ventilar.',
+        'Garantir via aérea, O₂, monitor, glicemia capilar e dois acessos venosos.',
+        'Infundir cristaloide gelado guiado pela pressão e pela diurese.',
+        'Tratar tremor, agitação e convulsão com benzodiazepínico.',
+        'Parar o resfriamento ativo com temperatura retal de 38,5–39 °C.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Cristaloide gelado', dose:'SF 0,9% ou Ringer lactato a 4 °C: 1–2 L no jovem; bolus de 250–500 mL no idoso', via:'EV', obs:'Ajuda no resfriamento e corrige a hipovolemia. Reavaliar congestão a cada bolus no cardiopata.' },
+        { droga:'Diazepam', dose:'5–10 mg, repetir a cada 5 min se preciso', via:'EV', obs:'Tremor (gera calor e atrapalha o resfriamento), agitação ou convulsão. Alternativa: midazolam 5 mg IM ou EV.' },
+        { droga:'Glicose 50%', dose:'40–60 mL (20–30 g)', via:'EV', obs:'Se glicemia < 70 mg/dL — hipoglicemia é comum no de esforço.' },
+        { droga:'Soro de reidratação oral', dose:'À vontade, 1–2 L nas primeiras horas', via:'VO', obs:'Exaustão pelo calor e cãibras, se consciente e sem vômito.' },
+        { droga:'Noradrenalina', dose:'0,05–0,5 mcg/kg/min', via:'EV BIC', obs:'Só se a hipotensão persiste depois do resfriamento e do volume.' }
+      ]},
+
+      { tipo:'tempo', titulo:'Linha do tempo', itens:[
+        { quando:'0–5 min', o_que:'Temperatura retal e início do resfriamento — não esperar exame.' },
+        { quando:'Até 30 min', o_que:'Temperatura abaixo de 39 °C: a mortalidade depende do tempo acima de 40,5 °C.' },
+        { quando:'Primeiras horas', o_que:'CPK, função renal, eletrólitos, coagulograma e transaminases; repetir em 6–12 h.' },
+        { quando:'24–72 h', o_que:'Pico de CPK, transaminases e CIVD: lesão hepática e renal aparecem depois do resfriamento.' }
+      ]},
+
+      { tipo:'lista', titulo:'Critérios diagnósticos', itens:[
+        '*Insolação (heat stroke):* temperatura central > 40 °C + disfunção do SNC (confusão, delirium, convulsão, coma) após exposição ao calor ou esforço. Pele seca no clássico; no de esforço, o suor pode persistir.',
+        '*Clássica:* idoso, criança, acamado, doente crônico, uso de diurético, anticolinérgico, antipsicótico ou betabloqueador, em onda de calor; instalação em dias.',
+        '*De esforço:* jovem saudável em exercício intenso (corrida, treino militar, trabalho pesado); instalação em horas; mais rabdomiólise, LRA, hipoglicemia e CIVD.',
+        '*Exaustão pelo calor:* temperatura até 40 °C, *consciência normal*, fraqueza, cefaleia, náusea, tontura, taquicardia. Melhora em 30 min com sombra e líquidos — se não melhora, tratar como insolação.',
+        '*Cãibras pelo calor:* contrações dolorosas após esforço com suor intenso, sem alteração neurológica.',
+        '*Diferenciais:* síndrome serotoninérgica, síndrome neuroléptica maligna, hipertermia maligna (pós-anestesia), intoxicação anticolinérgica, cocaína e anfetaminas, crise tireotóxica, sepse, meningite e encefalite, abstinência alcoólica, malária.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Glicemia capilar* na chegada.',
+        '*Gasometria com lactato, eletrólitos* (sódio, potássio, cálcio, fósforo), ureia e creatinina.',
+        '*CPK, urina tipo I* (mioglobinúria: sangue na fita sem hemácias), TGO, TGP e bilirrubinas.',
+        '*Hemograma, coagulograma e fibrinogênio* — CIVD.',
+        '*ECG* — arritmia, alterações por hipercalemia.',
+        '*Tomografia de crânio e punção lombar* se o quadro neurológico não melhora com o resfriamento ou a história não é clara.'
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Dar dipirona, paracetamol ou AINE para baixar a temperatura: não há febre a tratar e pioram fígado, rim e coagulação.',
+        'Transportar o atleta sem resfriar quando há como imergir no local.',
+        'Confiar no termômetro axilar ou timpânico.',
+        'Usar dantroleno: só serve na hipertermia maligna anestésica.',
+        'Esfregar álcool na pele: intoxica, especialmente a criança, e é inflamável.',
+        'Continuar resfriando abaixo de 38,5 °C.'
+      ]},
+
+      { tipo:'texto', titulo:'Destino', conteudo:'*Insolação* vai para UTI ou semi-intensiva por pelo menos 24 a 48 horas, com CPK, função renal, transaminases e coagulograma seriados: as complicações (rabdomiólise, lesão renal aguda, insuficiência hepática, CIVD, hipoglicemia, hipocalemia ou hipercalemia, SDRA) aparecem depois que a temperatura normalizou. Rabdomiólise segue a conduta própria, com hidratação alvo de diurese. *Exaustão pelo calor* que melhora em horas, com exames normais, tem alta com orientação de hidratação, repouso do esforço por 24 a 48 horas e evitar calor. *Retorno ao esporte* após insolação de esforço só depois de exames normalizados e com volta gradual, geralmente após 1 a 2 semanas assintomático, com avaliação médica. No clássico, revisar as medicações que atrapalham a termorregulação e acionar a rede de apoio do idoso. Divergência: alguns protocolos usam imersão também no clássico; outros preferem evaporativo pelo risco de manejo do idoso na água — a velocidade de resfriamento é o que importa.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Falta banheira? Lona ou saco de cadáver com água e gelo em volta do corpo (método TACO) resfria quase tão rápido.',
+        'Compressa de gelo só em axila e virilha resfria devagar demais: use como complemento, não como tratamento.',
+        'Atleta que estava confuso e melhorou quando chegou: ainda pode ter rabdomiólise e LRA — colha CPK.',
+        'No idoso de onda de calor, pergunte por diurético, anticolinérgico e antipsicótico.'
+      ]}
+    ] },
+
+  { id:'afogamento', titulo:'Afogamento (todas as idades)', categoria:'trauma', gravidade:'emergencia',
+    resumo:'O problema é a hipóxia: 5 ventilações iniciais na parada, oxigênio, VNI ou intubação com PEEP conforme o grau de Szpilman, e colar cervical só se houver trauma.',
+    tags:['afogamento','afogado','quase afogamento','submersao','submersão','szpilman','sobrasa','piscina','praia','mergulho','hipotermia','edema pulmonar','peep','criança','crianca','pcr'],
+    fonte:'SOBRASA — Classificação de afogamento de Szpilman (Chest 1997, revisada pela SOBRASA) · Szpilman D et al. — Drowning (N Engl J Med, 2012) · AHA (2025) — Circunstâncias especiais: afogamento · ERC (2021) — Special circumstances · UpToDate — Drowning (submersion injuries)',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Toda vítima retirada da água com *tosse, dispneia, espuma, alteração de consciência ou parada* — e todo mergulho em água rasa como possível trauma de coluna.' },
+      { rotulo:'Prioridade',    valor:'*Oxigenar e ventilar* — na parada, começar por 5 ventilações; o grau de Szpilman guia oxigênio, VNI, intubação e destino.' },
+      { rotulo:'Meta',          valor:'SpO₂ ≥ 92–94%, PEEP para recrutar alvéolos alagados, aquecer e observar o tempo certo antes da alta.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Vítima retirada da água',
+          nota:'Não perder tempo tentando tirar água dos pulmões. Colar cervical só se mergulho em água rasa, queda, surfe, jet-ski ou sinal de trauma' },
+        { tipo:'decisao', texto:'Respira e tem pulso?', ramos:[
+          { rotulo:'Submersão > 1 h, rigidez, decomposição ou livores', texto:'*Cadáver* — não iniciar RCP' },
+          { rotulo:'Sem respiração, com pulso (grau 5)', cor:'perigo', texto:'*Ventilar* com bolsa-válvula-máscara e O₂ até respirar; depois tratar como grau 4' },
+          { rotulo:'Sem respiração e sem pulso (grau 6)', cor:'perigo', texto:'*5 ventilações iniciais* e RCP: 30:2 no adulto, 15:2 na criança com 2 socorristas',
+            nota:'Ritmo quase sempre não chocável. Hipotérmico: prolongar a RCP até reaquecer', ir:'pcr-adulto',
+            meds:[{ droga:'Adrenalina', dose:'1 mg (criança 0,01 mg/kg) a cada 3–5 min', via:'EV/IO' }] },
+          { rotulo:'Respira', texto:'Classificar pelo exame pulmonar e pela PA' }
+        ]},
+        { tipo:'decisao', texto:'Qual o grau de Szpilman?', ramos:[
+          { rotulo:'Resgate ou grau 1: tosse, ausculta normal', cor:'ok', texto:'Aquecer, tranquilizar e *observar 6–8 h* se aspirou água',
+            nota:'Sem tosse nem dispneia após resgate: alta no local' },
+          { rotulo:'Grau 2: estertores em alguns campos', texto:'*O₂ por cateter 5 L/min* e observação hospitalar de 6–48 h' },
+          { rotulo:'Grau 3: edema pulmonar, PA normal', cor:'perigo', texto:'*O₂ por máscara 15 L/min*; SpO₂ < 92% ou cansaço: *VNI ou intubação com PEEP*', ir:'vni' },
+          { rotulo:'Grau 4: edema pulmonar com hipotensão', cor:'perigo', texto:'*Intubar*, PEEP, cristaloide e, se persistir, vasopressor',
+            ir:'ventilacao-mecanica-inicial', meds:['Cristaloide', 'Noradrenalina'] }
+        ]},
+        { tipo:'passo', rotulo:'Sempre', texto:'Retirar a roupa molhada, *aquecer*, glicemia, gasometria, RX de tórax e procurar causa do afogamento',
+          nota:'Convulsão, síncope ou arritmia (QT longo), álcool e drogas, trauma, tentativa de suicídio, maus-tratos na criança' },
+        { tipo:'fim', rotulo:'Destino', texto:'Grau 1: alta · grau 2: observação · graus 3 a 6: UTI' }
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*SpO₂ < 92%*, taquipneia, espuma ou estertores: grau 3 ou mais — UTI.',
+        '*Hipotensão:* grau 4, mortalidade em torno de 20%.',
+        '*Rebaixamento ou convulsão:* hipóxia cerebral, hipoglicemia, trauma ou intoxicação.',
+        '*Mergulho em água rasa* com déficit ou dor cervical: proteger a coluna.',
+        '*Temperatura < 35 °C:* hipotermia associada — reaquecer e não encerrar a RCP fria.'
+      ]},
+
+      { tipo:'passos', titulo:'Conduta imediata', itens:[
+        'Abrir a via aérea e ventilar: na parada, 5 ventilações iniciais antes das compressões.',
+        'Ofertar O₂ conforme o grau: cateter 5 L/min no grau 2, máscara 15 L/min no grau 3.',
+        'Iniciar VNI (CPAP ou BiPAP com PEEP 5–10 cmH₂O) no grau 3 consciente e colaborativo.',
+        'Intubar o grau 3 que falha à VNI, o grau 4 e o rebaixado; ventilar com 6 mL/kg e PEEP 5–10, subindo até SpO₂ ≥ 92%.',
+        'Repor cristaloide na hipotensão e começar vasopressor se persistir.',
+        'Aquecer: retirar roupa molhada, mantas, fluido aquecido.',
+        'Aspirar a via aérea se houver vômito — o vômito é comum e é a maior causa de aspiração.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Adrenalina', dose:'1 mg a cada 3–5 min (criança: 0,01 mg/kg, máximo 1 mg)', via:'EV/IO', obs:'PCR. Na hipotermia < 30 °C, a maioria dos protocolos adia a adrenalina até reaquecer.' },
+        { droga:'Cristaloide', dose:'SF 0,9% ou Ringer: 500–1.000 mL (criança: 10–20 mL/kg)', via:'EV', obs:'Grau 4 hipotenso. Reavaliar a cada bolus — o pulmão já está alagado.' },
+        { droga:'Noradrenalina', dose:'0,05–0,5 mcg/kg/min (criança: 0,05–1 mcg/kg/min)', via:'EV BIC', obs:'Hipotensão que persiste depois do volume.' },
+        { droga:'Glicose 50%', dose:'40–60 mL (criança: glicose 10% 2–5 mL/kg)', via:'EV', obs:'Se glicemia < 70 mg/dL.' },
+        { droga:'Midazolam', dose:'0,1–0,3 mg/kg (máximo 10 mg)', via:'EV/IM', obs:'Convulsão pós-hipóxia. Para a intubação, ver sequência rápida.' }
+      ]},
+
+      { tipo:'tempo', titulo:'Linha do tempo', itens:[
+        { quando:'0–1 min', o_que:'Ventilar — 5 ventilações iniciais na vítima que não respira.' },
+        { quando:'Primeira hora', o_que:'Classificar pelo grau, O₂, VNI ou intubação, aquecer, RX e gasometria.' },
+        { quando:'6–8 h', o_que:'Observação mínima do grau 1 sintomático e de quem aspirou: a piora respiratória costuma aparecer nesse período.' },
+        { quando:'24–72 h', o_que:'SDRA e pneumonia; definir prognóstico neurológico só depois de 72 h com normotermia.' }
+      ]},
+
+      { tipo:'lista', titulo:'Classificação de Szpilman (SOBRASA)', itens:[
+        '*Resgate:* sem tosse, sem dispneia — avaliar e liberar no local.',
+        '*Grau 1:* tosse, ausculta normal — mortalidade 0%. Repouso, aquecimento, sem O₂.',
+        '*Grau 2:* estertores em alguns campos — 0,6%. O₂ 5 L/min por cateter, observação hospitalar 6–48 h.',
+        '*Grau 3:* edema pulmonar agudo sem hipotensão — 5,2%. O₂ 15 L/min por máscara, VNI ou intubação, UTI.',
+        '*Grau 4:* edema pulmonar com hipotensão — 19,4%. Ventilação mecânica, volume, vasopressor, UTI.',
+        '*Grau 5:* parada respiratória com pulso — 44%. Ventilar; depois tratar como grau 4.',
+        '*Grau 6:* parada cardiorrespiratória — 93%. RCP começando pelas ventilações.',
+        '*Cadáver:* submersão > 1 h, rigidez cadavérica, decomposição ou livores — não reanimar.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Glicemia capilar* na chegada.',
+        '*Gasometria arterial com lactato* e eletrólitos — distúrbios de sódio por "água doce x salgada" são raros e sem importância prática.',
+        '*Radiografia de tórax* (pode ser normal no início e piorar em horas).',
+        '*ECG* — arritmia como causa (QT longo, Brugada) ou consequência (hipóxia, hipotermia).',
+        '*Temperatura central*, hemograma, função renal, CPK.',
+        '*Tomografia de coluna cervical e crânio* se mergulho, trauma ou rebaixamento sem explicação; *dosagem de álcool e toxicológico* conforme o caso.'
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Manobra de Heimlich ou compressão abdominal para "tirar a água": atrasa a ventilação e provoca vômito e aspiração.',
+        'Colar cervical de rotina sem mecanismo de trauma: atrapalha a via aérea.',
+        'Corticoide para "pneumonite" do afogamento.',
+        'Antibiótico profilático de rotina: só se água muito contaminada ou febre e infiltrado novo após 48 h.',
+        'Diurético para o edema pulmonar: o paciente está hipovolêmico.',
+        'Encerrar a RCP de vítima hipotérmica antes de reaquecer.'
+      ]},
+
+      { tipo:'texto', titulo:'Destino', conteudo:'*Alta* do resgate sem sintomas e do grau 1 após observação de 6 a 8 horas com exame pulmonar normal, SpO₂ ≥ 95% em ar ambiente e sem piora — com orientação de retornar se tosse persistente, febre ou falta de ar. *Grau 2:* observação hospitalar de 6 a 48 horas com O₂. *Graus 3 a 6:* UTI. Na ventilação, estratégia protetora (6 mL/kg, platô < 30, PEEP titulada), e a SDRA do afogamento costuma melhorar mais rápido que a de outras causas. *Pneumonia* aparece em uma minoria: tratar quando houver febre persistente, infiltrado novo ou piora após 48 h, e não por profilaxia. Corticoide e surfactante não são rotina. *Pós-PCR:* controle de temperatura e prognóstico neurológico só depois de 72 h normotérmico. Criança: investigar falha de supervisão e notificar quando cabível; adolescente e adulto: perguntar sobre álcool, drogas e intenção suicida. Divergência: na criança, a AHA mantém C-A-B para leigos, mas no afogamento todos os protocolos (AHA, ERC, SOBRASA) priorizam as ventilações iniciais.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'O afogado morre de hipóxia: a primeira medida é sempre ventilar, não comprimir.',
+        'Vítima que chegou bem pode piorar em horas — observar antes de liberar quem tossiu e aspirou.',
+        'Quem se afogou em piscina rasa pode ter quebrado o pescoço: pergunte se mergulhou.',
+        'Afogamento em bom nadador: procure a causa — convulsão, arritmia, álcool, trauma, hipoglicemia.'
+      ]}
+    ] },
+
+  { id:'choque-eletrico', titulo:'Choque elétrico e raio', categoria:'trauma', gravidade:'urgencia',
+    resumo:'Baixa voltagem doméstica, assintomático e ECG normal: alta. Alta voltagem, perda de consciência, ECG alterado ou queimadura significativa: monitorização, CPK e busca de lesão profunda que a pele esconde.',
+    tags:['choque eletrico','choque elétrico','eletrocussao','eletrocussão','descarga eletrica','raio','fulguracao','fulguração','alta voltagem','baixa voltagem','queimadura eletrica','rabdomiolise','cpk','arritmia','monitorizacao','gestante','lichtenberg'],
+    fonte:'Ministério da Saúde — Cartilha para tratamento de emergência das queimaduras (2012) · AHA (2025) e ERC (2021) — Circunstâncias especiais: eletrocussão e raio · ABLS — American Burn Association (2023) · Wilderness Medical Society — Lightning injuries (2014) · UpToDate — Electrical injuries and lightning strikes',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Contato com rede elétrica, fio de alta tensão, equipamento ou raio — inclusive quem "só levou um choque" e está bem.' },
+      { rotulo:'Prioridade',    valor:'*ECG na chegada*, procurar pontos de entrada e saída, CPK e urina, e decidir quem precisa de monitor.' },
+      { rotulo:'Meta',          valor:'Não deixar passar arritmia, rabdomiólise, síndrome compartimental e lesão de coluna — e liberar com segurança quem é de baixo risco.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Vítima de choque elétrico ou raio',
+          nota:'Cena segura antes de tocar na vítima. Raio com várias vítimas: *triagem reversa* — atender primeiro quem está em parada' },
+        { tipo:'decisao', texto:'Em parada?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*RCP e desfibrilação* conforme o ritmo; RCP prolongada',
+            nota:'Corrente alternada dá FV; raio dá assistolia e apneia que voltam com ventilação. Pupilas fixas não indicam morte no raio', ir:'pcr-adulto' },
+          { rotulo:'Não', texto:'ATLS: coluna se queda ou arremesso, ECG e exame de pele' }
+        ]},
+        { tipo:'decisao', texto:'Qual a exposição?', ramos:[
+          { rotulo:'Alta voltagem (≥ 1.000 V) ou raio', cor:'perigo', texto:'*Monitorizar*, CPK, urina, procurar compartimental e lesão interna',
+            nota:'A queimadura de pele subestima muito a lesão profunda — não usar só a fórmula de Parkland' },
+          { rotulo:'Baixa voltagem (127/220 V doméstico)', texto:'ECG e exame completo' }
+        ]},
+        { tipo:'decisao', texto:'Tem algum critério de monitor?', ramos:[
+          { rotulo:'Perda de consciência, ECG alterado, arritmia, dor torácica, queimadura significativa, cardiopatia, alta voltagem', cor:'perigo',
+            texto:'*Monitor por 24 h*, CPK seriada e troponina se dor ou ECG alterado' },
+          { rotulo:'Gestante', cor:'perigo', texto:'*Avaliação obstétrica* e monitorização fetal se ≥ 20 semanas',
+            nota:'Morte fetal já ocorreu após choque doméstico leve' },
+          { rotulo:'Nenhum, assintomático, ECG normal', cor:'ok', texto:'*Alta* com orientação' }
+        ]},
+        { tipo:'decisao', texto:'CPK alta ou urina escura (mioglobinúria)?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Cristaloide para diurese de 1–1,5 mL/kg/h* até a urina clarear',
+            ir:'rabdomiolise', meds:['Ringer lactato'] },
+          { rotulo:'Não', cor:'ok', texto:'Repetir CPK em 6–12 h se alta voltagem' }
+        ]},
+        { tipo:'passo', rotulo:'Sempre', texto:'Curativo das queimaduras, analgesia, *antitetânica* e pesquisa de compartimental',
+          meds:['Dipirona', 'Morfina', 'Toxoide tetânico'], ir:'sindrome-compartimental' },
+        { tipo:'fim', rotulo:'Destino', texto:'Baixo risco: alta · monitor 24 h: observação · alta voltagem com queimadura: centro de queimados' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        '*Doméstico:* tomada, eletrodoméstico, chuveiro elétrico — 127 ou 220 V, corrente alternada.',
+        '*Ocupacional:* eletricista, poda perto de fiação, fio de alta tensão, cabine de transformação.',
+        '*Criança pequena:* fio mordido — queimadura de comissura labial, com risco de sangramento da artéria labial em 1–2 semanas.',
+        '*Raio:* campo aberto, esporte, chuva — queimadura em samambaia (figuras de Lichtenberg), ruptura de tímpano, paralisia transitória dos membros.',
+        '*Queda ou arremesso* após o choque: trauma associado, fratura e lesão de coluna.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Alta voltagem ou raio*, mesmo com pele quase intacta.',
+        '*Perda de consciência*, arritmia ou ECG alterado na chegada.',
+        '*Corrente que atravessou o tórax* (mão a mão, mão ao pé) com dor torácica.',
+        '*Membro tenso, dor ao estiramento passivo, urina escura:* compartimental e rabdomiólise.',
+        '*Gestante*, de qualquer idade gestacional.'
+      ]},
+
+      { tipo:'lista', titulo:'Quem monitorizar e quem pode ir', itens:[
+        '*Monitor cardíaco por 24 h:* alta voltagem; perda de consciência; arritmia documentada ou ECG anormal; dor torácica; queimadura significativa ou lesão tecidual; cardiopatia prévia; raio.',
+        '*Alta sem monitor:* baixa voltagem, assintomático, sem perda de consciência, sem queimadura significativa, ECG normal na chegada, não gestante.',
+        '*Gestante:* toda gestante tem avaliação obstétrica. Com ≥ 20 semanas: cardiotocografia ou monitorização fetal por pelo menos 4 h; antes disso, ultrassom com batimento fetal e retorno em 1–2 semanas.',
+        '*Criança com queimadura de boca:* internar ou garantir reavaliação — a escara cai e pode sangrar a artéria labial.',
+        '*Arritmia tardia* em quem chegou com ECG normal após baixa voltagem é muito rara.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*ECG de 12 derivações* em todos.',
+        '*CPK, urina tipo I* (mioglobinúria), eletrólitos, ureia e creatinina na alta voltagem, no raio e em quem tem queimadura ou dor muscular.',
+        '*Troponina* se dor torácica, ECG alterado ou arritmia.',
+        '*Gasometria com lactato* e hemograma no grave.',
+        '*Radiografia ou tomografia* de coluna e ossos conforme queda, arremesso ou contração violenta (luxação posterior de ombro).',
+        '*Otoscopia* (tímpano roto no raio) e *exame oftalmológico* — catarata pode surgir meses depois.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Ringer lactato', dose:'Titular para diurese de 1–1,5 mL/kg/h (75–100 mL/h no adulto) enquanto houver mioglobinúria', via:'EV', obs:'Sem mioglobinúria, reposição da queimadura guiada pela diurese de 0,5 mL/kg/h. A área de pele queimada subestima o volume necessário.' },
+        { droga:'Dipirona', dose:'1–2 g (criança: 15–25 mg/kg, máximo 1 g)', via:'EV', obs:'Analgesia de base.' },
+        { droga:'Morfina', dose:'2–4 mg (criança: 0,05–0,1 mg/kg, máximo 4 mg por dose), titular', via:'EV', obs:'Queimadura e dor muscular.' },
+        { droga:'Toxoide tetânico', dose:'dT 0,5 mL (criança < 7 anos: conforme calendário)', via:'IM', obs:'Queimadura é ferida: atualizar a vacina; imunoglobulina se esquema incompleto e ferida extensa.' },
+        { droga:'Sulfadiazina de prata 1%', dose:'Camada fina no curativo, troca diária', via:'Tópico', obs:'Queimaduras de entrada e saída. Evitar em face, gestante a termo e RN.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Tocar a vítima antes de desligar a corrente.',
+        'Julgar a gravidade pela queimadura da pele: o dano maior está em músculo, nervo e vaso.',
+        'Usar a fórmula de Parkland isolada na alta voltagem — a meta é a diurese.',
+        'Dar alta a gestante sem avaliação obstétrica.',
+        'Desistir da RCP precoce na vítima de raio: a parada respiratória prolongada é reversível com ventilação.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Alta* para baixa voltagem doméstica, assintomático, sem perda de consciência, sem queimadura significativa, ECG normal e não gestante — com orientação de retorno se palpitação, dor torácica, síncope, urina escura ou dor muscular. *Observação com monitor por 24 horas* para quem tem algum critério (alta voltagem, raio, perda de consciência, ECG alterado, arritmia, dor torácica, queimadura significativa, cardiopata). *Internação e centro de queimados* para alta voltagem com queimadura, queimadura de face, mão, períneo ou articulação, rabdomiólise, síndrome compartimental (fasciotomia ou escarotomia) e lesão de coluna. Gestante: avaliação obstétrica sempre. Sequelas tardias que merecem seguimento: neuropatia periférica, catarata, sintomas neuropsiquiátricos e dor crônica. Divergência: o tempo de monitorização fetal não é padronizado — a maioria dos serviços usa pelo menos 4 h com ≥ 20 semanas, e alguns pedem ultrassom para toda gestante.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'No raio, quem se mexe sobrevive: atenda primeiro os que parecem mortos (triagem reversa).',
+        'Tetania pode "prender" a mão no fio — e luxar o ombro para trás: radiografe o ombro que dói.',
+        'Fio mordido pela criança: avise a família que a boca pode sangrar 1 a 2 semanas depois.',
+        'Choque de chuveiro com ECG normal e paciente bem não precisa de troponina nem de internação.'
+      ]}
+    ] },
+
+  { id:'hiperemese', titulo:'Hiperêmese gravídica', categoria:'obstetricia', gravidade:'urgencia',
+    resumo:'Vômitos incoercíveis no 1º trimestre com desidratação e cetose: excluir mola, gemelar, ITU e tireoide, hidratar, tiamina antes da glicose, antiemético escalonado e repor potássio e magnésio.',
+    tags:['hiperemese','hiperêmese','hiperemese gravidica','vomito na gravidez','vômito na gestação','nausea gestacao','enjoo','puque','puqe','tiamina','wernicke','doxilamina','piridoxina','dimenidrinato','ondansetrona','metoclopramida','cetonuria','mola'],
+    fonte:'Ministério da Saúde — Manual de Gestação de Alto Risco (2022) · FEBRASGO — Hiperêmese gravídica (Protocolo, 2018) · ACOG — Nausea and vomiting of pregnancy (Practice Bulletin 189, 2018) · RCOG — Green-top 69, Nausea and vomiting of pregnancy and hyperemesis gravidarum (2016) · UpToDate',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Gestante no 1º trimestre com *vômitos persistentes*, intolerância a líquidos, perda de peso > 5%, cetonúria ou distúrbio eletrolítico.' },
+      { rotulo:'Prioridade',    valor:'*Excluir outra causa* (mola, ITU, abdome agudo, CAD, tireotoxicose), hidratar e dar *tiamina antes de qualquer glicose*.' },
+      { rotulo:'Meta',          valor:'Tolerar a via oral com antiemético de manutenção, K e Mg corrigidos e sem cetose.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Gestante com náusea e vômitos que não param',
+          nota:'Começo antes de 9–10 semanas é o típico. Vômito que começa depois de 10–12 semanas: procurar outra causa' },
+        { tipo:'decisao', texto:'Tem sinal de outra causa?', ramos:[
+          { rotulo:'Dor abdominal, febre, disúria, diarreia, cefaleia, glicemia alta', cor:'perigo', texto:'*Investigar a causa:* pielonefrite, apendicite, colecistite, pancreatite, CAD, hepatite',
+            nota:'Hiperêmese não dá febre nem dor abdominal localizada', ir:'abdome-agudo' },
+          { rotulo:'Não', texto:'Calcular o PUQE e avaliar a desidratação' }
+        ]},
+        { tipo:'decisao', texto:'Gravidade (PUQE e exames)?', ramos:[
+          { rotulo:'Leve (PUQE ≤ 6), tolera líquidos', cor:'ok', texto:'*Alta:* dieta fracionada e doxilamina + piridoxina',
+            meds:['Doxilamina + piridoxina'] },
+          { rotulo:'Moderada (7–11) ou cetonúria', texto:'*Hidratar no PS* e antiemético EV; alta se tolerar a via oral' },
+          { rotulo:'Grave (≥ 12), perda > 5%, distúrbio eletrolítico ou LRA', cor:'perigo', texto:'*Internar*' }
+        ]},
+        { tipo:'passo', rotulo:'Hidratar', texto:'*Tiamina EV primeiro*, depois SF 0,9% ou Ringer; glicose só depois da tiamina',
+          nota:'Repor potássio e magnésio no soro conforme os exames',
+          meds:['Tiamina', 'Soro fisiológico 0,9%', 'Cloreto de potássio 19,1%'] },
+        { tipo:'passo', rotulo:'Antiemético', texto:'*1ª linha:* dimenidrinato + piridoxina ou metoclopramida EV · *2ª:* ondansetrona',
+          nota:'Combinar classes diferentes se não responder. Refratária: corticoide com o obstetra, evitando antes de 10 semanas',
+          meds:['Dimenidrinato + piridoxina', 'Metoclopramida', 'Ondansetrona'] },
+        { tipo:'decisao', texto:'Tolera líquido VO depois de 4–6 h?', ramos:[
+          { rotulo:'Sim', cor:'ok', texto:'*Alta* com antiemético em horário fixo e retorno' },
+          { rotulo:'Não', cor:'perigo', texto:'*Internar*: soro, antiemético EV e reposição eletrolítica' }
+        ]},
+        { tipo:'fim', rotulo:'Sempre', texto:'Ultrassom obstétrico se ainda não tem: confirma tópica, viabilidade, *gemelar e mola*' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        '*Início entre 4 e 10 semanas*, pico em 9–13 semanas, melhora até 20 semanas na maioria.',
+        '*Vômitos várias vezes ao dia* com intolerância a líquidos e sólidos.',
+        '*Perda de peso > 5%* do peso pré-gestacional, cetonúria, hipocalemia, alcalose metabólica.',
+        '*Fatores:* gemelar, mola, hiperêmese em gestação anterior, enxaqueca, feto feminino.',
+        '*Confusão, ataxia, nistagmo ou alteração visual:* encefalopatia de Wernicke — emergência.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Wernicke:* confusão, ataxia, nistagmo, oftalmoplegia — tiamina em dose alta agora.',
+        '*Febre, dor abdominal ou cefaleia:* não é hiperêmese.',
+        '*Beta-HCG muito alto*, útero maior que a idade, sangramento: mola.',
+        '*Potássio < 3,0, sódio < 125*, creatinina subindo ou alteração do ECG.',
+        '*Hematêmese* após vômitos: Mallory-Weiss ou esofagite.'
+      ]},
+
+      { tipo:'lista', titulo:'Escore PUQE (últimas 24 h)', itens:[
+        '*Náusea:* nenhuma = 1 · até 1 h = 2 · 2–3 h = 3 · 4–6 h = 4 · mais de 6 h = 5.',
+        '*Vômitos:* nenhum = 1 · 1–2 = 2 · 3–4 = 3 · 5–6 = 4 · 7 ou mais = 5.',
+        '*Ânsia sem vômito:* nenhuma = 1 · 1–2 = 2 · 3–4 = 3 · 5–6 = 4 · 7 ou mais = 5.',
+        '*Total:* leve ≤ 6 · moderada 7–11 · grave ≥ 12.',
+        '*Diferenciais:* mola e gemelar, ITU e pielonefrite, hipertireoidismo (Graves) x tireotoxicose gestacional transitória, apendicite, colecistite, pancreatite, hepatite, gastroenterite, CAD, hipercalcemia, enxaqueca, hipertensão intracraniana, síndrome de hiperêmese por cannabis.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Sódio, potássio, magnésio, ureia e creatinina*; gasometria venosa se vômito intenso (alcalose hipoclorêmica).',
+        '*Urina tipo I* (cetonúria, densidade, infecção) e urocultura.',
+        '*Glicemia*, hemograma, TGO e TGP (sobem em até metade das graves), amilase ou lipase se dor.',
+        '*TSH e T4 livre* — TSH baixo é comum por efeito do HCG; T4 muito alto, bócio ou oftalmopatia sugerem Graves.',
+        '*Beta-HCG quantitativo e ultrassom obstétrico* — mola, gemelar, tópica.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Tiamina', dose:'100 mg EV antes da glicose e 1x/dia enquanto em soro; suspeita de Wernicke: 500 mg de 8/8 h por 3 dias', via:'EV', obs:'Ampola de 100 mg/mL; diluir em 100 mL de SF e correr em 30 min. Segura na gestação.' },
+        { droga:'Soro fisiológico 0,9%', dose:'1.000 mL em 1–2 h, repetir conforme a desidratação e a diurese', via:'EV', obs:'Ou Ringer lactato. Soro glicosado só depois da tiamina. Hiponatremia: não corrigir mais que 8–10 mEq/L em 24 h.' },
+        { droga:'Cloreto de potássio 19,1%', dose:'10 mL (25 mEq) em cada 1.000 mL de soro se K < 3,5', via:'EV', obs:'Máximo de 10–20 mEq/h em veia periférica. K < 3,0: monitorizar e repor mais.' },
+        { droga:'Sulfato de magnésio 50%', dose:'2 g (4 mL) em 100 mL de SF 0,9% em 1 h', via:'EV', obs:'Se Mg < 1,8 mg/dL. Sem corrigir o Mg, o potássio não se sustenta.' },
+        { droga:'Doxilamina + piridoxina', dose:'10 mg + 10 mg: 2 comprimidos ao deitar; se precisar, +1 de manhã e +1 à tarde (máximo 4/dia)', via:'VO', obs:'1ª linha para casa. Dá sonolência. Comprimido de liberação retardada: não partir.' },
+        { droga:'Dimenidrinato + piridoxina', dose:'EV: 1 ampola (dimenidrinato 30 mg + piridoxina 50 mg) de 6/6 h · VO: 50 mg + 10 mg de 6/6 h', via:'EV/VO', obs:'Conferir a apresentação: a ampola EV contém glicose — dar a tiamina antes. Máximo de 400 mg/dia de dimenidrinato.' },
+        { droga:'Metoclopramida', dose:'10 mg de 8/8 h', via:'EV/IM/VO', obs:'Pode associar a anti-histamínico. Suspender se acatisia ou distonia (biperideno trata). Máximo 30 mg/dia por até 5 dias.' },
+        { droga:'Ondansetrona', dose:'4–8 mg de 8/8 h', via:'EV/VO', obs:'2ª linha. ECG se outras drogas que alongam QT ou hipocalemia. Ver divergência sobre o 1º trimestre.' },
+        { droga:'Prometazina', dose:'25 mg de 8/8 h', via:'IM/VO', obs:'Alternativa. Não fazer EV em veia periférica (necrose). Sonolência.' },
+        { droga:'Metilprednisolona', dose:'16 mg de 8/8 h por 3 dias, depois retirada gradual', via:'EV/VO', obs:'Só na refratária, internada e com o obstetra. Evitar antes de 10 semanas (fenda oral). Sem resposta em 3 dias: suspender.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Correr soro glicosado antes da tiamina na gestante que vomita há semanas.',
+        'Chamar de hiperêmese o vômito com febre, dor localizada ou que começou no 2º trimestre.',
+        'Liberar sem ultrassom quem nunca fez: mola e gemelar mudam a conduta.',
+        'Repor potássio sem olhar o magnésio.',
+        'Corrigir hiponatremia crônica rápido demais (mielinólise).',
+        'Mandar para casa com antiemético "se necessário" — a manutenção é em horário fixo.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Internar* se não tolera a via oral apesar do antiemético EV, cetonúria persistente com perda de peso > 5%, distúrbio eletrolítico importante (K < 3,0, Na < 130), lesão renal aguda, suspeita de Wernicke, comorbidade (diabetes, doença renal) ou outra causa ainda não excluída. Internada: soro com tiamina, antiemético EV em horário fixo combinando classes, reposição de K e Mg, profilaxia de TEV se imobilizada e desidratada, e dieta liberada conforme tolerância. Refratária: corticoide e, em último caso, nutrição enteral. *Alta* com via oral tolerada: doxilamina + piridoxina em horário fixo (ou dimenidrinato + piridoxina), refeições pequenas e frequentes, evitar gatilhos, suspender o sulfato ferroso até melhorar, retorno se não conseguir beber ou urinar pouco e pré-natal em 1 semana. Divergência: a ondansetrona no 1º trimestre teve associação pequena com fenda oral em alguns estudos (cerca de 3 casos a mais por 10.000) e não em outros; ACOG e RCOG permitem como 2ª linha, e muitos serviços brasileiros preferem evitá-la antes de 10 semanas. A doxilamina + piridoxina é a 1ª linha da ACOG; no Brasil, a combinação com dimenidrinato é a mais usada no PS.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Calcule o PUQE: dá número para a gravidade e para mostrar a melhora.',
+        'Pergunte por maconha: a síndrome canabinoide melhora com banho quente e piora com mais uso.',
+        'TSH baixo na hiperêmese quase sempre é efeito do HCG — não iniciar antitireoidiano no PS.',
+        'Vitamina pré-natal com ferro piora a náusea: troque por ácido fólico isolado até melhorar.'
+      ]}
+    ] },
+
+  { id:'parto-iminente', titulo:'Parto iminente no PS', categoria:'obstetricia', gravidade:'emergencia',
+    resumo:'Cabeça coroando não se transfere: preparar, proteger o períneo, deixar a rotação acontecer, ALEERTA na distocia de ombro, ocitocina 10 UI IM depois do nascimento e RN vigoroso no colo da mãe com clampeamento tardio.',
+    tags:['parto','parto iminente','periodo expulsivo','período expulsivo','parto normal','parto no ps','distocia de ombro','aleerta','helperr','mcroberts','circular de cordao','circular de cordão','dequitacao','dequitação','ocitocina','pelvico','pélvico','prolapso de cordao','clampeamento tardio','recem-nascido'],
+    fonte:'Ministério da Saúde — Diretrizes Nacionais de Assistência ao Parto Normal (2017) e Manual de Gestação de Alto Risco (2022) · FEBRASGO — Distocia de ombro e Assistência ao parto · SBP — Reanimação do recém-nascido ≥ 34 semanas (2022) · ALSO (ALEERTA) · RCOG — Shoulder dystocia (Green-top 42, 2012) · OMS — Prevenção da hemorragia pós-parto (2018)',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Gestante com *puxos involuntários*, períneo abaulado, ânus entreaberto ou *cabeça visível* — multípara com contrações fortes evolui em minutos.' },
+      { rotulo:'Prioridade',    valor:'Não transferir no período expulsivo: *chamar ajuda, separar material e posicionar*; preparar a reanimação do RN.' },
+      { rotulo:'Meta',          valor:'Nascimento controlado, RN aquecido e avaliado no 1º minuto, *ocitocina 10 UI IM* e útero contraído.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Suspeita', texto:'Gestante com puxos, períneo abaulado ou cabeça visível',
+          nota:'Perguntar idade gestacional, número de fetos, cesárea prévia, bolsa rota, sangramento e se fez pré-natal' },
+        { tipo:'decisao', texto:'Dá para transferir antes de nascer?', ramos:[
+          { rotulo:'Cabeça coroando ou puxos com dilatação total', cor:'perigo', texto:'*Assistir aqui* — o pior lugar para nascer é a ambulância' },
+          { rotulo:'Início de trabalho de parto, sem puxos', cor:'ok', texto:'Transferir pela regulação para a maternidade de referência' }
+        ]},
+        { tipo:'passo', rotulo:'Preparar', texto:'Ajuda (2º profissional), luvas, campos, 2 pinças, tesoura, aspirador, *bolsa-válvula-máscara neonatal*, berço aquecido ou campos quentes',
+          nota:'Acesso venoso na mãe. Posição semissentada ou a que ela preferir' },
+        { tipo:'passo', rotulo:'Cabeça', texto:'*Proteger o períneo* com a mão e controlar a saída lenta da cabeça entre as contrações',
+          nota:'Palpar o pescoço: circular frouxa passa pela cabeça; apertada que não reduz, clampear com 2 pinças e cortar' },
+        { tipo:'decisao', texto:'A cabeça saiu e o ombro não desprende em 60 s (sinal da tartaruga)?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Distocia de ombro — ALEERTA*: ajuda, McRoberts, pressão suprapúbica, braço posterior, Rubin e Woods',
+            nota:'Não tracionar a cabeça nem empurrar o fundo do útero. 30–60 s por manobra' },
+          { rotulo:'Não', cor:'ok', texto:'Aguardar a rotação externa; tração suave para baixo (ombro anterior) e para cima (posterior)' }
+        ]},
+        { tipo:'decisao', texto:'RN a termo, respirando ou chorando, com tônus bom?', ramos:[
+          { rotulo:'Sim', cor:'ok', texto:'*Pele a pele* com a mãe, secar, cobrir e *clampear após 1–3 min*' },
+          { rotulo:'Não', cor:'perigo', texto:'*Clampear e reanimar:* aquecer, posicionar, aspirar se preciso e *ventilar em até 60 s*',
+            nota:'Algoritmo da SBP: a ventilação é o centro da reanimação neonatal', ir:'pcr-pediatrica' }
+        ]},
+        { tipo:'passo', rotulo:'3º período', texto:'*Ocitocina 10 UI IM* no 1º minuto, tração controlada do cordão e massagem uterina após a placenta',
+          meds:['Ocitocina'] },
+        { tipo:'decisao', texto:'Placenta saiu inteira e útero contraído?', ramos:[
+          { rotulo:'Sangramento > 500 mL ou útero amolecido', cor:'perigo', texto:'*Hemorragia pós-parto*', ir:'hemorragia-pos-parto' },
+          { rotulo:'Placenta retida > 30 min', texto:'Não tracionar com força: transferir com acesso e ocitocina em infusão' },
+          { rotulo:'Sim', cor:'ok', texto:'Revisar canal de parto e suturar laceração' }
+        ]},
+        { tipo:'fim', rotulo:'Destino', texto:'Mãe e RN juntos para a maternidade de referência, com placenta e relato do parto' }
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Cabeça sai e volta* contra o períneo (sinal da tartaruga): distocia de ombro.',
+        '*Cordão visível ou palpável* antes do feto: prolapso de cordão — cesárea de emergência.',
+        '*Apresentação pélvica* ou de membro: não tracionar.',
+        '*Prematuro, gemelar, líquido meconial ou sangramento antes do parto:* preparar reanimação e chamar a pediatria.',
+        '*Sangramento > 500 mL*, útero mole ou mãe taquicárdica após o parto: hemorragia pós-parto.'
+      ]},
+
+      { tipo:'passos', titulo:'Conduta imediata', itens:[
+        'Chamar ajuda e avisar a regulação e a maternidade; um profissional fica para o RN.',
+        'Posicionar a mãe semissentada, lavar as mãos, calçar luvas e abrir os campos.',
+        'Controlar a saída da cabeça com uma mão e proteger o períneo com a outra, sem pressa entre as contrações.',
+        'Procurar circular de cordão e esperar a rotação externa espontânea.',
+        'Desprender o ombro anterior com tração suave para baixo e o posterior para cima.',
+        'Secar o RN sobre a mãe, avaliar respiração e tônus e clampear após 1–3 min se vigoroso.',
+        'Fazer ocitocina 10 UI IM, aguardar a placenta com tração controlada e revisar o canal.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Ocitocina', dose:'10 UI (2 ampolas de 5 UI/mL)', via:'IM', obs:'No 1º minuto após o nascimento, depois de excluir 2º gemelar. Se acesso venoso: pode ser EV lento. Hemorragia: ver a conduta própria.' },
+        { droga:'Lidocaína 2% sem vasoconstritor', dose:'5–10 mL (máximo 4,5 mg/kg)', via:'Infiltração', obs:'Episiotomia (só se indicada) e sutura de laceração. Aspirar antes de injetar.' },
+        { droga:'Ácido tranexâmico', dose:'1 g em 10 min', via:'EV', obs:'Na hemorragia pós-parto, nas primeiras 3 h. Não é profilaxia de rotina.' },
+        { droga:'Vitamina K (RN)', dose:'1 mg (RN < 2.000 g: 0,5 mg)', via:'IM', obs:'Na 1ª hora de vida, depois do contato pele a pele.' },
+        { droga:'Imunoglobulina anti-D', dose:'300 mcg', via:'IM', obs:'Mãe Rh negativo com RN Rh positivo (ou desconhecido), em até 72 h — pode ficar para a maternidade.' }
+      ]},
+
+      { tipo:'tempo', titulo:'Linha do tempo', itens:[
+        { quando:'Antes', o_que:'Ajuda, material, aquecimento e bolsa-válvula-máscara neonatal prontos.' },
+        { quando:'Cabeça → corpo', o_que:'Em geral na contração seguinte. Mais de 60 s sem desprender o ombro: ALEERTA.' },
+        { quando:'1º minuto de vida', o_que:'RN que não respira tem que estar sendo ventilado até 60 s (minuto de ouro).' },
+        { quando:'1–3 min', o_que:'Clampeamento do cordão no RN vigoroso; ocitocina IM na mãe no 1º minuto.' },
+        { quando:'Até 30 min', o_que:'Dequitação. Passou disso: placenta retida.' }
+      ]},
+
+      { tipo:'lista', titulo:'Sinais de período expulsivo', itens:[
+        '*Puxos involuntários*, vontade de evacuar e gemido expulsivo nas contrações.',
+        '*Períneo abaulado*, ânus entreaberto, apresentação visível na vulva entre as contrações.',
+        '*Dilatação total* ao toque, se der tempo de tocar.',
+        '*Multípara* com contrações a cada 2 min ou menos: o expulsivo pode durar minutos.'
+      ]},
+
+      { tipo:'lista', titulo:'Distocia de ombro — ALEERTA (ALSO)', itens:[
+        '*A — Ajuda:* chamar mais profissionais, anotar o horário da saída da cabeça e avisar a mãe. Não puxar a cabeça, não empurrar o fundo.',
+        '*L — Levantar as pernas (McRoberts):* hiperflexão das coxas sobre o abdome, com nádegas na borda da maca — resolve boa parte sozinha.',
+        '*E — Externa (pressão suprapúbica):* auxiliar empurra o ombro anterior com a mão fechada logo acima do púbis, do lado do dorso fetal, contínua ou em movimentos de vaivém.',
+        '*E — Episiotomia:* considerar para dar espaço às manobras internas; sozinha não solta o ombro.',
+        '*R — Remover o braço posterior:* mão na vagina, flexionar o cotovelo fetal e trazer o braço pela frente do tórax.',
+        '*T — Toque para manobras internas:* Rubin II (empurrar a face posterior do ombro anterior) e Woods (rodar o ombro posterior 180°, saca-rolhas), com Woods reverso se falhar.',
+        '*A — Alterar a posição:* quatro apoios (Gaskin) e repetir as manobras. Cada manobra dura 30 a 60 segundos.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Tipagem e Rh* da mãe (anti-D) e *sorologias* do pré-natal (HIV, sífilis, hepatite B) — sem resultado: teste rápido de HIV e sífilis.',
+        '*Hemoglobina* se sangramento maior que o habitual.',
+        '*Glicemia capilar do RN* se prematuro, mãe diabética, RN grande ou pequeno.',
+        '*Placenta:* guardar e mandar junto para a maternidade conferir se está completa.'
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Colocar no transporte a mulher com a cabeça coroando.',
+        'Tracionar a cabeça ou fazer pressão no fundo uterino (Kristeller) na distocia de ombro.',
+        'Tracionar o feto pélvico: mãos fora até aparecer o umbigo e as escápulas.',
+        'Recolocar ou manipular o cordão prolapsado; empurrar a apresentação para cima é o que salva.',
+        'Clampear o cordão do RN vigoroso antes de 1 minuto sem motivo.',
+        'Tracionar o cordão com força antes da placenta descolar: inversão uterina.'
+      ]},
+
+      { tipo:'texto', titulo:'Destino', conteudo:'Depois do parto, *mãe e RN vão juntos* para a maternidade de referência pela regulação, com a placenta e o relato (horário, intercorrências, manobras, Apgar, medicações). *Apresentação pélvica:* deixar sair espontaneamente com as mãos fora até o umbigo; apoiar o corpo sem puxar e, para a cabeça derradeira, usar a manobra de Bracht (corpo levado sobre o abdome da mãe) ou Mauriceau (dedos na maxila fetal, flexionando a cabeça) com pressão suprapúbica pelo auxiliar. *Prolapso de cordão:* chamar o obstetra, mão na vagina empurrando a apresentação para cima sem comprimir o cordão, mãe em genupeitoral ou Trendelenburg, bexiga cheia com 500–700 mL de SF por sonda se o transporte for longo, e cesárea de emergência. *Gemelar:* após o 1º, não dar ocitocina até confirmar que não há outro feto. *RN deprimido:* seguir o algoritmo de reanimação neonatal da SBP (aquecer, posicionar a cabeça, aspirar só se obstrução e ventilar com máscara em ar ambiente no ≥ 34 semanas até 60 s de vida). Divergência: na distocia de ombro, o HELPERR (EUA) e o RCOG colocam a remoção do braço posterior e as manobras internas no mesmo patamar — a ordem importa menos que trocar de manobra a cada 30 a 60 segundos.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Antes de tudo, pergunte "é o primeiro filho?": multípara com puxo nasce em minutos.',
+        'Anote a hora em que a cabeça saiu: na distocia de ombro, cada minuto conta para o RN.',
+        'A ocitocina IM no 1º minuto é a medida que mais previne hemorragia — não esqueça no tumulto.',
+        'Campos aquecidos e touca: RN que nasce no PS perde calor rápido.'
+      ]}
+    ] },
+
+  { id:'rpmo', titulo:'Rotura prematura de membranas', categoria:'obstetricia', gravidade:'urgencia',
+    resumo:'Perda de líquido antes do trabalho de parto: confirmar com especular sem toque, e conduzir pela idade gestacional — indução a termo, corticoide e antibiótico de latência no pré-termo, interrupção na corioamnionite.',
+    tags:['rpmo','rpm','rotura prematura de membranas','ruptura prematura de membranas','bolsa rota','perda de liquido','perda de líquido','amniorrexe','corioamnionite','amnisure','nitrazina','cristalizacao','cristalização','corticoide','betametasona','sulfato de magnesio','neuroprotecao','estreptococo do grupo b','gbs','ampicilina','azitromicina'],
+    fonte:'Ministério da Saúde — Manual de Gestação de Alto Risco (2022) · FEBRASGO — Rotura prematura das membranas ovulares (Protocolo, 2021) · ACOG — Prelabor rupture of membranes (Practice Bulletin 217, 2020) · UpToDate — Preterm prelabor rupture of membranes',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Gestante com *perda de líquido* pela vagina, em jato ou contínua, antes do início das contrações.' },
+      { rotulo:'Prioridade',    valor:'*Especular estéril sem toque*, idade gestacional confirmada, vitalidade fetal e sinais de infecção.' },
+      { rotulo:'Meta',          valor:'Termo: parto. Pré-termo: ganhar tempo com segurança (corticoide, antibiótico, magnésio) e no hospital certo.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Gestante com perda de líquido vaginal',
+          nota:'Diferenciais: incontinência urinária, leucorreia, tampão mucoso, sêmen' },
+        { tipo:'passo', rotulo:'Confirmar', texto:'*Exame especular estéril*: líquido saindo pelo colo (pedir para tossir ou Valsalva); se dúvida, pH, cristalização ou teste imunocromatográfico',
+          nota:'*Não fazer toque* fora do trabalho de parto: aumenta infecção e encurta a latência' },
+        { tipo:'decisao', texto:'Sinais de corioamnionite?', ramos:[
+          { rotulo:'Febre + taquicardia materna ou fetal, útero doloroso, líquido purulento ou fétido', cor:'perigo',
+            texto:'*Antibiótico EV e interromper a gestação* em qualquer idade gestacional',
+            nota:'Via vaginal preferencial; cesárea por indicação obstétrica', meds:['Ampicilina', 'Gentamicina'] },
+          { rotulo:'Não', texto:'Conduta pela idade gestacional' }
+        ]},
+        { tipo:'decisao', texto:'Idade gestacional?', ramos:[
+          { rotulo:'≥ 37 semanas', cor:'ok', texto:'*Induzir o parto* (ocitocina; misoprostol se colo desfavorável) e profilaxia de GBS se indicada',
+            meds:['Penicilina G cristalina'] },
+          { rotulo:'34 a 36+6 semanas', texto:'*Indução* ou conduta expectante até 37 semanas, conforme o serviço',
+            nota:'Ver divergência. Profilaxia de GBS no trabalho de parto' },
+          { rotulo:'24 a 33+6 semanas', cor:'perigo', texto:'*Internar:* corticoide, antibiótico de latência e conduta expectante',
+            meds:['Betametasona', 'Ampicilina', 'Azitromicina'] },
+          { rotulo:'< 24 semanas', texto:'*Aconselhamento* com o obstetra e a neonatologia: prognóstico ruim, conduta individualizada' }
+        ]},
+        { tipo:'decisao', texto:'Menos de 32 semanas com parto iminente ou indicado?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Sulfato de magnésio para neuroproteção fetal*', meds:['Sulfato de magnésio'] },
+          { rotulo:'Não', cor:'ok', texto:'Seguir a vigilância materna e fetal' }
+        ]},
+        { tipo:'fim', rotulo:'Destino', texto:'Termo: maternidade habitual · pré-termo < 34–35 semanas: *transferir para hospital com UTI neonatal* se a mãe estiver estável e o parto não for iminente' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        '*Perda súbita de líquido claro* em jato, que molha a roupa e continua ao andar.',
+        '*Perda pequena e contínua* — a rotura alta pode vazar pouco.',
+        '*Diminuição da barriga* ou dos movimentos fetais após a perda.',
+        '*Fatores:* RPMO prévia, colo curto, infecção genital, tabagismo, gemelar, polidrâmnio, sangramento no 2º trimestre.',
+        '*Febre, dor uterina ou líquido com cheiro ruim:* corioamnionite.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Febre ≥ 38 °C* com taquicardia materna ou fetal, útero doloroso ou líquido purulento: corioamnionite.',
+        '*Cordão visível ou palpável* na vagina: prolapso — cesárea de emergência.',
+        '*Sangramento:* descolamento prematuro de placenta.',
+        '*Bradicardia fetal* ou cardiotocografia alterada.',
+        '*Apresentação não cefálica* com bolsa rota: maior risco de prolapso de cordão.'
+      ]},
+
+      { tipo:'lista', titulo:'Diagnóstico', itens:[
+        '*Clínico (especular):* líquido saindo pelo orifício do colo ou acumulado no fundo de saco — basta para o diagnóstico.',
+        '*pH (fita de nitrazina):* > 6,5 sugere líquido amniótico. Falso positivo com sangue, sêmen, urina alcalina, vaginose e tricomoníase.',
+        '*Cristalização em samambaia* do conteúdo do fundo de saco ao microscópio.',
+        '*Testes imunocromatográficos:* PAMG-1 (AmniSure) ou IGFBP-1 (Actim PROM) — úteis na dúvida, mais caros.',
+        '*Ultrassom:* líquido reduzido apoia, mas líquido normal não exclui; também confirma apresentação, idade gestacional e peso fetal.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Hemograma e PCR* na admissão e seriados — tendência importa mais que valor isolado (corticoide eleva leucócitos).',
+        '*Urina tipo I e urocultura.*',
+        '*Swab vaginal e retal para GBS* se não tiver resultado das últimas 5 semanas.',
+        '*Cardiotocografia* (≥ 26–28 semanas) e *ultrassom* com apresentação e líquido.',
+        '*Sorologias do pré-natal* e testes rápidos de HIV e sífilis se ausentes.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Betametasona', dose:'12 mg de 24/24 h, 2 doses', via:'IM', obs:'De 24 a 33+6 semanas (a partir de 22–23 em casos selecionados com a neonatologia). Alternativa: dexametasona 6 mg IM de 12/12 h, 4 doses.' },
+        { droga:'Ampicilina', dose:'Latência: 2 g de 6/6 h por 48 h, depois amoxicilina 500 mg VO de 8/8 h por 5 dias · Corioamnionite: 2 g de 6/6 h', via:'EV', obs:'Esquema de latência de 7 dias no pré-termo < 34 semanas. Alergia não grave: cefazolina 1 g EV de 8/8 h.' },
+        { droga:'Azitromicina', dose:'1 g dose única', via:'VO', obs:'Junto com a ampicilina no início da latência (substitui a eritromicina do esquema americano). Evitar amoxicilina + clavulanato: enterocolite necrosante.' },
+        { droga:'Gentamicina', dose:'5 mg/kg 1x/dia (ou 1,5 mg/kg de 8/8 h)', via:'EV', obs:'Corioamnionite, com a ampicilina. Após cesárea, associar clindamicina 900 mg EV de 8/8 h ou metronidazol 500 mg EV de 8/8 h.' },
+        { droga:'Sulfato de magnésio', dose:'4 g EV em 20–30 min e 1 g/h até o parto (máximo 24 h)', via:'EV', obs:'Neuroproteção < 32 semanas com parto previsto. MgSO₄ 50%: 8 mL + 12 mL de água destilada = 4 g em 20 mL. Vigiar reflexo patelar, FR e diurese; gluconato de cálcio 10% 10 mL EV se intoxicação.' },
+        { droga:'Penicilina G cristalina', dose:'5 milhões UI de ataque e 2,5 milhões UI de 4/4 h até o parto', via:'EV', obs:'Profilaxia de GBS: positivo, desconhecido com pré-termo, febre ou bolsa rota ≥ 18 h. Alternativa: ampicilina 2 g e depois 1 g de 4/4 h.' },
+        { droga:'Ocitocina', dose:'5 UI em 500 mL de SF 0,9%, iniciar 1–2 mUI/min (6–12 mL/h) e aumentar a cada 30 min', via:'EV BIC', obs:'Indução a termo com colo favorável. Colo desfavorável: misoprostol 25 mcg via vaginal de 6/6 h (uso hospitalar).' },
+        { droga:'Paracetamol', dose:'750 mg de 6/6 h', via:'VO', obs:'Febre na corioamnionite.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Toque vaginal fora do trabalho de parto ou do parto iminente.',
+        'Amoxicilina + clavulanato como antibiótico de latência (enterocolite necrosante no RN).',
+        'Tocólise na RPMO com suspeita de infecção ou acima de 34 semanas.',
+        'Esperar o leucograma ou a cultura para tratar corioamnionite clínica.',
+        'Manter conduta expectante com corioamnionite — o tratamento é antibiótico e parto.',
+        'Transferir a gestante instável ou em parto iminente: estabilizar e assistir onde está.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'RPMO confirmada *interna sempre* — não há alta com bolsa rota. *≥ 37 semanas:* indução em vez de esperar (menos corioamnionite e infecção neonatal), com profilaxia de GBS se positivo, desconhecido com fator de risco ou bolsa rota há ≥ 18 h. *34 a 36+6 semanas:* indução ou conduta expectante até 37 semanas. *24 a 33+6 semanas:* internação em hospital com UTI neonatal, corioamnionite vigiada (temperatura, pulso, dor uterina, líquido, hemograma e PCR, cardiotocografia), corticoide, antibiótico de latência por 7 dias e parto com 34 semanas ou antes se infecção, sofrimento fetal, descolamento ou trabalho de parto. *< 32 semanas com parto previsto:* sulfato de magnésio. *Corioamnionite:* ampicilina + gentamicina, antitérmico e parto em qualquer idade gestacional, sem cesárea só por causa da infecção; manter o antibiótico após o parto conforme o protocolo do serviço. *Transferir* pela regulação quando a idade gestacional exige UTI neonatal e a mãe está estável, depois da 1ª dose de corticoide e antibiótico. Divergência: entre 34 e 36+6 semanas, o Ministério da Saúde e a FEBRASGO tendem à resolução, enquanto a ACOG aceita conduta expectante até 37 semanas (estudo PPROMT); o corticoide no pré-termo tardio (34 a 36+6) é controverso e fica a critério do serviço.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Com especular mostrando líquido saindo do colo, o diagnóstico está feito — teste é para a dúvida.',
+        'Taquicardia fetal ou materna sem outra causa costuma ser o primeiro sinal de corioamnionite, antes da febre.',
+        'O pré-termo vale ouro: corticoide e antibiótico na 1ª hora e vaga em UTI neonatal antes de o parto começar.',
+        'Anote a hora da rotura: define profilaxia de GBS e prazo de vigilância.'
+      ]}
+    ] },
+
+  /* ==== expansão 02/10/2026: ORL, hemato, ambientais, tóxico, obstetrícia e pediatria ==== */
+  { id:'anticoagulado', titulo:'Anticoagulado: INR alto, sangramento e reversão', categoria:'hemato', gravidade:'urgencia',
+    resumo:'Varfarina com INR alto, sangramento em uso de anticoagulante oral direto ou heparina: reverter só quem sangra de verdade, com o antídoto certo para cada droga, e saber quando reiniciar.',
+    tags:['anticoagulado','anticoagulante','varfarina','marevan','inr alto','inr elevado','vitamina k','fitomenadiona','kanakion','complexo protrombinico','ccp','beriplex','octaplex','plasma','dabigatrana','pradaxa','idarucizumabe','praxbind','rivaroxabana','xarelto','apixabana','eliquis','edoxabana','lixiana','andexanete','heparina','enoxaparina','protamina','clopidogrel','antiagregante','sangramento maior','reversao'],
+    fonte:'ACC — Expert Consensus Decision Pathway on Management of Bleeding in Patients on Oral Anticoagulants (2020) · ACCP — Antithrombotic Therapy, 9th ed (Chest 2012) · ISTH — Definição de sangramento maior (2005) · AHA/ASA — Hemorragia intracerebral espontânea (2022) · SBC — Diretriz de Antiagregantes e Anticoagulantes em Cardiologia (2013) · UpToDate — Management of warfarin-associated bleeding; Management of bleeding in patients receiving DOACs',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Todo paciente em uso de *varfarina, DOAC (dabigatrana, rivaroxabana, apixabana, edoxabana) ou heparina* que sangra, que vai a procedimento ou que chega com INR acima do alvo.' },
+      { rotulo:'Prioridade',    valor:'Definir *se o sangramento é maior* (sítio crítico, instabilidade, queda de Hb) e *qual droga e a que horas* foi a última dose.' },
+      { rotulo:'Meta',          valor:'Reverter rápido quem tem sangramento maior; no INR alto sem sangramento, *suspender e ajustar*, sem expor ao risco de trombose.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Paciente anticoagulado com INR alto ou sangramento',
+          nota:'Perguntar: qual droga, dose, *hora da última tomada*, indicação (válvula mecânica? TEV recente?) e função renal' },
+        { tipo:'decisao', texto:'Como está o sangramento?', ramos:[
+          { rotulo:'Maior: sítio crítico, instável ou queda de Hb ≥ 2 g/dL', cor:'perigo', texto:'*Suspender, ressuscitar e reverter já* — e tratar a fonte',
+            nota:'Dois acessos, tipagem, Hb, plaquetas, coagulograma, creatinina. Ácido tranexâmico como adjuvante fora da HDA',
+            meds:['Ácido tranexâmico'], ir:'choque-abordagem' },
+          { rotulo:'Menor ou moderado', texto:'*Medidas locais* (compressão, tamponamento, cauterização), suspender 1 dose e conferir INR',
+            nota:'Epistaxe, hematúria leve, equimose: em geral sem reversão', ir:'epistaxe' },
+          { rotulo:'Sem sangramento, só INR alto', cor:'ok', texto:'Seguir pela faixa de INR (abaixo)' }
+        ]},
+        { tipo:'decisao', texto:'Sangramento maior: qual anticoagulante?', ramos:[
+          { rotulo:'Varfarina', cor:'perigo', texto:'*Complexo protrombínico* pela faixa de INR + *vitamina K 10 mg EV*',
+            nota:'Sem CCP: plasma 15–20 mL/kg (mais volume, mais demora). INR de controle 30 min após',
+            meds:['Complexo protrombínico (varfarina)', 'Vitamina K (fitomenadiona) EV', 'Plasma fresco congelado'] },
+          { rotulo:'Dabigatrana', cor:'perigo', texto:'*Idarucizumabe 5 g EV*',
+            nota:'Sem antídoto: CCP 50 UI/kg e considerar hemodiálise (a dabigatrana é dialisável). Carvão se tomou há < 2 h',
+            meds:['Idarucizumabe', 'Complexo protrombínico (DOAC)'] },
+          { rotulo:'Rivaroxabana, apixabana, edoxabana', cor:'perigo', texto:'*CCP 50 UI/kg* — andexanete alfa só se houver no serviço',
+            nota:'Carvão ativado se a última dose foi há < 2–6 h e a via aérea está protegida',
+            meds:['Complexo protrombínico (DOAC)', 'Andexanete alfa', 'Carvão ativado'] },
+          { rotulo:'Heparina ou enoxaparina', cor:'perigo', texto:'*Protamina* conforme a dose e o tempo da última aplicação',
+            meds:['Protamina'] },
+          { rotulo:'Antiagregante', texto:'Sem reversão de rotina; *plaquetas só se for para cirurgia*; desmopressina na HIC',
+            meds:['Desmopressina', 'Concentrado de plaquetas'], ir:'avc-hemorragico' }
+        ]},
+        { tipo:'decisao', texto:'Varfarina sem sangramento: qual o INR?', ramos:[
+          { rotulo:'Acima do alvo e < 4,5', cor:'ok', texto:'*Reduzir ou pular 1 dose* e reajustar; INR em 3–7 dias' },
+          { rotulo:'4,5 a 10', texto:'*Suspender 1–2 doses*; vitamina K não é de rotina',
+            nota:'Considerar 1–2,5 mg VO se alto risco de sangrar (idoso, sangramento recente, plaquetopenia)',
+            meds:['Vitamina K (fitomenadiona) VO'] },
+          { rotulo:'> 10', cor:'perigo', texto:'*Suspender + vitamina K 2,5–5 mg VO*; INR em 24 h',
+            meds:['Vitamina K (fitomenadiona) VO'] }
+        ]},
+        { tipo:'passo', rotulo:'Sempre', texto:'Achar *por que* o INR subiu: antibiótico novo, amiodarona, erro de dose, diarreia, dieta, hepatopatia' },
+        { tipo:'fim', rotulo:'Destino', texto:'Sangramento maior: internar (UTI se sítio crítico) · INR alto sem sangramento: alta com dose ajustada e INR marcado' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        '*Sangramento em sítio crítico:* cefaleia súbita, déficit focal, dor lombar ou abdominal com queda de Hb (retroperitônio), dor ocular, hemartrose.',
+        '*Sangramento digestivo:* melena, hematêmese, enterorragia em quem usa anticoagulante.',
+        '*INR acima do alvo* em exame de rotina, sem sangramento.',
+        '*Equimoses, gengivorragia, hematúria* — às vezes o primeiro sinal de interação medicamentosa.',
+        '*Procedimento urgente* (cirurgia, punção lombar, drenagem) em paciente anticoagulado.',
+        '*Intoxicação ou tentativa de suicídio* com anticoagulante ou raticida (superwarfarina).'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Cefaleia ou alteração neurológica* em anticoagulado: TC de crânio sem contraste antes de qualquer coisa.',
+        'Hipotensão, taquicardia ou queda de Hb ≥ 2 g/dL: sangramento maior até prova em contrário.',
+        'Dor lombar ou no flanco com anemia: *hematoma de retroperitônio* (TC).',
+        'Dor e tensão em um membro: hematoma com síndrome compartimental.',
+        'INR muito alto sem uso de varfarina: *superwarfarina* (raticida) — vitamina K por semanas.'
+      ]},
+
+      { tipo:'lista', titulo:'Critérios de sangramento maior (ISTH / ACC 2020)', itens:[
+        '*Fatal* ou com instabilidade hemodinâmica.',
+        '*Sítio crítico:* intracraniano, intraespinhal, intraocular, pericárdico, retroperitoneal, intra-articular, intramuscular com síndrome compartimental, via aérea.',
+        '*Queda de hemoglobina ≥ 2 g/dL* ou necessidade de *≥ 2 concentrados de hemácias*.',
+        '*Sangramento que exige intervenção* (endoscopia, cirurgia, embolização) para parar.',
+        '*Fora desses critérios:* sangramento menor — medidas locais, sem reversão.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Hemograma, TP/INR, TTPa, fibrinogênio*, creatinina com clearance, função hepática, tipagem.',
+        '*INR mede só a varfarina.* TTPa normal não exclui dabigatrana em nível relevante; TP normal não exclui rivaroxabana e não mede apixabana.',
+        '*Tempo de trombina normal* praticamente exclui dabigatrana relevante; *anti-Xa calibrado* para a droga, se o laboratório tiver.',
+        '*Imagem do sítio:* TC de crânio sem contraste, angio-TC abdominal, endoscopia.',
+        '*Repetir INR 30 min após o CCP* e Hb seriada.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Vitamina K (fitomenadiona) VO', dose:'INR 4,5–10: 1–2,5 mg só se alto risco de sangrar · INR > 10: 2,5–5 mg', via:'VO', obs:'Não há comprimido no Brasil: a ampola Kanakion MM 10 mg/mL pode ser dada por boca (conferir a bula da ampola disponível). Age em 24–48 h.' },
+        { droga:'Vitamina K (fitomenadiona) EV', dose:'10 mg diluídos em 50–100 mL de SF 0,9% em 20–30 min', via:'EV', obs:'Sangramento maior, sempre junto do CCP (o CCP passa em horas, a vitamina K segura). Repetir em 12 h se o INR voltar a subir. Anafilaxia rara: infundir devagar. Não usar IM.' },
+        { droga:'Complexo protrombínico (varfarina)', dose:'INR 2–4: 25 UI/kg (máx 2.500 UI) · INR 4–6: 35 UI/kg (máx 3.500 UI) · INR > 6: 50 UI/kg (máx 5.000 UI)', via:'EV', obs:'CCP de 4 fatores (Beriplex, Octaplex, Prothromplex). Alternativa: dose fixa de 1.000–1.500 UI. Correr em 10–20 min. Risco trombótico baixo, mas real.' },
+        { droga:'Complexo protrombínico (DOAC)', dose:'50 UI/kg (máx 5.000 UI) ou dose fixa de 2.000 UI', via:'EV', obs:'Anti-Xa sem andexanete e dabigatrana sem idarucizumabe. Efeito não monitorável pelo INR.' },
+        { droga:'Plasma fresco congelado', dose:'15–20 mL/kg', via:'EV', obs:'Só se não houver CCP. Demora a descongelar, muito volume (risco de congestão) e reverte de forma incompleta.' },
+        { droga:'Idarucizumabe', dose:'5 g (2 frascos de 2,5 g/50 mL) em bolus ou 2 infusões seguidas', via:'EV', obs:'Antídoto da dabigatrana (Praxbind). Reverte em minutos. Reiniciar o anticoagulante após 24 h se a hemostasia estiver garantida.' },
+        { droga:'Andexanete alfa', dose:'Dose baixa: 400 mg em bolus + 4 mg/min por 2 h · dose alta: 800 mg + 8 mg/min por 2 h', via:'EV', obs:'Antídoto dos anti-Xa, *raramente disponível no Brasil* — conferir com a farmácia. Dose alta se rivaroxabana > 10 mg ou apixabana > 5 mg há menos de 8 h.' },
+        { droga:'Protamina', dose:'HNF: 1 mg para cada 100 UI de heparina das últimas 2–3 h (máx 50 mg) · enoxaparina < 8 h: 1 mg por 1 mg; 8–12 h: 0,5 mg por 1 mg', via:'EV', obs:'Correr lento (até 5 mg/min): hipotensão e anafilaxia. Neutraliza só parcialmente a enoxaparina. Ampola nacional costuma vir em UI (1.000 UI/mL neutralizam cerca de 1.000 UI de heparina) — conferir o rótulo.' },
+        { droga:'Carvão ativado', dose:'50 g', via:'VO/SNG', obs:'DOAC ingerido há menos de 2 h (até 6 h para apixabana e rivaroxabana), com via aérea protegida.' },
+        { droga:'Ácido tranexâmico', dose:'1 g em 10 min', via:'EV', obs:'Adjuvante em trauma, sangramento mucoso e cirúrgico. *Não usar na HDA* (sem benefício e mais trombose).' },
+        { droga:'Desmopressina', dose:'0,3 mcg/kg em 50 mL de SF 0,9% em 15–30 min', via:'EV', obs:'Antiagregante com hemorragia intracraniana ou uremia. Ampola 4 mcg/mL. Hiponatremia: restringir água livre nas 24 h seguintes.' },
+        { droga:'Concentrado de plaquetas', dose:'1 unidade por 10 kg ou 1 aférese', via:'EV', obs:'Em antiagregante só se for para neurocirurgia ou cirurgia de urgência. Na HIC sem cirurgia piorou o desfecho (PATCH).' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Dar vitamina K a todo INR alto sem sangramento — atrasa a reanticoagulação e não reduz sangramento.',
+        'Vitamina K por via IM: absorção errática e hematoma.',
+        'Esperar o INR para reverter quem tem hemorragia intracraniana em uso de varfarina.',
+        'Usar o INR para julgar o efeito de dabigatrana, rivaroxabana ou apixabana.',
+        'Transfundir plaquetas de rotina no paciente em AAS ou clopidogrel com AVC hemorrágico que não vai operar.',
+        'Reverter a anticoagulação de válvula mecânica por INR alto sem sangramento.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Alta* para INR alto sem sangramento ou com sangramento menor controlado: dose ajustada por escrito, INR em 24 h (INR > 10) ou em 3–7 dias, e revisão de interações. *Internar* todo sangramento maior (UTI se sítio crítico ou instável) e o INR > 10 em quem não tem como repetir o exame. *Quando reiniciar:* sangramento menor, assim que controlado; sangramento digestivo maior, em geral entre 7 e 14 dias depois da hemostasia, com a gastro; hemorragia intracraniana, discutir com a neurologia entre 4 e 8 semanas, pesando o motivo da anticoagulação (válvula mecânica e TEV recente pesam a favor de voltar antes). Ponte com heparina não é necessária na maioria das retomadas. *Interações que sobem o INR:* amiodarona, fluconazol e azóis, metronidazol, sulfametoxazol-trimetoprima, ciprofloxacino, macrolídeos, paracetamol em dose alta e uso contínuo, álcool agudo. *Que baixam:* rifampicina, carbamazepina, fenitoína, fenobarbital, vegetais verdes em excesso. DOAC: evitar com inibidores ou indutores fortes de CYP3A4 e glicoproteína-P (cetoconazol, ritonavir, rifampicina, carbamazepina). *Divergência:* a ACCP 2012 desaconselha vitamina K no INR entre 4,5 e 10 sem sangramento; o consenso do ACC 2020 admite 1–2,5 mg VO quando o risco de sangrar é alto.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Antes de reverter, pergunte a indicação: reverter quem tem válvula mecânica ou TEV de 2 semanas tem preço trombótico.',
+        'Pergunte a hora da última dose do DOAC: depois de 2 a 3 meias-vidas (cerca de 24–48 h com rim normal) o efeito é pequeno.',
+        'Todo paciente que volta com INR fora do alvo merece a pergunta: "começou algum remédio novo?" — antibiótico é o campeão.',
+        'Raticida de "chumbinho" não é cumarínico; raticida de "bolinha azul" ou "isca peletizada" costuma ser superwarfarina.'
+      ]}
+    ] },
+
+  { id:'lise-tumoral', titulo:'Síndrome de lise tumoral', categoria:'hemato', gravidade:'emergencia',
+    resumo:'Hiperuricemia, hipercalemia, hiperfosfatemia e hipocalcemia em tumor de alto turnover ou logo após a quimioterapia: hiper-hidratar, baixar o ácido úrico (rasburicase se alto risco e sem deficiência de G6PD), tratar o potássio e chamar a diálise cedo.',
+    tags:['lise tumoral','sindrome de lise tumoral','slt','cairo-bishop','hiperuricemia','acido urico','rasburicase','fasturtec','alopurinol','g6pd','hiperfosfatemia','hipocalcemia','hipercalemia','linfoma de burkitt','leucemia aguda','quimioterapia','lesao renal aguda'],
+    fonte:'Cairo e Bishop — Br J Haematol (2004) · Cairo et al. — Recommendations for TLS risk classification (Br J Haematol 2010) · Coiffier et al. — Guidelines for TLS (J Clin Oncol 2008) · BSH — Management of TLS in adults and children (2015) · UpToDate — Tumor lysis syndrome',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'*Leucemia aguda, linfoma de Burkitt ou outro linfoma volumoso*, leucometria muito alta ou massa grande, sobretudo 12–72 h após iniciar quimioterapia ou corticoide — mas pode ser espontânea.' },
+      { rotulo:'Prioridade',    valor:'*ECG e potássio já*, acesso calibroso, hidratação vigorosa e débito urinário medido de hora em hora.' },
+      { rotulo:'Meta',          valor:'Diurese ≥ 100 mL/h no adulto, potássio seguro, ácido úrico em queda e *diálise antes* da arritmia ou da sobrecarga.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Suspeita', texto:'Tumor de alto turnover com creatinina, potássio, fósforo ou ácido úrico subindo',
+          nota:'Também espontânea antes de qualquer tratamento, e após corticoide isolado no linfoma' },
+        { tipo:'passo', rotulo:'Já', texto:'*ECG, monitor, gasometria com K*, eletrólitos, ácido úrico, creatinina, LDH',
+          nota:'Amostra de ácido úrico de quem recebeu rasburicase vai *no gelo* (a droga continua agindo no tubo)' },
+        { tipo:'decisao', texto:'Potássio ≥ 6 ou alteração no ECG?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Tratar a hipercalemia agora* e acionar a nefrologia',
+            nota:'Cálcio para estabilizar a membrana só com alteração no ECG (fósforo alto precipita)',
+            meds:['Gluconato de cálcio 10%', 'Insulina regular + glicose'], ir:'hipercalemia' },
+          { rotulo:'Não', texto:'Seguir a hidratação' }
+        ]},
+        { tipo:'passo', rotulo:'Base', texto:'*Hiper-hidratação sem potássio* — 2–3 L/m²/dia, diurese ≥ 100 mL/h (criança 80–100 mL/m²/h)',
+          nota:'Diurético só se houver hipervolemia, depois de garantir volume. Sem alcalinizar a urina',
+          meds:['Hidratação venosa'] },
+        { tipo:'decisao', texto:'Hipouricemiante: qual o risco ou o ácido úrico?', ramos:[
+          { rotulo:'Alto risco ou SLT instalada', cor:'perigo', texto:'*Rasburicase* — se G6PD normal ou desconhecido sem tempo, discutir com hemato',
+            nota:'Deficiência de G6PD: hemólise e metemoglobinemia. Nesse caso, alopurinol',
+            meds:['Rasburicase'] },
+          { rotulo:'Risco intermediário ou baixo', cor:'ok', texto:'*Alopurinol* 1–2 dias antes da quimioterapia, por 3–7 dias',
+            meds:['Alopurinol'] }
+        ]},
+        { tipo:'decisao', texto:'Cálcio baixo?', ramos:[
+          { rotulo:'Com sintomas (tetania, convulsão, arritmia)', cor:'perigo', texto:'*Gluconato de cálcio* na menor dose que tira o sintoma',
+            meds:['Gluconato de cálcio 10%'] },
+          { rotulo:'Sem sintomas', cor:'ok', texto:'*Não repor* — tratar o fósforo',
+            nota:'Cálcio com fósforo alto vira fosfato de cálcio no rim', meds:['Hidróxido de alumínio'] }
+        ]},
+        { tipo:'alerta', rotulo:'Diálise', texto:'Oligúria apesar de volume, K refratário, sobrecarga, fósforo ou produto Ca x P muito altos, hipocalcemia sintomática',
+          nota:'Chamar cedo: a lise continua e o potássio sobe rápido', ir:'indicacao-dialise' },
+        { tipo:'fim', rotulo:'Destino', texto:'UTI ou unidade com monitor, eletrólitos de 4/4 a 6/6 h e nefrologia de sobreaviso' }
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Potássio ≥ 6* ou alteração no ECG: risco de morte súbita.',
+        '*Oligúria* apesar de hidratação adequada.',
+        'Convulsão, tetania ou QT longo: hipocalcemia sintomática.',
+        'Hemólise ou cianose com saturação "normal" após rasburicase: *deficiência de G6PD* (metemoglobinemia).',
+        'Creatinina subindo em leucemia ou linfoma recém-diagnosticado, antes de qualquer tratamento: SLT espontânea.'
+      ]},
+
+      { tipo:'passos', titulo:'Conduta imediata', itens:[
+        'Monitorar e fazer ECG: o potássio é o que mata.',
+        'Puncionar acesso calibroso e pesar o paciente.',
+        'Hidratar sem potássio, com meta de diurese medida de hora em hora (sonda se necessário).',
+        'Tratar a hipercalemia conforme a conduta própria, sem esperar a diálise.',
+        'Iniciar rasburicase no alto risco ou na SLT estabelecida, alopurinol nos demais.',
+        'Suspender drogas nefrotóxicas, AINE, contraste e suplementos de potássio e fósforo.',
+        'Acionar hematologia e nefrologia na mesma hora.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Hidratação venosa', dose:'Adulto: 2–3 L/m²/dia (cerca de 3 L/dia) · criança < 10 kg: 200 mL/kg/dia', via:'EV', obs:'SF 0,9% ou SG 5% com NaCl 0,45%, *sem potássio*. Meta: diurese ≥ 100 mL/h no adulto, 80–100 mL/m²/h na criança (≥ 4 mL/kg/h se < 10 kg). Cuidado na insuficiência cardíaca.' },
+        { droga:'Rasburicase', dose:'0,2 mg/kg em 50 mL de SF 0,9% em 30 min, 1x/dia, por até 5–7 dias', via:'EV', obs:'Fasturtec 1,5 mg/mL. Muitos serviços dão dose única (3–6 mg no adulto) e repetem pelo ácido úrico. *Contraindicada na deficiência de G6PD* e na gestação.' },
+        { droga:'Alopurinol', dose:'Adulto: 100 mg/m² de 8/8 h (máx 800 mg/dia; usual 300–600 mg/dia) · criança: 10 mg/kg/dia ÷ 8/8 h (máx 800 mg/dia)', via:'VO', obs:'Comprimidos de 100 e 300 mg. Não baixa o ácido úrico já formado. Reduzir na DRC. Reduzir azatioprina e 6-mercaptopurina em 65–75%.' },
+        { droga:'Gluconato de cálcio 10%', dose:'Adulto: 10–20 mL (1–2 g) em 10–20 min · criança: 0,5–1 mL/kg (50–100 mg/kg; máx 20 mL)', via:'EV', obs:'Só hipocalcemia sintomática ou hipercalemia com alteração no ECG. Diluir e correr lento, em acesso separado do bicarbonato.' },
+        { droga:'Insulina regular + glicose', dose:'Adulto: 10 UI + 50 mL de glicose 50% · criança: 0,1 UI/kg (máx 10 UI) + glicose 0,5 g/kg', via:'EV', obs:'Desloca o potássio para dentro da célula por 4–6 h. Glicemia de 1/1 h por 4–6 h.' },
+        { droga:'Hidróxido de alumínio', dose:'Adulto: 10–15 mL (suspensão 61,5 mg/mL) 3–4x/dia com as refeições, por 1–2 dias · criança: 50–150 mg/kg/dia ÷ 3–4', via:'VO', obs:'Quelante de fósforo de curto prazo. Alternativa: sevelamer 800 mg, 1–2 comprimidos 3x/dia. Fósforo muito alto ou refratário: diálise.' },
+        { droga:'Furosemida', dose:'0,5–1 mg/kg (adulto 20–40 mg)', via:'EV', obs:'*Só com hipervolemia* e volume garantido. Não é para "forçar diurese" no desidratado.' }
+      ]},
+
+      { tipo:'tempo', titulo:'Linha do tempo', itens:[
+        { quando:'0–15 min', o_que:'ECG, monitor, K na gasometria, acesso calibroso.' },
+        { quando:'Primeira hora', o_que:'Hidratação correndo, hipercalemia tratada, hipouricemiante prescrito, hemato e nefro acionadas.' },
+        { quando:'4–6 h', o_que:'Repetir K, fósforo, cálcio, ácido úrico e creatinina; balanço hídrico.' },
+        { quando:'De 6/6 h a 8/8 h', o_que:'Eletrólitos enquanto durar a lise (em geral os primeiros 3 a 7 dias de quimioterapia).' }
+      ]},
+
+      { tipo:'lista', titulo:'Critérios diagnósticos (Cairo-Bishop)', itens:[
+        '*SLT laboratorial:* 2 ou mais alterações entre 3 dias antes e 7 dias depois do início da quimioterapia.',
+        '*Ácido úrico* ≥ 8 mg/dL ou aumento de 25%.',
+        '*Potássio* ≥ 6 mEq/L ou aumento de 25%.',
+        '*Fósforo* ≥ 4,5 mg/dL no adulto (≥ 6,5 mg/dL na criança) ou aumento de 25%.',
+        '*Cálcio* ≤ 7 mg/dL ou queda de 25%.',
+        '*SLT clínica:* laboratorial + creatinina ≥ 1,5 vez o limite superior, arritmia ou morte súbita, ou convulsão.',
+        '*Alto risco:* Burkitt, leucemia linfoblástica com leucócitos ≥ 100.000, LMA com leucócitos ≥ 100.000, linfoma volumoso com LDH ≥ 2 vezes o normal, DRC prévia.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Potássio, fósforo, cálcio (iônico se possível), ácido úrico, creatinina, ureia, LDH*, magnésio.',
+        '*Gasometria venosa* — acidose piora a hipercalemia.',
+        '*Hemograma* (hiperleucocitose), coagulograma (CIVD na leucemia promielocítica).',
+        '*ECG* na entrada e a cada alteração de potássio ou cálcio.',
+        '*Dosagem de G6PD* antes da rasburicase se o tempo permitir (alto risco: homem de ascendência africana ou mediterrânea).',
+        '*Ultrassom de rins e vias* se oligúria: excluir obstrução pelo tumor.'
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        '*Alcalinizar a urina* com bicarbonato: precipita fosfato de cálcio e xantina, e piora a hipocalcemia.',
+        'Repor cálcio na hipocalcemia sem sintomas.',
+        'Rasburicase na deficiência de G6PD.',
+        'Dar furosemida para "fazer urina" no paciente hipovolêmico.',
+        'Colher ácido úrico após rasburicase em tubo comum, sem gelo — o resultado vem falsamente baixo.',
+        'Esperar a creatinina dobrar para chamar a nefrologia.'
+      ]},
+
+      { tipo:'texto', titulo:'Destino', conteudo:'SLT estabelecida ou alto risco com alteração laboratorial vai para *UTI ou unidade com monitor*, eletrólitos seriados e nefrologia de sobreaviso. *Indicações de diálise:* oligúria ou anúria apesar de volume, hipercalemia refratária, sobrecarga de volume, hiperfosfatemia grave ou produto cálcio x fósforo acima de 70, hipocalcemia sintomática, uremia. Na SLT a diálise é indicada mais cedo que em outras lesões renais, porque o potássio continua sendo liberado; hemodiálise intermitente remove potássio mais rápido, e métodos contínuos evitam o rebote. *Prevenção* é a melhor conduta: hidratação e alopurinol no risco intermediário, rasburicase profilática no alto risco, iniciadas antes da quimioterapia.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Linfoma volumoso que "piorou dos rins" depois de uma dose de dexametasona: pense em lise, não só em contraste ou desidratação.',
+        'A rasburicase derruba o ácido úrico em horas; o alopurinol só impede que se forme mais.',
+        'Hipocalcemia da lise é secundária ao fósforo: trate o fósforo e o cálcio sobe.',
+        'Peça G6PD na admissão de toda leucemia e linfoma de alto risco — evita a dúvida na madrugada.'
+      ]}
+    ] },
+
+  { id:'veia-cava-superior', titulo:'Síndrome da veia cava superior', categoria:'hemato', gravidade:'urgencia',
+    resumo:'Edema de face, pescoço e braços com circulação colateral no tórax: TC com contraste, cabeceira elevada e diagnóstico histológico rápido; emergência só com estridor, edema cerebral ou instabilidade, que vão para stent.',
+    tags:['veia cava superior','sindrome da veia cava superior','svcs','sindrome de vcs','edema de face','pletora','circulacao colateral','cancer de pulmao','linfoma','timoma','massa mediastinal','stent','cateter','trombose de cateter','dexametasona'],
+    fonte:'Yu, Wilson e Detterbeck — Proposed classification system for SVC syndrome (J Thorac Oncol 2008) · NCCN — Non-small cell lung cancer e B-cell lymphomas (2025) · ASCO/ASH — VTE em pacientes com câncer (2023) · UpToDate — Malignancy-related superior vena cava syndrome',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'*Edema de face, pescoço e braços*, pletora, veias dilatadas no pescoço e no tórax, dispneia que piora deitado — em quem tem câncer de pulmão, linfoma, massa mediastinal ou *cateter venoso central*.' },
+      { rotulo:'Prioridade',    valor:'Reconhecer o que é emergência (*estridor, edema cerebral, choque*) e pedir *TC de tórax com contraste*.' },
+      { rotulo:'Meta',          valor:'Via aérea segura, *biópsia sem atraso* antes de tratar às cegas e stent para quem não pode esperar.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Suspeita', texto:'Edema de face e braços, pletora e colaterais no tórax',
+          nota:'Piora ao deitar ou ao inclinar o tronco para frente. Instala-se em semanas: a colateral compensa' },
+        { tipo:'passo', rotulo:'Já', texto:'*Cabeceira elevada*, oxigênio se SpO2 < 92%, acesso venoso *nos membros inferiores*',
+          nota:'Acesso no braço infunde lento e pode piorar o edema' },
+        { tipo:'decisao', texto:'Tem sinal de emergência?', ramos:[
+          { rotulo:'Estridor, edema de laringe, confusão, rebaixamento ou síncope, hipotensão', cor:'perigo',
+            texto:'*Stent endovascular de urgência* — radiologia intervencionista ou vascular',
+            nota:'Via aérea difícil prevista: intubação com tubo menor, acordado, por quem tem mais experiência', ir:'via-aerea-dificil' },
+          { rotulo:'Não', texto:'*TC de tórax com contraste* e investigação da causa' }
+        ]},
+        { tipo:'decisao', texto:'Qual a causa na TC?', ramos:[
+          { rotulo:'Trombose ligada a cateter ou marca-passo', texto:'*Anticoagular*; retirar o cateter se não for mais necessário ou não funcionar',
+            meds:['Enoxaparina', 'Heparina não fracionada'], ir:'tvp' },
+          { rotulo:'Massa sem diagnóstico', texto:'*Biópsia em dias*, antes de corticoide ou radioterapia',
+            nota:'Biópsia por broncoscopia, linfonodo cervical, mediastinoscopia ou guiada por TC' },
+          { rotulo:'Linfoma ou timoma conhecido, com sintomas', cor:'ok', texto:'*Corticoide* junto com a oncologia',
+            nota:'Idealmente depois do material para biópsia: o corticoide pode apagar o diagnóstico do linfoma',
+            meds:['Dexametasona'] }
+        ]},
+        { tipo:'fim', rotulo:'Destino', texto:'Internar com oncologia ou hematologia · stent na emergência · tratamento da causa (quimio, radioterapia) após o diagnóstico' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        '*Edema facial e de pescoço:* "sente o colarinho apertado", pálpebras inchadas pela manhã.',
+        '*Veias distendidas* no pescoço e na parede do tórax, que não colabam ao sentar.',
+        '*Dispneia, tosse, rouquidão* e piora ao deitar ou abaixar.',
+        '*Cefaleia, tontura, turvação visual* — congestão venosa cerebral.',
+        '*Contexto:* câncer de pulmão (sobretudo pequenas células), linfoma não Hodgkin, timoma, metástase mediastinal, cateter de quimioterapia ou de diálise.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Estridor* ou edema de língua e laringe: via aérea em risco.',
+        '*Confusão, rebaixamento, convulsão*: edema cerebral.',
+        '*Síncope ou hipotensão* sem outra causa: queda do retorno venoso.',
+        'Massa mediastinal anterior com ortopneia: *risco de colapso* na sedação ou intubação.',
+        'Instalação em horas a poucos dias: pior tolerância (sem tempo para colaterais).'
+      ]},
+
+      { tipo:'lista', titulo:'Classificação de gravidade (Yu 2008)', itens:[
+        '*Grau 0:* imagem com obstrução, sem sintomas.',
+        '*Grau 1 (leve):* edema de face e pescoço, pletora, cianose.',
+        '*Grau 2 (moderado):* edema com prejuízo funcional (disfagia leve, tosse, limitação de movimentos da cabeça e da mandíbula, alteração visual por edema palpebral).',
+        '*Grau 3 (grave):* edema cerebral leve a moderado (cefaleia, tontura), edema de laringe leve a moderado, ou síncope ao inclinar.',
+        '*Grau 4 (risco de morte):* edema cerebral grave (confusão), edema de laringe grave (estridor) ou instabilidade hemodinâmica — *stent de urgência*.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*TC de tórax com contraste* — mostra o local, a extensão, a massa e o trombo.',
+        '*Hemograma, LDH, ácido úrico, eletrólitos, creatinina* — linfoma volumoso pode estar em lise.',
+        '*Radiografia de tórax:* alargamento do mediastino ou massa hilar (normal não exclui).',
+        '*Material para diagnóstico:* linfonodo periférico, derrame pleural (citologia), medula óssea, broncoscopia — o acesso menos invasivo primeiro.',
+        '*Beta-HCG e alfafetoproteína* no homem jovem com massa mediastinal anterior (tumor de células germinativas).'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Dexametasona', dose:'10 mg de ataque e depois 4 mg de 6/6 h', via:'EV', obs:'*Só em linfoma, timoma* ou edema de laringe sintomático, e junto com a oncologia. Pode impedir o diagnóstico de linfoma: colher a biópsia antes sempre que possível.' },
+        { droga:'Enoxaparina', dose:'1 mg/kg de 12/12 h', via:'SC', obs:'Trombose de cateter ou trombo associado à massa. ClCr < 30 mL/min: 1 mg/kg 1x/dia. Plaquetas < 50.000: discutir com a hemato.' },
+        { droga:'Heparina não fracionada', dose:'80 UI/kg em bolus + 18 UI/kg/h, ajustar pelo TTPa', via:'EV', obs:'Preferir quando pode haver procedimento (stent, trombólise dirigida por cateter) nas próximas horas ou na DRC grave.' },
+        { droga:'Furosemida', dose:'20–40 mg', via:'EV', obs:'Benefício não comprovado; só se houver congestão ou sobrecarga de volume associadas.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Dar corticoide "para desinchar" antes da biópsia de uma massa mediastinal sem diagnóstico.',
+        'Radioterapia empírica sem diagnóstico, salvo emergência sem acesso a stent.',
+        'Deitar o paciente com massa mediastinal anterior para TC ou sedação sem avaliar a via aérea.',
+        'Puncionar acesso venoso e infundir contraste no braço do lado mais edemaciado sem necessidade.',
+        'Atrasar a biópsia por dias esperando o paciente "melhorar".'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'Síndrome de veia cava de causa nova é *internação*, com oncologia ou hematologia, para diagnóstico histológico rápido e tratamento da causa. A maioria tolera dias de investigação, porque a obstrução se instala devagar e a circulação colateral compensa; a regra é *diagnóstico primeiro*, já que o tratamento depende do tipo de tumor (quimioterapia no pequenas células e no linfoma, radioterapia no não pequenas células, cirurgia no timoma). *Stent endovascular* alivia os sintomas em horas a dias e não atrapalha a biópsia: é a escolha para o grau 4, para recorrência após tratamento e para quem não responde. Trombose associada a cateter: anticoagular por pelo menos 3 meses e, se o cateter for mantido, enquanto estiver no lugar.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Pletora com colaterais no tórax e "colarinho apertado" em fumante: câncer de pulmão até prova em contrário.',
+        'Massa mediastinal anterior e ortopneia: sede e intube com o anestesista e o cirurgião presentes — o colapso vem na indução.',
+        'Paciente com cateter de quimioterapia e braço e face inchados: trombose de cateter é a causa benigna mais comum.'
+      ]}
+    ] },
+
+  { id:'anemia-falciforme', titulo:'Anemia falciforme no PS (adulto e criança)', categoria:'hemato', gravidade:'urgencia',
+    resumo:'Crise de dor com opioide em até 1 hora, febre tratada como sepse em asplênico, síndrome torácica aguda reconhecida cedo e transfusão com alvo de hemoglobina de no máximo 10 g/dL.',
+    tags:['anemia falciforme','doenca falciforme','falciforme','hbss','hbsc','crise vaso-oclusiva','crise de dor','crise algica','sindrome toracica aguda','sta','sequestro esplenico','crise aplastica','parvovirus','avc falciforme','exsanguineotransfusao','priapismo','hidroxiureia','asplenia','ceftriaxona','morfina'],
+    fonte:'Ministério da Saúde — Doença falciforme: condutas básicas para tratamento (2012) e Manual de eventos agudos em doença falciforme (2009) · Ministério da Saúde — PCDT Doença falciforme (2018) · SBP — Doença falciforme na infância · NHLBI — Evidence-based management of sickle cell disease (2014) · ASH — Diretrizes de doença falciforme: dor aguda e crônica (2020), doença cerebrovascular (2020), transfusão (2020) · UpToDate',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Todo paciente com doença falciforme que chega com *dor, febre, dispneia ou dor torácica, palidez súbita, baço grande, déficit neurológico ou ereção dolorosa*.' },
+      { rotulo:'Prioridade',    valor:'*Analgesia em até 30–60 min* da chegada, *antibiótico em até 1 h* na febre, e procurar sempre a síndrome torácica aguda.' },
+      { rotulo:'Meta',          valor:'Dor controlada, infecção coberta e complicação grave reconhecida — transfundir sem passar de *Hb 10 g/dL*.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Paciente falciforme no PS',
+          nota:'Perguntar a Hb basal (está no cartão do hemocentro), uso de hidroxiureia, transfusões e aloanticorpos' },
+        { tipo:'decisao', texto:'Qual o quadro principal?', ramos:[
+          { rotulo:'Dor (crise vaso-oclusiva)', texto:'*Opioide em até 30–60 min* + dipirona; hidratação de manutenção',
+            nota:'Reavaliar a dor a cada 15–30 min e repetir. Sem acesso na criança: fentanil intranasal',
+            meds:['Morfina', 'Dipirona', 'Fentanil intranasal'] },
+          { rotulo:'Febre ≥ 38,5 °C', cor:'perigo', texto:'*Ceftriaxona em até 1 h*, depois exames',
+            nota:'Asplenia funcional: pneumococo mata em horas. Suspeita de meningite: dose de meningite', meds:['Ceftriaxona'], ir:'sepse' },
+          { rotulo:'Dor torácica, tosse, dispneia ou infiltrado novo', cor:'perigo', texto:'*Síndrome torácica aguda* (abaixo)' },
+          { rotulo:'Palidez súbita', cor:'perigo', texto:'*Baço grande: sequestro* · baço normal com reticulócitos baixos: *crise aplástica*' },
+          { rotulo:'Déficit focal, convulsão, cefaleia súbita', cor:'perigo', texto:'*AVC* — TC e transfusão de urgência (abaixo)' },
+          { rotulo:'Ereção dolorosa > 4 h', cor:'perigo', texto:'*Priapismo isquêmico* — urologia para aspiração', ir:'escroto-agudo' }
+        ]},
+        { tipo:'decisao', texto:'Síndrome torácica aguda?', ramos:[
+          { rotulo:'Infiltrado novo + febre, dor torácica, taquipneia ou hipoxemia', cor:'perigo',
+            texto:'*Ceftriaxona + azitromicina*, O2 se SpO2 < 95%, incentivador respiratório, analgesia',
+            nota:'Transfusão simples se Hb caiu ≥ 1 g/dL do basal; exsanguineotransfusão se SpO2 < 90% com O2, piora rápida ou acometimento multilobar',
+            meds:['Ceftriaxona', 'Azitromicina', 'Concentrado de hemácias'] },
+          { rotulo:'Radiografia normal', texto:'Seguir tratando a dor e *repetir a radiografia* se surgirem sintomas',
+            nota:'A STA aparece em 24–72 h depois da crise de dor em boa parte dos casos' }
+        ]},
+        { tipo:'decisao', texto:'Anemia aguda: qual a causa?', ramos:[
+          { rotulo:'Sequestro esplênico', cor:'perigo', texto:'*Volume e hemácias em alíquotas pequenas* (5 mL/kg)',
+            nota:'O baço devolve sangue ao encolher: alvo de Hb mais baixo (cerca de 8 g/dL)', meds:['Concentrado de hemácias'] },
+          { rotulo:'Crise aplástica (parvovírus B19)', texto:'*Transfundir* até perto da Hb basal; reticulócitos em 3–5 dias',
+            nota:'Isolar de gestantes e de imunossuprimidos', meds:['Concentrado de hemácias'] }
+        ]},
+        { tipo:'alerta', rotulo:'AVC', texto:'*Exsanguineotransfusão* de urgência com alvo de HbS < 30%',
+          nota:'Se a troca demorar, transfusão simples logo, sem passar de Hb 10 g/dL. Adulto na janela: trombólise segue os critérios usuais',
+          meds:['Exsanguineotransfusão'], ir:'avc-isquemico' },
+        { tipo:'fim', rotulo:'Destino', texto:'Alta com dor controlada por via oral e sem complicação · internar febre com sinal de gravidade, STA, sequestro, aplástica, AVC e dor refratária' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        '*Crise vaso-oclusiva:* dor em ossos longos, coluna, tórax ou abdome, igual às crises anteriores; no lactente, dactilite (mãos e pés inchados).',
+        '*Síndrome torácica aguda:* dor torácica, tosse, febre, taquipneia, hipoxemia e infiltrado novo — pneumonia e infarto pulmonar se confundem.',
+        '*Sequestro esplênico:* criança pequena (HbSS até 5 anos; HbSC até mais tarde) pálida, prostrada, com baço que cresceu e Hb ≥ 2 g/dL abaixo do basal.',
+        '*Crise aplástica:* palidez e cansaço com reticulócitos muito baixos, muitas vezes após febre — parvovírus B19.',
+        '*AVC:* déficit focal, afasia, convulsão, cefaleia intensa — pico na criança entre 2 e 10 anos.',
+        '*Priapismo:* ereção dolorosa sem estímulo; mais de 4 h é isquêmico.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Febre ≥ 38,5 °C* com toxemia, febre ≥ 40 °C, ou leucócitos > 30.000 ou < 5.000: sepse por pneumococo.',
+        '*SpO2 < 95% ou queda de 3 pontos do basal*, taquipneia ou dor torácica: síndrome torácica aguda.',
+        '*Baço crescendo e Hb caindo*: sequestro — pode matar em horas.',
+        '*Qualquer sinal neurológico*: AVC até prova em contrário.',
+        '*Dor que não cede* com opioide adequado, ou diferente das crises de sempre: procurar outra causa (colecistite, osteomielite, necrose de cabeça de fêmur).'
+      ]},
+
+      { tipo:'lista', titulo:'Metas de transfusão', itens:[
+        '*Alvo:* Hb até 10 g/dL — *não passar de 10–11 g/dL* (hiperviscosidade, AVC, STA).',
+        '*Volume:* criança 10–15 mL/kg; adulto 1–2 unidades. No sequestro, 5 mL/kg por vez.',
+        '*Hemácias fenotipadas* (pelo menos Rh e Kell) e *leucorreduzidas*; avisar o banco de sangue que é falciforme.',
+        '*Exsanguineotransfusão:* AVC, STA grave ou progressiva, falência de múltiplos órgãos — alvo de HbS < 30%.',
+        '*Não transfundir* crise de dor não complicada, anemia estável assintomática ou priapismo agudo isolado.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Hemograma com reticulócitos* e comparar com a Hb basal.',
+        '*Tipagem com fenotipagem e pesquisa de anticorpos* em quem pode precisar de sangue.',
+        '*Hemocultura, urina tipo I e urocultura* na febre; radiografia de tórax se febre ou sintoma respiratório.',
+        '*Bilirrubinas, LDH, creatinina*, função hepática; gasometria se hipoxemia.',
+        '*Punção lombar* na criança febril com suspeita de meningite.',
+        '*TC de crânio* (ressonância se disponível) no déficit neurológico.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Morfina', dose:'0,1 mg/kg (máx 10 mg na 1ª dose); repetir 0,05 mg/kg a cada 20–30 min até aliviar', via:'EV/SC', obs:'Criança e adulto. Ampola 10 mg/mL: diluir em 9 mL de SF (1 mg/mL). VO: 0,2–0,3 mg/kg de 4/4 h. Após o controle: dose fixa de 4/4 h ou bomba de analgesia, com resgate.' },
+        { droga:'Fentanil intranasal', dose:'1,5–2 mcg/kg (máx 100 mcg)', via:'IN', obs:'Criança sem acesso venoso. Ampola 50 mcg/mL com atomizador, dividir entre as narinas. Pode repetir 1 mcg/kg em 10 min.' },
+        { droga:'Dipirona', dose:'Criança: 15–25 mg/kg (máx 1 g) de 6/6 h · adulto: 1 g de 6/6 h', via:'EV/VO', obs:'Associar ao opioide sempre (poupa opioide). Ampola 500 mg/mL.' },
+        { droga:'Cetoprofeno', dose:'Adulto: 100 mg em 100 mL de SF de 12/12 h', via:'EV', obs:'Máx 5 dias. Evitar na nefropatia falciforme, desidratação e creatinina alterada. Criança: ibuprofeno 10 mg/kg (máx 600 mg) VO de 8/8 h.' },
+        { droga:'Cetamina', dose:'0,1–0,3 mg/kg/h em infusão contínua', via:'EV', obs:'Dose subanestésica, adjuvante na dor refratária ao opioide (ASH 2020) — com monitorização.' },
+        { droga:'Hidratação venosa', dose:'Manutenção: 1 a 1,5 vez a necessidade hídrica diária (VO + EV)', via:'EV/VO', obs:'Bolus de 10 mL/kg só se desidratado ou hipovolêmico. *Excesso de volume precipita STA.*' },
+        { droga:'Ceftriaxona', dose:'50 mg/kg 1x/dia (máx 2 g) · suspeita de meningite: 100 mg/kg/dia (máx 4 g/dia)', via:'EV/IM', obs:'Em até 1 h da chegada na febre. Alergia grave a betalactâmico: discutir levofloxacino ou clindamicina com a infecto.' },
+        { droga:'Azitromicina', dose:'Criança: 10 mg/kg (máx 500 mg) no 1º dia e 5 mg/kg (máx 250 mg) do 2º ao 5º · adulto: 500 mg 1x/dia', via:'VO/EV', obs:'Cobertura de atípicos na síndrome torácica aguda, junto com a ceftriaxona.' },
+        { droga:'Concentrado de hemácias', dose:'Criança: 10–15 mL/kg · adulto: 1–2 unidades · sequestro: 5 mL/kg por vez', via:'EV', obs:'Fenotipado e leucorreduzido. *Alvo de Hb até 10 g/dL*, nunca acima de 11.' },
+        { droga:'Exsanguineotransfusão', dose:'Troca manual ou por aférese, alvo HbS < 30% com Hb final até 10 g/dL', via:'EV', obs:'AVC, STA grave, falência orgânica. Hemoterapia e hematologia.' },
+        { droga:'Ondansetrona', dose:'0,15 mg/kg (máx 8 mg)', via:'EV', obs:'Náusea pelo opioide.' },
+        { droga:'Hidroxiureia', dose:'Manter a dose em uso (em geral 15–35 mg/kg/dia)', via:'VO', obs:'Não suspender na crise. Suspender só se neutrófilos < 1.500–2.000, plaquetas < 80.000 ou crise aplástica, conforme o hematologista.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Atrasar o opioide por desconfiar de "busca por droga" — a dor é real e a demora piora o desfecho.',
+        'Usar meperidina: metabólito convulsivante e duração curta.',
+        'Hiper-hidratar "para desfalcizar": congestão e síndrome torácica aguda.',
+        'Transfundir acima de Hb 10–11 g/dL ou transfundir crise de dor não complicada.',
+        'Esperar hemograma ou hemocultura para dar ceftriaxona ao febril.',
+        'Dar alta sem conferir a SpO2 e sem repetir o exame do tórax em quem recebeu muito opioide.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Alta* da crise de dor quando controlada com analgésico oral, aceitando líquidos, sem febre, sem queda de SpO2 e sem queda de Hb — com dipirona e opioide fraco ou morfina VO por poucos dias e retorno ao hemocentro. *Febre:* criança bem, com mais de 1 ano, sem sinais de gravidade, com Hb e leucócitos próximos do basal e retorno garantido pode ir para casa após a ceftriaxona, com reavaliação em 24 h (protocolos do MS e da SBP); os demais internam. *Internar sempre:* síndrome torácica aguda, sequestro esplênico, crise aplástica, AVC, priapismo que não resolveu, dor refratária, febre com toxemia ou foco grave. *Prevenção* que se confere no PS: penicilina profilática até os 5 anos (MS: penicilina benzatina ou penicilina V oral), vacinas especiais do CRIE (pneumocócica, meningocócica, influenza), ácido fólico e *hidroxiureia* — indicada pelo PCDT para quem tem crises frequentes, STA prévia ou Hb baixa, e pelo NHLBI 2014 para todas as crianças com HbSS a partir de 9 meses. *Divergência:* o alvo para febre varia entre 38,3 °C e 38,5 °C nos protocolos; o MS e o NHLBI usam 38,5 °C para investigação e antibiótico parenteral.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'O paciente sabe qual analgésico funciona para ele: pergunte e use — protocolo individual é recomendação da ASH.',
+        'Ensine os pais a palpar o baço: sequestro é a primeira causa de morte nos primeiros anos.',
+        'Incentivador respiratório de 2/2 h acordado reduz a síndrome torácica aguda na crise de dor torácica ou dorsal.',
+        'Hb muito abaixo do basal com reticulócitos baixos: parvovírus — pergunte se há gestante em casa.'
+      ]}
+    ] },
+
+  { id:'escroto-agudo', titulo:'Escroto agudo, parafimose e priapismo (todas as idades)', categoria:'nefro', gravidade:'emergencia',
+    resumo:'Dor escrotal aguda é torção testicular até prova em contrário: TWIST, urologia e cirurgia em até 6 h sem esperar o Doppler; e o que mais aparece — epididimite, apêndice torcido, Fournier, hérnia encarcerada, parafimose e priapismo.',
+    tags:['escroto agudo','torcao testicular','torção de testículo','dor testicular','twist','destorcao manual','apendice testicular','hidatide de morgagni','epididimite','orquite','orquiepididimite','caxumba','fournier','hernia encarcerada','parafimose','priapismo','fenilefrina','aspiracao cavernosa','falciforme','ceftriaxona','doxiciclina','levofloxacino'],
+    fonte:'SBU — Escroto agudo e Priapismo · EAU — Guidelines on Paediatric Urology (2024) e Urological Infections (2024) · AUA/SMSNA — Diagnosis and management of acute ischemic priapism (2022) · Ministério da Saúde — PCDT IST (2022) · CDC — STI Treatment Guidelines (2021) · Barbosa et al. — TWIST score (J Urol 2013) · UpToDate',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'*Dor testicular súbita* com náusea ou vômito, em qualquer idade — pico no recém-nascido e na adolescência. No menino com dor abdominal baixa, *examine o escroto*.' },
+      { rotulo:'Prioridade',    valor:'*Urologia na suspeita*. TWIST alto vai para o centro cirúrgico sem Doppler; se a cirurgia demorar, *destorção manual*.' },
+      { rotulo:'Meta',          valor:'Destorcer em até *6 h do início da dor* (salvamento acima de 90%); depois de 24 h, menos de 10%.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Suspeita', texto:'Dor escrotal aguda',
+          nota:'Anotar a *hora exata do início*. Dor que acordou o paciente de madrugada é típica de torção' },
+        { tipo:'passo', rotulo:'Já', texto:'*Analgesia, jejum*, exame dos dois lados em pé e deitado e escore TWIST',
+          nota:'Testículo alto e horizontalizado, endurecido, sem reflexo cremastérico',
+          meds:['Morfina', 'Dipirona'] },
+        { tipo:'decisao', texto:'Qual o TWIST?', ramos:[
+          { rotulo:'5 a 7', cor:'perigo', texto:'*Centro cirúrgico* — exploração escrotal sem esperar Doppler',
+            nota:'Se a cirurgia vai demorar: destorção manual "abrir o livro" — não substitui a cirurgia' },
+          { rotulo:'3 a 4', texto:'*Doppler imediato*, com a urologia já acionada',
+            nota:'Fluxo presente não exclui torção intermitente ou parcial. Exame duvidoso + clínica = explorar' },
+          { rotulo:'0 a 2', cor:'ok', texto:'Torção improvável — buscar a outra causa; Doppler se dúvida' }
+        ]},
+        { tipo:'decisao', texto:'Qual a outra causa?', ramos:[
+          { rotulo:'Ponto azul no polo superior, dor localizada', cor:'ok', texto:'*Torção de apêndice testicular*: AINE, repouso e suspensório',
+            meds:['Ibuprofeno'] },
+          { rotulo:'Dor gradual, febre, disúria ou uretrite', texto:'*Epididimite ou orquiepididimite*: antibiótico pela idade e prática sexual' },
+          { rotulo:'Dor perineal, crepitação, pele escura, toxemia', cor:'perigo', texto:'*Fournier*: antibiótico amplo e desbridamento já',
+            meds:['Piperacilina-tazobactam', 'Clindamicina', 'Vancomicina'], ir:'fasciite-necrotizante' },
+          { rotulo:'Massa inguinoescrotal que não reduz', cor:'perigo', texto:'*Hérnia encarcerada*: redução com analgesia se sem estrangulamento; senão cirurgia',
+            ir:'obstrucao-intestinal' }
+        ]},
+        { tipo:'decisao', texto:'Epididimite: qual esquema?', ramos:[
+          { rotulo:'Até 35 anos ou risco de IST', texto:'*Ceftriaxona 500 mg IM + doxiciclina por 10 dias*',
+            meds:['Ceftriaxona 500 mg', 'Doxiciclina'] },
+          { rotulo:'Sexo anal insertivo', texto:'*Ceftriaxona + levofloxacino por 10 dias* (cobre gonococo e entéricos)',
+            meds:['Ceftriaxona 500 mg', 'Levofloxacino'] },
+          { rotulo:'Acima de 35 anos, sem risco de IST, ou após procedimento urológico', texto:'*Levofloxacino por 10 dias*',
+            meds:['Levofloxacino'] },
+          { rotulo:'Criança pré-púbere', cor:'ok', texto:'*Analgesia e repouso*; antibiótico só se urina alterada', ir:'itu-pedia' }
+        ]},
+        { tipo:'paralelo', colunas:[
+          { tipo:'alerta', rotulo:'Parafimose', texto:'*Gelo, compressão e redução manual*; incisão dorsal pela urologia se falhar',
+            nota:'Glande arroxeada ou necrose: urologia imediata', meds:['Lidocaína gel 2%', 'Lidocaína 1–2% sem vasoconstritor'] },
+          { tipo:'alerta', rotulo:'Priapismo > 4 h', texto:'*Isquêmico:* bloqueio, aspiração dos corpos cavernosos e fenilefrina',
+            nota:'Falciforme: mesmo tratamento urológico, mais hidratação e analgesia', meds:['Fenilefrina intracavernosa'] }
+        ]},
+        { tipo:'fim', rotulo:'Destino', texto:'Torção, Fournier e hérnia estrangulada: centro cirúrgico · epididimite e apêndice: alta com retorno em 48–72 h' }
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Dor súbita com vômito* e testículo alto ou horizontal: torção.',
+        'Recém-nascido com escroto endurecido e escurecido: torção perinatal — urologia no mesmo dia.',
+        '*Crepitação, bolhas, pele escura* ou dor desproporcional no períneo: Fournier.',
+        'Glande arroxeada e fria na parafimose: isquemia.',
+        '*Ereção dolorosa e rígida há mais de 4 h*: priapismo isquêmico — síndrome compartimental do pênis.'
+      ]},
+
+      { tipo:'passos', titulo:'Conduta imediata', itens:[
+        'Anotar a hora do início da dor: define a chance de salvar o testículo.',
+        'Analgesiar com opioide e deixar em jejum.',
+        'Calcular o TWIST e acionar a urologia na suspeita, antes do Doppler.',
+        'Tentar a destorção manual se o centro cirúrgico não estiver disponível em minutos.',
+        'Tratar o diagnóstico alternativo só quando a torção estiver razoavelmente excluída.',
+        'Reduzir a parafimose e aspirar o priapismo isquêmico com a urologia, sem esperar o dia seguinte.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Morfina', dose:'Criança: 0,05–0,1 mg/kg (máx 4 mg por dose) · adulto: 2–4 mg, titular a cada 5–10 min', via:'EV', obs:'Analgesia antes do exame e do Doppler não atrapalha o diagnóstico.' },
+        { droga:'Dipirona', dose:'Criança: 15–25 mg/kg (máx 1 g) · adulto: 1–2 g', via:'EV', obs:'Base da analgesia.' },
+        { droga:'Ibuprofeno', dose:'Criança: 10 mg/kg (máx 600 mg) de 8/8 h · adulto: 600 mg de 8/8 h por 5–7 dias', via:'VO', obs:'Torção de apêndice testicular, epididimite e orquite viral.' },
+        { droga:'Ceftriaxona 500 mg', dose:'500 mg dose única (1 g se ≥ 150 kg)', via:'IM', obs:'Epididimite com risco de IST. Diluir com lidocaína 1% para a IM.' },
+        { droga:'Doxiciclina', dose:'100 mg de 12/12 h por 10 dias', via:'VO', obs:'Cobre clamídia. Tomar com bastante água e não deitar por 30 min.' },
+        { droga:'Levofloxacino', dose:'500 mg 1x/dia por 10 dias', via:'VO', obs:'Acima de 35 anos sem risco de IST, pós-procedimento ou sexo anal insertivo (este, junto com a ceftriaxona). Fazer urocultura antes.' },
+        { droga:'Lidocaína gel 2%', dose:'Aplicar generosamente na glande e no anel do prepúcio, aguardar 5–10 min', via:'Tópica', obs:'Parafimose, antes da compressão e da redução.' },
+        { droga:'Lidocaína 1–2% sem vasoconstritor', dose:'Até 4,5 mg/kg (adulto: 10–20 mL de lidocaína 1% em bloqueio peniano dorsal)', via:'Infiltração', obs:'Bloqueio peniano para redução de parafimose ou aspiração do priapismo. *Nunca com adrenalina no pênis.*' },
+        { droga:'Fenilefrina intracavernosa', dose:'Diluir 1 mL (10 mg) em 49 mL de SF = 200 mcg/mL; injetar 0,5–1 mL (100–200 mcg) a cada 3–5 min, até 1 mg (5 mL) em 1 h', via:'Intracavernosa', obs:'Priapismo isquêmico após aspiração. Monitorar PA e FC (hipertensão, bradicardia reflexa). Criança: doses menores, com a urologia.' },
+        { droga:'Piperacilina-tazobactam', dose:'4,5 g de 6/6 h', via:'EV', obs:'Fournier, junto com a cirurgia. Alternativa: meropeném 1 g de 8/8 h.' },
+        { droga:'Clindamicina', dose:'900 mg de 8/8 h', via:'EV', obs:'Fournier: inibe toxinas.' },
+        { droga:'Vancomicina', dose:'25–30 mg/kg de ataque, depois 15–20 mg/kg de 12/12 h', via:'EV', obs:'Fournier se risco de MRSA. Ajustar pela função renal.' }
+      ]},
+
+      { tipo:'tempo', titulo:'Linha do tempo', itens:[
+        { quando:'0–15 min', o_que:'Hora do início anotada, analgesia, TWIST, urologia acionada.' },
+        { quando:'Até 1 h', o_que:'Doppler só se TWIST intermediário; destorção manual se o centro cirúrgico demorar.' },
+        { quando:'Até 6 h do início da dor', o_que:'Exploração cirúrgica com orquidopexia bilateral — salvamento acima de 90%.' },
+        { quando:'6–24 h', o_que:'Ainda vale operar: salvamento cai para cerca de 50% em 12 h e menos de 10% após 24 h.' }
+      ]},
+
+      { tipo:'lista', titulo:'Critérios diagnósticos — TWIST', itens:[
+        '*Edema testicular:* 2 pontos.',
+        '*Testículo endurecido:* 2 pontos.',
+        '*Reflexo cremastérico ausente:* 1 ponto.',
+        '*Náusea ou vômito:* 1 ponto.',
+        '*Testículo alto (elevado):* 1 ponto.',
+        '*Leitura:* 0–2 risco baixo · 3–4 intermediário (Doppler) · 5–7 alto (cirurgia sem imagem). Validado em crianças e adolescentes; no adulto, usar como apoio.',
+        '*Destorção manual "abrir o livro":* girar o testículo de medial para lateral (olhando dos pés: o direito no sentido anti-horário, o esquerdo no horário), 180° por vez, até 2–3 voltas. Sucesso: alívio súbito e testículo desce. Se a dor piorar, girar para o outro lado.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Nenhum exame atrasa a cirurgia* na torção com clínica típica.',
+        '*Ultrassom com Doppler* no TWIST intermediário ou na dúvida: assimetria de fluxo, sinal do redemoinho no cordão.',
+        '*Urina tipo I e urocultura* na epididimite; *NAAT para gonococo e clamídia* em urina de primeiro jato, se disponível.',
+        '*Testes rápidos* de HIV, sífilis e hepatites na epididimite com risco de IST.',
+        '*Gasometria do sangue cavernoso* no priapismo: pO2 < 30, pCO2 > 60 e pH < 7,25 = isquêmico (sangue escuro).',
+        '*TC* se Fournier com dúvida da extensão — sem atrasar o desbridamento.'
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Esperar o Doppler para chamar a urologia na dor súbita com TWIST alto.',
+        'Excluir torção porque o Doppler mostrou fluxo ou porque o sinal de Prehn foi "positivo".',
+        'Chamar de epididimite a dor súbita do adolescente sem uretrite nem disúria.',
+        'Considerar a destorção manual como tratamento definitivo: a orquidopexia é obrigatória.',
+        'Dar alta da parafimose sem conferir que o prepúcio voltou e a glande está corada.',
+        'Esperar o priapismo isquêmico "passar" ou dar só analgésico e gelo por horas.'
+      ]},
+
+      { tipo:'texto', titulo:'Destino', conteudo:'*Centro cirúrgico* para torção testicular (exploração com orquidopexia bilateral, orquiectomia se inviável), Fournier (desbridamento extenso, muitas vezes repetido, com UTI) e hérnia estrangulada. Serviço sem urologista transfere pela regulação como emergência, depois de tentar a destorção manual. *Alta* para torção de apêndice testicular e epididimite sem toxemia, com analgesia, suspensório, gelo, antibiótico quando indicado, parceiros tratados (IST) e retorno em 48–72 h — sem melhora, rever o diagnóstico (abscesso, tumor, torção tardia). Orquite da caxumba: suporte. *Parafimose:* após gelo e compressão (gaze úmida enrolada firme por 5–10 min, ou pequenas punções no edema com agulha fina), empurrar a glande com os polegares enquanto os indicadores puxam o prepúcio; se falhar, incisão dorsal pela urologia; postectomia eletiva depois. *Priapismo isquêmico:* aspiração com agulha 16–19 G na lateral do corpo cavernoso, irrigação com SF e fenilefrina; sem resposta em cerca de 1 h, shunt cirúrgico. Priapismo não isquêmico (após trauma perineal, sangue vermelho vivo, pênis parcialmente rígido e pouco doloroso) não é emergência. *Divergência:* a idade de corte de 35 anos para o esquema da epididimite é do CDC; a EAU orienta mais pela prática sexual que pela idade.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Menino com "dor de barriga" e vômito: tire a fralda ou a roupa e examine o escroto.',
+        'Torção não dá febre nem disúria no início; epididimite raramente começa em minutos.',
+        'Priapismo: pergunte por trazodona, antipsicótico, cocaína, injeção para ereção e doença falciforme.',
+        'Fournier começa como "furúnculo no saco" em diabético: palpe procurando crepitação.'
+      ]}
+    ] },
+
+  { id:'hipomagnesemia', titulo:'Hipomagnesemia', categoria:'nefro', gravidade:'urgencia',
+    resumo:'Magnésio baixo por IBP, diurético, álcool ou diarreia: EV rápido só com torsades ou convulsão, EV lento no grave, VO no leve — e corrigir o magnésio para que o potássio e o cálcio subam.',
+    tags:['hipomagnesemia','magnesio baixo','magnesio','sulfato de magnesio','torsades de pointes','qt longo','hipocalemia refrataria','hipocalcemia','alcoolismo','omeprazol','ibp','diuretico','diarreia','cisplatina'],
+    fonte:'UpToDate — Hypomagnesemia: causes, clinical manifestations and treatment · AHA — ACLS e PALS (2025) · Ministério da Saúde — RENAME (2024) · Kidney International Reports — Magnesium disorders (revisão, 2020)',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'*Hipocalemia ou hipocalcemia que não corrige*, torsades ou QT longo, tremor, tetania, convulsão — em etilista, desnutrido, diarreia crônica, uso de IBP ou diurético.' },
+      { rotulo:'Prioridade',    valor:'*ECG*; arritmia ou convulsão recebe sulfato de magnésio na hora, sem esperar o resultado.' },
+      { rotulo:'Meta',          valor:'Mg acima de 1,7 mg/dL (e acima de 2 se arritmia), com potássio e cálcio corrigidos junto e a causa identificada.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Magnésio < 1,7 mg/dL ou suspeita clínica',
+          nota:'Mg sérico normal não exclui depleção corporal. 1 mg/dL = 0,41 mmol/L = 0,82 mEq/L' },
+        { tipo:'decisao', texto:'Como está o paciente?', ramos:[
+          { rotulo:'Torsades, TV polimórfica ou convulsão', cor:'perigo', texto:'*Sulfato de magnésio 1–2 g em 15 min* (bolus em 1–2 min se sem pulso)',
+            meds:['Sulfato de magnésio (instável)'], ir:'taqui-qrs-largo' },
+          { rotulo:'Sintomático sem instabilidade ou Mg < 1,2 mg/dL', texto:'*EV: 1–2 g em 15–60 min*, depois 4–8 g em 12–24 h',
+            nota:'Infusão lenta retém mais: o rim perde metade do que entra rápido',
+            meds:['Sulfato de magnésio (grave)'] },
+          { rotulo:'Leve, sem sintomas, tolera VO', cor:'ok', texto:'*Magnésio oral* por semanas e retirar a causa',
+            meds:['Magnésio oral'] }
+        ]},
+        { tipo:'decisao', texto:'Função renal?', ramos:[
+          { rotulo:'ClCr < 30 mL/min ou oligúria', cor:'perigo', texto:'*Metade da dose*, Mg de 6/6 h, reflexo patelar e FR antes de cada dose',
+            nota:'Arreflexia ou depressão respiratória: parar e dar cálcio', meds:['Gluconato de cálcio 10%'] },
+          { rotulo:'Normal', cor:'ok', texto:'Dose plena e Mg de controle após o fim da infusão' }
+        ]},
+        { tipo:'passo', rotulo:'Junto', texto:'*Repor potássio e cálcio ao mesmo tempo* — eles não sobem enquanto o Mg estiver baixo',
+          ir:'hipocalemia' },
+        { tipo:'passo', rotulo:'Causa', texto:'*Revisar remédios e perdas*: IBP, diurético, álcool, diarreia, cisplatina, aminoglicosídeo, anfotericina',
+          nota:'FEMg > 2% com função renal normal = perda renal; < 2% = perda intestinal' },
+        { tipo:'fim', rotulo:'Destino', texto:'Alta com magnésio oral se leve e sem arritmia · internar se EV, arritmia, convulsão ou distúrbio associado grave' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        '*Hipocalemia refratária* à reposição de potássio.',
+        '*Hipocalcemia* com PTH inapropriadamente baixo.',
+        '*Arritmias:* QT longo, torsades, extrassístoles, fibrilação atrial; toxicidade digitálica facilitada.',
+        '*Neuromuscular:* tremor, fasciculação, Chvostek e Trousseau, tetania, nistagmo, convulsão.',
+        '*Contexto:* alcoolismo, desnutrição e realimentação, diarreia crônica, IBP por mais de 1 ano, tiazídico ou de alça, cisplatina, aminoglicosídeo, anfotericina B, ciclosporina, tacrolimo, pancreatite, tratamento da cetoacidose.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Torsades de pointes* ou QTc > 500 ms.',
+        '*Convulsão* ou tetania.',
+        'Mg < 1,2 mg/dL com hipocalemia ou hipocalcemia associadas.',
+        'Paciente em digoxina com Mg baixo: arritmia digitálica facilitada.',
+        'Reposição EV em doente renal: risco de *hipermagnesemia* (arreflexia, hipotensão, apneia).'
+      ]},
+
+      { tipo:'lista', titulo:'Critérios e gravidade', itens:[
+        '*Referência:* 1,7–2,4 mg/dL (conferir o laboratório).',
+        '*Leve a moderada:* 1,2–1,7 mg/dL, em geral sem sintomas.',
+        '*Grave:* < 1,2 mg/dL ou qualquer valor com sintomas, arritmia, hipocalemia ou hipocalcemia.',
+        '*FEMg* = (Mg urinário x creatinina sérica) / (0,7 x Mg sérico x creatinina urinária) x 100.',
+        '*Perda renal:* FEMg > 2% · *perda intestinal ou ingesta baixa:* FEMg < 2%.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Magnésio, potássio, cálcio iônico, fósforo, creatinina*.',
+        '*ECG* com QTc.',
+        '*Magnésio e creatinina em urina isolada* antes de repor, para a FEMg (se a causa não estiver clara).',
+        '*Digoxinemia* se em uso de digoxina.',
+        '*Glicemia e gasometria* no etilista e no paciente em tratamento de cetoacidose.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Sulfato de magnésio (instável)', dose:'Adulto: 1–2 g (2–4 mL da ampola 50% ou 10–20 mL da 10%) em 50–100 mL de SG 5% ou SF em 5–15 min · criança: 25–50 mg/kg (máx 2 g)', via:'EV', obs:'Torsades, TV polimórfica ou convulsão. Torsades sem pulso: bolus em 1–2 min. Rubor, calor e hipotensão se correr rápido.' },
+        { droga:'Sulfato de magnésio (grave)', dose:'Adulto: 1–2 g em 15–60 min, depois 4–8 g em 12–24 h (até 1 g/h) · criança: 25–50 mg/kg (máx 2 g) em 30–60 min, repetir de 6/6 h conforme o nível', via:'EV', obs:'1 g = 8 mEq = cerca de 98 mg de magnésio elementar. Ampola 50% = 0,5 g/mL; ampola 10% = 0,1 g/mL. Manter a reposição por 2–5 dias para repor o estoque.' },
+        { droga:'Sulfato de magnésio (moderado, sem VO)', dose:'Adulto: 2–4 g em 4–12 h', via:'EV', obs:'Sem sintomas, quando não pode usar a via oral.' },
+        { droga:'Magnésio oral', dose:'Adulto: 240–720 mg de magnésio elementar por dia ÷ 2–3 tomadas', via:'VO', obs:'Cloreto, lactato ou citrato causam menos diarreia que o óxido (óxido 400 mg = 241 mg elementar). Conferir o teor elementar no rótulo. Diarreia limita a dose. Criança: conferir dose por kg com a pediatria.' },
+        { droga:'Gluconato de cálcio 10%', dose:'10–20 mL (1–2 g) em 10 min', via:'EV', obs:'*Antídoto* da hipermagnesemia (arreflexia, depressão respiratória, hipotensão). Também para a hipocalcemia sintomática associada.' },
+        { droga:'Amilorida', dose:'5–10 mg 1x/dia', via:'VO', obs:'Perda renal por diurético que precisa ser mantido — ambulatorial, monitorando potássio.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Repor potássio por dias sem dosar o magnésio na hipocalemia que não sobe.',
+        'Correr magnésio em bolus no paciente estável — o rim joga fora e causa rubor e hipotensão.',
+        'Dar dose plena de magnésio EV no doente renal sem checar reflexos e nível.',
+        'Esquecer de suspender ou trocar o IBP que causou o quadro.',
+        'Tratar torsades com amiodarona antes do magnésio.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Alta* com magnésio oral na hipomagnesemia leve sem sintomas, sem arritmia e sem hipocalemia ou hipocalcemia importantes, com Mg de controle em 1–2 semanas e retirada ou troca da droga causadora (IBP por anti-H2 quando possível; diurético revisto). *Internar* quem precisa de reposição EV, tem arritmia, convulsão, QT longo, hipocalemia ou hipocalcemia graves, ou não tolera a via oral. O magnésio sérico é só 1% do total do corpo: depois de uma reposição EV o nível sobe rápido e volta a cair, por isso a reposição se estende por dias. No etilista e na realimentação, magnésio, fósforo e potássio caem juntos — repor os três, com tiamina antes da glicose.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Hipocalemia que não sobe com potássio: dose o magnésio antes de aumentar a reposição.',
+        'Uso de omeprazol por anos é a causa esquecida mais comum no idoso.',
+        'Na torsades, magnésio vem antes de qualquer antiarrítmico, mesmo com Mg normal.',
+        'No doente renal, reflexo patelar presente é o sinal mais simples de que dá para continuar.'
+      ]}
+    ] },
+
+  { id:'abscesso-pele', titulo:'Abscesso cutâneo, furúnculo e drenagem', categoria:'infecto', gravidade:'rotina',
+    resumo:'Coleção de pus na pele se trata com incisão e drenagem; antibiótico só para quem tem critério (tamanho, celulite, febre, imunossupressão, face, mão ou genital) — com cobertura para MRSA comunitário.',
+    tags:['abscesso','abscesso de pele','abscesso cutaneo','furunculo','furunculose','carbunculo','antraz','drenagem','incisao e drenagem','mrsa','staphylococcus','sulfametoxazol','bactrim','clindamicina','cefalexina','paroniquia','unha encravada','hidradenite','descolonizacao','mupirocina','pocus'],
+    fonte:'IDSA — Practice guidelines for skin and soft tissue infections (2014) · Talan et al. — NEJM (2016) e Daum et al. — NEJM (2017) · Ministério da Saúde — RENAME (2024) · SBD — Infecções bacterianas de pele · UpToDate — Skin abscess; Recurrent skin and soft tissue infection; Paronychia',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'*Nódulo doloroso, quente e flutuante*, com ou sem ponto de pus, às vezes com celulite ao redor — axila, nádega, coxa, virilha, nuca.' },
+      { rotulo:'Prioridade',    valor:'Confirmar que é coleção (*ultrassom à beira do leito*) e que não é aneurisma, e *drenar*.' },
+      { rotulo:'Meta',          valor:'Cavidade aberta e vazia, antibiótico só com critério e retorno se piorar.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Nódulo de pele doloroso, eritematoso, flutuante ou endurecido' },
+        { tipo:'passo', rotulo:'Antes do bisturi', texto:'*Ultrassom à beira do leito* — coleção hipoecoica que se move à compressão',
+          nota:'Pulsátil, na virgem, em usuário de droga injetável ou perto de enxerto vascular: *Doppler antes de cortar* (pseudoaneurisma)' },
+        { tipo:'decisao', texto:'Tem coleção?', ramos:[
+          { rotulo:'Sim', texto:'*Incisão e drenagem*', meds:['Lidocaína 1–2% sem vasoconstritor'] },
+          { rotulo:'Não, só celulite', cor:'ok', texto:'Tratar como celulite; reavaliar em 48 h', ir:'celulite-erisipela' },
+          { rotulo:'Endurecido, sem coleção definida', texto:'*Compressas mornas* 3–4x/dia e reavaliar em 24–48 h',
+            nota:'Furúnculo pequeno pode drenar sozinho' }
+        ]},
+        { tipo:'decisao', texto:'Precisa de antibiótico depois de drenar?', ramos:[
+          { rotulo:'Febre, toxemia, celulite extensa ou que progride', cor:'perigo', texto:'*Internar com vancomicina* e drenar no centro cirúrgico se grande ou profundo',
+            meds:['Vancomicina'], ir:'sepse' },
+          { rotulo:'> 2 cm, celulite ao redor, imunossupressão, diabetes, extremos de idade, face, mão ou genital, abscessos múltiplos', texto:'*SMX-TMP ou clindamicina* por 5–7 dias',
+            nota:'Cobertura de MRSA comunitário. Celulite sem pus: cefalexina',
+            meds:['Sulfametoxazol-trimetoprima', 'Clindamicina', 'Cefalexina'] },
+          { rotulo:'Abscesso simples, pequeno, bem drenado', cor:'ok', texto:'*Só a drenagem*, analgesia e cuidado local',
+            meds:['Dipirona', 'Ibuprofeno'] }
+        ]},
+        { tipo:'decisao', texto:'É recorrente (2 ou mais episódios em 6 meses)?', ramos:[
+          { rotulo:'Sim', texto:'*Descolonização*: mupirocina nasal + banho com clorexidina; cultura do pus; checar diabetes e hidradenite',
+            meds:['Mupirocina 2%', 'Clorexidina degermante'] },
+          { rotulo:'Não', cor:'ok', texto:'Orientar higiene e não compartilhar toalhas e lâminas' }
+        ]},
+        { tipo:'fim', rotulo:'Alta', texto:'Curativo, retorno em 48 h se tamponado, ou antes se febre, celulite aumentando ou dor crescente' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        '*Abscesso:* nódulo quente e doloroso com flutuação, às vezes com ponto amarelado.',
+        '*Furúnculo:* abscesso centrado em folículo piloso; *carbúnculo:* vários furúnculos unidos, com múltiplos pontos de drenagem.',
+        '*Paroníquia aguda:* dor, eritema e pus na prega ungueal após trauma, unha roída ou manicure.',
+        '*Unha encravada:* borda lateral da unha do hálux penetrando a pele, com granuloma e secreção.',
+        '*O que não é abscesso:* pseudoaneurisma (pulsátil), hidradenite supurativa (axila e virilha, recorrente, com trajetos), cisto epidérmico inflamado, linfonodo, Bartholin e abscesso perianal (condutas próprias).'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Massa pulsátil* ou na virilha de usuário de droga injetável: Doppler antes de incisar.',
+        '*Dor desproporcional, crepitação, bolhas ou pele escura*: fasciite necrosante.',
+        'Abscesso na *face central* (triângulo nariz-boca): risco de tromboflebite do seio cavernoso.',
+        'Abscesso na *mão* (polpa digital, tenossinovite): avaliação da cirurgia da mão.',
+        'Febre alta, hipotensão ou celulite que avança: infecção sistêmica — internar.'
+      ]},
+
+      { tipo:'lista', titulo:'Critérios para antibiótico após a drenagem', itens:[
+        '*Tamanho:* abscesso > 2 cm (benefício modesto em cura e recorrência nos ensaios de 2016 e 2017).',
+        '*Celulite* ao redor ou progressiva, linfangite.',
+        '*Sinais sistêmicos:* febre, taquicardia, leucocitose.',
+        '*Hospedeiro:* imunossupressão, diabetes descompensado, neutropenia, extremos de idade.',
+        '*Local:* face, mãos, genitais — difíceis de drenar por completo ou de risco.',
+        '*Evolução:* falha da drenagem isolada, abscessos múltiplos, tromboflebite séptica.'
+      ]},
+
+      { tipo:'ordem', titulo:'Técnica de drenagem', itens:[
+        '*Anestesia:* bloqueio de campo com lidocaína em losango ao redor da lesão (infiltrar dentro do pus quase não funciona); considerar analgesia ou sedação leve em abscesso grande.',
+        '*Incisão:* linear, com lâmina 11, no ponto de maior flutuação e no sentido das linhas de pele, longa o bastante para a cavidade drenar (em geral 1–2 cm ou cerca de 2/3 do diâmetro).',
+        '*Exploração:* romper as loculações com pinça hemostática curva, em movimentos circulares, até sentir a cavidade única.',
+        '*Cultura:* colher o pus em quem vai receber antibiótico, recorrência ou imunossupressão.',
+        '*Irrigação:* SF opcional (não mudou desfecho nos estudos).',
+        '*Tamponamento:* opcional — reservar para abscesso > 5 cm ou cavidade profunda; pequenos cicatrizam igual sem gaze e doem menos. Técnica alternativa: dreno em alça (loop) em abscesso grande.',
+        '*Curativo:* gaze seca, compressas mornas a partir do dia seguinte, retirar o tampão em 24–48 h.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Nenhum* no abscesso simples em paciente saudável.',
+        '*Ultrassom à beira do leito:* confirma a coleção, mede e guia a incisão (mais acurado que o exame físico).',
+        '*Doppler* se pulsátil ou perto de vaso: excluir pseudoaneurisma.',
+        '*Cultura do pus* se antibiótico, recorrência, falha ou imunossupressão.',
+        '*Glicemia ou HbA1c* na furunculose recorrente; hemograma e PCR se sinais sistêmicos.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Lidocaína 1–2% sem vasoconstritor', dose:'Até 4,5 mg/kg (com adrenalina até 7 mg/kg)', via:'SC', obs:'1% = 10 mg/mL: 20 mL no adulto de 70 kg ficam bem abaixo do máximo. Com adrenalina sangra menos; pode usar em dedos com técnica habitual.' },
+        { droga:'Sulfametoxazol-trimetoprima', dose:'Adulto: 800/160 mg, 1–2 comprimidos de 12/12 h (2 se > 70 kg) por 5–7 dias · criança: 8–12 mg/kg/dia de trimetoprima ÷ 12/12 h (máx 160 mg/dose)', via:'VO', obs:'Primeira escolha para MRSA comunitário. Suspensão 200/40 mg por 5 mL. Evitar < 2 meses e no fim da gestação. Pouca cobertura de estreptococo: se celulite associada, somar cefalexina ou usar clindamicina.' },
+        { droga:'Clindamicina', dose:'Adulto: 300–450 mg de 8/8 h por 5–7 dias · criança: 10–13 mg/kg/dose de 8/8 h (máx 450 mg/dose)', via:'VO', obs:'Cobre MRSA e estreptococo. Cápsulas de 150 e 300 mg; suspensão pouco disponível no Brasil (manipular). Diarreia e colite por C. difficile.' },
+        { droga:'Doxiciclina', dose:'100 mg de 12/12 h por 5–7 dias', via:'VO', obs:'Alternativa para MRSA em adulto e criança > 8 anos. Não na gestação.' },
+        { droga:'Cefalexina', dose:'Adulto: 500 mg de 6/6 h por 5 dias · criança: 25–50 mg/kg/dia ÷ 6/6 h (máx 500 mg/dose)', via:'VO', obs:'Celulite *sem* pus. Suspensão 250 mg/5 mL. Não cobre MRSA.' },
+        { droga:'Vancomicina', dose:'15–20 mg/kg de 12/12 h (dose de ataque 25 mg/kg se grave)', via:'EV', obs:'Abscesso com sinais sistêmicos, imunossupressão grave ou falha. Ajustar pela função renal e nível sérico.' },
+        { droga:'Mupirocina 2%', dose:'Aplicar nas narinas 2x/dia por 5 dias', via:'Nasal', obs:'Descolonização na furunculose recorrente, junto com o banho de clorexidina. Repetir mensalmente se recorrer.' },
+        { droga:'Clorexidina degermante', dose:'Banho diário com clorexidina 2–4% por 5–14 dias', via:'Tópica', obs:'Deixar agir 1–2 min antes de enxaguar. Evitar olhos e mucosas.' },
+        { droga:'Dipirona', dose:'Adulto: 1 g de 6/6 h · criança: 15–25 mg/kg (máx 1 g)', via:'VO/EV', obs:'Analgesia antes e depois da drenagem.' },
+        { droga:'Ibuprofeno', dose:'Adulto: 400–600 mg de 8/8 h · criança: 10 mg/kg (máx 600 mg) de 8/8 h', via:'VO', obs:'Por 3–5 dias.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Tratar abscesso com antibiótico sem drenar — o pus não é alcançado pela droga.',
+        'Incisar massa pulsátil ou na virilha de usuário de droga sem Doppler.',
+        'Espremer furúnculo da face central.',
+        'Usar cefalexina sozinha em abscesso com pus quando há indicação de antibiótico (não cobre MRSA).',
+        'Tamponar com gaze todo abscesso pequeno — dói mais e não cura mais rápido.',
+        'Drenar repetidamente hidradenite sem encaminhar à dermatologia.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Alta* após a drenagem na grande maioria: analgesia, compressas mornas, troca de curativo, antibiótico só com critério e retorno em 48 h se tamponado ou se febre, celulite que aumenta ou dor crescente. *Internar* abscesso com sepse, celulite extensa, imunossupressão grave, local de risco (face central, mão profunda, períneo) ou que precisa de centro cirúrgico. *Paroníquia aguda:* sem pus, compressas mornas 3–4x/dia; com pus, elevar a prega ungueal com a lâmina 11 paralela à unha (quase sem dor, às vezes sem anestesia) ou bloqueio digital; antibiótico só com celulite. Paroníquia crônica (mãos na água, cândida) se trata com proteção e corticoide tópico. *Unha encravada:* leve — algodão sob a borda, corte reto e calçado largo; com granuloma ou infecção — bloqueio digital e retirada da espícula lateral, cauterização da matriz (fenol) pela cirurgia ambulatorial. *Furunculose recorrente:* descolonizar o paciente e a família, lavar roupas de cama e toalhas em água quente, não compartilhar objetos pessoais. *Divergência:* a IDSA 2014 reserva o antibiótico para abscesso com critério; os ensaios de 2016 (Talan) e 2017 (Daum) mostraram pequeno aumento de cura com SMX-TMP ou clindamicina mesmo em abscessos simples — ponderar o benefício contra os efeitos adversos.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Bloqueio em losango ao redor do abscesso funciona; injetar dentro do pus inflamado quase não anestesia.',
+        'Furúnculo de repetição em adulto: peça glicemia — diabetes não diagnosticado é comum.',
+        'Abscesso na axila ou virilha que volta sempre no mesmo lugar, com cicatriz em cordão: hidradenite, não "furúnculo".',
+        'O ultrassom muda a conduta em até metade dos casos duvidosos: celulite que parecia abscesso e vice-versa.'
+      ]}
+    ] },
+
+  { id:'exantematicas', titulo:'Doenças exantemáticas: varicela, sarampo, escarlatina, mononucleose (todas as idades)', categoria:'infecto', gravidade:'urgencia',
+    resumo:'Febre com exantema: primeiro excluir o que mata (meningococcemia, Kawasaki, farmacodermia grave), depois reconhecer o padrão, notificar sarampo e rubéola na hora, tratar varicela de risco com aciclovir e proteger os contatos.',
+    tags:['exantema','doenca exantematica','rash','febre e manchas','varicela','catapora','aciclovir','sarampo','vitamina a','rubeola','escarlatina','mononucleose','epstein-barr','exantema subito','roseola','eritema infeccioso','quinta doenca','parvovirus','mao-pe-boca','coxsackie','notificacao compulsoria','imunoglobulina','vzig','reye'],
+    fonte:'Ministério da Saúde — Guia de Vigilância em Saúde (2024) · Ministério da Saúde — Manual dos Centros de Referência para Imunobiológicos Especiais (CRIE, 2023) · Ministério da Saúde — Nota técnica sobre vitamina A em casos suspeitos de sarampo (2025) · SBP — Doenças exantemáticas e Departamento de Infectologia · AAP — Red Book (2024) · UpToDate',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Febre com manchas, pápulas ou vesículas na pele, em qualquer idade — olhar a *morfologia, a progressão, a mucosa* e a vacinação.' },
+      { rotulo:'Prioridade',    valor:'Excluir *petéquias ou púrpura com febre*, Kawasaki e farmacodermia grave; *notificar e isolar* suspeita de sarampo ou rubéola.' },
+      { rotulo:'Meta',          valor:'Aciclovir para quem tem risco na varicela, vitamina A no sarampo, antibiótico na escarlatina e contatos suscetíveis protegidos.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Febre com exantema',
+          nota:'Perguntar vacinação, contato, viagem, gestação e remédios novos (amoxicilina, anticonvulsivante, sulfa)' },
+        { tipo:'decisao', texto:'Tem sinal de gravidade?', ramos:[
+          { rotulo:'Petéquias ou púrpura com febre, toxemia', cor:'perigo', texto:'*Meningococcemia até prova em contrário* — ceftriaxona já',
+            meds:[{droga:'Ceftriaxona', dose:'criança 100 mg/kg (máx 2 g) · adulto 2 g', via:'EV'}], ir:'febre-petequias' },
+          { rotulo:'Febre ≥ 5 dias, conjuntivite, lábios e língua vermelhos, mãos e pés inchados', cor:'perigo', texto:'*Kawasaki*', ir:'kawasaki' },
+          { rotulo:'Bolhas, descolamento de pele ou lesão em várias mucosas', cor:'perigo', texto:'*Farmacodermia grave* (Stevens-Johnson) — suspender a droga e internar' },
+          { rotulo:'Plaquetas baixas, dor abdominal, sangramento em área de dengue', cor:'perigo', texto:'*Dengue*', ir:'dengue' },
+          { rotulo:'Nenhum', cor:'ok', texto:'Reconhecer o padrão (abaixo)' }
+        ]},
+        { tipo:'decisao', texto:'Qual o padrão?', ramos:[
+          { rotulo:'Vesículas em vários estágios, pruriginosas, começa no tronco e couro cabeludo', texto:'*Varicela* — aciclovir se tiver risco (ver doses)',
+            meds:['Aciclovir VO (criança)', 'Aciclovir VO (adulto)'] },
+          { rotulo:'Maculopapular de cima para baixo + tosse, coriza ou conjuntivite', cor:'perigo', texto:'*Sarampo* — notificar em 24 h, isolamento aéreo, vitamina A',
+            meds:['Vitamina A (palmitato de retinol)'] },
+          { rotulo:'Pele áspera "em lixa", palidez ao redor da boca, língua em framboesa, faringite', texto:'*Escarlatina* — amoxicilina ou penicilina benzatina',
+            meds:['Amoxicilina', 'Penicilina benzatina'], ir:'faringoamigdalite' },
+          { rotulo:'Faringite exsudativa, linfonodos cervicais posteriores, baço grande — rash após amoxicilina', texto:'*Mononucleose* — suporte e afastar de esporte de contato' },
+          { rotulo:'Rosado discreto + linfonodos retroauriculares e occipitais', cor:'perigo', texto:'*Rubéola* — notificar em 24 h, afastar de gestantes' },
+          { rotulo:'Lactente com 3–5 dias de febre alta; manchas quando a febre some', cor:'ok', texto:'*Exantema súbito* (HHV-6) — só suporte', nota:'Causa frequente de convulsão febril', ir:'convulsao-febril' },
+          { rotulo:'Bochechas "esbofeteadas" e rendilhado em membros', cor:'ok', texto:'*Eritema infeccioso* (parvovírus B19) — suporte; já não transmite',
+            nota:'Gestante exposta: obstetrícia. Falciforme: crise aplástica', ir:'anemia-falciforme' },
+          { rotulo:'Vesículas em mãos, pés, boca e nádegas', cor:'ok', texto:'*Mão-pé-boca* — analgesia e hidratação', meds:['Paracetamol', 'Dipirona'] }
+        ]},
+        { tipo:'decisao', texto:'Varicela: quem precisa de mais que sintomáticos?', ramos:[
+          { rotulo:'Imunossuprimido, gestante grave, recém-nascido, pneumonia, encefalite, hepatite', cor:'perigo', texto:'*Internar e aciclovir EV*',
+            meds:['Aciclovir EV'] },
+          { rotulo:'> 12 anos, adulto, gestante, doença crônica de pele ou pulmão, corticoide, uso de AAS, 2º caso no domicílio', texto:'*Aciclovir VO* idealmente nas primeiras 24 h do exantema',
+            meds:['Aciclovir VO (criança)', 'Aciclovir VO (adulto)'] },
+          { rotulo:'Criança saudável < 12 anos', cor:'ok', texto:'*Sintomáticos*: paracetamol ou dipirona, anti-histamínico, unhas curtas',
+            meds:['Paracetamol', 'Hidroxizina'] }
+        ]},
+        { tipo:'passo', rotulo:'Contatos', texto:'*Proteger suscetíveis*: vacina pós-exposição ou imunoglobulina pelo CRIE',
+          meds:['Imunoglobulina antivaricela-zóster', 'Imunoglobulina humana normal (sarampo)'] },
+        { tipo:'fim', rotulo:'Destino', texto:'Alta com sintomáticos, afastamento escolar e retorno com sinais de alarme · internar complicação, imunossuprimido e sarampo grave' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        '*Varicela:* pródromo leve e vesículas em "gota de orvalho" em surtos — mácula, pápula, vesícula e crosta ao mesmo tempo.',
+        '*Sarampo:* febre alta, tosse, coriza e conjuntivite por 3–5 dias, manchas de Koplik, exantema que começa atrás das orelhas e desce.',
+        '*Escarlatina:* faringite, exantema áspero que acentua nas dobras (sinal de Pastia), descamação de mãos e pés na 2ª semana.',
+        '*Mononucleose:* adolescente com faringite arrastada, cansaço, linfonodos cervicais posteriores, esplenomegalia, linfocitose atípica.',
+        '*Rubéola:* exantema discreto, febre baixa, linfonodos retroauriculares e occipitais, artralgia na mulher adulta.',
+        '*Mão-pé-boca:* lesões orais dolorosas que impedem de comer, vesículas em palmas e plantas; a unha pode cair semanas depois.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Petéquias ou púrpura com febre*: meningococcemia até prova em contrário.',
+        'Varicela com *febre que volta após o 4º dia*, lesão vermelha, quente e dolorosa: infecção bacteriana invasiva ou fasciite.',
+        'Varicela com tosse e dispneia (pneumonia, mais em adulto e gestante) ou ataxia e confusão (encefalite).',
+        'Sarampo com dispneia, desidratação, confusão ou em desnutrido e lactente < 1 ano.',
+        'Mononucleose com dor no quadrante superior esquerdo ou no ombro esquerdo: *ruptura esplênica*; estridor: obstrução da via aérea.'
+      ]},
+
+      { tipo:'lista', titulo:'Notificação, isolamento e afastamento', itens:[
+        '*Sarampo e rubéola:* notificação compulsória *imediata (em até 24 h)* na suspeita, sem esperar exame. Isolamento aéreo no sarampo até 4 dias após o início do exantema; gotículas na rubéola até 7 dias após.',
+        '*Varicela:* notificar casos graves e óbitos (e surtos); afastar até todas as lesões virarem crosta.',
+        '*Escarlatina:* afastar até 24 h após o início do antibiótico.',
+        '*Mão-pé-boca:* afastar enquanto houver febre e lesões abertas.',
+        '*Eritema infeccioso e exantema súbito:* quando o exantema aparece, já não transmitem — sem afastamento.',
+        '*Suspeita de sarampo:* febre + exantema maculopapular + tosse, coriza ou conjuntivite, em qualquer idade e situação vacinal.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Nenhum* na maioria — o diagnóstico é clínico.',
+        '*Sarampo e rubéola:* sorologia IgM e swab de nasofaringe e orofaringe com urina para PCR, colhidos *no primeiro atendimento* (orientação da vigilância).',
+        '*Hemograma e plaquetas* se dúvida com dengue, mononucleose (linfocitose atípica) ou toxemia.',
+        '*Teste rápido para estreptococo* ou cultura na escarlatina duvidosa.',
+        '*Mononucleose:* teste de anticorpos heterófilos (falso-negativo em < 4 anos e na 1ª semana) ou sorologia para EBV; transaminases elevadas são comuns.',
+        '*Radiografia de tórax* na varicela ou sarampo com sintomas respiratórios; PCR para VZV no líquor se encefalite.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Aciclovir VO (criança)', dose:'20 mg/kg/dose de 6/6 h (4x/dia), máx 800 mg/dose, por 5 dias', via:'VO', obs:'Varicela com indicação. Comprimidos de 200 e 400 mg (suspensão 200 mg/5 mL quando disponível). Começar nas primeiras 24 h do exantema; até 72 h ainda se usa.' },
+        { droga:'Aciclovir VO (adulto)', dose:'800 mg 5x/dia por 7 dias', via:'VO', obs:'Adolescente > 12 anos, adulto e gestante (na gestação, discutir com a obstetrícia). Alternativa: valaciclovir 1 g de 8/8 h por 7 dias.' },
+        { droga:'Aciclovir EV', dose:'10 mg/kg de 8/8 h (criança ≥ 1 ano: alternativa 500 mg/m² de 8/8 h) por 7–10 dias', via:'EV', obs:'Imunossuprimido, pneumonia, encefalite, hepatite, recém-nascido. Hidratar bem e ajustar pela função renal (nefrotoxicidade por cristais).' },
+        { droga:'Imunoglobulina antivaricela-zóster', dose:'125 UI por 10 kg (mín 125 UI, máx 625 UI)', via:'IM', obs:'Pelo CRIE, até 96 h após o contato: imunossuprimido suscetível, gestante suscetível, recém-nascido de mãe com varicela de 5 dias antes a 2 dias depois do parto, prematuros expostos.' },
+        { droga:'Vacina varicela (pós-exposição)', dose:'1 dose em até 120 h (5 dias) do contato', via:'SC', obs:'Contato suscetível imunocompetente, não gestante, a partir de 9 meses em situação de surto (calendário de rotina: 15 meses e 4 anos).' },
+        { droga:'Vitamina A (palmitato de retinol)', dose:'< 6 meses: 50.000 UI · 6–11 meses: 100.000 UI · 12–59 meses: 200.000 UI — 2 doses (no dia da suspeita e no dia seguinte)', via:'VO', obs:'Toda criança < 5 anos com *suspeita* de sarampo, independente de vacina ou dose prévia (MS 2025). Cápsulas de 100.000 e 200.000 UI. Maiores de 5 anos com desnutrição ou xeroftalmia: discutir com a pediatria.' },
+        { droga:'Vacina tríplice viral (pós-exposição)', dose:'1 dose em até 72 h do contato', via:'SC', obs:'Contato suscetível de sarampo a partir de 6 meses (dose zero, não conta no calendário). Contraindicada em gestante e imunossuprimido grave.' },
+        { droga:'Imunoglobulina humana normal (sarampo)', dose:'Conforme o produto do CRIE (referência CDC: 0,5 mL/kg IM, máx 15 mL; ou 400 mg/kg EV)', via:'IM/EV', obs:'Até 6 dias do contato: menor de 6 meses, gestante suscetível e imunossuprimido.' },
+        { droga:'Amoxicilina', dose:'Criança: 50 mg/kg/dia ÷ 12/12 h (máx 500 mg/dose) · adulto: 500 mg de 8/8 h — por 10 dias', via:'VO', obs:'Escarlatina. Suspensões 250 mg/5 mL e 400 mg/5 mL. Na mononucleose, causa exantema em boa parte dos casos (não é alergia verdadeira).' },
+        { droga:'Penicilina benzatina', dose:'< 27 kg: 600.000 UI · ≥ 27 kg e adulto: 1.200.000 UI, dose única', via:'IM', obs:'Escarlatina quando a adesão ao oral é duvidosa. Alergia: azitromicina 12 mg/kg (máx 500 mg) 1x/dia por 5 dias.' },
+        { droga:'Paracetamol', dose:'Criança: 10–15 mg/kg (máx 750 mg) de 6/6 h · adulto: 750 mg de 6/6 h', via:'VO', obs:'Antitérmico de escolha na varicela. Gotas 200 mg/mL.' },
+        { droga:'Dipirona', dose:'Criança: 15–25 mg/kg (máx 1 g) de 6/6 h · adulto: 1 g de 6/6 h', via:'VO/EV', obs:'Alternativa ao paracetamol. Gotas 500 mg/mL.' },
+        { droga:'Hidroxizina', dose:'Criança: 1–2 mg/kg/dia ÷ 3–4 tomadas (máx 25 mg/dose) · adulto: 25 mg de 8/8 h', via:'VO', obs:'Prurido da varicela. Solução 2 mg/mL. Alternativa: cetirizina. Seda — cuidado em lactente.' },
+        { droga:'Prednisolona', dose:'1 mg/kg/dia (máx 60 mg) por 3–5 dias', via:'VO', obs:'*Só* na mononucleose com obstrução de via aérea, anemia hemolítica ou plaquetopenia grave — não de rotina.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        '*AAS* na varicela ou na influenza em criança e adolescente: síndrome de Reye.',
+        '*Ibuprofeno e outros anti-inflamatórios* na varicela: associados a infecção estreptocócica invasiva e fasciite.',
+        'Esperar a sorologia para notificar ou isolar suspeita de sarampo.',
+        'Deixar suspeita de sarampo na sala de espera comum.',
+        'Chamar de alergia à amoxicilina o exantema da mononucleose e rotular o paciente para a vida.',
+        'Liberar mononucleose para futebol, luta ou academia antes de 3–4 semanas.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Alta* para a maioria, com antitérmico, hidratação, cuidado da pele (unhas curtas, banho), afastamento escolar pelo tempo de transmissão e retorno com sinais de alarme (febre que volta, lesão de pele vermelha e dolorosa, falta de ar, sonolência, recusa de líquidos). *Internar:* varicela em imunossuprimido, recém-nascido ou com complicação (pneumonia, encefalite, infecção bacteriana grave, hepatite); sarampo com pneumonia, desidratação, encefalite ou em lactente desnutrido; mão-pé-boca com desidratação ou sinais neurológicos (mioclonias, ataxia, tremor — enterovírus 71); mononucleose com obstrução de via aérea ou suspeita de ruptura esplênica. *Gestante* exposta a varicela, rubéola ou parvovírus: sorologia e contato com o pré-natal no mesmo dia. *Mononucleose:* sem esporte de contato por pelo menos 3–4 semanas (mais, se o baço ainda estiver grande). *Divergência:* o MS indica vitamina A em 2 doses (dia da suspeita e dia seguinte) para toda criança < 5 anos com suspeita de sarampo; a OMS acrescenta uma 3ª dose em 2–4 semanas se houver xeroftalmia. Para escarlatina, o corte de peso da penicilina benzatina varia entre 20 e 27 kg conforme a referência.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Varicela em adolescente e adulto é outra doença: mais pneumonia — trate com aciclovir.',
+        'Antes de liberar o febril com exantema, faça a pergunta da vacina: sarampo voltou e começa como "virose com manchas".',
+        'Exantema que aparece quando a febre vai embora, no lactente: exantema súbito — tranquilize a família.',
+        'Febre com petéquias abaixo da linha dos mamilos ou que não desaparecem à vitropressão não é virose até prova em contrário.'
+      ]}
+    ] },
+
+  { id:'corpo-estranho-esofago', titulo:'Impactação alimentar e corpo estranho no esôfago (adulto)', categoria:'gastro', gravidade:'urgencia',
+    resumo:'Entalo com carne ou objeto engolido: quem não engole a saliva vai para endoscopia em até 6 h, bateria e objeto pontiagudo no esôfago também; os demais em até 24 h. Pacote de droga não se tira por endoscopia.',
+    tags:['corpo estranho','impactacao alimentar','bolo alimentar','entalo','engasgo','carne presa','espinha de peixe','osso de galinha','bateria de botao','pilha','ima','moeda','protese dentaria','body packer','mula','capsula de cocaina','glucagon','endoscopia','esofagite eosinofilica','disfagia'],
+    fonte:'ESGE — Removal of foreign bodies in the upper gastrointestinal tract in adults (2016) · ASGE — Management of ingested foreign bodies and food impactions (2011) · SOBED — Corpo estranho no trato digestivo · UpToDate — Foreign bodies of the esophagus and gastrointestinal tract in adults',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Adulto com *sensação de entalo* logo após comer (carne é o clássico) ou que engoliu objeto — com disfagia, odinofagia, dor retroesternal ou sialorreia.' },
+      { rotulo:'Prioridade',    valor:'*Consegue engolir a saliva?* Não engolir = obstrução completa = endoscopia em até 6 h. Bateria e pontiagudo no esôfago também são emergência.' },
+      { rotulo:'Meta',          valor:'Esôfago desobstruído sem perfuração e *causa de base investigada* (estenose, esofagite eosinofílica, câncer).' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Entalo após comer ou objeto engolido',
+          nota:'Perguntar o que, quando, se já aconteceu antes (estenose, esofagite eosinofílica) e se usa prótese dentária' },
+        { tipo:'decisao', texto:'Tem sinal de perfuração?', ramos:[
+          { rotulo:'Dor torácica intensa, febre, enfisema subcutâneo, crepitação no pescoço', cor:'perigo',
+            texto:'*TC de tórax e pescoço*, jejum, antibiótico e cirurgia — sem endoscopia antes da imagem',
+            meds:['Piperacilina-tazobactam'], ir:'ruptura-esofago' },
+          { rotulo:'Não', texto:'Seguir pelo tipo de objeto' }
+        ]},
+        { tipo:'decisao', texto:'Consegue engolir a própria saliva?', ramos:[
+          { rotulo:'Não: sialorreia, regurgita tudo', cor:'perigo', texto:'*Endoscopia em até 6 h* (idealmente em 2 h)',
+            nota:'Cabeceira elevada, aspirar a boca, nada por via oral. Risco de aspiração' },
+          { rotulo:'Sim, com sintoma', texto:'*Endoscopia em até 24 h*',
+            nota:'Muitos bolos passam sozinhos; se os sintomas sumirem, endoscopia eletiva para investigar a causa' }
+        ]},
+        { tipo:'decisao', texto:'Qual o objeto?', ramos:[
+          { rotulo:'Bateria de botão no esôfago', cor:'perigo', texto:'*Endoscopia de emergência* — em até 2 h',
+            nota:'Corrente elétrica causa necrose em 2 h e perfuração e fístula para a aorta depois. Radiografia: duplo contorno (halo)' },
+          { rotulo:'Pontiagudo (osso, espinha, palito, alfinete, prótese) no esôfago', cor:'perigo', texto:'*Endoscopia em até 6 h*',
+            nota:'Espinha visível na orofaringe: retirada direta com pinça ou laringoscopia (otorrino)' },
+          { rotulo:'Ímãs (mais de um, ou ímã + metal)', cor:'perigo', texto:'*Retirada endoscópica urgente* enquanto ao alcance',
+            nota:'Atraem-se através das alças: necrose e fístula' },
+          { rotulo:'Alimento', texto:'*Endoscopia* (empurrar com cuidado ou retirar) com biópsias',
+            nota:'Glucagon não recomendado como rotina' },
+          { rotulo:'Pacotes de droga (body packer)', cor:'perigo', texto:'*Não fazer endoscopia*: observar, TC e cirurgia se obstrução, ruptura ou intoxicação',
+            ir:'cocaina-estimulantes' },
+          { rotulo:'Romba e pequena no estômago (moeda, botão)', cor:'ok', texto:'*Conduta expectante*: passa sozinha na maioria',
+            nota:'Objeto > 2,5 cm de diâmetro ou > 6 cm de comprimento: retirada endoscópica' }
+        ]},
+        { tipo:'fim', rotulo:'Destino', texto:'Alta após endoscopia sem lesão, com IBP se esofagite e retorno para resultado das biópsias · internar perfuração, lesão profunda e body packer' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        '*Impactação alimentar:* início súbito durante a refeição (carne, frango), dor retroesternal, incapacidade de engolir, sialorreia.',
+        '*Objeto pontiagudo:* odinofagia e dor localizada após comer peixe ou frango; prótese dentária que sumiu.',
+        '*Bateria ou ímã:* idoso com déficit visual ou cognitivo (pilha de aparelho auditivo), paciente psiquiátrico, ingestão intencional.',
+        '*Body packer:* viajante vindo de rota de tráfico, preso em aeroporto ou com dor abdominal e sinais simpatomiméticos.',
+        '*Causa de base:* episódios repetidos em jovem com atopia (esofagite eosinofílica), disfagia progressiva no idoso (câncer, estenose péptica, anel de Schatzki).'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Não engole a saliva*: obstrução completa, risco de aspiração.',
+        '*Bateria de botão* no esôfago: horas contam.',
+        'Dor torácica, febre, enfisema subcutâneo ou crepitação: *perfuração*.',
+        'Estridor, dispneia ou rouquidão: objeto na via aérea ou compressão da traqueia.',
+        'Body packer agitado, taquicárdico, hipertenso ou convulsionando: *pacote roto* — cirurgia de emergência.'
+      ]},
+
+      { tipo:'lista', titulo:'Prazos para endoscopia (ESGE 2016)', itens:[
+        '*Emergência (até 6 h, idealmente até 2 h):* obstrução esofágica completa, bateria de botão no esôfago, objeto pontiagudo no esôfago.',
+        '*Urgência (até 24 h):* impactação alimentar sem obstrução completa, outros objetos no esôfago, ímãs, objeto pontiagudo ou grande no estômago.',
+        '*Eletiva ou expectante:* objeto rombo pequeno no estômago (< 2,5 cm), sem sintomas.',
+        '*Cirurgia:* perfuração com mediastinite, objeto fora do alcance que causa obstrução ou não progride, body packer com complicação.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Radiografia de pescoço, tórax (PA e perfil) e abdome* para objeto radiopaco e ar livre — mas *alimento, espinha fina, plástico e madeira não aparecem*.',
+        '*Bateria x moeda:* a bateria mostra duplo contorno (halo) de frente e degrau de perfil.',
+        '*TC de pescoço e tórax* se suspeita de perfuração, osso ou espinha não vista na radiografia, ou objeto pontiagudo.',
+        '*TC de abdome sem contraste* no body packer (radiografia perde parte dos pacotes).',
+        '*Sem bário ou contraste oral* antes da endoscopia: aspira, atrapalha a visão e não muda a conduta.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Glucagon', dose:'1 mg em bolus lento; pode repetir 1 vez em 20 min (máx 2 mg)', via:'EV', obs:'*Não recomendado como rotina* (sem benefício sobre placebo nos estudos). Se usado, não pode atrasar a endoscopia. Causa vômito: cabeceira elevada. Ampola GlucaGen 1 mg.' },
+        { droga:'Piperacilina-tazobactam', dose:'4,5 g de 6/6 h', via:'EV', obs:'Perfuração esofágica, com cirurgia. Associar antifúngico se a perfuração for tardia ou grave, conforme a cirurgia.' },
+        { droga:'Omeprazol', dose:'40 mg 1x/dia (VO) por 8 semanas, ou 40 mg EV se em jejum', via:'VO/EV', obs:'Após a retirada, se esofagite ou estenose péptica; também é tratamento inicial da esofagite eosinofílica até as biópsias.' },
+        { droga:'Dipirona', dose:'1 g', via:'EV', obs:'Dor retroesternal ou odinofagia enquanto aguarda.' },
+        { droga:'Escopolamina', dose:'20 mg', via:'EV', obs:'Uso comum, sem evidência de que faça o bolo passar. Não atrasar a endoscopia por ela.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Dar amaciante de carne (papaína), refrigerante ou bebida gasosa para "empurrar": risco de perfuração e aspiração, sem benefício provado.',
+        'Induzir vômito ou passar sonda às cegas para empurrar o bolo.',
+        'Pedir esofagograma com bário antes da endoscopia.',
+        'Liberar com radiografia normal quem engoliu espinha ou osso e continua com dor — o objeto pode não aparecer.',
+        'Tentar retirar pacote de droga por endoscopia: rompe e intoxica.',
+        'Dar alta da impactação alimentar sem encaminhar para endoscopia com biópsia quando o bolo passou sozinho.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Alta* após endoscopia sem lesão profunda, com dieta pastosa por 24–48 h, IBP se esofagite e retorno para o resultado das biópsias. Bolo que passou sozinho no PS com melhora completa: alta com endoscopia eletiva em poucas semanas — mais da metade dos adultos com impactação tem doença de base (esofagite eosinofílica, estenose, anel, câncer). *Internar* perfuração (jejum, antibiótico, cirurgia torácica), lesão profunda por bateria (risco de fístula com a aorta e a traqueia por dias a semanas), objeto que precisa de cirurgia e *body packer* (observação até eliminar todos os pacotes, com TC de controle; irrigação intestinal com polietilenoglicol só após discutir com o CIATox e a cirurgia). *Divergência:* a ASGE 2011 aceita uma tentativa de glucagon 0,5–1 mg EV sem atrasar a endoscopia; a ESGE 2016 e estudos controlados posteriores não mostram benefício, e a prática atual é não usar como rotina.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'A pergunta que decide o prazo: "você consegue engolir a saliva?" — cuspe acumulado na boca é obstrução completa.',
+        'Jovem com segundo episódio de carne entalada: esofagite eosinofílica até a biópsia provar o contrário.',
+        'O paciente costuma apontar bem o local quando o objeto está no pescoço; abaixo disso a localização da dor engana.',
+        'Idoso que perdeu a prótese dentária parcial: peça radiografia — o grampo metálico é pontiagudo.'
+      ]}
+    ] },
+
+  { id:'doenca-perianal', titulo:'Fissura anal, abscesso perianal e trombose hemorroidária', categoria:'gastro', gravidade:'rotina',
+    resumo:'Dor anal no PS: fissura trata com fibra, banho de assento e relaxante tópico; abscesso drena; trombose hemorroidária com menos de 72 h pode ser excisada — e sangramento com perda de peso vai para colonoscopia.',
+    tags:['dor anal','fissura anal','fissura','abscesso perianal','abscesso anorretal','fistula anal','hemorroida','trombose hemorroidaria','hemorroida trombosada','nifedipina topica','diltiazem topico','isossorbida','banho de assento','psyllium','plicoma','proctologia','coloproctologia','sangramento anal'],
+    fonte:'ASCRS — Clinical practice guidelines for anal fissures (2017), hemorrhoids (2018) e anorectal abscess, fistula-in-ano and rectovaginal fistula (2022) · SBCP — Sociedade Brasileira de Coloproctologia · Ministério da Saúde — Caderno de Atenção Básica · UpToDate — Anal fissure; Perianal abscess; Thrombosed external hemorrhoids',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Dor anal, sangue vivo no papel, nódulo ou inchaço perianal — *examine o ânus* com boa luz, afastando as nádegas.' },
+      { rotulo:'Prioridade',    valor:'Separar fissura, trombose e abscesso pelo exame; *abscesso drena no mesmo dia*; toxemia ou crepitação é Fournier.' },
+      { rotulo:'Meta',          valor:'Dor controlada, fezes amolecidas e *red flags investigadas* (perda de peso, anemia, mudança do hábito).' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Dor anal ou perianal',
+          nota:'Inspeção afastando as nádegas resolve a maioria; toque retal pode ser adiado na fissura muito dolorosa' },
+        { tipo:'decisao', texto:'O que o exame mostra?', ramos:[
+          { rotulo:'Corte na linha média posterior, dor em lâmina ao evacuar, sangue vivo no papel', texto:'*Fissura anal*: fibra, banho de assento, relaxante tópico + anestésico',
+            meds:['Psyllium', 'Nifedipina tópica', 'Lidocaína pomada 5%'] },
+          { rotulo:'Nódulo azulado, tenso e doloroso na borda anal', texto:'*Trombose hemorroidária externa*: < 72 h, excisão sob anestesia local; > 72 h, conservador',
+            meds:['Lidocaína 1–2% com vasoconstritor', 'Diosmina + hesperidina', 'Ibuprofeno'] },
+          { rotulo:'Abaulamento quente, endurecido ou flutuante, com ou sem febre', cor:'perigo', texto:'*Abscesso perianal*: incisão e drenagem',
+            nota:'Antibiótico se imunossupressão, diabetes, celulite, sinais sistêmicos ou prótese valvar',
+            meds:['Amoxicilina + clavulanato'] },
+          { rotulo:'Dor retal profunda, febre, retenção urinária e exame externo normal', cor:'perigo', texto:'*Abscesso profundo* (isquiorretal, interesfinctérico, supraelevador): toque retal, TC e cirurgia' },
+          { rotulo:'Necrose, crepitação, toxemia', cor:'perigo', texto:'*Fournier*: antibiótico amplo e desbridamento', ir:'escroto-agudo' }
+        ]},
+        { tipo:'decisao', texto:'Tem sinal de alarme?', ramos:[
+          { rotulo:'Sangramento com perda de peso, anemia, mudança do hábito intestinal, > 45 anos sem colonoscopia, história familiar', cor:'perigo',
+            texto:'*Colonoscopia* — não atribuir o sangue à hemorroida ou à fissura sem investigar', ir:'hdb' },
+          { rotulo:'Fissura lateral, múltipla, indolor ou que não cicatriza', texto:'*Investigar Crohn, HIV, sífilis, tuberculose e câncer*' },
+          { rotulo:'Nenhum', cor:'ok', texto:'Tratar e encaminhar à coloproctologia se não melhorar' }
+        ]},
+        { tipo:'fim', rotulo:'Alta', texto:'Fezes amolecidas, banho de assento, analgesia e coloproctologia ambulatorial · abscesso drenado com retorno em 48 h' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        '*Fissura anal:* dor intensa durante e depois da evacuação (minutos a horas), sangue vivo no papel, constipação; plicoma sentinela na fissura crônica (> 6–8 semanas).',
+        '*Trombose hemorroidária externa:* nódulo súbito, roxo e muito doloroso após esforço, viagem ou parto; dor máxima em 48–72 h.',
+        '*Hemorroida interna:* sangramento indolor em jato ou gotejamento; dói só se prolapsada e encarcerada.',
+        '*Abscesso perianal:* dor contínua e pulsátil, pior ao sentar, com abaulamento; febre nos maiores.',
+        '*Abscesso profundo:* dor retal e febre sem nada visível por fora, às vezes retenção urinária.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        '*Sangramento com perda de peso*, anemia ou mudança do hábito intestinal: câncer colorretal até investigar.',
+        'Febre alta, toxemia, crepitação ou pele escura no períneo: *Fournier*.',
+        'Imunossuprimido, neutropênico ou diabético descompensado com dor anal: infecção grave com pouco sinal.',
+        'Hemorroida interna prolapsada, encarcerada e escura: necrose — coloproctologia.',
+        'Fissura atípica (lateral, múltipla, indolor, larga): Crohn, IST, HIV, tuberculose ou câncer.'
+      ]},
+
+      { tipo:'lista', titulo:'Quando dar antibiótico no abscesso perianal', itens:[
+        '*Imunossupressão*, neutropenia, HIV avançado.',
+        '*Diabetes*, sobretudo descompensado.',
+        '*Celulite* extensa ao redor ou sinais sistêmicos (febre, taquicardia, leucocitose).',
+        '*Prótese valvar* ou endocardite prévia.',
+        '*Sem esses critérios:* a drenagem basta (ASCRS 2022 admite antibiótico após drenagem para reduzir fístula, com evidência fraca).'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Nenhum* na fissura e na trombose típicas.',
+        '*Hemograma, glicemia e PCR* no abscesso grande, no diabético e no imunossuprimido.',
+        '*TC de pelve com contraste* (ou ressonância) na suspeita de abscesso profundo, Crohn ou Fournier.',
+        '*Testes rápidos de HIV e sífilis* na fissura atípica ou com úlceras.',
+        '*Colonoscopia* ambulatorial com red flag ou > 45 anos com sangramento sem investigação prévia.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações', itens:[
+        { droga:'Psyllium', dose:'1 sachê (cerca de 5 g) 1–2x/dia em 1 copo cheio de água', via:'VO', obs:'Base do tratamento da fissura e das hemorroidas, junto com 2 L de água por dia.' },
+        { droga:'Macrogol (polietilenoglicol 3350)', dose:'1 sachê (14–17 g) 1–2x/dia, ajustar para fezes pastosas', via:'VO', obs:'Se o psyllium não amolecer as fezes. Alternativa: lactulose 15–30 mL/dia.' },
+        { droga:'Nifedipina tópica', dose:'Nifedipina 0,2–0,3% + lidocaína 1,5% em pomada (manipulada), na borda anal 2–3x/dia por 6–8 semanas', via:'Tópica', obs:'Primeira escolha na fissura. Cefaleia rara. Pode cicatrizar a fissura crônica.' },
+        { droga:'Diltiazem tópico', dose:'Diltiazem 2% gel ou pomada (manipulado), 2x/dia por 6–8 semanas', via:'Tópica', obs:'Alternativa à nifedipina, eficácia semelhante.' },
+        { droga:'Dinitrato de isossorbida tópico', dose:'Isossorbida 1% pomada (manipulada) ou nitroglicerina 0,2–0,4%, 2x/dia por 6–8 semanas', via:'Tópica', obs:'Mais cefaleia que os bloqueadores de canal de cálcio. *Não usar com sildenafila ou tadalafila.*' },
+        { droga:'Lidocaína pomada 5%', dose:'Aplicar na borda anal antes e depois de evacuar, até 4x/dia', via:'Tópica', obs:'Alívio sintomático; não cicatriza sozinha.' },
+        { droga:'Lidocaína 1–2% com vasoconstritor', dose:'Até 7 mg/kg (sem vasoconstritor até 4,5 mg/kg)', via:'SC', obs:'Anestesia para excisão da trombose ou drenagem do abscesso.' },
+        { droga:'Diosmina + hesperidina', dose:'Crise: 3 comprimidos de 500 mg de 12/12 h por 4 dias, depois 2 comprimidos de 12/12 h por 3 dias', via:'VO', obs:'Crise hemorroidária; alívio modesto da dor e do sangramento.' },
+        { droga:'Pomada proctológica com anestésico', dose:'Aplicar 2–3x/dia por até 7 dias', via:'Tópica', obs:'Policresuleno + cinchocaína ou fluocortolona + lidocaína. Corticoide tópico só por poucos dias (atrofia da pele).' },
+        { droga:'Amoxicilina + clavulanato', dose:'875/125 mg de 12/12 h por 7 dias', via:'VO', obs:'Abscesso com critério. Alergia: ciprofloxacino 500 mg de 12/12 h + metronidazol 400 mg de 8/8 h.' },
+        { droga:'Dipirona', dose:'1 g de 6/6 h', via:'VO/EV', obs:'Analgesia.' },
+        { droga:'Ibuprofeno', dose:'400–600 mg de 8/8 h por 5 dias', via:'VO', obs:'Trombose e abscesso drenado. Evitar se sangramento importante.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Tratar abscesso perianal só com antibiótico, esperando "amadurecer".',
+        'Atribuir sangramento retal à hemorroida em quem tem perda de peso ou anemia, sem colonoscopia.',
+        'Incisar e só espremer o coágulo da trombose (incisão simples): recidiva — fazer excisão elíptica do nódulo.',
+        'Excisar trombose com mais de 72 h e dor já em melhora — o conservador vence.',
+        'Usar pomada de corticoide por semanas.',
+        'Prescrever opioide sem laxante na doença orificial: a constipação piora a fissura.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Alta* para fissura, trombose e abscesso perianal superficial drenado, com fibra, água, banho de assento morno 2–3x/dia (10–15 min, sem produto na água), analgesia, evitar ficar muito tempo sentado no vaso e retorno à coloproctologia. *Fissura aguda* cicatriza em até 8 semanas na maioria só com medidas clínicas; a crônica que não responde ao tratamento tópico vai para toxina botulínica ou esfincterotomia lateral interna. *Trombose:* excisão elíptica sob anestesia local nas primeiras 72 h alivia mais rápido e recidiva menos; depois disso, tratamento conservador — o coágulo é absorvido em 2 a 3 semanas. *Abscesso:* drenagem com incisão próxima da borda anal (trajeto de eventual fístula mais curto), sem tamponamento obrigatório; cerca de 1 em cada 3 evolui para fístula, que é tratada eletivamente. *Internar* abscesso profundo, Fournier, sepse, imunossuprimido grave e hemorroida interna encarcerada com necrose. Fournier segue a conduta de escroto agudo.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Fissura na linha média posterior é típica; em qualquer outro lugar, pense em doença de base.',
+        'Dor anal sem nada visível, com febre: faça o toque — o abscesso profundo só se sente por dentro.',
+        'A fissura dói depois de evacuar por horas; a hemorroida interna sangra sem doer.',
+        'Pomada manipulada demora a ficar pronta: prescreva já com fibra e banho de assento para começar no mesmo dia.'
+      ]}
+    ] },
+
+  /* ==== expansão 02/10/2026: ORL, hemato, ambientais, tóxico, obstetrícia e pediatria ==== */
+  { id:'claudicacao', titulo:'Criança mancando: sinovite, artrite séptica e pronação dolorosa', categoria:'pedia', gravidade:'urgencia',
+    resumo:'Claudicação aguda: excluir artrite séptica (Kocher + PCR, ultrassom e punção), não deixar o adolescente com epifisiólise andar, lembrar de fratura do lactente, leucemia e maus-tratos; pronação dolorosa se reduz sem radiografia.',
+    tags:['claudicacao','crianca mancando','mancando','nao apoia','sinovite transitoria','artrite septica','kocher','osteomielite','perthes','legg-calve-perthes','epifisiolise','toddler','fratura do lactente','pronacao dolorosa','cotovelo de baba','subluxacao da cabeca do radio','quadril','dor no quadril','oxacilina','cefazolina','cefuroxima','kingella'],
+    fonte:'PIDS/IDSA — Acute Bacterial Arthritis in Pediatrics (2023) · PIDS/IDSA — Acute Hematogenous Osteomyelitis in Pediatrics (2021) · Kocher et al., JBJS (1999) e Caird et al., JBJS (2006) · Cochrane — Manipulação da pronação dolorosa (Krul et al., 2017) · UpToDate — Evaluation of limp in children',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Criança que passou a mancar, não apoia o peso ou não mexe um membro. Entre 1 e 4 anos, braço pendente depois de um puxão: *pronação dolorosa*.' },
+      { rotulo:'Prioridade',    valor:'*Febre + não apoia = artrite séptica até prova em contrário*: PCR, VHS, hemograma, hemocultura, ultrassom do quadril e punção.' },
+      { rotulo:'Meta',          valor:'Drenar e tratar a artrite séptica em horas, tirar a carga da epifisiólise e não perder leucemia nem maus-tratos.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Criança mancando ou recusando apoiar o peso',
+          nota:'Examinar a criança inteira, sem roupa: coluna, abdome, testículos, pele (petéquias, hematomas) e todas as articulações' },
+        { tipo:'decisao', texto:'Tem febre, toxemia ou dor intensa a qualquer movimento do quadril?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Artrite séptica ou osteomielite até prova em contrário*: PCR, VHS, hemograma, hemocultura e ultrassom',
+            nota:'Aplicar os critérios de Kocher + PCR' },
+          { rotulo:'Não, bom estado', texto:'Seguir pela idade, pela história e pelo exame' }
+        ]},
+        { tipo:'decisao', texto:'Quantos critérios: febre > 38,5 °C, não apoia, VHS > 40, leucócitos > 12 mil, PCR > 2 mg/dL?', ramos:[
+          { rotulo:'0 a 1, criança bem', cor:'ok', texto:'*Sinovite transitória provável*: anti-inflamatório e reavaliar em 24 a 48 h',
+            meds:['Ibuprofeno'] },
+          { rotulo:'2', texto:'*Ultrassom*; se houver derrame, *punção* com a ortopedia',
+            nota:'Risco intermediário: não liberar sem afastar artrite séptica' },
+          { rotulo:'3 ou mais, ou líquido purulento', cor:'perigo', texto:'*Punção, cultura, antibiótico EV* e drenagem pela ortopedia',
+            nota:'Menor de 5 anos sem vacina Hib completa: cefuroxima',
+            meds:['Oxacilina', 'Cefazolina', 'Cefuroxima'] }
+        ]},
+        { tipo:'decisao', texto:'Sem febre: qual o cenário?', ramos:[
+          { rotulo:'Adolescente obeso, dor no quadril, na coxa ou só no joelho', cor:'perigo',
+            texto:'*Epifisiólise*: não deixar andar, radiografia de bacia AP + rã bilateral, ortopedia no mesmo dia' },
+          { rotulo:'Menor de 3 anos, sem trauma claro', texto:'*Fratura do lactente*: radiografia da tíbia AP, perfil e oblíquas',
+            ir:'fraturas-comuns' },
+          { rotulo:'4 a 8 anos, início insidioso', texto:'*Legg-Calvé-Perthes*: radiografia de bacia AP + rã; ortopedia ambulatorial' },
+          { rotulo:'Dor noturna, palidez, petéquias, visceromegalia', cor:'perigo', texto:'*Leucemia ou tumor*: hemograma com esfregaço, LDH e ácido úrico' },
+          { rotulo:'Lesão que não combina com a história', cor:'perigo', texto:'*Maus-tratos*', ir:'maus-tratos' }
+        ]},
+        { tipo:'passo', rotulo:'Pronação dolorosa', texto:'Braço junto ao corpo em pronação após puxão, 1 a 4 anos: *reduzir sem radiografia*',
+          nota:'Hiperpronação (mais eficaz) ou supinação seguida de flexão. A criança volta a usar o braço em 10 a 30 min' },
+        { tipo:'fim', rotulo:'Alta', texto:'Sinovite com marcha melhorando, sem febre, com retorno em 24 a 48 h · pronação reduzida e braço em uso' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        'Sinovite transitória: 3 a 8 anos, dias após virose, afebril ou febre baixa, bom estado, rotação do quadril pouco limitada.',
+        'Artrite séptica: febre, toxemia, quadril em flexão, abdução e rotação externa, dor intensa a qualquer movimento.',
+        'Osteomielite: febre e dor localizada na metáfise; a radiografia é normal nos primeiros 10 a 14 dias.',
+        'Epifisiólise: 10 a 16 anos, sobrepeso, dor no quadril, na coxa ou *só no joelho*; o quadril roda para fora ao ser fletido (sinal de Drehmann).',
+        'Fratura do lactente: 9 meses a 3 anos, recusa a apoiar após queda banal, dor à palpação ou à torção da tíbia.',
+        'Leucemia ou tumor: dor que acorda à noite, dor óssea migratória, palidez, petéquias, perda de peso, visceromegalia.',
+        'Pronação dolorosa: 1 a 4 anos, puxão pela mão, braço pendente em pronação, sem edema nem deformidade.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        'Febre + recusa a apoiar o peso: artrite séptica até prova em contrário — o quadril infectado destrói a cabeça femoral em horas.',
+        'Adolescente com epifisiólise que não consegue apoiar: forma *instável* — maca, nenhuma carga, ortopedia de urgência (risco de necrose avascular).',
+        'Dor no joelho com exame do joelho normal: examine o quadril.',
+        'Dor noturna, sintomas sistêmicos, citopenias ou blastos: leucemia — não dar corticoide antes do diagnóstico.',
+        'Fratura em quem ainda não anda, fraturas múltiplas ou em idades diferentes, história que muda: maus-tratos.'
+      ]},
+
+      { tipo:'lista', titulo:'Critérios de Kocher + PCR (Caird)', itens:[
+        'Febre: temperatura acima de 38,5 °C.',
+        'Carga: não apoia o peso no membro.',
+        'VHS: acima de 40 mm/h.',
+        'Leucócitos: acima de 12.000/mm³.',
+        'PCR: acima de 2 mg/dL (20 mg/L) — o melhor preditor isolado; abaixo de 1 mg/dL torna artrite séptica muito improvável.',
+        'Probabilidade no estudo original: 0 critério < 1% · 1 critério 3% · 2 critérios 40% · 3 critérios 93% · 4 critérios 99%. Nas validações os números foram menores — é apoio, não regra.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Hemograma com esfregaço*: citopenias ou blastos mudam o diagnóstico.',
+        '*PCR e VHS* — a PCR sobe primeiro e serve para acompanhar a resposta.',
+        '*Hemocultura* antes do antibiótico em todo febril.',
+        '*Ultrassom do quadril*: mostra derrame; sem derrame, artrite séptica do quadril fica muito improvável.',
+        '*Punção articular* (ortopedia, guiada por ultrassom): Gram, cultura (inocular também em frasco de hemocultura, para Kingella) e celularidade; acima de 50.000 leucócitos/mm³ com neutrófilos sugere séptica.',
+        '*Radiografia*: bacia AP + rã (Lauenstein) bilateral se epifisiólise ou Perthes; tíbia AP, perfil e oblíquas no lactente.',
+        '*Ressonância*: osteomielite, abscesso, piomiosite, ou febre com dor localizada e radiografia normal.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações — por quilo', itens:[
+        { droga:'Ibuprofeno', dose:'10 mg/kg por dose (máximo de 400 mg)', via:'VO', obs:'De 6/6 a 8/8 h por 3 a 7 dias na sinovite transitória. Gotas de 50 mg/mL e de 100 mg/mL: conferir a concentração do frasco.' },
+        { droga:'Dipirona', dose:'15 mg/kg por dose (máximo de 1 g)', via:'VO ou EV', obs:'De 6/6 h, se dor. Gotas 500 mg/mL (1 mL = 20 gotas).' },
+        { droga:'Oxacilina', dose:'50 mg/kg por dose (máximo de 2 g)', via:'EV', obs:'De 6/6 h (200 mg/kg/dia). Frasco de 500 mg. Escolha na artrite séptica e osteomielite onde MRSA comunitário é raro.' },
+        { droga:'Cefazolina', dose:'33 a 50 mg/kg por dose (máximo de 2 g)', via:'EV', obs:'De 8/8 h (100 a 150 mg/kg/dia). Cobre S. aureus sensível e Kingella. Frasco de 1 g.' },
+        { droga:'Cefuroxima', dose:'50 mg/kg por dose (máximo de 1,5 g)', via:'EV', obs:'De 8/8 h (150 mg/kg/dia). Menor de 5 anos sem vacina Hib completa: cobre estafilococo, Kingella e Haemophilus. Frasco de 750 mg.' },
+        { droga:'Clindamicina', dose:'10 a 13 mg/kg por dose (máximo de 900 mg)', via:'EV', obs:'De 8/8 h (30 a 40 mg/kg/dia). Alérgico a betalactâmico ou MRSA com resistência local abaixo de 10 a 15%. *Não cobre Kingella.*' },
+        { droga:'Vancomicina', dose:'15 mg/kg por dose (máximo de 1 g)', via:'EV', obs:'De 6/6 h. Sepse, choque ou MRSA provável — associada à oxacilina ou cefazolina no grave. Nível sérico e função renal.' },
+        { droga:'Ceftriaxona', dose:'50 a 100 mg/kg/dia (máximo de 2 g por dose)', via:'EV', obs:'1 vez ao dia ou de 12/12 h. Associar ao antiestafilocócico se adolescente sexualmente ativo (gonococo) ou anemia falciforme (Salmonella).' },
+        { droga:'Cefalexina', dose:'25 a 37,5 mg/kg por dose (máximo de 1 g)', via:'VO', obs:'De 6/6 h (100 a 150 mg/kg/dia), na troca para via oral após melhora clínica e queda da PCR. Suspensão 250 mg/5 mL ou 500 mg/5 mL.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Liberar criança febril que não apoia o peso sem ultrassom e marcadores inflamatórios.',
+        'Dar antibiótico sem colher hemocultura — e, se a punção for demorar horas, não espere por ela para tratar o séptico.',
+        'Deixar o adolescente com suspeita de epifisiólise andar ou sair de muletas sem ortopedia.',
+        'Radiografia de rotina na pronação dolorosa com história típica.',
+        'Corticoide para dor articular sem diagnóstico: mascara leucemia.',
+        'Rotular como sinovite transitória quem tem febre alta ou PCR elevada.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Internar* a suspeita de artrite séptica ou osteomielite (antibiótico EV, drenagem cirúrgica da artrite séptica do quadril, que é urgência), a epifisiólise (cirurgia de fixação, sem carga até lá), a suspeita de leucemia e qualquer suspeita de maus-tratos (proteção da criança e notificação ao Conselho Tutelar). Na artrite séptica não complicada, passar para via oral (cefalexina em dose alta, ou clindamicina) após 2 a 4 dias com melhora clínica e PCR caindo, completando 10 a 14 dias no total; osteomielite: 3 a 4 semanas. *Alta* na sinovite transitória com criança afebril, bom estado, marcha melhorando com o anti-inflamatório e retorno garantido em 24 a 48 horas; voltar antes se surgir febre ou piora. Pronação dolorosa: alta assim que usar o braço; orientar a não erguer a criança pelas mãos. *Divergência:* a PIDS/IDSA 2023 trata a artrite séptica com cefazolina isolada (cobre Kingella), reservando a cefuroxima ou ceftriaxona para o não vacinado contra Hib; muitos protocolos brasileiros ainda associam oxacilina a ceftriaxona no menor de 5 anos — siga o perfil de resistência do serviço.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Peça para a criança andar, pular num pé só e sentar no chão: diz mais do que o exame deitado.',
+        'Pronação dolorosa: se não voltar a usar o braço em 15 a 30 min, tente a outra manobra; após duas falhas, radiografia.',
+        'Kingella kingae é a causa mais comum de artrite séptica entre 6 meses e 4 anos e cresce mal: líquido sinovial em frasco de hemocultura.',
+        'Sinovite que não melhora em 48 a 72 h, ou que volta, não é sinovite: reavaliar com exames.'
+      ]}
+    ] },
+
+  { id:'rn-ps', titulo:'Recém-nascido no PS: icterícia, febre e choro', categoria:'pedia', gravidade:'urgencia',
+    resumo:'RN febril interna sempre, com culturas, líquor e antibiótico; icterícia avaliada pela curva da AAP 2022 (e nunca normal nas primeiras 24 h); checklist do choro inconsolável, perda de peso, coto umbilical, monilíase e BRUE.',
+    tags:['recem-nascido','rn','neonato','febre no rn','ictericia neonatal','bilirrubina','fototerapia','nomograma','bhutani','colestase','acolia','coluria','atresia biliar','choro inconsolavel','torniquete de cabelo','perda de peso','onfalite','coto umbilical','granuloma umbilical','monilia','sapinho','candidiase oral','nistatina','brue','alte','ampicilina','gentamicina','cefotaxima','aciclovir','herpes neonatal'],
+    fonte:'AAP — Febrile Infants 8 to 60 Days Old (2021) · AAP — Management of Hyperbilirubinemia in the Newborn ≥ 35 Weeks (2022) · AAP — Brief Resolved Unexplained Events (2016) · NASPGHAN/ESPGHAN — Cholestatic Jaundice in Infants (2017) · AAP — Red Book (2024)',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Qualquer RN (até 28 dias) no PS: febre, icterícia, choro, mamada ruim, perda de peso, umbigo, boca branca ou evento de susto (BRUE).' },
+      { rotulo:'Prioridade',    valor:'*Febre ≥ 38 °C no RN = internar*, culturas, líquor e antibiótico. Icterícia: *dosar bilirrubina* e plotar por horas de vida.' },
+      { rotulo:'Meta',          valor:'Não perder sepse, meningite, herpes, hemólise, atresia biliar nem maus-tratos; alta só com mamada conferida e retorno marcado.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'RN de até 28 dias trazido ao PS',
+          nota:'Peso atual x peso de nascimento, mamada observada, temperatura, glicemia capilar se hipoativo' },
+        { tipo:'decisao', texto:'Qual a queixa principal?', ramos:[
+          { rotulo:'Febre ≥ 38 °C ou hipotermia < 36 °C', cor:'perigo',
+            texto:'*Internar*: hemograma, PCR, hemocultura, urina por sondagem, urocultura e *líquor* → ampicilina + gentamicina (cefotaxima se meningite)',
+            nota:'Não existe RN febril de baixo risco para alta do PS',
+            meds:['Ampicilina', 'Gentamicina', 'Cefotaxima'], ir:'febre-sem-foco' },
+          { rotulo:'Icterícia', texto:'*Bilirrubina total e frações* e plotar no nomograma por horas de vida, idade gestacional e fatores de risco' },
+          { rotulo:'Choro inconsolável', texto:'*Despir e examinar da cabeça aos pés* com o checklist do choro' },
+          { rotulo:'Evento de susto (BRUE)', texto:'RN nunca é baixo risco: *observar internado* com monitor' }
+        ]},
+        { tipo:'alerta', rotulo:'Herpes neonatal', texto:'Febre com vesículas, convulsão, líquor alterado, transaminases altas ou mãe com lesão: *associar aciclovir*',
+          nota:'Pode não haver vesícula. Mortalidade alta se o tratamento atrasa',
+          meds:['Aciclovir'] },
+        { tipo:'decisao', texto:'Icterícia: qual o padrão?', ramos:[
+          { rotulo:'Nas primeiras 24 h de vida', cor:'perigo', texto:'*Patológica*: hemólise até prova em contrário — BT e frações, tipagem e Coombs, Ht, reticulócitos' },
+          { rotulo:'Acima da linha de fototerapia', cor:'perigo', texto:'*Fototerapia intensiva* já; a 2 mg/dL do limiar de exsanguineotransfusão: UTI neonatal',
+            meds:['Fototerapia'] },
+          { rotulo:'Acolia, colúria ou BD > 1 mg/dL', cor:'perigo', texto:'*Colestase*: investigar atresia biliar com urgência — Kasai antes de 60 dias' },
+          { rotulo:'Abaixo da linha, RN bem, mamando', cor:'ok', texto:'Alta com nova bilirrubina programada conforme a distância do limiar' }
+        ]},
+        { tipo:'fim', rotulo:'Alta', texto:'RN mamando bem, peso em recuperação, bilirrubina segura e retorno em 24 a 48 h' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        'Sepse neonatal: febre ou hipotermia, hipoatividade, sucção débil, gemência, apneia, má perfusão — os sinais são sutis.',
+        'Herpes neonatal: 1ª a 3ª semana, vesículas (podem faltar), convulsão, hepatite, hipotermia, mãe com lesão genital.',
+        'Icterícia de risco: início antes de 24 h, prematuro tardio, hemólise (ABO, Rh, G6PD), cefalo-hematoma, aleitamento com perda de peso grande.',
+        'Colestase: icterícia além de 14 dias (21 no prematuro), fezes claras no cartão de cores da caderneta, urina escura.',
+        'Desidratação hipernatrêmica: perda acima de 10% do peso, poucas fraldas molhadas, cristais de urato na fralda, mamada ineficaz.',
+        'Onfalite: eritema e endurecimento da pele ao redor do umbigo, secreção fétida, febre.',
+        'BRUE: evento de menos de 1 min em menor de 1 ano — cianose ou palidez, respiração ausente ou irregular, mudança de tônus ou de resposta — já resolvido e sem explicação.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        'RN com febre não tem alta do PS — nem com bom estado e exames normais.',
+        'Icterícia nas primeiras 24 h de vida é sempre patológica.',
+        'Hipotonia ou hipertonia, opistótono, choro agudo, sucção fraca com bilirrubina alta: encefalopatia bilirrubínica — exsanguineotransfusão de emergência.',
+        'Fezes acólicas: atresia biliar até prova em contrário; o prognóstico depende de operar antes de 60 dias.',
+        'Vômito bilioso no RN: má-rotação com volvo — cirurgia pediátrica imediata.'
+      ]},
+
+      { tipo:'lista', titulo:'Critérios e checklists', itens:[
+        'Fatores de neurotoxicidade (AAP 2022): idade gestacional < 38 semanas, albumina < 3 g/dL, hemólise (isoimune, G6PD), sepse, instabilidade clínica nas últimas 24 h — baixam a linha de fototerapia.',
+        'Checklist do choro inconsolável: torniquete de cabelo em dedos e pênis, fratura (clavícula, ossos longos), hérnia encarcerada, torção testicular, otite, abrasão de córnea, fissura anal, fome, febre, abuso (fontanela, hematomas, retina).',
+        'Perda de peso: até 7 a 10% na 1ª semana é esperada; o peso de nascimento volta em 10 a 14 dias.',
+        'BRUE de baixo risco (AAP 2016): idade > 60 dias · IG ≥ 32 semanas e idade pós-concepcional ≥ 45 semanas · primeiro evento · duração < 1 min · sem RCP por profissional · história e exame sem achados preocupantes. RN nunca é baixo risco.',
+        'Monilíase oral: placas brancas que não saem ao raspar (resto de leite sai). Tratar a boca e o mamilo da mãe.',
+        'Coto umbilical: cai entre 5 e 15 dias; granuloma (tecido rosado e úmido) se trata com nitrato de prata; queda após 3 semanas pede investigar defeito de leucócitos.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*RN febril*: hemograma, PCR (procalcitonina se houver), hemocultura, urina tipo I e urocultura por sondagem, líquor (celularidade, bioquímica, Gram, cultura; PCR para herpes e enterovírus se disponível).',
+        '*Suspeita de herpes*: PCR para HSV no sangue e no líquor, swab de vesículas, conjuntiva, boca e reto; transaminases.',
+        '*Icterícia*: bilirrubina total e frações (a transcutânea é triagem; perto do limiar, sérica), tipagem ABO/Rh e Coombs direto, hematócrito, reticulócitos; G6PD se disponível.',
+        '*Perda de peso > 10%*: sódio, ureia, creatinina, glicemia e bilirrubina.',
+        '*BRUE fora do baixo risco*: glicemia, eletrólitos, hemograma, ECG (QT longo), pesquisa de coqueluche e vírus; o restante conforme a história.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações — RN de 35 semanas ou mais', itens:[
+        { droga:'Ampicilina', dose:'50 mg/kg por dose', via:'EV', obs:'Até 7 dias de vida: 8/8 h; de 8 a 28 dias: 6/6 h. *Meningite:* 100 mg/kg de 8/8 h (até 7 dias) ou 75 mg/kg de 6/6 h (8 a 28 dias). Frasco de 500 mg ou 1 g.' },
+        { droga:'Gentamicina', dose:'4 a 5 mg/kg por dose', via:'EV', obs:'1 vez ao dia: 4 mg/kg até 7 dias de vida; 5 mg/kg de 8 a 28 dias. Nível sérico se uso acima de 48 h ou função renal alterada.' },
+        { droga:'Cefotaxima', dose:'50 mg/kg por dose', via:'EV', obs:'De 8/8 h (6/6 h na meningite após 7 dias), junto com a ampicilina, quando há suspeita de meningite. Na falta: ceftazidima ou cefepima conforme a CCIH.' },
+        { droga:'Aciclovir', dose:'20 mg/kg por dose', via:'EV', obs:'De 8/8 h, em 1 h, com boa hidratação. 14 dias (pele, olho e boca) ou 21 dias (SNC ou disseminado). Frasco de 250 mg.' },
+        { droga:'Oxacilina', dose:'25 a 50 mg/kg por dose', via:'EV', obs:'Onfalite, com a gentamicina. De 8/8 h até 7 dias de vida; 6/6 h de 8 a 28 dias. 50 mg/kg se houver suspeita de meningite.' },
+        { droga:'Nistatina suspensão oral 100.000 UI/mL', dose:'1 mL (0,5 mL em cada lado da boca)', via:'VO', obs:'De 6/6 h por 7 a 14 dias, até 48 h depois de sumirem as placas. Tratar o mamilo materno junto.' },
+        { droga:'Paracetamol', dose:'10 mg/kg por dose', via:'VO', obs:'De 6/6 a 8/8 h, se dor. Gotas 200 mg/mL: 1 gota/kg. Não usar para baixar febre de RN antes da investigação.' },
+        { droga:'Fototerapia', dose:'Intensiva (≥ 30 µW/cm²/nm)', via:'—', obs:'RN despido, olhos protegidos, mamadas mantidas. Bilirrubina em 4 a 6 h se perto do exsanguíneo; senão em 12 a 24 h.' },
+        { droga:'Nitrato de prata (bastão)', dose:'Aplicação no granuloma', via:'TÓPICA', obs:'Proteger a pele ao redor. Repetir a cada 2 a 3 dias se preciso.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Liberar RN febril, mesmo em bom estado e com exames normais.',
+        'Ceftriaxona no RN ictérico ou que recebe cálcio EV (desloca bilirrubina e precipita).',
+        'Dipirona em menor de 3 meses ou de 5 kg — contraindicada em bula.',
+        'Decidir fototerapia pela zona de Kramer: dosar a bilirrubina.',
+        'Suspender o aleitamento por causa da icterícia: aumentar a frequência das mamadas.',
+        'Miconazol gel oral no lactente pequeno — risco de engasgo; prefira a nistatina.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Internar* todo RN febril (ou hipotérmico), o RN com icterícia acima da linha de fototerapia ou de causa hemolítica, a colestase (investigação rápida com cirurgia pediátrica e gastro), perda de peso acima de 10% com hipernatremia ou desidratação, onfalite (antibiótico EV), BRUE no RN e qualquer suspeita de maus-tratos. *Alta* com bilirrubina abaixo da linha e retorno programado para nova dosagem (24 a 48 h, mais cedo quanto mais perto do limiar), mamada observada e ajustada, peso de controle em 48 h, nistatina para monilíase, nitrato de prata para granuloma e orientação de cuidado do coto com álcool 70% (conduta do Ministério da Saúde). Orientar sinais de alarme: febre, hipoatividade, recusa alimentar, icterícia que avança, fezes claras. *Divergência:* a AAP 2021 permite observar em casa, em casos selecionados, o lactente de 22 a 28 dias com marcadores inflamatórios e líquor normais; na prática brasileira e da SBP, todo RN febril é internado até o resultado das culturas.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Peça para a mãe amamentar na sua frente: pega e sucção explicam metade dos retornos.',
+        'Tire meia e fralda de todo bebê chorando: torniquete de cabelo é fácil de ver e fácil de esquecer.',
+        'Pergunte pelo cartão de cores das fezes da caderneta.',
+        'Bilirrubina subindo mais de 0,3 mg/dL por hora nas primeiras 24 h, ou mais de 0,2 mg/dL por hora depois: pense em hemólise.'
+      ]}
+    ] },
+
+  { id:'kawasaki', titulo:'Doença de Kawasaki e MIS-C', categoria:'pedia', gravidade:'urgencia',
+    resumo:'Febre de 5 dias ou mais com critérios clínicos (ou pelo algoritmo do incompleto): imunoglobulina 2 g/kg em 10 a 12 h e AAS, eco no diagnóstico; MIS-C pós-covid com choque cardiogênico pede imunoglobulina + corticoide.',
+    tags:['kawasaki','doenca de kawasaki','kawasaki incompleto','aneurisma coronariano','imunoglobulina','ivig','aas','aspirina','mis-c','sim-p','sindrome inflamatoria multissistemica','covid','febre prolongada','lingua em framboesa','descamacao','linfadenopatia cervical','infliximabe'],
+    fonte:'AHA — Update on Diagnosis and Management of Kawasaki Disease (Jone et al., 2024) · AHA — Diagnosis, Treatment and Long-Term Management of Kawasaki Disease (McCrindle et al., 2017) · ACR — Clinical Guidance for MIS-C, versão 3 (2022) · CDC — Definição de caso de MIS-C (2023) · Ministério da Saúde — Vigilância da SIM-P associada à covid-19 (2020)',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Criança (sobretudo < 5 anos) com *febre ≥ 5 dias* e conjuntivite sem secreção, boca vermelha, exantema, edema de mãos e pés ou linfonodo cervical; lactente com febre ≥ 7 dias sem causa.' },
+      { rotulo:'Prioridade',    valor:'*Imunoglobulina 2 g/kg* até o 10º dia de febre + AAS; *ecocardiograma* no diagnóstico, sem atrasar o tratamento.' },
+      { rotulo:'Meta',          valor:'Prevenir aneurisma coronariano; no MIS-C, reconhecer o choque cardiogênico e tratar com imunoglobulina + corticoide.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Febre de 5 dias ou mais sem foco que explique',
+          nota:'Mais comum de 6 meses a 5 anos. Com 4 ou mais critérios, pode-se tratar no 4º dia' },
+        { tipo:'decisao', texto:'Quantos dos 5 critérios clínicos?', ramos:[
+          { rotulo:'4 ou 5', cor:'perigo', texto:'*Kawasaki completo*: tratar' },
+          { rotulo:'2 ou 3, ou lactente com febre ≥ 7 dias', texto:'*Suspeita de incompleto*: PCR e VHS' },
+          { rotulo:'0 ou 1', cor:'ok', texto:'Procurar outra causa; reavaliar se a febre continuar' }
+        ]},
+        { tipo:'decisao', texto:'Incompleto: PCR ≥ 3 mg/dL e/ou VHS ≥ 40 mm/h?', ramos:[
+          { rotulo:'Sim, com 3 ou mais exames suplementares ou eco alterado', cor:'perigo', texto:'*Tratar como Kawasaki*' },
+          { rotulo:'Sim, mas menos de 3 suplementares e eco normal', texto:'Repetir eco e exames; descamação periungueal confirma depois' },
+          { rotulo:'Não', cor:'ok', texto:'Reavaliar todo dia; repetir PCR e VHS se a febre persistir' }
+        ]},
+        { tipo:'passo', rotulo:'Tratar', texto:'*Imunoglobulina 2 g/kg EV em 10 a 12 h* + *AAS* em dose moderada ou alta',
+          nota:'Depois do 10º dia, tratar se ainda houver febre ou PCR alta',
+          meds:['Imunoglobulina humana', 'AAS — fase aguda'] },
+        { tipo:'decisao', texto:'Alto risco: idade ≤ 6 meses ou z-escore ≥ 2,5 na DA ou CD no primeiro eco?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'Associar *corticoide* (ou infliximabe) já com a primeira imunoglobulina',
+            meds:['Prednisolona', 'Metilprednisolona'] },
+          { rotulo:'Não', cor:'ok', texto:'Imunoglobulina + AAS' }
+        ]},
+        { tipo:'decisao', texto:'Febre 36 h ou mais após o fim da imunoglobulina?', ramos:[
+          { rotulo:'Sim — resistente', cor:'perigo', texto:'*Segunda imunoglobulina 2 g/kg*, ou pulso de metilprednisolona, ou infliximabe',
+            meds:['Imunoglobulina humana', 'Metilprednisolona — pulso', 'Infliximabe'] },
+          { rotulo:'Não', cor:'ok', texto:'Após 48 h sem febre, *AAS em dose baixa*',
+            meds:['AAS — dose baixa'] }
+        ]},
+        { tipo:'alerta', rotulo:'MIS-C', texto:'Febre + 2 sistemas + PCR alta + covid nas últimas semanas: *imunoglobulina + metilprednisolona*',
+          nota:'O choque é cardiogênico: bolus de 10 mL/kg com reavaliação, adrenalina; UTI',
+          meds:['Imunoglobulina humana', 'Metilprednisolona', 'Adrenalina'] },
+        { tipo:'fim', rotulo:'Seguimento', texto:'Eco no diagnóstico, em 1 a 2 semanas e em 4 a 6 semanas; AAS baixo até o eco da 4ª a 6ª semana normal' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        'Conjuntivite bilateral sem secreção, poupando o limbo.',
+        'Boca: lábios vermelhos e fissurados, língua em framboesa, orofaringe difusamente hiperemiada.',
+        'Exantema polimorfo — maculopapular, morbiliforme ou tipo eritema multiforme, nunca vesicular; eritema e descamação perineal precoces.',
+        'Extremidades: eritema e edema endurado de mãos e pés na fase aguda; descamação periungueal na 2ª e 3ª semanas.',
+        'Linfonodo cervical ≥ 1,5 cm, em geral único e unilateral — pode parecer adenite que não responde a antibiótico.',
+        'Pistas extras: irritabilidade desproporcional, hiperemia na cicatriz da BCG, piúria estéril, hidropsia de vesícula, uveíte.',
+        'MIS-C: escolar ou adolescente com febre, dor abdominal, vômitos, diarreia, conjuntivite, exantema e choque, 2 a 6 semanas após covid.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        'Lactente abaixo de 6 meses com febre prolongada: poucos critérios e o maior risco de aneurisma — limiar baixo para eco e tratamento.',
+        'Choque, hipotensão ou disfunção ventricular: síndrome do choque do Kawasaki ou MIS-C — UTI.',
+        'Aneurisma gigante (z ≥ 10 ou ≥ 8 mm): anticoagulação + AAS com a cardiologia pediátrica.',
+        'Febre 36 h ou mais depois da imunoglobulina: resistência, com mais risco coronariano.',
+        'Dor torácica, choro inexplicado, palidez ou arritmia em quem tem aneurisma: infarto.'
+      ]},
+
+      { tipo:'lista', titulo:'Critérios (AHA 2017 e 2024)', itens:[
+        'Clássico: febre ≥ 5 dias + 4 de 5 — conjuntivite, boca, exantema, extremidades, linfonodo cervical. Com aneurisma no eco, menos critérios bastam.',
+        'Incompleto: febre ≥ 5 dias + 2 ou 3 critérios, ou lactente com febre ≥ 7 dias sem causa — dosar PCR e VHS.',
+        'Exames suplementares (3 ou mais para tratar): anemia para a idade · plaquetas ≥ 450 mil após o 7º dia · albumina ≤ 3 g/dL · ALT elevada · leucócitos ≥ 15 mil · urina com ≥ 10 leucócitos por campo.',
+        'Eco positivo: z-escore da DA ou CD ≥ 2,5, aneurisma, ou 3 ou mais achados (disfunção de VE, insuficiência mitral, derrame pericárdico, z entre 2 e 2,5).',
+        'MIS-C (CDC 2023): menor de 21 anos, febre, PCR ≥ 3 mg/dL, ≥ 2 sistemas (cardíaco, choque, hematológico, gastrointestinal, mucocutâneo), internação, e SARS-CoV-2 recente (exame ou contato até 60 dias), sem diagnóstico melhor.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Hemograma, PCR, VHS*, albumina, TGO/TGP, sódio e urina tipo I. A imunoglobulina eleva a VHS: depois dela, acompanhe pela PCR.',
+        '*Ecocardiograma* no diagnóstico, sem atrasar a imunoglobulina.',
+        '*ECG*: arritmia, alteração isquêmica, bloqueio AV.',
+        '*MIS-C*: troponina, BNP ou NT-proBNP, ferritina, D-dímero, fibrinogênio, DHL, procalcitonina e exame para SARS-CoV-2 (RT-PCR, antígeno ou sorologia).',
+        '*Diferenciais*: hemocultura, teste para estreptococo, sorologias (adenovírus, sarampo, EBV) conforme o quadro.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações — por quilo', itens:[
+        { droga:'Imunoglobulina humana', dose:'2 g/kg (dose única)', via:'EV', obs:'Em 10 a 12 h, em bomba. Frascos de 0,5 a 10 g, a 5% ou 10% — conferir a concentração. No MIS-C, máximo de 100 g.' },
+        { droga:'AAS — fase aguda', dose:'30 a 50 mg/kg/dia (moderada) ou 80 a 100 mg/kg/dia (alta)', via:'VO', obs:'Dividido de 6/6 h até 48 h sem febre; máximo de 4 g/dia. Comprimidos de 100 e 500 mg.' },
+        { droga:'AAS — dose baixa', dose:'3 a 5 mg/kg/dia (máximo de 100 mg)', via:'VO', obs:'1 vez ao dia até o eco da 4ª a 6ª semana normal; indefinido se houver aneurisma. Evitar ibuprofeno junto (bloqueia o efeito antiplaquetário).' },
+        { droga:'Prednisolona', dose:'2 mg/kg/dia (máximo de 60 mg)', via:'VO', obs:'Alto risco, junto com a imunoglobulina: dividir de 8/8 ou 12/12 h, manter até a PCR normalizar e retirar em 2 a 3 semanas.' },
+        { droga:'Metilprednisolona', dose:'1 a 2 mg/kg/dia (máximo de 60 mg/dia)', via:'EV', obs:'Kawasaki de alto risco sem via oral e MIS-C. Dividir de 12/12 h; passar para prednisolona quando estável.' },
+        { droga:'Metilprednisolona — pulso', dose:'10 a 30 mg/kg/dia (máximo de 1 g)', via:'EV', obs:'Em 1 a 3 h, por 1 a 3 dias: Kawasaki resistente ou MIS-C grave e refratário. Monitorar PA, glicemia e FC.' },
+        { droga:'Infliximabe', dose:'5 a 10 mg/kg (dose única)', via:'EV', obs:'Em 2 h. Alternativa ao corticoide no alto risco ou na resistência, decidida com reumatologia ou cardiologia pediátrica.' },
+        { droga:'Adrenalina', dose:'0,05 a 0,3 mcg/kg/min', via:'EV', obs:'Bomba. Choque com disfunção miocárdica (MIS-C ou choque do Kawasaki). Milrinona se pressão adequada e baixo débito.' },
+        { droga:'Cristaloide', dose:'10 mL/kg por bolus', via:'EV', obs:'Em 10 a 20 min, reavaliando fígado, ausculta e perfusão a cada bolus: o coração está doente.' },
+        { droga:'Enoxaparina', dose:'1 mg/kg por dose', via:'SC', obs:'De 12/12 h (1,5 mg/kg no menor de 2 meses): aneurisma gigante, trombose ou fração de ejeção < 35%, com a cardiologia.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Esperar o 5º dia ou todos os critérios no lactente pequeno com eco alterado.',
+        'Deixar de dar imunoglobulina porque passou do 10º dia, se ainda há febre ou PCR alta.',
+        'Ibuprofeno como antitérmico durante o AAS.',
+        'Vacina de vírus vivo (sarampo, varicela) nos 11 meses seguintes à imunoglobulina — adiar.',
+        'Repetir bolus de 20 mL/kg no choque do MIS-C sem avaliar a função ventricular.',
+        'Manter AAS se a criança pegar influenza ou varicela — risco de síndrome de Reye; discutir troca do antiagregante.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'Todo Kawasaki e todo MIS-C *internam*: a imunoglobulina é dada no hospital, com eco e cardiologia pediátrica; choque, disfunção ventricular ou arritmia vão para UTI. *Alta* com 24 a 48 h sem febre, PCR caindo, AAS em dose baixa prescrito, eco de controle marcado (1 a 2 semanas e 4 a 6 semanas) e vacina de influenza inativada em dia. O MIS-C (SIM-P) deve ser notificado à vigilância conforme o Ministério da Saúde. *Divergência:* a AHA 2024 aceita AAS em dose moderada ou alta na fase aguda (nenhuma reduz aneurisma) e alguns serviços já começam em dose baixa; o corticoide adjuvante na primeira dose fica reservado ao alto risco (≤ 6 meses ou z ≥ 2,5), já que o escore japonês de Kobayashi não funciona bem fora da Ásia. No MIS-C, o ACR orienta imunoglobulina + corticoide para a maioria dos internados.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Pergunte e procure os critérios que já passaram: fotos no celular da família fecham o diagnóstico.',
+        'Hiperemia e crosta na cicatriz da BCG é sinal muito sugestivo no lactente.',
+        'Adenite cervical que não melhora com antibiótico, com febre alta: pense em Kawasaki.',
+        'Plaquetas sobem na 2ª e 3ª semanas; plaquetas baixas na fase aguda sugerem MIS-C, sepse ou ativação macrofágica.'
+      ]}
+    ] },
+
+  { id:'dengue-pedia', titulo:'Dengue na criança', categoria:'pedia', gravidade:'urgencia',
+    resumo:'Classificação A a D do Ministério da Saúde (2024), sinais de alarme, volume oral por peso (130/100/80 mL/kg/dia) e expansão de 10 mL/kg/h no grupo C ou 20 mL/kg em 20 min no grupo D.',
+    tags:['dengue','dengue crianca','dengue pediatrica','arbovirose','sinais de alarme','prova do laco','hidratacao oral','holliday-segar','sro','hematocrito','plaquetas','choque da dengue','grupo a','grupo b','grupo c','grupo d','dipirona','paracetamol'],
+    fonte:'Ministério da Saúde — Dengue: diagnóstico e manejo clínico, adulto e criança, 6ª edição (2024) · OPAS — Guidelines for the Clinical Diagnosis and Treatment of Dengue, Chikungunya and Zika (2022)',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Febre de 2 a 7 dias com 2 ou mais de: vômito, exantema, mialgia, cefaleia, dor retro-orbitária, petéquias ou prova do laço positiva, leucopenia. No lactente, febre com irritabilidade, sonolência ou diarreia.' },
+      { rotulo:'Prioridade',    valor:'*Classificar em A, B, C ou D* em todo atendimento e começar a hidratação ainda na sala de espera.' },
+      { rotulo:'Meta',          valor:'Pegar o sinal de alarme na queda da febre (3º ao 7º dia) e não deixar a criança chegar ao choque.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Criança com suspeita de dengue',
+          nota:'Peso, FC, PA, pressão de pulso, enchimento capilar, diurese e prova do laço (positiva com 10 ou mais petéquias na criança)' },
+        { tipo:'decisao', texto:'Tem choque, sangramento grave ou disfunção grave de órgão?', ramos:[
+          { rotulo:'Sim — Grupo D', cor:'perigo', texto:'*SF 0,9% 20 mL/kg em até 20 min*, até 3 vezes; reavaliar a cada 15 a 30 min; UTI',
+            meds:['SF 0,9% — Grupo D'] },
+          { rotulo:'Não', texto:'Procurar sinais de alarme' }
+        ]},
+        { tipo:'decisao', texto:'Tem sinal de alarme?', ramos:[
+          { rotulo:'Sim — Grupo C', cor:'perigo', texto:'*SF 0,9% 10 mL/kg na 1ª hora*; manter 10 mL/kg/h até o hematócrito de 2 h; internar',
+            nota:'Começar em qualquer nível de atenção, mesmo sem exames e durante a transferência',
+            meds:['SF 0,9% — Grupo C'] },
+          { rotulo:'Não', texto:'Ver sangramento de pele e condição especial' }
+        ]},
+        { tipo:'decisao', texto:'Petéquias ou prova do laço positiva, menor de 2 anos, comorbidade ou risco social?', ramos:[
+          { rotulo:'Sim — Grupo B', texto:'*Hemograma obrigatório*; hidratação oral na unidade até o resultado',
+            nota:'Hemoconcentração ou sinal de alarme: conduzir como grupo C',
+            meds:['Hidratação oral'] },
+          { rotulo:'Não — Grupo A', cor:'ok', texto:'*Hidratação oral em casa* com o volume escrito no cartão; retorno diário',
+            meds:['Hidratação oral'] }
+        ]},
+        { tipo:'decisao', texto:'Grupos C e D reavaliados: como está?', ramos:[
+          { rotulo:'Melhorou na clínica e no hematócrito', cor:'ok', texto:'*Manutenção*: SF 25 mL/kg em 6 h; se seguir bem, 25 mL/kg em 8 h',
+            meds:['SF 0,9% — manutenção'] },
+          { rotulo:'Choque mantido, Ht subindo após 3 expansões', cor:'perigo', texto:'*Albumina 0,5 a 1 g/kg*; UTI',
+            meds:['Albumina'] },
+          { rotulo:'Choque mantido, Ht caindo', cor:'perigo', texto:'Procurar *sangramento*: concentrado de hemácias',
+            meds:['Concentrado de hemácias'] }
+        ]},
+        { tipo:'alerta', rotulo:'Proibido', texto:'*AAS e anti-inflamatórios* — febre e dor só com dipirona ou paracetamol',
+          nota:'Aumentam o risco de sangramento',
+          meds:['Dipirona', 'Paracetamol'] },
+        { tipo:'fim', rotulo:'Sempre', texto:'Notificar, entregar o cartão da dengue preenchido e ler os sinais de alarme com o responsável',
+          nota:'A partir de 13 anos, seguir o volume e as condutas do adulto', ir:'dengue' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        'Febre alta de início súbito por 2 a 7 dias, com cefaleia, dor retro-orbitária, mialgia, artralgia e exantema.',
+        'Lactente: febre com irritabilidade, sonolência, recusa alimentar, vômitos ou diarreia — a dor não é relatada.',
+        'Fase crítica: quando a febre cai (3º ao 7º dia) começa o extravasamento — a criança "melhora da febre e piora".',
+        'Prova do laço: manguito na PA média por 3 min na criança; positiva com 10 ou mais petéquias num quadrado de 2,5 cm.',
+        'Diferenciais: chikungunya, zika, sarampo, escarlatina, meningococcemia, leptospirose, sepse.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        'Sinal de alarme é grupo C: soro EV na hora, em qualquer serviço, antes dos exames.',
+        'Choque na criança começa com taquicardia, enchimento capilar > 2 s, extremidades frias e PA convergente (≤ 20 mmHg) — a hipotensão é tardia.',
+        'Lactente abaixo de 2 anos é no mínimo grupo B: hemograma obrigatório.',
+        'Hematócrito caindo com choque que não melhora: hemorragia oculta — transfundir.',
+        'Desconforto respiratório, estertores ou fígado crescendo durante o soro: hiper-hidratação — reduzir e reavaliar.'
+      ]},
+
+      { tipo:'lista', titulo:'Sinais de alarme e de choque (MS 2024)', itens:[
+        'Dor abdominal intensa e contínua — referida ou à palpação.',
+        'Vômitos persistentes.',
+        'Acúmulo de líquidos — ascite, derrame pleural ou pericárdico.',
+        'Hipotensão postural e/ou lipotimia.',
+        'Hepatomegalia — mais de 2 cm abaixo do rebordo costal.',
+        'Sangramento de mucosa.',
+        'Letargia e/ou irritabilidade.',
+        'Aumento progressivo do hematócrito.',
+        'Sinais de choque: taquicardia, extremidades frias, pulso fino, enchimento capilar > 2 s, PA convergente < 20 mmHg, taquipneia, oligúria < 1,5 mL/kg/h; hipotensão e cianose são tardias.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Hemograma*: obrigatório nos grupos B, C e D. Hematócrito de referência — cerca de 36% (1 a 2 anos), 37% (5 anos), 40% (10 anos); vale mais a comparação com o basal.',
+        '*Grupos C e D*: albumina e transaminases; ultrassom de abdome e radiografia de tórax (PA, perfil e Hjelm-Laurell) para derrames.',
+        '*Conforme o caso*: glicemia, ureia, creatinina, eletrólitos, gasometria, coagulograma, ecocardiograma.',
+        '*Confirmação*: NS1 ou RT-PCR até o 5º dia; IgM a partir do 6º. Obrigatória, mas não muda a conduta.',
+        '*Hematócrito a cada 2 h* nas fases de expansão; no grupo B ambulatorial, diário até 48 h sem febre.'
+      ]},
+
+      { tipo:'doses', titulo:'Hidratação e sintomáticos — por quilo', itens:[
+        { droga:'Hidratação oral (Holliday-Segar + 3%)', dose:'Até 10 kg: 130 mL/kg/dia · 10 a 20 kg: 100 mL/kg/dia · acima de 20 kg: 80 mL/kg/dia', via:'VO', obs:'1/3 em SRO e 2/3 em água, suco, chá ou água de coco; 1/3 do volume nas primeiras 4 a 6 h. Manter o leite materno. Escrever o volume em mL no cartão. A partir de 13 anos: 60 mL/kg/dia.' },
+        { droga:'SF 0,9% — Grupo C', dose:'10 mL/kg na 1ª hora; 10 mL/kg/h na 2ª', via:'EV', obs:'Máximo de 20 mL/kg por fase de 2 h; hematócrito ao fim de cada fase. Sem melhora: repetir até 3 vezes. Diurese desejada ≥ 1 mL/kg/h.' },
+        { droga:'SF 0,9% — manutenção', dose:'25 mL/kg em 6 h, depois 25 mL/kg em 8 h', via:'EV', obs:'Após melhora clínica e do hematócrito nos grupos C e D.' },
+        { droga:'SF 0,9% — Grupo D', dose:'20 mL/kg em até 20 min', via:'EV', obs:'Até 3 vezes; reavaliar a cada 15 a 30 min e hematócrito a cada 2 h. Melhorou: volta à expansão do grupo C.' },
+        { droga:'Albumina', dose:'0,5 a 1 g/kg', via:'EV', obs:'Choque com hematócrito subindo após 3 expansões. Solução a 5%: 25 mL de albumina 20% + 75 mL de SF. Sem albumina: coloide sintético 10 mL/kg/h.' },
+        { droga:'Concentrado de hemácias', dose:'10 a 15 mL/kg', via:'EV', obs:'Hemorragia com hematócrito caindo e choque. Coagulopatia: plasma 10 mL/kg, vitamina K e crioprecipitado. Plaquetas só com sangramento persistente.' },
+        { droga:'Dipirona', dose:'10 mg/kg por dose (máximo de 1 g)', via:'VO ou EV', obs:'Até de 6/6 h. Gotas 500 mg/mL (1 mL = 20 gotas); solução oral 50 mg/mL. Acima de 3 meses.' },
+        { droga:'Paracetamol', dose:'10 mg/kg por dose (máximo de 35 gotas ou 500 mg)', via:'VO', obs:'Até de 6/6 h. Gotas 200 mg/mL: 1 gota/kg. Não passar da dose — hepatotóxico.' },
+        { droga:'Ondansetrona', dose:'0,15 mg/kg por dose (máximo de 4 mg)', via:'VO ou EV', obs:'De 8/8 h, se vômito, acima de 6 meses. Vômito persistente continua sendo sinal de alarme.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'AAS, ibuprofeno, diclofenaco, nimesulida ou cetoprofeno — em nenhuma fase.',
+        'Injeção intramuscular.',
+        'Liberar o grupo B antes do resultado do hemograma.',
+        'Transfundir plaquetas pela contagem isolada, sem sangramento.',
+        'Soro EV em quem aceita a via oral, corticoide ou antibiótico sem indicação.',
+        'Bolus de 20 mL/kg no grupo C — ali a expansão é de 10 mL/kg/h.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Grupo A*: alta com hidratação oral em volume escrito, dipirona ou paracetamol, cartão de acompanhamento e retorno imediato se surgir sinal de alarme; reavaliar no primeiro dia sem febre. *Grupo B*: observação na unidade até o hemograma; hematócrito normal e sem alarme, tratamento em casa com reavaliação clínica e laboratorial diária até 48 h depois de a febre cessar. *Grupo C*: internação por no mínimo 48 h. *Grupo D*: UTI até estabilizar (mínimo de 48 h). *Alta hospitalar* só com os cinco critérios do Ministério da Saúde: estabilidade hemodinâmica por 48 h, sem febre por 24 h, melhora visível, hematócrito normal e estável por 24 h e plaquetas subindo. Notificação compulsória em todos os casos. Para adolescentes de 13 anos ou mais e adultos, ver a conduta da dengue no adulto.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Traduza o volume em copos e mamadeiras: a família entende copo, não mL/kg.',
+        'Sem balança: lactente de 3 a 12 meses pesa cerca de idade em meses × 0,5 + 4,5; de 1 a 8 anos, idade × 2 + 8,5.',
+        'Peça o hematócrito basal cedo: a comparação vale mais do que o número.',
+        'Pressão de pulso de 20 mmHg ou menos com PA "normal" já é choque.'
+      ]}
+    ] },
+
+  { id:'hidratacao-manutencao', titulo:'Hidratação venosa de manutenção', categoria:'pedia', gravidade:'rotina',
+    resumo:'Holliday-Segar (100/50/20 mL/kg/dia, ou 4-2-1 mL/kg/h) com soro ISOTÔNICO e glicose 5% (AAP 2018), potássio depois da diurese, restrição a 2/3 no risco de SIADH e sódio monitorado. Prescrição pronta para 10, 20 e 30 kg.',
+    tags:['hidratacao venosa','soro de manutencao','manutencao','holliday-segar','4-2-1','soro isotonico','soro glicofisiologico','hiponatremia','siadh','potassio','kcl','prescricao de soro','ringer lactato','plasma-lyte','balanco hidrico'],
+    fonte:'AAP — Clinical Practice Guideline: Maintenance Intravenous Fluids in Children (Feld et al., 2018) · NICE NG29 — Intravenous fluid therapy in children and young people in hospital (2015, atualizada 2020) · Holliday & Segar, Pediatrics (1957)',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Criança de 28 dias a 18 anos que não pode, ou não consegue, receber líquido suficiente por boca ou sonda.' },
+      { rotulo:'Prioridade',    valor:'*Tratar antes o choque e o déficit* (bolus e reidratação); manutenção é só o que a criança gasta no dia.' },
+      { rotulo:'Meta',          valor:'Soro isotônico com glicose e potássio na vazão certa, sódio e glicemia dosados, e volta à via oral o quanto antes.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Criança que vai precisar de soro EV',
+          nota:'A via enteral (boca ou sonda) é sempre preferível quando possível' },
+        { tipo:'decisao', texto:'Tem choque ou desidratação?', ramos:[
+          { rotulo:'Choque', cor:'perigo', texto:'*Bolus de 10 a 20 mL/kg* de cristaloide e reavaliar',
+            meds:[{ droga:'SF 0,9% ou Ringer lactato', dose:'10 a 20 mL/kg em 5 a 20 min', via:'EV' }], ir:'sepse-pediatrica' },
+          { rotulo:'Desidratação', texto:'Repor o déficit à parte (plano B ou C)', ir:'desidratacao-crianca' },
+          { rotulo:'Não', cor:'ok', texto:'Calcular a manutenção' }
+        ]},
+        { tipo:'passo', rotulo:'Volume', texto:'*100 mL/kg/dia* até 10 kg · *1.000 + 50 mL/kg* de 10 a 20 kg · *1.500 + 20 mL/kg* acima de 20 kg',
+          nota:'Em mL/h: 4 por kg nos primeiros 10 kg + 2 por kg nos 10 seguintes + 1 por kg acima de 20. Teto de 2.400 mL/dia (100 mL/h)' },
+        { tipo:'passo', rotulo:'Solução', texto:'*Isotônica com glicose 5%*: soro glicofisiológico, ou Ringer/Plasma-Lyte com glicose',
+          meds:['Soro glicofisiológico'] },
+        { tipo:'decisao', texto:'Já urinou e o potássio está normal?', ramos:[
+          { rotulo:'Sim', cor:'ok', texto:'Acrescentar *KCl 20 mEq/L*',
+            meds:['Cloreto de potássio 19,1%'] },
+          { rotulo:'Não, ou insuficiência renal, ou K alto', cor:'perigo', texto:'Sem potássio até a diurese e o resultado' }
+        ]},
+        { tipo:'decisao', texto:'Risco de SIADH (bronquiolite, pneumonia, meningite, TCE, pós-operatório, dor, náusea)?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Restringir a 2/3* da manutenção e dosar sódio em 6 a 8 h', ir:'hiponatremia' },
+          { rotulo:'Não', cor:'ok', texto:'Manutenção plena' }
+        ]},
+        { tipo:'fim', rotulo:'Monitorar', texto:'Sódio, potássio e glicemia no início e em 24 h · peso, diurese e balanço diários · reavaliar todo dia se ainda precisa do soro' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando indicar', itens:[
+        'Vômitos incoercíveis — ou falha da terapia de reidratação oral.',
+        'Desconforto respiratório que impede mamar, com sonda não tolerada (bronquiolite, pneumonia).',
+        'Jejum prolongado antes ou depois de cirurgia.',
+        'Rebaixamento de consciência, convulsão ou sepse.',
+        'Abdome cirúrgico, íleo ou pancreatite.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        'Soro hipotônico (NaCl 0,45%, 0,3% ou "soro 4:1") como manutenção causa hiponatremia iatrogênica e edema cerebral.',
+        'Cefaleia, vômitos, letargia ou convulsão em criança com soro: dosar sódio na hora.',
+        'Sódio caindo abaixo de 135 mEq/L: reduzir o volume e rever a solução.',
+        'Potássio sem diurese, ou com insuficiência renal: hipercalemia.',
+        'Exceções que pedem especialista: RN < 28 dias, cardiopatia, insuficiência renal ou hepática, diabetes insípido, cetoacidose, queimado, neurocirurgia.'
+      ]},
+
+      { tipo:'lista', titulo:'Cálculo pronto (Holliday-Segar)', itens:[
+        '10 kg: 1.000 mL/dia — *42 mL/h*; com restrição a 2/3, 28 mL/h.',
+        '20 kg: 1.500 mL/dia — *62 mL/h* (60 pela regra 4-2-1); com 2/3, 42 mL/h.',
+        '30 kg: 1.700 mL/dia — *70 mL/h*; com 2/3, 47 mL/h.',
+        '40 kg: 1.900 mL/dia — 80 mL/h; com 2/3, 53 mL/h.',
+        'Teto: 2.400 mL/dia (100 mL/h), mesmo no adolescente grande — no obeso, calcular pelo peso ideal.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames e monitorização', itens:[
+        '*Sódio, potássio, glicemia e creatinina* antes de iniciar (se possível) e em 24 h.',
+        '*Sódio em 6 a 8 h* se houver risco de SIADH, sódio inicial alterado ou sintomas neurológicos.',
+        '*Peso diário*, diurese (desejável ≥ 1 mL/kg/h) e balanço hídrico a cada 6 a 12 h.',
+        '*Glicemia capilar* no lactente e em quem está em jejum prolongado.'
+      ]},
+
+      { tipo:'prescricao', titulo:'Prescrição pronta — 10, 20 e 30 kg', nota:'Criança de 28 dias a 18 anos, sem cardiopatia, nefropatia ou hepatopatia, já com diurese. Frasco de 500 mL, sempre em bomba de infusão. Os itens em âmbar só entram se a condição for verdadeira.', itens:[
+        { grupo:'Montar o soro — vale para todos os pesos' },
+        { item:'SF 0,9% 450 mL + glicose 50% 50 mL + KCl 19,1% 4 mL', via:'EV', obs:'Ou soro glicofisiológico pronto 500 mL + KCl 19,1% 4 mL. Resultado: glicose 5%, sódio cerca de 137 a 140 mEq/L, potássio 20 mEq/L.' },
+        { item:'Montar sem KCl', via:'EV', se:'sem diurese, potássio > 5 mEq/L ou insuficiência renal' },
+
+        { grupo:'10 kg — 1.000 mL/dia' },
+        { item:'Correr a 42 mL/h em bomba de infusão', via:'EV' },
+        { item:'Correr a 28 mL/h (2/3)', via:'EV', se:'risco de SIADH: bronquiolite, pneumonia, meningite, TCE, pós-operatório' },
+
+        { grupo:'20 kg — 1.500 mL/dia' },
+        { item:'Correr a 62 mL/h em bomba de infusão', via:'EV' },
+        { item:'Correr a 42 mL/h (2/3)', via:'EV', se:'risco de SIADH' },
+
+        { grupo:'30 kg — 1.700 mL/dia' },
+        { item:'Correr a 70 mL/h em bomba de infusão', via:'EV' },
+        { item:'Correr a 47 mL/h (2/3)', via:'EV', se:'risco de SIADH' },
+
+        { grupo:'Monitorização' },
+        { item:'Sódio, potássio e glicemia agora e em 24 h', obs:'Em 6 a 8 h se risco de SIADH ou sódio inicial alterado.' },
+        { item:'Peso diário, diurese e balanço hídrico de 6/6 h' },
+        { item:'Reavaliar diariamente a volta da dieta oral e suspender o soro assim que possível' }
+      ]},
+
+      { tipo:'doses', titulo:'Soluções e aditivos', itens:[
+        { droga:'Soro glicofisiológico', dose:'Glicose 5% + NaCl 0,9%, no volume de Holliday-Segar', via:'EV', obs:'Pronto (frascos de 500 e 1.000 mL) ou montado: SF 0,9% 450 mL + glicose 50% 50 mL. Solução de escolha (AAP 2018).' },
+        { droga:'Ringer lactato ou Plasma-Lyte com glicose 5%', dose:'Mesmo volume', via:'EV', obs:'Balanceados; acrescentar glicose 50% 50 mL a 450 mL. O Ringer lactato (Na 130) é levemente hipotônico: evitar no TCE e na hiponatremia.' },
+        { droga:'Cloreto de potássio 19,1%', dose:'4 mL por 500 mL (20 mEq/L)', via:'EV', obs:'2,5 mEq/mL. Só após diurese e potássio normal. Em veia periférica, no máximo 40 mEq/L.' },
+        { droga:'Cloreto de potássio 10%', dose:'7,5 mL por 500 mL (20 mEq/L)', via:'EV', obs:'1,34 mEq/mL. Mesma regra: só após diurese.' },
+        { droga:'Glicose 50%', dose:'50 mL por 500 mL de solução', via:'EV', obs:'Para chegar à glicose 5% no soro montado. Hipoglicemia é risco real no lactente em soro sem glicose.' },
+        { droga:'SF 0,9% em bolus', dose:'10 a 20 mL/kg', via:'EV', obs:'Só para choque ou má perfusão, antes da manutenção. Cardiopata e desnutrido: 5 a 10 mL/kg.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Soro hipotônico (NaCl 0,45%, 0,3%, "4:1" ou "1:1") como manutenção de rotina.',
+        'Usar a manutenção para corrigir desidratação ou choque — o déficit é calculado à parte.',
+        'Manter soro EV em quem já aceita boca ou sonda.',
+        'Colocar potássio antes da diurese.',
+        'Passar de 2.400 mL/dia ou usar o peso real do obeso.',
+        'Deixar 24 h de soro sem dosar sódio na criança doente.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'Criança em soro de manutenção está internada; a meta é tirá-la do soro. Reavaliar todos os dias: aceitação oral ou por sonda, peso, diurese, sódio e glicemia. *Restringir a 2/3* (às vezes 50%) quando houver risco de secreção inapropriada de ADH — bronquiolite, pneumonia, meningite, TCE, pós-operatório, dor e náusea — e no edema, na insuficiência cardíaca ou renal. As recomendações da AAP 2018 *não* se aplicam ao RN de menos de 28 dias, ao cardiopata, nefropata ou hepatopata grave, ao diabetes insípido, à cetoacidose (tem protocolo próprio) e ao queimado. *Divergência:* AAP 2018 e NICE recomendam solução isotônica (Na 131 a 154 mEq/L) com glicose; muitos serviços brasileiros ainda prescrevem soro hipotônico (4:1 ou 1:1), conduta que a evidência associa a hiponatremia grave. A NICE também sugere já começar com volume reduzido na criança doente, pois o Holliday-Segar superestima o gasto no paciente acamado.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Regra 4-2-1 em mL/h: 4 para os primeiros 10 kg, 2 para os 10 seguintes, 1 para cada kg acima.',
+        'Criança em soro sempre em bomba de infusão: equipo de gotas descalibra e encharca.',
+        'O melhor soro é a mamadeira: reavalie todo dia se ainda precisa.',
+        'Antes de culpar o soro pela hiponatremia, olhe o balanço: entrou mais do que saiu?'
+      ]}
+    ] },
+
+  { id:'anafilaxia-pedia', titulo:'Urticária e anafilaxia na criança', categoria:'pedia', gravidade:'emergencia',
+    resumo:'Anafilaxia é diagnóstico clínico (WAO): adrenalina IM 0,01 mg/kg na coxa já, repetir em 5 a 15 min; anti-histamínico e corticoide são só adjuvantes. Urticária isolada: anti-histamínico de 2ª geração pela idade. Angioedema sem urticária pode ser hereditário e não responde à adrenalina.',
+    tags:['anafilaxia','anafilaxia pediatrica','alergia','reacao alergica','choque anafilatico','urticaria','urticaria aguda','angioedema','angioedema hereditario','adrenalina','epinefrina','adrenalina intramuscular','cetirizina','loratadina','desloratadina','hidroxizina','difenidramina','alergia alimentar','picada de inseto','icatibanto'],
+    fonte:'WAO — Anaphylaxis Guidance (2020) · EAACI — Anaphylaxis Guidelines (2021) · SBP — Guia prático de anafilaxia (2021) · WAO/EAACI — Guideline for the Management of Hereditary Angioedema (2021)',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Minutos a poucas horas após alimento, remédio ou picada: pele ou mucosa (urticária, angioedema) + respiração, circulação ou vômitos intensos — ou broncoespasmo, estridor ou hipotensão súbitos após alérgeno provável, mesmo sem pele.' },
+      { rotulo:'Prioridade',    valor:'*Adrenalina IM 0,01 mg/kg na coxa, já* — antes de acesso, anti-histamínico ou corticoide.' },
+      { rotulo:'Meta',          valor:'Reverter em minutos, observar o tempo certo e sair com plano escrito, adrenalina e encaminhamento ao alergista.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Reação alérgica aguda',
+          nota:'No lactente: vômitos, irritabilidade, palidez e hipotonia podem ser os únicos sinais' },
+        { tipo:'decisao', texto:'Preenche critério de anafilaxia (WAO)?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Adrenalina 0,01 mg/kg IM* no vasto lateral (máximo 0,3 mg pré-púbere; 0,5 mg adolescente)',
+            meds:['Adrenalina 1 mg/mL IM'] },
+          { rotulo:'Só pele: urticária ou angioedema, sem outro sistema', cor:'ok', texto:'*Anti-histamínico de 2ª geração* e observar',
+            meds:['Cetirizina', 'Loratadina', 'Desloratadina'] },
+          { rotulo:'Angioedema sem urticária, recorrente, história familiar', texto:'Pensar em *angioedema hereditário* — não responde à adrenalina',
+            meds:['Icatibanto', 'Concentrado de inibidor de C1'] }
+        ]},
+        { tipo:'passo', rotulo:'Junto', texto:'Deitar com pernas elevadas, *oxigênio*, monitor e acesso venoso',
+          nota:'Sentado se só dispneia; de lado se vomita. Nunca pôr em pé de repente: risco de colapso' },
+        { tipo:'decisao', texto:'Melhorou em 5 a 15 min?', ramos:[
+          { rotulo:'Sim', cor:'ok', texto:'Adjuvantes e observação' },
+          { rotulo:'Não', cor:'perigo', texto:'*Repetir adrenalina IM* + *SF 20 mL/kg* rápido',
+            meds:['Adrenalina 1 mg/mL IM', 'SF 0,9%'] },
+          { rotulo:'Sibilância persiste', texto:'*Salbutamol* inalatório',
+            meds:['Salbutamol'] }
+        ]},
+        { tipo:'decisao', texto:'Refratária após 2 a 3 doses IM e volume?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Adrenalina em infusão contínua* 0,1 a 1 mcg/kg/min; UTI',
+            meds:['Adrenalina em infusão'] },
+          { rotulo:'Usa betabloqueador', texto:'*Glucagon*',
+            meds:['Glucagon'] }
+        ]},
+        { tipo:'passo', rotulo:'Depois da adrenalina', texto:'Adjuvantes: anti-histamínico para prurido e urticária; corticoide opcional',
+          meds:['Difenidramina', 'Prednisolona'] },
+        { tipo:'fim', rotulo:'Alta', texto:'Observação de 4 a 6 h no mínimo (até 12 a 24 h se grave), plano escrito, adrenalina para casa e alergista' }
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        'Adrenalina atrasada é o principal fator de morte por anafilaxia — não há contraindicação absoluta.',
+        'Estridor, rouquidão, sialorreia ou edema de língua: via aérea em risco — preparar intubação com tubo menor.',
+        'Hipotensão na criança: PAS < 70 mmHg (1 mês a 1 ano), < 70 + 2 × idade (1 a 10 anos), < 90 mmHg (11 a 17 anos) ou queda > 30%.',
+        'Asma mal controlada, adolescente, alergia a amendoim, castanhas ou leite: maior risco de anafilaxia fatal.',
+        'Reação bifásica pode surgir horas depois (até 72 h) — orientar retorno imediato.'
+      ]},
+
+      { tipo:'passos', titulo:'Conduta imediata', itens:[
+        'Remover o desencadeante — parar a infusão do remédio, retirar o ferrão.',
+        'Aplicar adrenalina IM no vasto lateral da coxa: 0,01 mL/kg da ampola de 1 mg/mL, em seringa de 1 mL.',
+        'Chamar ajuda e posicionar: deitado com pernas elevadas; sentado se só dispneia.',
+        'Ofertar oxigênio em alto fluxo e monitorizar SatO2, FC e PA.',
+        'Puncionar acesso (ou intraósseo) e correr SF 20 mL/kg se hipotensão ou má perfusão.',
+        'Repetir a adrenalina IM a cada 5 a 15 min enquanto não melhorar.',
+        'Iniciar adrenalina em infusão após 2 a 3 doses IM sem resposta, com UTI acionada.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações — por quilo', itens:[
+        { droga:'Adrenalina 1 mg/mL IM', dose:'0,01 mg/kg = 0,01 mL/kg (máximo de 0,3 mg pré-púbere; 0,5 mg adolescente)', via:'IM', obs:'Face anterolateral da coxa. Repetir a cada 5 a 15 min. Ampola 1 mg/mL (1:1000). Autoinjetor, onde houver: 0,15 mg até 25 a 30 kg; 0,3 mg acima.' },
+        { droga:'Adrenalina em infusão', dose:'0,1 a 1 mcg/kg/min', via:'EV', obs:'Bomba, monitor contínuo. Diluição prática: 0,3 mg × peso (kg) em 50 mL de SF → 1 mL/h = 0,1 mcg/kg/min.' },
+        { droga:'Adrenalina nebulizada', dose:'0,5 mL/kg da ampola 1 mg/mL (máximo de 5 mL)', via:'INAL', obs:'Edema laríngeo com estridor — adjuvante, não substitui a IM.' },
+        { droga:'SF 0,9%', dose:'20 mL/kg', via:'EV ou IO', obs:'Em 5 a 10 min, repetindo conforme a perfusão; o choque anafilático pode pedir 40 a 60 mL/kg.' },
+        { droga:'Salbutamol', dose:'0,15 mg/kg nebulizado (mínimo 2,5 mg; máximo 5 mg) ou 4 a 10 jatos com espaçador', via:'INAL', obs:'Broncoespasmo que persiste após a adrenalina. Não substitui a adrenalina.' },
+        { droga:'Glucagon', dose:'20 a 30 mcg/kg (máximo de 1 mg)', via:'EV', obs:'Em 5 min, se em uso de betabloqueador e refratário. Pode repetir; vômito é comum. Frasco de 1 mg.' },
+        { droga:'Difenidramina', dose:'1 mg/kg (máximo de 50 mg)', via:'EV ou IM', obs:'EV lento. Adjuvante para prurido e urticária. Ampola de 50 mg/mL. Seda; não trata via aérea nem choque.' },
+        { droga:'Cetirizina', dose:'2 a 6 anos: 2,5 mg de 12/12 h · 6 a 12 anos: 5 mg de 12/12 h · ≥ 12 anos: 10 mg 1x/dia', via:'VO', obs:'Solução 1 mg/mL. Bula brasileira: a partir de 2 anos. Urticária aguda: 5 a 7 dias.' },
+        { droga:'Loratadina', dose:'2 a 12 anos com até 30 kg: 5 mg · acima de 30 kg ou ≥ 12 anos: 10 mg', via:'VO', obs:'1 vez ao dia. Xarope 1 mg/mL.' },
+        { droga:'Desloratadina', dose:'6 a 11 meses: 1 mg · 1 a 5 anos: 1,25 mg · 6 a 11 anos: 2,5 mg · ≥ 12 anos: 5 mg', via:'VO', obs:'1 vez ao dia. Xarope 0,5 mg/mL. Opção para o menor de 2 anos.' },
+        { droga:'Hidroxizina', dose:'0,7 mg/kg por dose (máximo de 25 mg)', via:'VO', obs:'De 8/8 h, acima de 6 meses; máximo de 2 mg/kg/dia. Xarope 2 mg/mL. Sedativa: útil à noite no prurido intenso.' },
+        { droga:'Prednisolona', dose:'1 a 2 mg/kg/dia (máximo de 40 mg)', via:'VO', obs:'1 vez ao dia por 3 dias. Adjuvante; não previne reação bifásica de forma comprovada. Também na urticária extensa refratária.' },
+        { droga:'Metilprednisolona', dose:'1 a 2 mg/kg (máximo de 125 mg)', via:'EV', obs:'Se não puder via oral. Adjuvante.' },
+        { droga:'Icatibanto', dose:'12 a 25 kg: 10 mg · 26 a 40 kg: 15 mg · 41 a 50 kg: 20 mg · 51 a 65 kg: 25 mg · > 65 kg: 30 mg', via:'SC', obs:'Crise de angioedema hereditário, a partir de 2 anos. Seringa de 30 mg/3 mL.' },
+        { droga:'Concentrado de inibidor de C1', dose:'20 UI/kg', via:'EV', obs:'Crise de angioedema hereditário. Na falta: plasma fresco congelado 10 mL/kg.' }
+      ]},
+
+      { tipo:'tempo', titulo:'Linha do tempo', itens:[
+        { quando:'0 min', o_que:'Adrenalina IM, posição, oxigênio, chamar ajuda' },
+        { quando:'5 a 15 min', o_que:'Sem melhora: 2ª dose IM + SF 20 mL/kg' },
+        { quando:'15 a 30 min', o_que:'Refratária: adrenalina em infusão e UTI; glucagon se betabloqueador' },
+        { quando:'Estabilizado', o_que:'Anti-histamínico e corticoide, se indicados' },
+        { quando:'4 a 24 h', o_que:'Observação conforme a gravidade; alta com plano escrito e adrenalina' }
+      ]},
+
+      { tipo:'lista', titulo:'Critérios (WAO 2020) e diferenciais', itens:[
+        'Critério 1: início agudo com pele ou mucosa (urticária, prurido, rubor, edema de lábio, língua ou úvula) + pelo menos 1 — comprometimento respiratório, queda da PA ou disfunção de órgão (hipotonia, síncope, incontinência), ou sintomas gastrointestinais graves, sobretudo após alérgeno não alimentar.',
+        'Critério 2: hipotensão, broncoespasmo ou acometimento laríngeo agudos após exposição a alérgeno conhecido ou muito provável — mesmo sem pele.',
+        'Urticária aguda isolada: placas que somem em menos de 24 h cada, sem outro sistema — não é anafilaxia; na criança, a causa mais comum é viral.',
+        'Angioedema hereditário: edema sem prurido e sem urticária, que dura 2 a 5 dias, dor abdominal recorrente, história familiar; piora com trauma, estresse e estrogênio.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        'Diagnóstico clínico: nenhum exame antes da adrenalina.',
+        '*Triptase sérica* entre 30 min e 2 h do início, se disponível — ajuda o alergista.',
+        '*Glicemia* no lactente e na reação prolongada.',
+        '*Angioedema hereditário*: C4 (baixo na crise) e inibidor de C1 quantitativo e funcional — encaminhar.'
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Anti-histamínico ou corticoide no lugar da adrenalina.',
+        'Adrenalina subcutânea, ou EV em bolus fora da parada — a via é IM na coxa.',
+        'Pôr a criança em pé ou sentada durante o choque.',
+        'Prometazina em menor de 2 anos (depressão respiratória).',
+        'Tratar angioedema hereditário só com adrenalina, anti-histamínico e corticoide e liberar: não funcionam, e o edema de laringe mata.',
+        'Liberar sem plano escrito e sem treinar a família com a adrenalina.'
+      ]},
+
+      { tipo:'texto', titulo:'Destino', conteudo:'*Observação* (SBP 2021): mínimo de 4 a 6 h após a resolução; 6 a 8 h se houve sintoma respiratório; 12 a 24 h (internação) se houve hipotensão, mais de uma dose de adrenalina, asma grave, reação bifásica prévia, chegada tardia ou dificuldade de voltar. Choque refratário ou via aérea comprometida: UTI. *Alta* com plano de ação escrito, lista do que evitar, anti-histamínico por alguns dias se houver urticária, e adrenalina para casa: no Brasil não há autoinjetor registrado na Anvisa (o importado depende de compra no exterior ou de decisão judicial); na falta, entregar ampola de 1 mg/mL com seringa de 1 mL e a dose em mL marcada, treinando a família. Encaminhar todos ao alergista. *Urticária aguda isolada*: alta com anti-histamínico de 2ª geração por 5 a 7 dias. *Angioedema hereditário*: crise com edema de face, língua ou laringe interna; encaminhar ao imunologista. *Divergência:* o corticoide para prevenir reação bifásica não tem benefício comprovado (WAO e EAACI), mas muitos serviços brasileiros ainda prescrevem 3 dias de prednisolona.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Marque a dose na seringa para a família: 0,01 mL/kg — criança de 20 kg = 0,2 mL.',
+        'Urticária + vômitos após alimento já é anafilaxia: dê a adrenalina.',
+        'Anote no prontuário o desencadeante suspeito e o horário: o alergista depende disso.',
+        'Angioedema que não melhora com adrenalina: pense em hereditário (ou por IECA no adolescente) e peça C4.'
+      ]}
+    ] },
+
+  { id:'lactente-gastro', titulo:'Constipação, cólica e refluxo do lactente', categoria:'pedia', gravidade:'rotina',
+    resumo:'Constipação funcional (Roma IV) com desimpactação por PEG e manutenção por meses; cólica e regurgitação fisiológica pedem orientação, não remédio; vômito bilioso, em jato, sangue ou perda de peso mudam tudo.',
+    tags:['constipacao','intestino preso','lactente','peg','polietilenoglicol','macrogol','lactulose','oleo mineral','fecaloma','colica do lactente','choro','simeticona','regurgitacao','golfada','refluxo','drge','omeprazol','estenose de piloro','vomito bilioso','disquesia','hirschsprung','roma iv'],
+    fonte:'ESPGHAN/NASPGHAN — Evaluation and Treatment of Functional Constipation in Infants and Children (2014) · Critérios de Roma IV — distúrbios funcionais do neonato, lactente e criança (2016) · NASPGHAN/ESPGHAN — Pediatric Gastroesophageal Reflux Clinical Practice Guidelines (2018) · NICE CG99 — Constipation in children and young people (2010, atualizada 2017)',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Lactente ou criança em bom estado levada ao PS por intestino preso, choro inconsolável ou golfadas.' },
+      { rotulo:'Prioridade',    valor:'*Procurar os sinais de alarme* (vômito bilioso ou em jato, sangue, distensão, febre, perda de peso, letargia) antes de chamar de funcional.' },
+      { rotulo:'Meta',          valor:'Tirar o fecaloma, deixar plano de manutenção por meses e acalmar a família sem medicar cólica e regurgitação.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Queixa gastrointestinal em lactente ou criança bem',
+          nota:'Pesar e plotar na curva; examinar abdome, região anal e sacral' },
+        { tipo:'decisao', texto:'Tem sinal de alarme?', ramos:[
+          { rotulo:'Vômito bilioso (verde)', cor:'perigo', texto:'*Má-rotação com volvo*: jejum, sonda gástrica aberta, soro EV e cirurgia pediátrica já',
+            ir:'dor-abdominal-pedia' },
+          { rotulo:'Vômito em jato, 2 a 8 semanas, faminto', cor:'perigo', texto:'*Estenose de piloro*: ultrassom, gasometria e eletrólitos; corrigir antes da cirurgia',
+            meds:['Soro de correção'] },
+          { rotulo:'Sangue nas fezes, distensão, febre, letargia', cor:'perigo', texto:'Invaginação, enterocolite, alergia à proteína do leite, infecção — investigar' },
+          { rotulo:'Não', cor:'ok', texto:'Seguir pela queixa' }
+        ]},
+        { tipo:'decisao', texto:'Qual a queixa?', ramos:[
+          { rotulo:'Intestino preso', texto:'Aplicar *Roma IV* e palpar fecaloma' },
+          { rotulo:'Choro inconsolável', texto:'*Cólica* só depois do checklist do choro; orientar', ir:'rn-ps' },
+          { rotulo:'Golfadas', cor:'ok', texto:'Ganha peso e está bem: *regurgitação fisiológica* — orientar, sem remédio' }
+        ]},
+        { tipo:'decisao', texto:'Constipação: há fecaloma (massa no abdome ou no reto)?', ramos:[
+          { rotulo:'Sim', texto:'*Desimpactação oral*: PEG 1 a 1,5 g/kg/dia por 3 a 6 dias',
+            meds:['PEG 3350 — desimpactação'] },
+          { rotulo:'Não', cor:'ok', texto:'*Manutenção*: PEG 0,4 a 0,8 g/kg/dia, ou lactulose no lactente pequeno',
+            meds:['PEG 3350 — manutenção', 'Lactulose'] }
+        ]},
+        { tipo:'fim', rotulo:'Alta', texto:'Plano escrito: laxativo por pelo menos 2 meses, treino de toalete, água e fibras, retorno com o pediatra' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        'Constipação funcional: evacuações raras, dolorosas ou endurecidas, retenção, fezes calibrosas — na criança treinada, escape fecal.',
+        'Disquesia do lactente: menor de 9 meses que faz força e chora por 10 min antes de fezes *moles* — não é constipação.',
+        'Cólica: lactente abaixo de 5 meses, choro prolongado e inconsolável no fim do dia, sem febre, crescendo bem; pico com 6 semanas.',
+        'Regurgitação fisiológica: 3 semanas a 12 meses, 2 ou mais por dia, sem esforço, lactente feliz e ganhando peso.',
+        'DRGE: regurgitação com recusa alimentar, baixo ganho de peso, irritabilidade nas mamadas, hematêmese ou sintomas respiratórios.',
+        'Estenose de piloro: 2 a 8 semanas, vômito não bilioso em jato logo após mamar, fome logo depois, oliva palpável.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        'Vômito bilioso em lactente: volvo até prova em contrário — cirurgia em horas.',
+        'Mecônio após 48 h de vida, distensão, ampola vazia e fezes explosivas ao toque retal: Hirschsprung.',
+        'Constipação desde o 1º mês, déficit de crescimento, alteração neurológica nas pernas, tufo de pelos ou fosseta sacral: causa orgânica.',
+        'Choro com febre, letargia, fontanela abaulada, hematomas ou recusa alimentar: não é cólica.',
+        'Perda de peso ou desidratação com vômitos: não é refluxo fisiológico.'
+      ]},
+
+      { tipo:'lista', titulo:'Roma IV e distinções que importam', itens:[
+        'Constipação funcional (menor de 4 anos): 2 ou mais por 1 mês — até 2 evacuações por semana, retenção excessiva, evacuação dolorosa ou endurecida, fezes de grande diâmetro, grande massa fecal no reto; na criança treinada, também escape fecal 1 vez por semana ou mais.',
+        'Cólica (Roma IV): começa e termina antes de 5 meses, choro recorrente e prolongado sem causa óbvia, sem febre e sem déficit de crescimento.',
+        'Regurgitação x DRGE: regurgitar é normal; DRGE é quando o refluxo causa sintoma que incomoda ou complicação.',
+        'Disquesia: esforço e choro antes de fezes moles — passa sozinha, sem laxativo nem estímulo retal.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Constipação funcional, cólica e regurgitação*: nenhum exame de rotina.',
+        '*Radiografia de abdome* só se não der para examinar (obesidade, recusa) e houver dúvida sobre fecaloma.',
+        '*Suspeita de estenose de piloro*: ultrassom (músculo ≥ 3 a 4 mm, canal ≥ 15 a 17 mm), gasometria, sódio, potássio e cloro.',
+        '*Vômito bilioso*: radiografia e estudo contrastado ou ultrassom urgentes, sem atrasar o cirurgião.',
+        '*Constipação refratária*: TSH, cálcio, anticorpos para doença celíaca e encaminhar.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações — por quilo', itens:[
+        { droga:'PEG 3350 — desimpactação', dose:'1 a 1,5 g/kg/dia (máximo de 100 g/dia)', via:'VO', obs:'Por 3 a 6 dias, dissolvido em água ou suco. Pó manipulado ou sachê comercial. Abaixo de 6 meses é uso fora de bula.' },
+        { droga:'PEG 3350 — manutenção', dose:'0,4 a 0,8 g/kg/dia (máximo de 17 g/dia)', via:'VO', obs:'1 vez ao dia, por pelo menos 2 meses e mais 1 mês sem sintomas; ajustar para fezes pastosas diárias.' },
+        { droga:'Lactulose', dose:'1 a 2 g/kg/dia ≈ 1,5 a 3 mL/kg/dia (máximo de 30 mL por dose)', via:'VO', obs:'Em 1 ou 2 tomadas. Xarope 667 mg/mL. Opção no lactente pequeno; causa gases e cólica.' },
+        { droga:'Óleo mineral', dose:'1 a 3 mL/kg/dia (sem passar da dose do adulto)', via:'VO', obs:'Só acima de 1 ano, sem risco de aspiração (sem disfagia, refluxo importante ou doença neurológica). Nunca deitado ou forçado.' },
+        { droga:'Supositório de glicerina infantil', dose:'1 supositório', via:'RETAL', obs:'Alívio pontual no lactente; não usar de rotina.' },
+        { droga:'Soro de correção', dose:'SF 0,9% 10 a 20 mL/kg se desidratado; depois glicose 5% em SF 0,9% + KCl 20 mEq/L a 1 a 1,5 × a manutenção', via:'EV', obs:'Estenose de piloro: KCl só após diurese. Operar com cloro ≥ 100 mEq/L e bicarbonato < 30 mEq/L.' },
+        { droga:'Omeprazol', dose:'1 mg/kg/dia (máximo de 20 mg)', via:'VO', obs:'*Não* para regurgitação nem para choro. Só DRGE com sintomas típicos persistentes ou esofagite, prova de 4 a 8 semanas com o pediatra. Abrir a cápsula em alimento ácido.' },
+        { droga:'Lactobacillus reuteri DSM 17938', dose:'5 gotas (10⁸ UFC) 1 vez ao dia', via:'VO', obs:'Cólica em lactente amamentado, por 21 dias: algum benefício nos ensaios. Sem evidência em quem toma fórmula.' },
+        { droga:'Fórmula extensamente hidrolisada', dose:'Prova de 2 a 4 semanas', via:'VO', obs:'Lactente em fórmula com cólica ou regurgitação intensas e suspeita de alergia ao leite. No amamentado: tirar leite de vaca da dieta materna por 2 a 4 semanas.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Omeprazol, domperidona, bromoprida ou metoclopramida para golfada ou choro do lactente.',
+        'Simeticona, chás e "remédios para cólica" como tratamento — anis-estrelado é neurotóxico no lactente.',
+        'Antiespasmódico (escopolamina, diciclomina) no lactente.',
+        'Óleo mineral em menor de 1 ano ou com risco de aspiração (pneumonia lipoide).',
+        'Enema de fosfato em menor de 2 anos.',
+        'Suspender o laxativo assim que a criança evacua — a recaída é a regra.',
+        'Trocar de fórmula a cada consulta ou desestimular o aleitamento.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Internar* o vômito bilioso (cirurgia pediátrica imediata), a estenose de piloro (corrigir alcalose e potássio antes da piloromiotomia), o lactente desidratado ou com perda de peso, o sangramento com instabilidade e a suspeita de Hirschsprung com enterocolite (distensão, febre, diarreia fétida). *Alta* na constipação funcional com desimpactação iniciada e plano escrito de manutenção, explicando que o tratamento dura meses; na cólica e na regurgitação fisiológica, com orientação, curva de peso conferida e retorno ao pediatra. *Divergência:* a simeticona não é melhor que placebo nos ensaios, mas ainda é prescrita para tranquilizar a família; o Lactobacillus reuteri DSM 17938 tem benefício modesto no amamentado segundo metanálises, e outras diretrizes consideram a evidência insuficiente para recomendar; o PEG abaixo de 6 meses é fora de bula, e ali muitos preferem a lactulose.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Pergunte como a criança evacua, não só quantas vezes: dor e retenção definem constipação.',
+        'Desimpacte antes de manter: com fecaloma, o laxativo só faz escape em volta.',
+        'Golfador feliz e ganhando peso é problema de lavanderia, não de remédio.',
+        'Diga aos pais que o choro tem pico com 6 semanas — e o que fazer se perderem a paciência: pôr o bebê no berço e sair do quarto. Sacudir mata.'
+      ]}
+    ] },
+
+  { id:'celulite-periorbitaria', titulo:'Celulite periorbitária e orbitária', categoria:'pedia', gravidade:'urgencia',
+    resumo:'Pré-septal: pálpebra inchada com olho livre — amoxicilina-clavulanato VO. Orbitária: dor ao mover o olho, proptose, oftalmoplegia ou baixa visual — TC, internação, ceftriaxona + oxacilina (ou clindamicina), oftalmo e otorrino.',
+    tags:['celulite periorbitaria','celulite pre-septal','celulite orbitaria','olho inchado','edema palpebral','proptose','oftalmoplegia','abscesso subperiosteal','trombose do seio cavernoso','sinusite','etmoidite','chandler','amoxicilina-clavulanato','ceftriaxona','clindamicina','oxacilina','vancomicina'],
+    fonte:'IDSA — Acute Bacterial Rhinosinusitis in Children and Adults (2012) · AAP — Clinical Practice Guideline for Acute Bacterial Sinusitis in Children (2013) · EPOS — European Position Paper on Rhinosinusitis and Nasal Polyps (2020) · UpToDate — Preseptal and orbital cellulitis in children',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Pálpebra vermelha e inchada, em geral de um lado, com febre, depois de sinusite, picada, trauma ou lesão de pele.' },
+      { rotulo:'Prioridade',    valor:'*Examinar o olho*: dor ao mover, proptose, oftalmoplegia, baixa visual ou alteração pupilar = *orbitária* → TC com contraste e internação.' },
+      { rotulo:'Meta',          valor:'Antibiótico certo para o compartimento e drenagem do abscesso antes de perder a visão.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Edema e eritema ao redor do olho',
+          nota:'Se o edema não deixa abrir o olho, afastar as pálpebras com cuidado ou chamar oftalmo: o olho precisa ser examinado' },
+        { tipo:'decisao', texto:'Há sinal orbitário: dor ao mover o olho, proptose, oftalmoplegia, diplopia, baixa visual, defeito pupilar, quemose?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'*Celulite orbitária*: TC de órbitas e seios com contraste, internar, antibiótico EV',
+            meds:['Ceftriaxona', 'Oxacilina', 'Clindamicina'] },
+          { rotulo:'Não, mas toxemia, menor de 1 ano, edema que impede o exame ou falha do VO', texto:'*Pré-septal com internação*: antibiótico EV',
+            meds:['Ceftriaxona', 'Oxacilina'] },
+          { rotulo:'Não, criança bem, acima de 1 ano', cor:'ok', texto:'*Pré-septal*: amoxicilina-clavulanato VO e reavaliar em 24 a 48 h',
+            meds:['Amoxicilina-clavulanato'] }
+        ]},
+        { tipo:'decisao', texto:'Origem na pele (picada, impetigo, ferida), suspeita de MRSA ou quadro grave?', ramos:[
+          { rotulo:'Sim', cor:'perigo', texto:'Trocar o antiestafilocócico por *vancomicina* (grave) ou *clindamicina*',
+            meds:['Vancomicina', 'Clindamicina'] },
+          { rotulo:'Não', cor:'ok', texto:'Manter o esquema' }
+        ]},
+        { tipo:'decisao', texto:'A TC mostra abscesso ou complicação?', ramos:[
+          { rotulo:'Subperiosteal pequeno, visão normal, menor de 9 anos', texto:'Antibiótico EV e oftalmo a cada 12 a 24 h' },
+          { rotulo:'Grande, intraorbitário, perda visual ou sem melhora em 48 h', cor:'perigo', texto:'*Drenagem cirúrgica* com otorrino e oftalmo' },
+          { rotulo:'Cefaleia intensa, rebaixamento, sinais bilaterais', cor:'perigo', texto:'*Trombose do seio cavernoso ou abscesso intracraniano*: RM, metronidazol, neurocirurgia',
+            meds:['Metronidazol'] }
+        ]},
+        { tipo:'fim', rotulo:'Troca para VO', texto:'Afebril por 24 a 48 h, edema regredindo e olho normal: amoxicilina-clavulanato até completar o tempo',
+          meds:['Amoxicilina-clavulanato'] }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        'Pré-septal: edema e eritema da pálpebra, olho branco, movimentos livres e sem dor, visão normal — mais na criança pequena.',
+        'Orbitária: criança maior, sinusite etmoidal, febre, dor ao mover o olho, proptose, quemose, diplopia, baixa visual.',
+        'Origem sinusal: resfriado arrastado por mais de 10 dias, secreção nasal purulenta, cefaleia.',
+        'Origem cutânea: picada de inseto, impetigo, varicela, trauma, hordéolo, dacriocistite.',
+        'Diferenciais: conjuntivite com edema, reação alérgica (prurido, sem dor), picada, edema da síndrome nefrótica (bilateral e matinal), tumor (rabdomiossarcoma, retinoblastoma).'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        'Proptose, oftalmoplegia ou dor ao mover o olho: orbitária até prova em contrário.',
+        'Baixa acuidade, defeito pupilar aferente ou perda da visão de cores: compressão do nervo óptico — cirurgia de urgência.',
+        'Sinais bilaterais, paralisia dos nervos III, IV ou VI, cefaleia intensa e toxemia: trombose do seio cavernoso.',
+        'Rebaixamento, vômitos, convulsão ou sinais meníngeos: abscesso intracraniano ou meningite.',
+        'Menor de 1 ano ou não vacinado contra Hib: risco de bacteremia — internar.'
+      ]},
+
+      { tipo:'lista', titulo:'Classificação de Chandler', itens:[
+        'Chandler I — celulite pré-septal: na frente do septo orbitário; olho poupado.',
+        'Chandler II — celulite orbitária: inflamação difusa da gordura orbitária, sem abscesso.',
+        'Chandler III — abscesso subperiosteal: entre a periórbita e o osso, em geral medial (etmoide).',
+        'Chandler IV — abscesso orbitário: dentro do cone muscular; perda visual frequente.',
+        'Chandler V — trombose do seio cavernoso: sinais bilaterais, toxemia, paralisias de nervos cranianos.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Hemograma, PCR e hemocultura* nos internados (a hemocultura é pouco positiva).',
+        '*TC de órbitas e seios da face com contraste*: sinal orbitário, olho que não dá para examinar, sem melhora em 24 a 48 h de antibiótico EV ou sinal de SNC.',
+        '*RM de crânio e órbitas*: suspeita de trombose do seio cavernoso ou complicação intracraniana.',
+        '*Cultura* de secreção ou do material drenado.',
+        '*Avaliação oftalmológica* na orbitária: acuidade, pupila, motilidade, fundo de olho, repetida a cada 12 a 24 h.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações — por quilo', itens:[
+        { droga:'Amoxicilina-clavulanato', dose:'45 a 50 mg/kg/dia (amoxicilina) de 8/8 h, ou 80 a 90 mg/kg/dia de 12/12 h (máximo de 875 mg de amoxicilina por dose)', via:'VO', obs:'Pré-septal ambulatorial por 7 a 10 dias. Suspensão 250 + 62,5 mg/5 mL (8/8 h) ou 400 + 57 mg/5 mL (12/12 h). Dose alta se a origem for sinusal.' },
+        { droga:'Cefalexina', dose:'25 mg/kg por dose (máximo de 1 g)', via:'VO', obs:'De 6/6 h. Pré-septal de origem cutânea (picada, impetigo). Suspensão 250 mg/5 mL. Não serve para a de origem sinusal.' },
+        { droga:'Clindamicina', dose:'10 a 13 mg/kg por dose (máximo de 450 mg VO ou 900 mg EV)', via:'VO ou EV', obs:'De 8/8 h. Alergia à penicilina ou suspeita de MRSA comunitário; cobre anaeróbios. Sem suspensão pronta no Brasil: cápsula, manipulado ou EV.' },
+        { droga:'Ceftriaxona', dose:'50 mg/kg por dose (máximo de 2 g)', via:'EV', obs:'Orbitária: de 12/12 h (100 mg/kg/dia). Pré-septal internada: 50 a 75 mg/kg 1 vez ao dia. Cobre pneumococo, Haemophilus e Moraxella.' },
+        { droga:'Oxacilina', dose:'50 mg/kg por dose (máximo de 2 g)', via:'EV', obs:'De 6/6 h, com a ceftriaxona: cobre S. aureus sensível e estreptococo.' },
+        { droga:'Vancomicina', dose:'15 mg/kg por dose (máximo de 1 g)', via:'EV', obs:'De 6/6 h, com a ceftriaxona, no lugar da oxacilina: orbitária grave, extensão intracraniana ou MRSA. Nível sérico.' },
+        { droga:'Metronidazol', dose:'7,5 mg/kg por dose (máximo de 500 mg)', via:'EV', obs:'De 8/8 h. Extensão intracraniana, origem dentária ou abscesso, se não estiver com clindamicina. Bolsa de 500 mg/100 mL.' },
+        { droga:'Ampicilina-sulbactam', dose:'50 mg/kg (de ampicilina) por dose (máximo de 2 g)', via:'EV', obs:'De 6/6 h. Alternativa à ceftriaxona + oxacilina; cobre anaeróbios.' },
+        { droga:'Dipirona', dose:'15 mg/kg por dose (máximo de 1 g)', via:'VO ou EV', obs:'De 6/6 h, se dor ou febre.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Chamar de conjuntivite ou alergia sem testar a motilidade e a visão.',
+        'Liberar com antibiótico VO quem tem qualquer sinal orbitário.',
+        'Adiar a TC quando o edema impede examinar o olho.',
+        'Cefalexina isolada na pré-septal de origem sinusal (cobre mal Haemophilus e Moraxella).',
+        'Corticoide sistêmico de rotina antes de o antibiótico agir — decisão do especialista.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Internar* toda celulite orbitária, a pré-septal em menor de 1 ano, com toxemia, edema que impede o exame do olho, falha de 24 a 48 h de antibiótico oral ou dúvida de adesão. Oftalmologia e otorrinolaringologia avaliam toda orbitária; neurocirurgia se houver extensão intracraniana. Trocar para via oral após 24 a 48 h afebril, com melhora clara do edema e exame ocular normal; tempo total de 10 a 14 dias na pré-septal internada e de 2 a 3 semanas na orbitária (mais se houve abscesso drenado ou osteomielite). *Alta* da pré-septal leve com amoxicilina-clavulanato, borda do eritema marcada e retorno obrigatório em 24 a 48 h, ou antes se surgir dor ao mover o olho, alteração visual, febre persistente ou prostração. *Divergência:* o corticoide sistêmico adjuvante (após 24 a 48 h de antibiótico EV) reduz o tempo de internação em séries, mas sem ensaio robusto; e os critérios para operar o abscesso subperiosteal (idade, tamanho, localização) variam entre serviços.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Peça para a criança seguir seu dedo nas quatro direções: dor ou limitação muda o diagnóstico.',
+        'Edema bilateral, matinal e sem eritema: pense em síndrome nefrótica — peça urina.',
+        'Picada de inseto sem febre: prurido sugere reação local; dor e calor sugerem infecção.',
+        'Marque a borda do eritema com caneta e anote a hora: a reavaliação em 24 h fica objetiva.'
+      ]}
+    ] },
+
+  { id:'coqueluche', titulo:'Coqueluche', categoria:'pedia', gravidade:'urgencia',
+    resumo:'Tosse em acessos com guincho, vômito ou apneia: lactente abaixo de 3 meses interna; azitromicina por 5 dias, quimioprofilaxia dos contatos prioritários, notificação e dTpa na gestante.',
+    tags:['coqueluche','pertussis','bordetella','tosse comprida','tosse paroxistica','guincho','apneia','cianose','linfocitose','azitromicina','claritromicina','eritromicina','quimioprofilaxia','contatos','dtpa','vacina gestante','notificacao'],
+    fonte:'Ministério da Saúde — Nota Técnica Conjunta nº 165/2025 DPNI/SVSA (tratamento e quimioprofilaxia) · Ministério da Saúde — Guia de Vigilância em Saúde, 6ª edição · SBP/SBIm — Nota técnica sobre coqueluche (2025) · AAP — Red Book (2024)',
+    ficha:[
+      { rotulo:'Quando pensar', valor:'Tosse em acessos com guincho, vômito depois da tosse, cianose ou apneia; no lactente pequeno, *apneia e cianose sem tosse típica*.' },
+      { rotulo:'Prioridade',    valor:'*Lactente abaixo de 3 meses interna* (apneia mata); azitromicina na suspeita, sem esperar exame.' },
+      { rotulo:'Meta',          valor:'Tratar, colher swab de nasofaringe, notificar e fazer quimioprofilaxia dos contatos prioritários em até 21 dias.' }
+    ],
+    secoes:[
+      { tipo:'fluxo', titulo:'Fluxograma da conduta', itens:[
+        { tipo:'inicio', rotulo:'Entrada', texto:'Tosse em acessos, guincho, vômito após a tosse, cianose ou apneia',
+          nota:'Lactente com apneia ou cianose: suspeitar e tratar mesmo antes de completar o tempo de tosse da definição de caso' },
+        { tipo:'passo', rotulo:'Na suspeita', texto:'*Colher swab de nasofaringe (PCR e cultura)* e iniciar azitromicina',
+          nota:'Coleta de preferência antes do antibiótico, mas sem atrasá-lo',
+          meds:['Azitromicina'] },
+        { tipo:'decisao', texto:'Precisa internar?', ramos:[
+          { rotulo:'Menor de 3 meses, apneia, cianose, pneumonia, convulsão, não mama, prematuro, cardiopata', cor:'perigo',
+            texto:'*Internar* com monitor de apneia e oximetria; leucócitos > 30 mil ou hipoxemia: UTI' },
+          { rotulo:'3 a 6 meses', texto:'Limiar baixo: observar um acesso de tosse e uma mamada antes de liberar' },
+          { rotulo:'Criança maior em bom estado', cor:'ok', texto:'*Tratamento em casa* e afastamento até 5 dias de antibiótico' }
+        ]},
+        { tipo:'decisao', texto:'Pode usar macrolídeo?', ramos:[
+          { rotulo:'Sim', cor:'ok', texto:'*Azitromicina por 5 dias* (claritromicina se faltar, acima de 1 mês)',
+            meds:['Azitromicina', 'Claritromicina'] },
+          { rotulo:'Não, e tem 2 meses ou mais', texto:'*Sulfametoxazol-trimetoprima* por 14 dias',
+            meds:['Sulfametoxazol-trimetoprima'] }
+        ]},
+        { tipo:'passo', rotulo:'Contatos', texto:'*Quimioprofilaxia* com o mesmo esquema, até 21 dias da exposição, para os contatos prioritários',
+          nota:'Menor de 1 ano, imunodeprimido ou pneumopata, quem mora com um vulnerável, gestante ≥ 32 semanas não vacinada, profissional e creche que cuidam de vulneráveis',
+          meds:['Azitromicina'] },
+        { tipo:'fim', rotulo:'Sempre', texto:'Notificar, conferir Penta e DTP da criança e dTpa da mãe; precaução de gotículas até 5 dias de antibiótico' }
+      ]},
+
+      { tipo:'passos', titulo:'Quando suspeitar', itens:[
+        'Fase catarral (1 a 2 semanas): coriza, tosse leve, febre baixa — a mais contagiosa, parece resfriado.',
+        'Fase paroxística (2 a 6 semanas): acessos de tosse em salva, guincho, vômito, cianose; entre os acessos a criança fica bem e sem febre.',
+        'Convalescença (2 a 6 semanas ou mais): a tosse diminui e volta com novas viroses.',
+        'Lactente abaixo de 3 meses: apneia, cianose, bradicardia, engasgo — o guincho costuma faltar.',
+        'Adolescente e adulto: tosse arrastada por semanas sem guincho — em geral é a fonte do lactente.',
+        'Pistas: lactente não vacinado ou com esquema incompleto, mãe sem dTpa na gestação, alguém tossindo em casa há semanas.'
+      ]},
+
+      { tipo:'alerta', titulo:'Red flags', itens:[
+        'Apneia ou cianose no lactente: internar com monitor, mesmo com exame normal entre os acessos.',
+        'Leucócitos acima de 30 mil (sobretudo acima de 50 mil) com taquicardia ou hipoxemia: hipertensão pulmonar — UTI; pode precisar de leucorredução.',
+        'Febre alta, taquipneia entre os acessos ou hipoxemia mantida: pneumonia, a complicação que mais mata.',
+        'Convulsão ou rebaixamento: encefalopatia ou hipóxia.',
+        'Menor de 1 mês tratado com macrolídeo: vigiar estenose de piloro (vômitos em jato).'
+      ]},
+
+      { tipo:'lista', titulo:'Definição de caso suspeito (Ministério da Saúde)', itens:[
+        'Menor de 6 meses: tosse há 10 dias ou mais + 1 ou mais de — tosse paroxística, guincho, vômito pós-tosse, cianose, apneia, engasgo.',
+        'A partir de 6 meses: tosse há 14 dias ou mais + 1 ou mais de — tosse paroxística, guincho, vômito pós-tosse.',
+        'Qualquer idade: tosse, em qualquer período, com contato próximo com caso confirmado por laboratório.',
+        'Vale independentemente da situação vacinal.'
+      ]},
+
+      { tipo:'lista', titulo:'Exames', itens:[
+        '*Swab ou aspirado de nasofaringe* para PCR em tempo real e cultura — melhor nas 3 primeiras semanas de tosse.',
+        '*Hemograma*: leucocitose com linfocitose absoluta, típica no lactente; acima de 30 mil indica gravidade.',
+        '*Radiografia de tórax* se febre, taquipneia ou hipoxemia.',
+        '*Lactente internado*: glicemia, eletrólitos e ecocardiograma se leucocitose extrema ou hipoxemia.',
+        '*Painel viral* se disponível: coinfecção com VSR é comum.'
+      ]},
+
+      { tipo:'doses', titulo:'Medicações — por quilo (tratamento = quimioprofilaxia)', itens:[
+        { droga:'Azitromicina', dose:'Menor de 6 meses: 10 mg/kg 1x/dia por 5 dias · 6 meses ou mais: 10 mg/kg no 1º dia (máximo de 500 mg) e 5 mg/kg do 2º ao 5º (máximo de 250 mg)', via:'VO', obs:'1ª escolha, inclusive abaixo de 1 mês. Suspensão 200 mg/5 mL. A partir de 12 anos ou 45 kg: 500 mg no 1º dia e 250 mg do 2º ao 5º. Cautela com QT longo.' },
+        { droga:'Claritromicina', dose:'7,5 mg/kg por dose (máximo de 500 mg)', via:'VO', obs:'De 12/12 h por 7 dias. Não usar abaixo de 1 mês. Suspensão 125 mg/5 mL ou 250 mg/5 mL.' },
+        { droga:'Eritromicina', dose:'10 mg/kg por dose (máximo de 500 mg)', via:'VO', obs:'De 6/6 h (40 mg/kg/dia, máximo de 2 g/dia) por 14 dias abaixo de 6 meses e 7 a 14 dias acima. 3ª escolha: mais efeitos gastrointestinais e maior risco de estenose de piloro no RN.' },
+        { droga:'Sulfametoxazol-trimetoprima', dose:'TMP 4 mg/kg + SMZ 20 mg/kg por dose (máximo de 160 + 800 mg)', via:'VO', obs:'De 12/12 h por 14 dias. Só a partir de 2 meses, se macrolídeo contraindicado. Suspensão 200 + 40 mg/5 mL.' },
+        { droga:'Oxigênio', dose:'Titular', via:'Cateter ou máscara', obs:'Se hipoxemia ou cianose nos acessos. Aspirar secreções com delicadeza.' },
+        { droga:'Dieta fracionada', dose:'Pequenos volumes, mais vezes', via:'VO ou SNG', obs:'Oferecer após o acesso de tosse. Sonda se não mantém a ingesta.' }
+      ]},
+
+      { tipo:'naofazer', titulo:'Não fazer', itens:[
+        'Esperar o resultado do PCR para tratar o caso suspeito.',
+        'Esperar 10 a 14 dias de tosse para suspeitar no lactente com apneia ou cianose.',
+        'Salbutamol, corticoide, anti-histamínico ou antitussígeno: não reduzem os acessos.',
+        'Liberar lactente abaixo de 3 meses sem observar um acesso e uma mamada.',
+        'Esquecer a quimioprofilaxia dos contatos prioritários e a vacina da família.',
+        'Repetir ciclos de quimioprofilaxia no mesmo contato — monitorar 21 dias e tratar se tossir.'
+      ]},
+
+      { tipo:'texto', titulo:'Internação x alta', conteudo:'*Internar* o menor de 3 meses, qualquer lactente com apneia, cianose, bradicardia, pneumonia, convulsão, dificuldade para mamar ou desidratação, o prematuro, o cardiopata ou pneumopata e quem tem leucocitose extrema; UTI na hipoxemia, hipertensão pulmonar ou apneias repetidas. Precaução de gotículas até 5 dias de antibiótico (ou 21 dias do início da tosse se não tratado). *Alta* da criança maior em bom estado com azitromicina prescrita, afastamento da escola ou creche por 5 dias de tratamento, explicação de que a tosse dura semanas e retorno imediato se apneia, cianose, febre ou recusa alimentar. *Notificar* todo caso suspeito (a lista nacional prevê notificação semanal, mas avise a vigilância no mesmo dia para iniciar a quimioprofilaxia dos contatos). Conferir a vacina: Penta aos 2, 4 e 6 meses, DTP aos 15 meses e 4 anos, e dTpa em toda gestação a partir de 20 semanas. *Atenção ao corte de idade da azitromicina:* o esquema de 10 mg/kg/dia por 5 dias vale para todo menor de 6 meses, inclusive abaixo de 1 mês; o esquema de 10 mg/kg seguido de 5 mg/kg é a partir de 6 meses (MS 2025 e AAP). *Divergência:* alguns protocolos internam todo menor de 6 meses; o consenso mínimo é o menor de 3 meses e qualquer lactente com apneia ou cianose.' },
+
+      { tipo:'dica', titulo:'Pega do plantão', itens:[
+        'Peça para a família filmar um acesso de tosse: ajuda muito quando a criança chega entre as crises.',
+        'Lactente pequeno que "engasga" e fica roxo nas mamadas repetidamente: pense em coqueluche.',
+        'Pergunte se a mãe tomou dTpa na gestação e quem tosse em casa há semanas.',
+        'Leucocitose com linfocitose em lactente com tosse e sem febre é muito sugestiva.'
       ]}
     ] }
 ];

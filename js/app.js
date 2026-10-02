@@ -768,19 +768,19 @@
            'hipertensao-intracraniana','compressao-medular','meningite'] },
     { nome:'Metabólico e endócrino', quando:'o exame muda a conduta na hora',
       ids:['hipoglicemia','hipercalemia','hiponatremia','cetoacidose','estado-hiperosmolar',
-           'crise-tireotoxica','coma-mixedematoso','insuficiencia-adrenal','indicacao-dialise'] },
+           'crise-tireotoxica','coma-mixedematoso','insuficiencia-adrenal','indicacao-dialise','lise-tumoral'] },
     { nome:'Trauma e sangramento', quando:'xABCDE e controle de hemorragia',
       ids:['atendimento-trauma','tce','trauma-toracico','trauma-abdominal','trauma-raquimedular',
-           'queimaduras','sindrome-compartimental','hda'] },
+           'queimaduras','sindrome-compartimental','hda','trauma-ocular','hipertermia','afogamento'] },
     { nome:'Abdome cirúrgico', quando:'cirurgião no telefone',
-      ids:['abdome-agudo','isquemia-mesenterica','colecistite-colangite','cirrose-descompensada'] },
-    { nome:'Gestante e puérpera', quando:'duas vidas, obstetra cedo',
-      ids:['pre-eclampsia','sangramento-gestacao','hemorragia-pos-parto'] },
+      ids:['abdome-agudo','isquemia-mesenterica','colecistite-colangite','cirrose-descompensada','escroto-agudo'] },
+    { nome:'Gestante, puérpera e pelve', quando:'duas vidas, beta-HCG e ginecologista cedo',
+      ids:['pre-eclampsia','sangramento-gestacao','hemorragia-pos-parto','parto-iminente','torcao-anexial','choque-toxico'] },
     { nome:'Criança', quando:'limiar de agir menor',
-      ids:['crianca-gravemente-doente','pcr-pediatrica','sepse-pediatrica','asma-pedia'] },
+      ids:['crianca-gravemente-doente','pcr-pediatrica','sepse-pediatrica','asma-pedia','estado-mal-pedia','cad-pedia','febre-petequias','anafilaxia-pedia'] },
     { nome:'Intoxicação e peçonhentos', quando:'antídoto e soro têm hora',
       ids:['intoxicado-abordagem','benzo-opioide','paracetamol','triciclicos','organofosforado',
-           'alcool-metanol','cocaina-estimulantes','monoxido-carbono','sindrome-serotoninergica',
+           'alcool-metanol','cocaina-estimulantes','monoxido-carbono','sindrome-serotoninergica','digoxina','bb-bcc',
            'acidente-ofidico','acidente-escorpiao-aranha'] },
     { nome:'Agitação e abstinência', quando:'risco para o paciente e para a equipe',
       ids:['agitacao-psicomotora','abstinencia-alcool','risco-suicidio'] }
@@ -1916,7 +1916,7 @@
         l.slice(0, lim).map(function (o) {
           var p = t === 'conduta' ? acharConduta(String(o.href).split('/').pop()) : null;
           var grav = p ? (p.gravidade || 'rotina') : '';
-          return '<a class="bz-it' + (grav ? ' g-' + grav : '') + '" href="' + esc(o.href || '#') + '"' + (o.abre ? ' data-abre="' + esc(o.abre) + '"' : '') + '>' +
+          return '<a class="bz-it' + (grav ? ' g-' + grav : '') + '" href="' + esc(o.href || '#') + '"' + (o.abre ? ' data-abre="' + esc(o.tipo) + ':' + esc(o.abre) + '"' : '') + '>' +
             '<i class="bz-dot"></i><span class="bz-t"><b>' + esc(o.titulo || o.nome || '') + (o.vazia ? ' <em class="bz-vz">a preencher</em>' : '') + '</b>' +
             (o.sub ? '<small>' + esc(o.sub) + '</small>' : '') +
             (o.achou ? '<small class="bz-achou">' + esc(o.achou) + '</small>' : '') + '</span>' +
@@ -2111,8 +2111,58 @@
      Alterna "Para casa" (receita de alta) e "Na unidade" (prescrição do PS). */
   var rxModo = ler('pref:rp-modo', 'casa');
   var rxAberta = null;
+  /* ---------- receitas pediátricas: a dose sai do peso digitado ----------
+     FERR_RX_PEDIA (js/receitas-pediatria.js): item { pid, dose, uso } aponta
+     para uma droga da calculadora pediátrica (dose = índice em doses[]) e o
+     volume vem do pdCalc com o peso e a idade do topo; { med, uso } é fixo. */
+  function rxPedTodos() {
+    return (typeof FERR_RX_PEDIA !== 'undefined' ? FERR_RX_PEDIA : []).map(function (r) {
+      return { id:r.id, grupo:r.grupo || 'Pediatria', nome:r.nome, sub:r.sub, tags:r.tags, conduta:r.conduta, atencao:r.atencao, ped:r };
+    });
+  }
+  function rxTodos() { return Ferramentas.quadrosTodos().concat(rxPedTodos()); }
+  function rxAchar(id) { return rxTodos().filter(function (x) { return x.id === id; })[0] || null; }
+  function pedDroga(pid) {
+    var l = (typeof FERR_PEDIA !== 'undefined' ? FERR_PEDIA : []).concat(typeof PED_PLANILHA !== 'undefined' ? PED_PLANILHA : []);
+    for (var i = 0; i < l.length; i++) if (l[i].id === pid) return l[i];
+    return null;
+  }
+  function rxPedLinhas(q) {
+    var kg = pesoAtual(), idade = Ferramentas.ped.idade();
+    return (q.ped.itens || []).map(function (it) {
+      if (!it.pid) return { med:it.med, uso:it.uso || '' };
+      /* abaixo de certa idade a receita troca de droga ou de dose: { abaixo:{ meses, pid?, dose?, uso? } } */
+      if (it.abaixo && idade != null && idade < it.abaixo.meses) {
+        it = { pid:it.abaixo.pid || it.pid, dose:it.abaixo.dose != null ? it.abaixo.dose : it.dose, uso:it.abaixo.uso != null ? it.abaixo.uso : it.uso, via:it.via };
+      }
+      var m = pedDroga(it.pid), d = m && m.doses && m.doses[it.dose || 0];
+      if (!d) return { med:it.pid, uso:'(droga fora da calculadora) ' + (it.uso || ''), falta:true };
+      var iv = pdIntervalos(d.freq)[0] || { txt:'', div:1 };
+      var r = pdCalc(m, d, kg, iv.div, idade);
+      var veta = Ferramentas.ped.vetado(m, idade);
+      var quanto = r.calc ? r.valor + (r.mg && r.mg !== r.valor ? ' (' + r.mg + ')' : '') : r.valor;
+      /* pó em grama (PEG): "6.000 a 12.000 mg" vira "6 a 12 g" */
+      quanto = quanto.replace(/^([\d.]+)(?: a ([\d.]+))? mg$/, function (s, a1, b1) {
+        var x = +a1.replace(/\./g, ''), y = b1 ? +b1.replace(/\./g, '') : null;
+        return x >= 2000 ? pdNum(x / 1000, 1) + (y ? ' a ' + pdNum(y / 1000, 1) : '') + ' g' : s;
+      });
+      /* receita de casa: se a droga tem via oral, a via é VO */
+      var via = it.via || (/\bVO\b/.test(m.via || '') ? 'VO' : (m.via || ''));
+      /* não repetir a duração que já veio na frequência ("por 5 dias, por 5 dias") */
+      var uso = String(it.uso || '');
+      var dur = /por \d+(?: a \d+)? dias/.exec(iv.txt || '');
+      if (dur && uso.indexOf(dur[0]) === 0) uso = uso.slice(dur[0].length).replace(/^[\s,—-]+/, '');
+      return { med:m.nome + (m.apres ? ' — ' + m.apres : ''),
+        uso:(veta ? 'NÃO USAR NESTA IDADE: ' + (m.veto && m.veto.txt || '') + ' ' : '') +
+          (r.calc ? 'Dar ' : 'Dose: ') + quanto + (via ? ' ' + via : '') + (iv.txt ? ' ' + iv.txt : '') +
+          (uso ? ', ' + uso : '') + '.',
+        calc:r.calc, semPeso:!kg && r.calc === false && /peso/i.test(r.sub || ''), veta:veta };
+    });
+  }
+  function rxPedTexto(q) { return Ferramentas.textoRxPed({ id:q.id, nome:q.nome, orientacoes:q.ped.orientacoes }, rxPedLinhas(q), pesoAtual()); }
+
   function rxLista() {
-    var todos = Ferramentas.quadrosTodos();
+    var todos = rxTodos();
     var grupos = [];
     todos.forEach(function (q) {
       var g = grupos.filter(function (x) { return x.nome === q.grupo; })[0];
@@ -2121,10 +2171,13 @@
     });
     return { todos:todos, grupos:grupos };
   }
-  function rxTem(q, modoX) { var l = Ferramentas.linhasRx(q.id); return modoX === 'casa' ? l.receita.length : l.unidade.length; }
+  function rxTem(q, modoX) { if (q.ped) return modoX === 'casa' ? (q.ped.itens || []).length : 0; var l = Ferramentas.linhasRx(q.id); return modoX === 'casa' ? l.receita.length : l.unidade.length; }
   function curtoMed(m) { return String(m || '').replace(/\*/g, '').split(/\s+\d/)[0].toLowerCase().replace(/(^|\s)\S/g, function (s) { return s.toUpperCase(); }); }
 
-  window.addEventListener('hashchange', function () { if (!/^#presc\b/.test(location.hash)) window.__rxCompleto = false; });
+  window.addEventListener('hashchange', function () {
+    if (/^#presc\b/.test(location.hash)) return;
+    window.__rxCompleto = false; rxAberta = null;   /* sair das receitas fecha a folha aberta */
+  });
   /* capa limpa: grupos numa coluna à esquerda, receitas em lista de uma
      linha à direita (nome + indicação curta). Copiar é um ícone na ponta. */
   var rxGrupo = ler('pref:rp-grupo', 'todas');
@@ -2195,8 +2248,9 @@
   }, true);
 
   function rxFolha(id) {
-    var q = Ferramentas.quadrosTodos().filter(function (x) { return x.id === id; })[0];
+    var q = rxAchar(id);
     if (!q) return '';
+    if (q.ped) return rxFolhaPed(q);
     var l = Ferramentas.linhasRx(id);
     var casa = rxModo === 'casa';
     var linhas = casa
@@ -2222,11 +2276,53 @@
       '</aside>';
   }
 
+  /* folha da receita pediátrica: peso no topo da folha, volumes recalculados */
+  function rxFolhaPed(q) {
+    var kg = pesoAtual(), linhas = rxPedLinhas(q), falta = linhas.some(function (x) { return x.semPeso; });
+    var ol = linhas.map(function (x, n) {
+      return '<li' + (x.veta ? ' class="rp-veta"' : '') + '><i>' + (n + 1) + '</i><div><b>' + esc(String(x.med).replace(/\*/g, '')) + '</b><span>' + rico(x.uso || '') + '</span></div></li>';
+    }).join('');
+    var orient = q.ped.orientacoes || [];
+    return '<div class="rp-veu" data-rp-fechar></div>' +
+      '<aside class="rp-folha" role="dialog" aria-label="' + esc(q.nome) + '">' +
+        '<header><div><span class="rp-f-k">Pediatria · dose pelo peso</span><h2>' + esc(q.nome) + '</h2></div>' +
+          '<button type="button" class="rp-x" data-rp-fechar aria-label="Fechar">' + ICO('fechar') + '</button></header>' +
+        '<label class="dz2-campo rp-peso' + (kg ? ' cheio' : '') + '"><span>Peso da criança</span><input type="text" inputmode="decimal" id="rpPeso" value="' + (kg ? br(kg) : '') + '" placeholder="—" aria-label="Peso da criança em kg"><i>kg</i></label>' +
+        (falta ? '<p class="rp-atencao">' + ICO('alerta') + '<span>Informe o peso para calcular os volumes.</span></p>' : '') +
+        '<div class="rp-papel">' +
+          '<p class="rp-papel-cab">Receita · uso oral' + (kg ? ' · ' + br(kg) + ' kg' : '') + '</p>' +
+          '<ol>' + ol + '</ol>' +
+          (orient.length ? '<div class="rp-orient"><b>Orientações</b><ul>' + orient.map(function (o) { return '<li>' + rico(o) + '</li>'; }).join('') + '</ul></div>' : '') +
+        '</div>' +
+        (q.atencao ? '<p class="rp-atencao">' + ICO('alerta') + '<span>' + rico(q.atencao) + '</span></p>' : '') +
+        '<footer>' +
+          '<button type="button" class="rp-copiar grande" data-rp-copiar="' + esc(q.id) + '"' + (falta ? ' disabled' : '') + '>' + ICO('copiar') + '<span>' + (falta ? 'Informe o peso' : 'Copiar receita') + '</span></button>' +
+          (q.conduta && acharConduta(q.conduta) ? '<a class="rp-cond" href="' + esc(hrefConduta(acharConduta(q.conduta))) + '">Ver a conduta' + ICO('setaDir') + '</a>' : '') +
+        '</footer>' +
+      '</aside>';
+  }
+  /* peso digitado na folha vale para o app inteiro (mesmo campo do topo) */
+  var rpPesoTimer = null;
+  doc.addEventListener('input', function (e) {
+    if (e.target.id !== 'rpPeso') return;
+    var p = document.getElementById('peso');
+    if (!p) return;
+    p.value = e.target.value.replace(',', '.').replace(/[^0-9.]/g, '');
+    clearTimeout(rpPesoTimer);
+    rpPesoTimer = setTimeout(function () {
+      p.dispatchEvent(new Event('input', { bubbles:true }));
+      renderReceitas();
+      var el = document.getElementById('rpPeso');
+      if (el) { el.focus(); var n = el.value.length; try { el.setSelectionRange(n, n); } catch (x) {} }
+    }, 400);
+  });
+
   doc.addEventListener('click', function (e) {
     var t;
     if ((t = e.target.closest('[data-rp-copiar]'))) {
-      var q = Ferramentas.quadrosTodos().filter(function (x) { return x.id === t.dataset.rpCopiar; })[0];
-      Ferramentas.copiarRx(Ferramentas.textoRx(t.dataset.rpCopiar, rxModo), q ? q.nome : 'Receita');
+      var q = rxAchar(t.dataset.rpCopiar);
+      if (q && q.ped) { if (rxPedLinhas(q).some(function (x) { return x.semPeso; })) return; Ferramentas.copiarRx(rxPedTexto(q), q.nome); }
+      else Ferramentas.copiarRx(Ferramentas.textoRx(t.dataset.rpCopiar, rxModo), q ? q.nome : 'Receita');
       t.classList.add('ok'); var s = t.querySelector('span'); if (s) s.textContent = 'Copiado';
       setTimeout(function () { t.classList.remove('ok'); if (s) s.textContent = t.classList.contains('grande') ? 'Copiar de novo' : 'Copiar'; }, 1600);
       return;
@@ -2239,7 +2335,12 @@
   /* receita escolhida na home já abre conferida na folha */
   doc.addEventListener('click', function (e) {
     var t = e.target.closest('[data-abre^="quadro:"]');
-    if (t) { rxAberta = t.dataset.abre.slice(7); window.__rxCompleto = false; }
+    if (!t) return;
+    var id = t.dataset.abre.slice(7);
+    /* prescrição de internado não é receita pronta: abre na tela completa, já expandida */
+    var ehReceita = !!rxAchar(id);
+    rxAberta = ehReceita ? id : null;
+    window.__rxCompleto = !ehReceita;
   }, true);
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' && rxAberta) { rxAberta = null; if (doc.querySelector('.rp')) renderReceitas(); }
@@ -2771,7 +2872,7 @@
   function quadrosRapidos() {
     if (typeof FERR_QUADROS === 'undefined') return [];
     var ok = { 'Dor':1, 'Respiratório':1, 'Gastro':1, 'Infeccioso':1, 'Alérgico':1, 'Trauma e pele':1 };
-    return FERR_QUADROS.filter(function (q) { return ok[q.grupo]; });
+    return Ferramentas.quadrosTodos().filter(function (q) { return ok[q.grupo]; });
   }
 
   /* ---------- HOME: painel de triagem, do zero ----------
@@ -3673,6 +3774,7 @@
     if (partes[0] === 'atb') {
       /* antibióticos moram nas Prescrições */
       if (temFerramentas() && Ferramentas.irAtb) Ferramentas.irAtb(partes[1] || null);
+      window.__rxCompleto = true; rxAberta = null;   /* a lista de antibióticos só existe na tela completa */
       location.replace('#presc'); return;
     }
     if (ehSecao(partes[0])) {

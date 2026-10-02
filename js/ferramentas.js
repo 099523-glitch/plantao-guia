@@ -3246,12 +3246,19 @@
     if (cacheIx) return cacheIx;
     var out = [];
 
-    Base.quadros().forEach(function (q) {
+    Base.quadros().filter(ehReceitaPronta).forEach(function (q) {
       out.push({ tipo:'quadro', id:q.id, titulo:q.nome, sub:q.sub, href:'#presc',
         abre:q.id,
         texto:[q.nome, q.sub, q.grupo, (q.tags||[]).join(' '), q.atencao,
           (q.unidade||[]).map(function(u){return u.med+' '+u.dose+' '+u.obs;}).join(' '),
           (q.receita||[]).map(function(r){return r.med+' '+r.uso;}).join(' '),
+          (q.orientacoes||[]).join(' ')].join(' ') });
+    });
+
+    (typeof FERR_RX_PEDIA !== 'undefined' ? FERR_RX_PEDIA : []).forEach(function (q) {
+      out.push({ tipo:'quadro', id:q.id, titulo:q.nome, sub:'Pediatria · ' + (q.sub || ''), href:'#presc', abre:q.id,
+        texto:[q.nome, q.sub, 'pediatria crianca infantil', (q.tags||[]).join(' '), q.atencao,
+          (q.itens||[]).map(function (x) { return (x.pid || '').replace(/^pl?-/, '') + ' ' + (x.med || '') + ' ' + (x.uso || ''); }).join(' '),
           (q.orientacoes||[]).join(' ')].join(' ') });
     });
 
@@ -3346,7 +3353,9 @@
 
   /* abre a aba certa ja com o item expandido (usado pela busca) */
   F.abrirItem = function (tipo, id) {
-    if (tipo === 'quadro')      { quadroAberto = id; filtroQuadro = 'todos'; buscaQuadro = ''; }
+    if (tipo === 'quadro' && internadoDe(id)) {
+      internadoAberto = id; ctxRx = 'internados'; grava('pref:rx-ctx', 'internados');
+    } else if (tipo === 'quadro') { quadroAberto = id; filtroQuadro = 'todos'; buscaQuadro = ''; }
     if (tipo === 'calculadora' || tipo === 'score') { calcAberta = id; }
     if (tipo === 'antibiotico') {
       atbAberto = id; buscaAtb = ''; buscaQuadro = ''; filtroQuadro = 'todos';
@@ -4172,7 +4181,9 @@
     setConc: function (id, v) { if (v === '' || v == null) delete concPed[id]; else concPed[id] = parseFloat(v); }
   };
   /* usados pela tela nova de receitas (app.js) */
-  F.quadrosTodos = function () { return Base.quadros(); };
+  /* "Receitas prontas" só mostra o que termina em alta (ver FERR_RX_FORA) */
+  function ehReceitaPronta(q) { return typeof FERR_RX_FORA === 'undefined' || FERR_RX_FORA.indexOf(q.id) === -1; }
+  F.quadrosTodos = function () { return Base.quadros().filter(ehReceitaPronta); };
   F.textoRx = function (id, ctx) {
     var q = quadroDe(id); if (!q) return '';
     var velhoCtx = ctxRx; ctxRx = ctx;
@@ -4185,6 +4196,13 @@
     return { unidade:rxDe(q, 'unidade'), receita:rxDe(q, 'receita'), orient:q.orientacoes || [] };
   };
   F.copiarRx = function (txt, nome) { if (!txt) return; copiarClinico(txt, nome, 'presc'); pilha(txt); };
+  /* receita pediátrica já calculada pelo peso (app.js monta as linhas) */
+  F.textoRxPed = function (q, linhas, kg) {
+    var velhoCtx = ctxRx; ctxRx = 'casa';
+    var txt = textoProto({ id:q.id, nome:q.nome, receita:linhas, orientacoes:q.orientacoes || [] });
+    ctxRx = velhoCtx;
+    return txt ? txt.replace('RECEITA — USO ORAL', 'RECEITA — USO ORAL' + (kg ? ' (peso ' + String(kg).replace('.', ',') + ' kg)' : '')) : '';
+  };
 
   window.Ferramentas = F;
 })();

@@ -812,6 +812,19 @@ var FERR_CALC = [
      unidade:[{med,dose,via,obs}], receita:[{med,uso}], orientacoes:[] }
    Doses de adulto. Conferir sempre a padronizacao da unidade.
    --------------------------------------------------------------- */
+/* Quadros de sala vermelha, internação ou procedimento: a prescrição
+   continua no editor completo, mas NÃO aparece em "Receitas prontas"
+   (nem na busca nem na home) — receita pronta é o que termina em alta. */
+var FERR_RX_FORA = [
+  'q-urgencia-has','q-emergencia-has','q-fa-rva','q-eap','q-dor-toracica-sca','q-iam-sem-supra','q-iam-vd',
+  'q-pcr-fv','q-pcr-aesp','q-pos-parada','q-bradicardia','q-taqui-instavel','q-tsv','q-tv-torsades',
+  'q-pac-internacao','q-sepse','q-meningite','q-endocardite',
+  'q-convulsao','q-agitacao','q-avei','q-aveh','q-anafilaxia',
+  'q-hipoglicemia','q-cad','q-hipercalemia','q-hipernatremia','q-acidose',
+  'q-apendicite','q-colecistite','q-colangite','q-varizes','q-pbe','q-rabdomiolise',
+  'q-iot','q-sedacao-continua','q-sedacao-cve','q-vasoativas','q-hemorragia','q-transfusao'
+];
+
 var FERR_QUADROS = [
 
 /* ====================== DOR ====================== */
@@ -2136,7 +2149,7 @@ FERR_QUADROS = FERR_QUADROS.concat([
 
 /* ====================== IST E PROFILAXIAS ====================== */
 { id:'q-uretrite', grupo:'IST e profilaxias', nome:'Uretrite / corrimento uretral', sub:'Tratar gonococo e clamídia juntos, sempre',
-  tags:['uretrite','corrimento','gonorreia','clamidia','ceftriaxona','azitromicina','ist'],
+  tags:['uretrite','cervicite','corrimento','gonorreia','clamidia','ceftriaxona','azitromicina','ist'],
   atencao:'Trata-se empiricamente os dois agentes na mesma consulta — não se espera exame. Tratar o parceiro é parte do tratamento; sem isso, reinfecta. Oferecer sorologias para HIV, sífilis e hepatites B e C.',
   unidade:[
     { med:'CEFTRIAXONA SÓDICA 500 MG', dose:'500 mg', via:'IM', obs:'Dose única, profunda em glúteo. Cobre o gonococo.' },
@@ -2154,7 +2167,7 @@ FERR_QUADROS = FERR_QUADROS.concat([
   ] },
 
 { id:'q-dip', grupo:'IST e profilaxias', nome:'Doença inflamatória pélvica', sub:'Dor pélvica com dor à mobilização do colo',
-  tags:['dip','doenca inflamatoria pelvica','anexite','ceftriaxona','doxiciclina','metronidazol'],
+  tags:['dip','doenca inflamatoria pelvica','anexite','ceftriaxona','doxiciclina','metronidazol'], conduta:'dip',
   atencao:'Na dúvida, trate: o custo de tratar sem DIP é baixo; o de não tratar é infertilidade, gravidez ectópica e dor pélvica crônica. Internar se houver gestação, abscesso tubo-ovariano, quadro grave com vômitos, falha do tratamento oral ou impossibilidade de seguimento.',
   unidade:[
     { med:'CEFTRIAXONA SÓDICA 500 MG', dose:'500 mg', via:'IM', obs:'Dose única.' },
@@ -2162,8 +2175,8 @@ FERR_QUADROS = FERR_QUADROS.concat([
   ],
   receita:[
     { med:'Doxiciclina 100 mg comprimido', uso:'Tomar 1 comprimido VO de 12/12 h por 14 dias.' },
-    { med:'Metronidazol 500 mg comprimido', uso:'Tomar 1 comprimido VO de 12/12 h por 14 dias. Não ingerir álcool durante o tratamento.' },
-    { med:'Tratamento do parceiro', uso:'Ceftriaxona 500 mg IM dose única + azitromicina 1 g VO dose única.' },
+    { med:'Metronidazol 250 mg comprimido', uso:'Tomar 2 comprimidos VO de 12/12 h por 14 dias. Não ingerir álcool durante o tratamento e até 24 h depois.' },
+    { med:'Tratamento do parceiro', uso:'Ceftriaxona 500 mg IM dose única + azitromicina 1 g VO dose única. Parceiros dos últimos 60 dias, com ou sem sintomas.' },
     { med:'Dipirona 500 mg comprimido', uso:'Tomar 1 comprimido VO de 6/6 h, se dor.' }
   ],
   orientacoes:[
@@ -2174,7 +2187,7 @@ FERR_QUADROS = FERR_QUADROS.concat([
   ] },
 
 { id:'q-sifilis', grupo:'IST e profilaxias', nome:'Sífilis', sub:'Penicilina benzatina conforme o estágio',
-  tags:['sifilis','penicilina benzatina','vdrl','cancro','ist'],
+  tags:['sifilis','penicilina benzatina','vdrl','cancro','ist'], conduta:'ulcera-genital',
   atencao:'Penicilina benzatina é o único tratamento que trata a gestante e o feto — alergia relatada exige teste e, se confirmada, dessensibilização, não substituição. Avisar sobre a reação de Jarisch-Herxheimer (febre e mal-estar nas primeiras 24 horas), que não é alergia.',
   unidade:[
     { med:'BENZILPENICILINA BENZATINA 1.200.000 UI', dose:'1 ampola em cada glúteo (2.400.000 UI)', via:'IM', obs:'Sífilis recente (primária, secundária ou latente com menos de 1 ano): dose única.' },
@@ -2191,16 +2204,57 @@ FERR_QUADROS = FERR_QUADROS.concat([
     'Oferecer teste para HIV, hepatites B e C.'
   ] },
 
+{ id:'q-herpes-genital', grupo:'IST e profilaxias', nome:'Herpes genital', sub:'Vesículas e erosões dolorosas',
+  tags:['herpes genital','hsv','vesiculas','ulcera genital','aciclovir','ferida genital','ist'], conduta:'ulcera-genital',
+  atencao:'Começar o antiviral o quanto antes — na recidiva, já no pródromo (ardor, formigamento). Primeiro episódio com retenção urinária, cefaleia com rigidez de nuca ou lesões extensas em imunossuprimida: internar para aciclovir EV. Aciclovir tópico isolado não funciona. Oferecer testes rápidos de HIV e sífilis.',
+  unidade:[
+    { med:'TESTES RÁPIDOS — HIV, SÍFILIS, HEPATITES B E C', dose:'—', via:'—', obs:'Úlcera genital aumenta muito a transmissão do HIV.' }
+  ],
+  receita:[
+    { med:'Aciclovir 200 mg comprimido', uso:'PRIMEIRO EPISÓDIO: tomar 2 comprimidos VO de 8/8 h por 7 a 10 dias. RECIDIVA: tomar 2 comprimidos VO de 8/8 h por 5 dias.' },
+    { med:'Paracetamol 750 mg comprimido', uso:'Tomar 1 comprimido VO de 6/6 h, se dor.' },
+    { med:'Lidocaína gel 2%', uso:'Aplicar fina camada sobre as lesões antes de urinar, se ardor intenso.' }
+  ],
+  orientacoes:[
+    'Lavar as lesões com soro fisiológico ou água e sabão neutro e manter secas.',
+    'Evitar relação sexual enquanto houver lesão; usar preservativo sempre — a transmissão pode ocorrer mesmo sem lesão.',
+    'Retorno em 7 dias para reavaliar as lesões.',
+    'Seis ou mais episódios por ano: tratamento supressivo com a infectologia ou ginecologia.',
+    'Herpes genital não causa câncer.'
+  ] },
+
+{ id:'q-ulcera-genital', grupo:'IST e profilaxias', nome:'Úlcera genital sem diagnóstico', sub:'Tratar sífilis e cancroide juntos (PCDT 2022)',
+  tags:['ulcera genital','ferida genital','cancro','sifilis','cancroide','cancro mole','ist','penicilina benzatina','azitromicina'], conduta:'ulcera-genital',
+  atencao:'Conduta do PCDT para úlcera com menos de 4 semanas, sem vesículas e sem laboratório: tratar sífilis e cancroide no mesmo atendimento. Com vesículas, é herpes. Lesão com mais de 4 semanas: biópsia e investigar também donovanose e linfogranuloma. Gestante: penicilina benzatina na hora; alergia se resolve com dessensibilização. Notificar a sífilis.',
+  unidade:[
+    { med:'BENZILPENICILINA BENZATINA 1.200.000 UI', dose:'1 ampola em cada glúteo (2.400.000 UI)', via:'IM', obs:'Dose única. Sífilis primária.' },
+    { med:'AZITROMICINA 500 MG COMPRIMIDO', dose:'2 comprimidos (1 g)', via:'VO', obs:'Dose única, observada. Cancroide.' },
+    { med:'TESTES RÁPIDOS — HIV, SÍFILIS, HEPATITES B E C', dose:'—', via:'—', obs:'Antes da medicação, sem atrasá-la.' },
+    { med:'OBSERVAÇÃO POR 30 MINUTOS APÓS A PENICILINA', dose:'—', via:'—', obs:'Material de anafilaxia disponível.' }
+  ],
+  receita:[
+    { med:'Tratamento da parceria', uso:'Benzilpenicilina benzatina 2.400.000 UI IM + azitromicina 1 g VO, dose única. Encaminhar a parceria ao serviço.' },
+    { med:'Paracetamol 750 mg comprimido', uso:'Tomar 1 comprimido VO de 6/6 h, se dor.' }
+  ],
+  orientacoes:[
+    'Lavar a lesão com água e sabão ou soro fisiológico 2 a 3 vezes ao dia.',
+    'Febre e mal-estar nas primeiras 24 h após a penicilina podem ser a reação de Jarisch-Herxheimer — não é alergia.',
+    'Sem relação sexual até a cicatrização e o tratamento da parceria.',
+    'Retorno em 7 dias para rever a lesão; VDRL de controle a cada 3 meses.',
+    'Notificação compulsória da sífilis.'
+  ] },
+
 { id:'q-violencia-sexual', grupo:'IST e profilaxias', nome:'Violência sexual', sub:'O pacote completo de profilaxias, em até 72 h',
-  tags:['violencia sexual','estupro','pep','levonorgestrel','profilaxia','ist'],
-  atencao:'Acolhimento primeiro; o exame e a coleta não podem ser condição para o atendimento. A profilaxia do HIV é ideal em até 2 horas e no máximo 72 horas. Não exigir boletim de ocorrência para atender. Notificação compulsória e imediata.',
+  tags:['violencia sexual','estupro','pep','levonorgestrel','profilaxia','ist'], conduta:'violencia-sexual',
+  atencao:'Acolhimento primeiro; o exame e a coleta não podem ser condição para o atendimento. A profilaxia do HIV é ideal em até 2 horas e no máximo 72 horas. Não exigir boletim de ocorrência para atender. Notificação compulsória e imediata. Doses para adulto e adolescente acima de 45 kg, inclusive gestante (exceto metronidazol no 1º trimestre).',
   unidade:[
     { med:'SÍFILIS — BENZILPENICILINA BENZATINA 1.200.000 UI', dose:'1 ampola em cada glúteo', via:'IM', obs:'Dose única.' },
     { med:'GONORREIA — CEFTRIAXONA 500 MG', dose:'500 mg', via:'IM', obs:'Dose única.' },
     { med:'CLAMÍDIA — AZITROMICINA 500 MG', dose:'2 comprimidos (1 g)', via:'VO', obs:'Dose única.' },
-    { med:'TRICOMONÍASE — METRONIDAZOL 500 MG', dose:'4 comprimidos (2 g)', via:'VO', obs:'Dose única.' },
+    { med:'TRICOMONÍASE — METRONIDAZOL 500 MG', dose:'4 comprimidos (2 g)', via:'VO', obs:'Dose única. Pode ser adiado se em PEP e contracepção de emergência (náusea). Não usar no 1º trimestre da gestação.' },
     { med:'CONTRACEPÇÃO — LEVONORGESTREL 1,5 MG', dose:'1 comprimido', via:'VO', obs:'Dose única, o quanto antes, em até 5 dias.' },
-    { med:'HEPATITE B EM NÃO VACINADO — IMUNOGLOBULINA + VACINA', dose:'Imunoglobulina 0,06 mL/kg IM + 1ª dose da vacina', via:'IM', obs:'Em locais diferentes. Completar o esquema vacinal depois.' }
+    { med:'HEPATITE B — VACINA', dose:'1ª dose ou completar o esquema', via:'IM', obs:'Se não vacinada ou com esquema incompleto.' },
+    { med:'HEPATITE B — IMUNOGLOBULINA (IGHAHB)', dose:'0,06 mL/kg', via:'IM', obs:'Só se suscetível E agressor HBsAg reagente ou de alto risco. Até 14 dias (ideal em 24 h), em local diferente da vacina.' }
   ],
   receita:[
     { med:'Tenofovir 300 mg + Lamivudina 300 mg', uso:'Tomar 1 comprimido VO 1 vez ao dia por 28 dias.' },
@@ -2209,6 +2263,7 @@ FERR_QUADROS = FERR_QUADROS.concat([
   ],
   orientacoes:[
     'Notificação compulsória imediata e comunicação ao conselho tutelar se a vítima for criança ou adolescente.',
+    'Violência contra a mulher: comunicação à autoridade policial em até 24 h pelo serviço (Lei 13.931/2019) — sem exigir boletim de ocorrência da vítima.',
     'Testagem para HIV, sífilis e hepatites na entrada e repetida em 30 a 90 dias.',
     'Encaminhamento ao serviço de referência, à saúde mental e ao serviço social.',
     'Informar sobre o direito ao aborto legal previsto em lei.'
@@ -2699,8 +2754,8 @@ var FERR_ATB = [
   nota:'Urocultura antes, e ajustar pelo antibiograma. Ultrassom se não melhorar em 48 a 72 horas ou se houver suspeita de obstrução. Não usar sulfametoxazol-trimetoprima empiricamente.' },
 
 /* ===================== IST ===================== */
-{ id:'atb-corrimento-uretral', sitio:'Infecções sexualmente transmissíveis', quadro:'Corrimento uretral',
-  sub:'Tratar gonococo e clamídia juntos, na mesma consulta', tags:['uretrite','gonorreia','clamidia','ceftriaxona','azitromicina'],
+{ id:'atb-corrimento-uretral', sitio:'Infecções sexualmente transmissíveis', quadro:'Corrimento uretral ou cervicite',
+  sub:'Tratar gonococo e clamídia juntos, na mesma consulta', tags:['uretrite','cervicite','mucopus','gonorreia','clamidia','ceftriaxona','azitromicina'],
   agentes:'N. gonorrhoeae e C. trachomatis.',
   atencao:'Toda IST é evento-sentinela: oferecer teste para HIV, sífilis e hepatites B e C, e vacinar para hepatite B.',
   escolha:[ { atb:'Ceftriaxona', dose:'500 mg', via:'IM', freq:'dose única', dur:'—' },
@@ -2715,7 +2770,11 @@ var FERR_ATB = [
   escolha:[ { atb:'Ceftriaxona', dose:'500 mg', via:'IM', freq:'dose única', dur:'—' },
             { atb:'Doxiciclina', dose:'100 mg', via:'VO', freq:'12/12 h', dur:'14 dias' },
             { atb:'Metronidazol', dose:'500 mg', via:'VO', freq:'12/12 h', dur:'14 dias' } ],
-  alt:[], nota:'Internar se houver gestação, abscesso tubo-ovariano, quadro grave com vômitos, falha do oral ou impossibilidade de seguimento. Reavaliar em 72 horas.' },
+  alt:[ { atb:'Hospitalar: ceftriaxona', dose:'1 g', via:'EV', freq:'1x/dia', dur:'até 24 h sem sintomas, completar 14 dias VO' },
+        { atb:'Hospitalar: + metronidazol', dose:'400–500 mg', via:'EV', freq:'12/12 h', dur:'+ doxiciclina 100 mg VO 12/12 h, 14 dias no total' },
+        { atb:'Hospitalar, 2ª opção: clindamicina + gentamicina', dose:'900 mg + 3–5 mg/kg', via:'EV', freq:'8/8 h + 1x/dia', dur:'14 dias no total' },
+        { atb:'Ambulatorial, 2ª opção: cefotaxima', dose:'500 mg', via:'IM', freq:'dose única', dur:'+ doxiciclina e metronidazol' } ],
+  nota:'Metronidazol oral = 250 mg, 2 comprimidos de 12/12 h (PCDT 2022). Internar se houver gestação, abscesso tubo-ovariano, quadro grave com vômitos, falha do oral ou impossibilidade de seguimento. Doxiciclina contraindicada na gestação. Reavaliar em 72 horas. Parceiros dos últimos 60 dias: ceftriaxona 500 mg IM + azitromicina 1 g VO.' },
 
 { id:'atb-sifilis', sitio:'Infecções sexualmente transmissíveis', quadro:'Sífilis',
   sub:'Esquema pelo estágio', tags:['sifilis','penicilina benzatina','vdrl','jarisch'],
@@ -2729,14 +2788,45 @@ var FERR_ATB = [
 { id:'atb-corrimento-vaginal', sitio:'Infecções sexualmente transmissíveis', quadro:'Corrimento vaginal',
   sub:'Vaginose, candidíase e tricomoníase', tags:['corrimento','vaginose','candidiase','tricomoniase','metronidazol','fluconazol'],
   agentes:'Gardnerella (vaginose), Candida albicans, Trichomonas vaginalis.',
-  escolha:[ { atb:'Vaginose bacteriana: metronidazol', dose:'500 mg', via:'VO', freq:'12/12 h', dur:'7 dias' },
-            { atb:'Candidíase: fluconazol', dose:'150 mg', via:'VO', freq:'dose única', dur:'—' },
-            { atb:'Tricomoníase: metronidazol', dose:'2 g', via:'VO', freq:'dose única', dur:'—' } ],
-  alt:[ { atb:'Vaginose: metronidazol gel 0,75%', dose:'1 aplicador', via:'VAGINAL', freq:'1x/dia', dur:'5 dias' },
-        { atb:'Candidíase: miconazol creme 2%', dose:'1 aplicador', via:'VAGINAL', freq:'à noite', dur:'7 dias' } ],
-  nota:'Só a tricomoníase exige tratar o parceiro — vaginose e candidíase não são IST. Não ingerir álcool com metronidazol.' },
+  escolha:[ { atb:'Vaginose bacteriana: metronidazol 250 mg', dose:'2 comprimidos (500 mg)', via:'VO', freq:'12/12 h', dur:'7 dias' },
+            { atb:'Candidíase: miconazol creme 2%', dose:'1 aplicador', via:'VAGINAL', freq:'à noite', dur:'7 dias' },
+            { atb:'Tricomoníase: metronidazol 400 mg', dose:'5 comprimidos (2 g)', via:'VO', freq:'dose única', dur:'—' } ],
+  alt:[ { atb:'Vaginose: metronidazol gel vaginal 100 mg/g', dose:'1 aplicador', via:'VAGINAL', freq:'à noite', dur:'5 dias' },
+        { atb:'Vaginose: clindamicina', dose:'300 mg', via:'VO', freq:'12/12 h', dur:'7 dias' },
+        { atb:'Candidíase: fluconazol (não na gestante/lactante)', dose:'150 mg', via:'VO', freq:'dose única', dur:'—' },
+        { atb:'Candidíase: nistatina 100.000 UI', dose:'1 aplicador', via:'VAGINAL', freq:'à noite', dur:'14 dias' },
+        { atb:'Candidíase recorrente: fluconazol', dose:'150 mg', via:'VO', freq:'dias 1, 4 e 7, depois 1x/semana', dur:'6 meses' },
+        { atb:'Tricomoníase: metronidazol 250 mg', dose:'2 comprimidos (500 mg)', via:'VO', freq:'12/12 h', dur:'7 dias' } ],
+  nota:'Esquemas do PCDT IST 2022. Só a tricomoníase exige tratar o parceiro — vaginose e candidíase não são IST. Gestante: candidíase só via vaginal; metronidazol oral permitido para vaginose e tricomoníase. Não ingerir álcool com metronidazol.' },
+
+{ id:'atb-ulcera-genital', sitio:'Infecções sexualmente transmissíveis', quadro:'Úlcera genital',
+  sub:'Sífilis, cancroide, herpes, LGV e donovanose', tags:['ulcera genital','cancroide','herpes','linfogranuloma','donovanose','aciclovir'],
+  agentes:'T. pallidum, H. ducreyi, HSV-1 e 2, C. trachomatis L1–L3, K. granulomatis.',
+  atencao:'Sem laboratório e sem vesículas: tratar sífilis e cancroide juntos. Vesículas: herpes. Mais de 4 semanas: biópsia e cobrir também LGV e donovanose (PCDT 2022).',
+  escolha:[ { atb:'Sífilis: penicilina G benzatina', dose:'2.400.000 UI', via:'IM', freq:'dose única', dur:'—' },
+            { atb:'Cancroide: azitromicina', dose:'1 g', via:'VO', freq:'dose única', dur:'—' },
+            { atb:'Herpes, 1º episódio: aciclovir 200 mg', dose:'2 comprimidos (400 mg)', via:'VO', freq:'8/8 h', dur:'7–10 dias' },
+            { atb:'Linfogranuloma venéreo: doxiciclina', dose:'100 mg', via:'VO', freq:'12/12 h', dur:'21 dias' },
+            { atb:'Donovanose: azitromicina', dose:'1 g', via:'VO', freq:'1x/semana', dur:'≥ 3 semanas, até cicatrizar' } ],
+  alt:[ { atb:'Cancroide: ceftriaxona', dose:'250 mg', via:'IM', freq:'dose única', dur:'—' },
+        { atb:'Cancroide: ciprofloxacino (não na gestante)', dose:'500 mg', via:'VO', freq:'12/12 h', dur:'3 dias' },
+        { atb:'Herpes, recidiva: aciclovir', dose:'400 mg', via:'VO', freq:'8/8 h', dur:'5 dias' },
+        { atb:'Herpes em imunossuprimido ou complicado: aciclovir', dose:'5–10 mg/kg', via:'EV', freq:'8/8 h', dur:'5–7 dias' },
+        { atb:'LGV na gestante: azitromicina', dose:'1 g', via:'VO', freq:'1x/semana', dur:'3 semanas' } ],
+  nota:'Tratar parcerias no cancroide, LGV e sífilis. Notificar sífilis. Retorno em 7 dias.' },
 
 /* ===================== PELE E PARTES MOLES ===================== */
+{ id:'atb-mastite', sitio:'Pele e partes moles', quadro:'Mastite',
+  sub:'Lactacional e não lactacional', tags:['mastite','abscesso mamario','lactante','cefalexina'],
+  agentes:'S. aureus (inclusive MRSA), estreptococos; anaeróbios na não lactacional periareolar.',
+  atencao:'Manter a amamentação. Abscesso não se resolve com antibiótico: ultrassom e punção guiada.',
+  escolha:[ { atb:'Lactacional: cefalexina', dose:'500 mg', via:'VO', freq:'6/6 h', dur:'10–14 dias' } ],
+  alt:[ { atb:'Alergia ou risco de MRSA: clindamicina', dose:'300 mg', via:'VO', freq:'6/6 h', dur:'10–14 dias' },
+        { atb:'Não lactacional: amoxicilina + clavulanato', dose:'875/125 mg', via:'VO', freq:'12/12 h', dur:'10–14 dias' },
+        { atb:'Internada: oxacilina', dose:'2 g', via:'EV', freq:'4/4 h', dur:'até melhora, completar VO' },
+        { atb:'Internada com risco de MRSA ou sepse: vancomicina', dose:'15–20 mg/kg', via:'EV', freq:'12/12 h', dur:'—' } ],
+  nota:'Não lactacional sem resposta em 1–2 semanas: mamografia e biópsia (carcinoma inflamatório).' },
+
 { id:'atb-celulite', sitio:'Pele e partes moles', quadro:'Celulite e erisipela',
   sub:'Erisipela tem borda nítida; celulite é mais profunda e difusa',
   tags:['celulite','erisipela','cefalexina','oxacilina','fasciite'],
@@ -2804,6 +2894,17 @@ var FERR_ATB = [
   nota:'Acionar a ortopedia para desbridamento em até 6 a 24 horas.' },
 
 /* ===================== OUTROS ===================== */
+{ id:'atb-choque-toxico', sitio:'Outros', quadro:'Síndrome do choque tóxico',
+  sub:'Tampão, coletor, pós-parto, ferida', tags:['choque toxico','tampao','clindamicina','estafilococo','estreptococo'],
+  agentes:'S. aureus produtor de toxina (TSST-1) e estreptococo do grupo A.',
+  atencao:'Retirar o foco (tampão, coletor, corpo estranho) é tão importante quanto o antibiótico. A clindamicina corta a produção de toxina — sempre junto.',
+  escolha:[ { atb:'Vancomicina', dose:'ataque 25–30 mg/kg, depois 15–20 mg/kg', via:'EV', freq:'8/8 a 12/12 h', dur:'10–14 dias' },
+            { atb:'+ Clindamicina', dose:'900 mg', via:'EV', freq:'8/8 h', dur:'—' },
+            { atb:'+ Piperacilina + tazobactam', dose:'4,5 g', via:'EV', freq:'6/6 h', dur:'até definir o foco' } ],
+  alt:[ { atb:'MSSA confirmado: oxacilina + clindamicina', dose:'2 g + 900 mg', via:'EV', freq:'4/4 h + 8/8 h', dur:'10–14 dias' },
+        { atb:'Estreptococo do grupo A: penicilina G cristalina + clindamicina', dose:'4 milhões UI + 900 mg', via:'EV', freq:'4/4 h + 8/8 h', dur:'10–14 dias' } ],
+  nota:'Choque refratário: imunoglobulina EV 1 g/kg no dia 1 e 0,5 g/kg nos dias 2 e 3. Foco de partes moles: desbridamento.' },
+
 { id:'atb-tuberculose', sitio:'Outros', quadro:'Tuberculose — esquema básico',
   sub:'RIPE, dose fixa combinada', tags:['tuberculose','ripe','rifampicina','isoniazida','tb'],
   agentes:'Mycobacterium tuberculosis.',
@@ -3006,7 +3107,7 @@ FERR_QUADROS = FERR_QUADROS.concat([
 
 /* ====================== GINECOLOGIA ====================== */
 { id:'q-dismenorreia', grupo:'Ginecologia', nome:'Dismenorreia', sub:'Cólica menstrual intensa',
-  tags:['colica menstrual','dismenorreia','endometriose','aine'],
+  tags:['colica menstrual','dismenorreia','endometriose','aine'], conduta:'dismenorreia',
   atencao:'Dismenorreia que começa anos após a menarca, que piora progressivamente, com dor à relação ou dor fora do período, sugere endometriose — encaminhar, não só medicar. E toda dor pélvica em mulher em idade fértil pede beta-HCG.',
   unidade:[
     { med:'BUTILBROMETO DE ESCOPOLAMINA 4 MG/ML + DIPIRONA 500 MG/ML AMP 5 ML', dose:'1 ampola + 100 mL de SF 0,9%', via:'EV', obs:'Analgesia e antiespasmódico juntos.' },
@@ -3025,23 +3126,163 @@ FERR_QUADROS = FERR_QUADROS.concat([
   ] },
 
 { id:'q-sangramento-uterino', grupo:'Ginecologia', nome:'Sangramento uterino anormal', sub:'Fora do período ou muito volumoso',
-  tags:['sangramento uterino','menorragia','sua','acido tranexamico','beta hcg'],
+  tags:['sangramento uterino','menorragia','sua','acido tranexamico','beta hcg'], conduta:'sangramento-uterino-anormal',
   atencao:'Beta-HCG em TODA mulher em idade fértil com sangramento: gestação ectópica e abortamento se apresentam assim e matam. Instabilidade hemodinâmica, sangramento volumoso ou hemoglobina baixa é caso de internação.',
   unidade:[
     { med:'BETA-HCG E HEMOGRAMA', dose:'—', via:'—', obs:'Antes de qualquer conduta. Tipagem sanguínea se o sangramento for volumoso.' },
-    { med:'ÁCIDO TRANEXÂMICO 250 MG/5 ML', dose:'1 ampola + 100 mL de SF 0,9%', via:'EV', obs:'De 8/8 h. Reduz o volume do sangramento.' },
+    { med:'ÁCIDO TRANEXÂMICO 250 MG/5 ML', dose:'4 ampolas (1 g) + 100 mL de SF 0,9%', via:'EV', obs:'Correr em 10 a 20 minutos, de 8/8 h. Máximo 4 g/dia. Reduz o volume do sangramento.' },
     { med:'CLORETO DE SÓDIO 0,9% SOLUÇÃO INJETÁVEL', dose:'1000 mL', via:'EV', obs:'SE repercussão hemodinâmica.' }
   ],
   receita:[
-    { med:'Ácido tranexâmico 250 mg comprimido', uso:'Tomar 2 comprimidos VO de 8/8 h durante os dias de sangramento intenso, por até 5 dias.' },
-    { med:'Ibuprofeno 600 mg comprimido', uso:'Tomar 1 comprimido VO de 8/8 h durante o sangramento — reduz o volume e a cólica.' },
-    { med:'Sulfato ferroso 40 mg de ferro elementar', uso:'Tomar 1 comprimido VO 1 vez ao dia, em jejum com suco cítrico, por 3 meses, se houver anemia.' },
-    { med:'Anticoncepcional hormonal', uso:'Esquema de controle conforme avaliação ginecológica.' }
+    { med:'Etinilestradiol 0,03 mg + levonorgestrel 0,15 mg comprimido', uso:'Dias 1 a 7: tomar 1 comprimido VO de 8/8 h. Dias 8 a 28: tomar 1 comprimido VO por dia. NÃO usar se trombose prévia, enxaqueca com aura, fumante acima de 35 anos, câncer de mama, pressão alta grave ou doença do fígado.' },
+    { med:'Medroxiprogesterona 10 mg comprimido', uso:'NO LUGAR do anticoncepcional se o estrogênio for contraindicado — dias 1 a 7: 1 comprimido VO de 8/8 h; dias 8 a 28: 1 comprimido por dia.' },
+    { med:'Ácido tranexâmico 250 mg comprimido', uso:'Tomar 4 comprimidos (1 g) VO de 8/8 h durante os dias de sangramento intenso, por até 5 dias.' },
+    { med:'Ondansetrona 4 mg comprimido', uso:'Tomar 1 comprimido VO de 8/8 h, se náusea — comum com a dose de ataque do hormônio.' },
+    { med:'Sulfato ferroso 40 mg de ferro elementar', uso:'Tomar 1 comprimido VO 1 vez ao dia, em jejum com suco cítrico, por 3 meses, se houver anemia.' }
   ],
   orientacoes:[
     'Encaminhamento à ginecologia com hemograma, beta-HCG e ultrassom transvaginal.',
     'Registrar um calendário menstrual com dias e número de absorventes.',
     'Retorno imediato se tontura ao levantar, palidez, palpitação, ou se encharcar mais de um absorvente por hora.'
+  ] },
+
+{ id:'q-candidiase', grupo:'Ginecologia', nome:'Candidíase vulvovaginal', sub:'Prurido com corrimento branco grumoso',
+  tags:['candidiase','corrimento','coceira vaginal','prurido vulvar','fluconazol','miconazol','monilíase'], conduta:'corrimento-vaginal',
+  atencao:'Gestante e lactante: SOMENTE tratamento vaginal — fluconazol oral é contraindicado. Não é IST: o parceiro só trata se tiver sintomas. Quatro ou mais episódios no ano é candidíase recorrente: investigar diabetes e HIV e usar o esquema de indução e manutenção.',
+  unidade:[],
+  receita:[
+    { med:'Miconazol creme vaginal 2%', uso:'Aplicar 1 aplicador cheio via vaginal à noite, ao deitar, por 7 noites. Pode passar uma camada fina na vulva também.' },
+    { med:'Fluconazol 150 mg cápsula', uso:'Tomar 1 cápsula VO em dose única. ALTERNATIVA ao creme — não usar na gestação nem na amamentação.' },
+    { med:'Nistatina creme vaginal 100.000 UI/4 g', uso:'Aplicar 1 aplicador cheio via vaginal à noite, por 14 noites. Opção segura na gestante.' }
+  ],
+  orientacoes:[
+    'Manter o tratamento durante a menstruação.',
+    'Roupas íntimas de algodão, evitar duchas vaginais e roupas apertadas e úmidas.',
+    'Recorrente (4 ou mais por ano): fluconazol 150 mg nos dias 1, 4 e 7 e depois 1 por semana por 6 meses, com a ginecologia.',
+    'Retorno se não melhorar após o tratamento completo.'
+  ] },
+
+{ id:'q-vaginose', grupo:'Ginecologia', nome:'Vaginose bacteriana', sub:'Corrimento acinzentado com odor de peixe',
+  tags:['vaginose','gardnerella','corrimento','odor','metronidazol','clue cells'], conduta:'corrimento-vaginal',
+  atencao:'Não é IST: o parceiro NÃO precisa ser tratado. Metronidazol oral é permitido na gestante e na lactante pelo PCDT 2022. Sem álcool durante o tratamento e até 24 h depois (efeito antabuse).',
+  unidade:[],
+  receita:[
+    { med:'Metronidazol 250 mg comprimido', uso:'Tomar 2 comprimidos VO de 12/12 h por 7 dias. Não ingerir bebida alcoólica até 24 h após o fim.' },
+    { med:'Metronidazol gel vaginal 100 mg/g', uso:'ALTERNATIVA ao oral: aplicar 1 aplicador cheio via vaginal à noite, por 5 noites.' }
+  ],
+  orientacoes:[
+    'Evitar duchas vaginais — elas favorecem a vaginose.',
+    'Manter o tratamento durante a menstruação.',
+    'Vaginose recorrente: metronidazol por 10 a 14 dias e encaminhamento à ginecologia.',
+    'Retorno se o odor ou o corrimento persistirem.'
+  ] },
+
+{ id:'q-tricomoniase', grupo:'IST e profilaxias', nome:'Tricomoníase', sub:'Corrimento amarelo-esverdeado bolhoso — é IST',
+  tags:['tricomoniase','trichomonas','corrimento','ist','metronidazol','colo em framboesa'], conduta:'corrimento-vaginal',
+  atencao:'É IST: as parcerias sexuais são tratadas com o mesmo esquema, mesmo sem sintomas. Oferecer testes rápidos de HIV, sífilis e hepatites B e C. Tratamento permitido na gestante e na lactante.',
+  unidade:[
+    { med:'METRONIDAZOL 400 MG COMPRIMIDO', dose:'5 comprimidos (2 g)', via:'VO', obs:'Dose única, observada na unidade. Tomar após alimentação.' },
+    { med:'TESTES RÁPIDOS — HIV, SÍFILIS, HEPATITES B E C', dose:'—', via:'—', obs:'Toda IST é evento-sentinela.' }
+  ],
+  receita:[
+    { med:'Metronidazol 400 mg comprimido', uso:'Tomar 5 comprimidos VO juntos, em dose única, se não tomou na unidade. Não ingerir bebida alcoólica por 24 h.' },
+    { med:'Tratamento da parceria', uso:'Metronidazol 400 mg — 5 comprimidos VO em dose única. Encaminhar a parceria ao serviço.' }
+  ],
+  orientacoes:[
+    'Suspender as relações sexuais até o fim do tratamento do casal.',
+    'Usar preservativo em todas as relações.',
+    'Se o preventivo vier alterado, repetir a citologia em 3 meses — a tricomoníase altera o exame.'
+  ] },
+
+{ id:'q-bartholin', grupo:'Ginecologia', nome:'Abscesso de Bartholin', sub:'Após a drenagem no PS',
+  tags:['bartholin','bartholinite','abscesso vulvar','caroco na vulva','drenagem','cateter de word'], conduta:'bartholinite',
+  atencao:'O tratamento é DRENAR — antibiótico só se houver celulite ao redor, febre, gestação, imunossupressão ou recidiva. Dor desproporcional, crepitação ou necrose: fasciíte necrotizante, não é abscesso simples. Mulher acima de 40 anos com massa nova: encaminhar para biópsia.',
+  unidade:[
+    { med:'LIDOCAÍNA 2% SEM VASOCONSTRITOR', dose:'2 a 5 mL', via:'INFILTRAÇÃO', obs:'Anestesia local na mucosa sobre o abscesso, antes da incisão.' },
+    { med:'DRENAGEM COM CATETER DE WORD (OU SONDA DE FOLEY FINA)', dose:'Balão com 2 a 3 mL', via:'—', obs:'Incisão de 5 mm na face mucosa, por dentro do anel himenal; lavar a loja. O cateter fica cerca de 4 semanas.' },
+    { med:'CETOPROFENO 100 MG FRASCO-AMPOLA', dose:'1 frasco + 100 mL de SF 0,9%', via:'EV', obs:'Analgesia.' }
+  ],
+  receita:[
+    { med:'Ibuprofeno 600 mg comprimido', uso:'Tomar 1 comprimido VO de 8/8 h, após as refeições, por 5 dias.' },
+    { med:'Dipirona 500 mg comprimido', uso:'Tomar 2 comprimidos VO de 6/6 h, se dor.' },
+    { med:'Amoxicilina + clavulanato 875/125 mg comprimido', uso:'Tomar 1 comprimido VO de 12/12 h por 7 dias. SOMENTE se houver celulite ao redor, febre, gestação, imunossupressão ou recidiva.' }
+  ],
+  orientacoes:[
+    'Banho de assento com água morna, 2 a 3 vezes ao dia, a partir do dia seguinte.',
+    'Não retirar o cateter em casa; ele costuma ficar 4 semanas. Se cair antes, não precisa voltar se não houver dor.',
+    'Retorno imediato se febre, vermelhidão que se espalha ou dor muito forte.',
+    'Retorno à ginecologia para retirar o cateter ou programar a marsupialização se voltar.'
+  ] },
+
+{ id:'q-mastite', grupo:'Ginecologia', nome:'Mastite lactacional', sub:'Mama vermelha e dolorosa na lactante',
+  tags:['mastite','amamentacao','lactante','mama vermelha','cefalexina','puerperio','ingurgitamento'], conduta:'mastite',
+  atencao:'NÃO suspender a amamentação — o esvaziamento faz parte do tratamento e o leite não faz mal ao bebê. Massa flutuante ou sem melhora em 48–72 h de antibiótico: ultrassom para abscesso (punção guiada). Mama vermelha e endurecida sem amamentação que não melhora: mamografia e biópsia (carcinoma inflamatório).',
+  unidade:[
+    { med:'CETOPROFENO 100 MG FRASCO-AMPOLA', dose:'1 frasco + 100 mL de SF 0,9%', via:'EV', obs:'Analgesia e anti-inflamatório. Compatível com a amamentação.' },
+    { med:'COMPRESSA FRIA OU GELO ENVOLTO EM PANO', dose:'15 minutos', via:'TÓPICO', obs:'Reduz o edema e a dor.' }
+  ],
+  receita:[
+    { med:'Cefalexina 500 mg cápsula', uso:'Tomar 1 cápsula VO de 6/6 h por 10 a 14 dias. Usar se houver febre, mal-estar ou se não melhorar em 12 a 24 h com as outras medidas.' },
+    { med:'Ibuprofeno 600 mg comprimido', uso:'Tomar 1 comprimido VO de 8/8 h, após as refeições, por 5 dias. Compatível com a amamentação.' },
+    { med:'Paracetamol 750 mg comprimido', uso:'Tomar 1 comprimido VO de 6/6 h, se dor ou febre.' },
+    { med:'Clindamicina 300 mg cápsula', uso:'Tomar 1 cápsula VO de 6/6 h por 10 a 14 dias. SOMENTE no lugar da cefalexina, se alergia a penicilina.' }
+  ],
+  orientacoes:[
+    'Continuar amamentando em livre demanda, começando pela mama que dói menos se a dor atrapalhar.',
+    'Gelo por 15 minutos após as mamadas; evitar massagem forte e não tirar leite além do que o bebê mama.',
+    'Corrigir a pega: procurar o banco de leite ou a equipe de aleitamento.',
+    'Retorno em 48 a 72 h, ou antes se febre persistente, caroço amolecido ou piora da vermelhidão.'
+  ] },
+
+{ id:'q-contracepcao-emergencia', grupo:'Ginecologia', nome:'Contracepção de emergência', sub:'Relação desprotegida há até 5 dias',
+  tags:['contracepcao de emergencia','pilula do dia seguinte','levonorgestrel','preservativo rompeu','relacao desprotegida'], conduta:'contracepcao-emergencia',
+  atencao:'Não exige beta-HCG, exame ou presença dos responsáveis (adolescente tem direito). Quanto antes, mais eficaz; vale até 5 dias. Obesidade ou uso de carbamazepina, fenitoína, rifampicina ou efavirenz: o DIU de cobre é a melhor opção. Se foi violência sexual, é o pacote completo de profilaxias.',
+  unidade:[
+    { med:'LEVONORGESTREL 1,5 MG COMPRIMIDO', dose:'1 comprimido', via:'VO', obs:'Dose única, tomada na unidade.' }
+  ],
+  receita:[
+    { med:'Levonorgestrel 1,5 mg comprimido', uso:'Tomar 1 comprimido VO em dose única, o quanto antes, se não tomou na unidade. Se vomitar em até 3 horas, tomar outra dose.' },
+    { med:'Preservativo', uso:'Usar em todas as relações até iniciar e estabilizar um método regular.' }
+  ],
+  orientacoes:[
+    'A próxima menstruação pode adiantar ou atrasar alguns dias. Se atrasar mais de 7 dias, fazer teste de gravidez.',
+    'Não é método de rotina: procurar a unidade básica para escolher um método regular (DIU, implante, pílula, injeção).',
+    'O método regular pode começar já, com preservativo junto por 7 dias.',
+    'Fazer os testes rápidos de HIV, sífilis e hepatites se a relação foi de risco.'
+  ] },
+
+{ id:'q-cisto-ovariano', grupo:'Ginecologia', nome:'Cisto ovariano hemorrágico estável', sub:'Alta após observação, beta-HCG negativo',
+  tags:['cisto ovariano','cisto hemorragico','corpo luteo','dor pelvica','ovario'], conduta:'cisto-ovariano-roto',
+  atencao:'Só tem alta com beta-HCG NEGATIVO, líquido livre restrito à pelve, hemoglobina estável e dor controlada por via oral. Anticoagulada: rever a anticoagulação. Evitar anti-inflamatório enquanto houver suspeita de sangramento.',
+  unidade:[
+    { med:'DIPIRONA SÓDICA 500 MG/ML AMP 2 ML', dose:'2 ampolas (2 g) + 100 mL de SF 0,9%', via:'EV', obs:'Analgesia.' },
+    { med:'MORFINA 10 MG/ML', dose:'2 a 4 mg', via:'EV', obs:'SE dor intensa. Diluir e titular.' }
+  ],
+  receita:[
+    { med:'Paracetamol 750 mg comprimido', uso:'Tomar 1 comprimido VO de 6/6 h, se dor, por 5 dias.' },
+    { med:'Dipirona 500 mg comprimido', uso:'Tomar 2 comprimidos VO de 6/6 h, se dor, alternando com o paracetamol.' }
+  ],
+  orientacoes:[
+    'Repouso relativo e evitar relação sexual e exercício intenso por 1 a 2 semanas.',
+    'Retorno imediato se a dor aumentar, tontura, desmaio, palidez ou falta de ar.',
+    'Ultrassom transvaginal de controle em 6 a 8 semanas — o cisto hemorrágico costuma desaparecer.',
+    'Encaminhamento à ginecologia se o cisto persistir ou se houver episódios repetidos.'
+  ] },
+
+{ id:'q-sho-leve', grupo:'Ginecologia', nome:'Hiperestimulação ovariana leve', sub:'Distensão após indução de ovulação, sem critério de gravidade',
+  tags:['hiperestimulacao ovariana','sho','fiv','inducao de ovulacao','ascite','reproducao assistida'], conduta:'hiperestimulacao-ovariana',
+  atencao:'Alta só sem critério de gravidade: hematócrito até 45%, sódio e potássio normais, diurese preservada e sem ascite clínica. Evitar anti-inflamatório (piora a função renal). Avisar a equipe de reprodução assistida.',
+  unidade:[],
+  receita:[
+    { med:'Paracetamol 750 mg comprimido', uso:'Tomar 1 comprimido VO de 6/6 h, se dor.' },
+    { med:'Ondansetrona 4 mg comprimido', uso:'Tomar 1 comprimido VO de 8/8 h, se náusea.' },
+    { med:'Enoxaparina 40 mg seringa', uso:'Aplicar 40 mg SC 1 vez ao dia, conforme orientação da equipe de reprodução (profilaxia de trombose).' }
+  ],
+  orientacoes:[
+    'Beber líquido conforme a sede (em geral 2 a 3 litros por dia) — nem forçar, nem restringir.',
+    'Pesar-se todo dia e anotar quanto urina: ganho de mais de 1 kg por dia ou urina diminuindo é motivo de voltar.',
+    'Evitar relação sexual e exercício intenso (o ovário aumentado pode torcer ou romper).',
+    'Retorno a cada 2 a 3 dias e imediato se falta de ar, barriga muito distendida, dor forte, inchaço em braço ou perna.'
   ] },
 
 /* ====================== ARBOVIROSES ====================== */
@@ -3198,6 +3439,780 @@ FERR_QUADROS = FERR_QUADROS.concat([
 
 ]);
 
+/* --- 11e. queixas simples de PS: pomadas, colírios, gotas (02/10/2026) --- */
+FERR_QUADROS = FERR_QUADROS.concat([
+
+{ id:'q-otite-media', grupo:'Olhos, ouvido e boca', nome:'Otite média aguda do adulto', sub:'Otalgia com membrana timpânica abaulada e hiperemiada',
+  tags:['otite media','dor de ouvido','otalgia','timpano abaulado','otorreia','amoxicilina'], conduta:'otite-adulto',
+  atencao:'Tiram o caso daqui: dor e edema retroauricular com apagamento do sulco e pavilhão desviado (mastoidite), paralisia facial, vertigem intensa ou perda auditiva súbita (labirintite), cefaleia intensa, rigidez de nuca ou rebaixamento (complicação intracraniana) — imagem e otorrino no mesmo dia. Otite média é incomum no adulto: otite serosa unilateral persistente pede nasofibroscopia para afastar tumor de rinofaringe.',
+  unidade:[
+    { med:'OTOSCOPIA BILATERAL', dose:'—', via:'—', obs:'Registrar abaulamento, perfuração e otorreia. Membrana apenas hiperemiada com choro, febre ou manipulação não fecha o diagnóstico.' },
+    { med:'DIPIRONA SÓDICA 500 MG/ML SOLUÇÃO INJETÁVEL AMP 2 ML', dose:'2 ampolas (2 g)', via:'EV', obs:'Diluir em 100 mL de SF 0,9%. Ou 1 g VO se dor moderada.' }
+  ],
+  receita:[
+    { med:'Amoxicilina 500 mg cápsula', uso:'Tomar 1 cápsula VO de 8/8 h por 7 dias.' },
+    { med:'Amoxicilina + clavulanato 875/125 mg comprimido', uso:'Tomar 1 comprimido VO de 12/12 h por 7 dias. Se usou antibiótico nos últimos 30 dias ou se falhou a amoxicilina após 48 a 72 h.' },
+    { med:'Claritromicina 500 mg comprimido', uso:'Tomar 1 comprimido VO de 12/12 h por 7 dias. Apenas em alergia à penicilina.' },
+    { med:'Dipirona 500 mg comprimido', uso:'Tomar 2 comprimidos VO de 6/6 h, se dor ou febre, por 5 dias.' },
+    { med:'Ibuprofeno 600 mg comprimido', uso:'Tomar 1 comprimido VO de 8/8 h, após as refeições, por 3 dias.' },
+    { med:'Ciprofloxacino solução otológica', uso:'SE perfuração com otorreia: pingar 4 gotas no ouvido de 12/12 h por 7 dias. Não usar gotas com aminoglicosídeo (neomicina, gentamicina) com tímpano perfurado.' }
+  ],
+  orientacoes:[
+    'Não pingar óleo, álcool ou remédio caseiro no ouvido.',
+    'Proteger o ouvido da água no banho enquanto houver secreção (algodão com vaselina).',
+    'Retorno se não melhorar em 48 a 72 h de antibiótico.',
+    'Retorno imediato se inchaço atrás da orelha, rosto torto, tontura forte, dor de cabeça intensa ou rigidez no pescoço.',
+    'Perda auditiva ou sensação de ouvido tampado por mais de 3 meses: otorrinolaringologista.'
+  ] },
+
+{ id:'q-otite-externa', grupo:'Olhos, ouvido e boca', nome:'Otite externa aguda', sub:'Dor à tração do pavilhão, conduto edemaciado',
+  tags:['otite externa','ouvido de nadador','otalgia','conduto','gota otologica','ciprofloxacino'], conduta:'otite-adulto',
+  atencao:'Diabético, idoso ou imunossuprimido com dor desproporcional, otorreia persistente, tecido de granulação no assoalho do conduto ou paralisia facial: otite externa maligna (necrotizante) — internação, antibiótico antipseudomonas EV e tomografia. Celulite que ultrapassa o conduto ou febre também saem da receita simples.',
+  unidade:[
+    { med:'LIMPEZA DO CONDUTO (ASPIRAÇÃO OU MECHA DE ALGODÃO SECO)', dose:'—', via:'—', obs:'Retirar debris para a gota alcançar a pele. Não lavar com seringa.' },
+    { med:'MECHA (PAVIO) DE GAZE OU ESPONJA OTOLÓGICA', dose:'—', via:'—', obs:'SE edema fechar o conduto: introduzir e pingar a gota nela. Retirar em 48 a 72 h.' },
+    { med:'CETOPROFENO 100 MG PÓ LIÓFILO PARA SOLUÇÃO INJETÁVEL FA', dose:'1 frasco', via:'EV', obs:'Diluir em 100 mL de SF 0,9%. A dor costuma ser intensa.' }
+  ],
+  receita:[
+    { med:'Ciprofloxacino + hidrocortisona solução otológica', uso:'Pingar 3 a 4 gotas no ouvido acometido de 12/12 h por 7 dias. Deitar de lado por 5 minutos após pingar. Seguro mesmo se o tímpano estiver perfurado.' },
+    { med:'Polimixina B + neomicina + hidrocortisona solução otológica', uso:'ALTERNATIVA: pingar 4 gotas de 8/8 h por 7 dias. Somente com tímpano íntegro (neomicina é ototóxica).' },
+    { med:'Ibuprofeno 600 mg comprimido', uso:'Tomar 1 comprimido VO de 8/8 h, após as refeições, por 5 dias.' },
+    { med:'Dipirona 500 mg comprimido', uso:'Tomar 2 comprimidos VO de 6/6 h, se dor.' },
+    { med:'Ciprofloxacino 500 mg comprimido', uso:'Tomar 1 comprimido VO de 12/12 h por 7 dias. SOMENTE se celulite além do conduto, diabetes descompensado ou imunossupressão.' }
+  ],
+  orientacoes:[
+    'Não molhar o ouvido por 7 a 10 dias: algodão com vaselina no banho; sem natação até curar.',
+    'Não usar hastes flexíveis (cotonete), grampos ou objetos no ouvido.',
+    'Melhora esperada em 48 a 72 h; o tratamento completo é de 7 dias.',
+    'Retorno se não melhorar em 72 h, se surgir febre, inchaço no rosto ou atrás da orelha, ou rosto torto.'
+  ] },
+
+{ id:'q-cerume', grupo:'Olhos, ouvido e boca', nome:'Cerume impactado', sub:'Ouvido tampado com rolha de cera',
+  tags:['cerume','cera no ouvido','rolha','ouvido tampado','lavagem otologica','hipoacusia'], conduta:'otite-adulto',
+  atencao:'Perda auditiva súbita em horas a 3 dias SEM rolha que a explique é surdez súbita neurossensorial (Weber lateraliza para o ouvido bom): corticoide precoce e otorrino em até 72 h — não é cera. Não lavar se houver perfuração conhecida ou suspeita, cirurgia otológica prévia, otite externa ou média, ouvido único com audição, ou radioterapia de cabeça.',
+  unidade:[
+    { med:'LAVAGEM OTOLÓGICA COM ÁGUA OU SF 0,9% MORNOS (37 °C)', dose:'Seringa de 20 mL, jato contra a parede póstero-superior', via:'—', obs:'Tracionar o pavilhão para cima e para trás. Água fria ou quente provoca vertigem. Parar se dor ou tontura.' },
+    { med:'CERUMINOLÍTICO OU ÓLEO MINERAL', dose:'5 a 10 gotas', via:'OTOLÓGICA', obs:'SE a rolha estiver muito endurecida: amolecer por 15 a 30 minutos antes de lavar, ou mandar para casa e lavar após 3 a 5 dias.' },
+    { med:'OTOSCOPIA APÓS A REMOÇÃO', dose:'—', via:'—', obs:'Conferir a membrana timpânica e o conduto.' }
+  ],
+  receita:[
+    { med:'Ceruminolítico solução otológica (oleato de trolamina)', uso:'Pingar 5 gotas no ouvido tampado 2 vezes ao dia por 3 a 5 dias, deitado de lado por 5 minutos. Depois, retornar para lavagem se não destampar.' },
+    { med:'Óleo mineral', uso:'ALTERNATIVA: pingar 5 gotas no ouvido à noite por 5 dias, para amolecer a cera.' }
+  ],
+  orientacoes:[
+    'A cera protege o ouvido: não usar cotonete, que empurra a cera para dentro e forma a rolha.',
+    'Limpar só a parte de fora da orelha com a ponta da toalha.',
+    'Quem forma rolha com frequência pode pingar óleo mineral 1 vez por semana.',
+    'Retorno imediato se dor, secreção, tontura ou se a audição não voltar após remover a cera.'
+  ] },
+
+{ id:'q-epistaxe-alta', grupo:'Olhos, ouvido e boca', nome:'Epistaxe — alta após controle', sub:'Sangramento anterior controlado com compressão, cauterização ou tampão',
+  tags:['epistaxe','sangramento nasal','sangue no nariz','tampao nasal','cauterizacao','nitrato de prata'], conduta:'epistaxe',
+  atencao:'Tiram o caso da alta: sangramento posterior (escorre para a garganta pelas duas narinas apesar do tampão anterior), anticoagulado com INR acima da faixa ou plaqueta baixa, instabilidade hemodinâmica, queda de hemoglobina, recidiva no PS. Sangramento unilateral recorrente com obstrução nasal pede nasofibroscopia (tumor). PA alta durante a epistaxe: tratar dor e ansiedade; não baixar a pressão de forma abrupta.',
+  unidade:[
+    { med:'COMPRESSÃO DIGITAL DA ASA NASAL', dose:'15 minutos contínuos', via:'—', obs:'Cabeça levemente para a frente, sem soltar para olhar.' },
+    { med:'OXIMETAZOLINA 0,05% SOLUÇÃO NASAL', dose:'Algodão embebido ou 2 jatos', via:'NASAL', obs:'Vasoconstritor antes de examinar e cauterizar.' },
+    { med:'CAUTERIZAÇÃO COM BASTÃO DE NITRATO DE PRATA', dose:'—', via:'TÓPICO', obs:'Só no ponto visível, com o sangramento controlado. Nunca cauterizar os dois lados do septo no mesmo dia (perfuração).' },
+    { med:'TAMPÃO NASAL ANTERIOR', dose:'—', via:'—', obs:'SE persistir: retirar em 48 a 72 h. Antibiótico profilático com tampão anterior não é rotina.' }
+  ],
+  receita:[
+    { med:'Neomicina + bacitracina pomada (ou vaselina sólida)', uso:'Aplicar com cotonete na parte da frente da narina que sangrou, 2 vezes ao dia, por 7 a 10 dias. Hidrata e protege a mucosa.' },
+    { med:'Soro fisiológico 0,9% spray nasal', uso:'Aplicar 2 jatos em cada narina de 6/6 h por 14 dias, sem assoar forte depois.' },
+    { med:'Paracetamol 750 mg comprimido', uso:'Tomar 1 comprimido VO de 6/6 h, se dor. Evitar AAS e anti-inflamatórios por 7 dias.' }
+  ],
+  orientacoes:[
+    'Não assoar o nariz, não fazer esforço, não pegar peso e não tomar bebida quente por 48 horas. Espirrar de boca aberta.',
+    'Umidificar o ambiente; não cutucar o nariz.',
+    'Se voltar a sangrar: sentar inclinado para a frente e apertar a parte mole do nariz por 15 minutos sem soltar.',
+    'Usuário de anticoagulante ou antiagregante: não suspender por conta própria; checar INR conforme orientação.',
+    'Retorno imediato se sangramento que não para com 20 minutos de compressão, sangue descendo pela garganta, tontura ou desmaio.',
+    'Com tampão: voltar em 48 a 72 h para retirar; retorno antes se febre, dor forte ou vermelhidão no rosto.'
+  ] },
+
+{ id:'q-herpes-labial', grupo:'Olhos, ouvido e boca', nome:'Herpes labial', sub:'Vesículas agrupadas no lábio, recorrentes',
+  tags:['herpes labial','herpes simples','bolha no labio','aciclovir','valaciclovir','febre do labio'],
+  atencao:'Saem da receita simples: lesões extensas em pele com dermatite atópica (eczema herpético de Kaposi, com febre — aciclovir sistêmico urgente), lesão perto do olho com olho vermelho ou dor (ceratite herpética: oftalmologia no mesmo dia), imunossuprimido com lesões extensas ou que não cicatrizam. Nunca prescrever colírio de corticoide.',
+  unidade:[],
+  receita:[
+    { med:'Valaciclovir 500 mg comprimido', uso:'Tomar 4 comprimidos (2 g) VO de 12/12 h, por apenas 1 dia (2 doses). Funciona se iniciado nos primeiros sintomas (formigamento, ardor).' },
+    { med:'Aciclovir 400 mg comprimido', uso:'ALTERNATIVA: tomar 1 comprimido VO 5 vezes ao dia (de 4/4 h, pulando a madrugada) por 5 dias.' },
+    { med:'Aciclovir creme 50 mg/g', uso:'Aplicar na lesão 5 vezes ao dia por 5 dias. Benefício pequeno; usar com cotonete e lavar as mãos depois.' },
+    { med:'Paracetamol 750 mg comprimido', uso:'Tomar 1 comprimido VO de 6/6 h, se dor.' }
+  ],
+  orientacoes:[
+    'É contagioso até a crosta cair: evitar beijo, compartilhar copos, talheres e toalhas; não tocar a lesão.',
+    'Não beijar recém-nascidos nem chegar perto de pessoas com eczema ou imunossuprimidas.',
+    'Protetor solar labial reduz as recidivas desencadeadas pelo sol.',
+    'Mais de 6 episódios por ano: avaliar terapia supressiva com a atenção primária.',
+    'Retorno imediato se dor ou vermelhidão no olho, febre ou lesões se espalhando pela pele.'
+  ] },
+
+{ id:'q-candidiase-oral', grupo:'Olhos, ouvido e boca', nome:'Candidíase oral e queilite angular', sub:'Placas brancas removíveis na boca ou fissura no canto dos lábios',
+  tags:['candidiase oral','sapinho','monilíase','queilite angular','boqueira','nistatina','fluconazol'],
+  atencao:'Odinofagia ou disfagia junto com o sapinho é candidíase esofágica: fluconazol sistêmico por 14 a 21 dias e investigar imunossupressão. Adulto sem causa aparente (sem prótese, corticoide inalatório, antibiótico recente ou diabetes): teste rápido de HIV obrigatório. Placa branca que NÃO sai na raspagem é leucoplasia: encaminhar para biópsia.',
+  unidade:[
+    { med:'TESTE RÁPIDO DE HIV E GLICEMIA CAPILAR', dose:'—', via:'—', obs:'SE não houver fator local que explique.' }
+  ],
+  receita:[
+    { med:'Nistatina suspensão oral 100.000 UI/mL', uso:'Bochechar 5 mL, manter na boca o maior tempo possível e engolir, de 6/6 h, por 14 dias (continuar 48 h após sumirem as placas).' },
+    { med:'Fluconazol 100 mg cápsula', uso:'Casos moderados ou que falharam com a nistatina: tomar 2 cápsulas VO no 1º dia e depois 1 cápsula 1 vez ao dia por 7 a 14 dias. Não usar na gestação.' },
+    { med:'Miconazol creme 20 mg/g', uso:'Queilite angular: aplicar nos cantos da boca de 12/12 h por 14 dias.' },
+    { med:'Nistatina + óxido de zinco pomada', uso:'ALTERNATIVA para a queilite: aplicar nos cantos da boca 3 vezes ao dia por 14 dias.' }
+  ],
+  orientacoes:[
+    'Usuário de prótese: retirar à noite, escovar e deixar de molho em água com algumas gotas de hipoclorito (água sanitária) ou no antifúngico; tratar a prótese junto.',
+    'Usuário de bombinha de corticoide: bochechar com água e cuspir após cada uso.',
+    'Queilite angular recorrente: rever prótese (perda de dimensão vertical), deficiência de ferro e de vitaminas do complexo B.',
+    'Retorno se dor para engolir, febre ou se não melhorar em 7 dias.'
+  ] },
+
+{ id:'q-faringite-viral', grupo:'Olhos, ouvido e boca', nome:'Faringite viral', sub:'Dor de garganta com tosse, coriza ou rouquidão — sem antibiótico',
+  tags:['faringite','dor de garganta','viral','odinofagia','centor','sem antibiotico'], conduta:'faringoamigdalite',
+  atencao:'Tiram o caso daqui: trismo, voz abafada (batata quente), sialorreia, desvio da úvula ou abaulamento de um lado (abscesso periamigdaliano), estridor ou dor intensa com faringe quase normal (epiglotite), dor e rigidez cervical (abscesso retrofaríngeo, Lemierre). Centor/McIsaac 0 a 1 ou presença de tosse e coriza: não dar antibiótico. Comportamento sexual de risco: pensar em gonococo, sífilis e HIV agudo.',
+  unidade:[
+    { med:'DIPIRONA SÓDICA 500 MG/ML SOLUÇÃO INJETÁVEL AMP 2 ML', dose:'2 ampolas (2 g)', via:'EV', obs:'Diluir em 100 mL de SF 0,9%. Ou 1 g VO.' },
+    { med:'DEXAMETASONA FOSFATO 4 MG/ML SOLUÇÃO INJETÁVEL AMP 2,5 ML', dose:'1 ampola (10 mg)', via:'IM', obs:'SE odinofagia intensa que impede de comer ou beber. Dose única; reduz a dor em 24 h.' }
+  ],
+  receita:[
+    { med:'Dipirona 500 mg comprimido', uso:'Tomar 2 comprimidos VO de 6/6 h, se dor ou febre, por 5 dias.' },
+    { med:'Ibuprofeno 600 mg comprimido', uso:'Tomar 1 comprimido VO de 8/8 h, após as refeições, por 3 a 5 dias.' },
+    { med:'Benzidamina 1,5 mg/mL spray oral', uso:'Aplicar 4 a 8 jatos na garganta de 3/3 h, se dor, por até 7 dias.' },
+    { med:'Pastilha para garganta (anestésico + antisséptico)', uso:'Dissolver 1 pastilha na boca de 3/3 h, se dor. Máximo de 8 por dia.' }
+  ],
+  orientacoes:[
+    'Infecção viral: antibiótico não acelera a melhora e causa efeito colateral. Dura de 5 a 7 dias.',
+    'Hidratação, alimentos frios e pastosos; gargarejo com água morna e sal.',
+    'Retorno se febre por mais de 3 dias, placas de pus com ínguas doloridas no pescoço sem tosse, ou sem melhora em 7 dias.',
+    'Retorno imediato se não conseguir engolir a saliva, não conseguir abrir a boca, voz abafada, babar ou falta de ar.'
+  ] },
+
+{ id:'q-mononucleose', grupo:'Olhos, ouvido e boca', nome:'Mononucleose infecciosa', sub:'Faringite exsudativa, adenomegalia cervical posterior e fadiga',
+  tags:['mononucleose','epstein barr','ebv','doenca do beijo','esplenomegalia','linfocitose atipica','monoteste'], conduta:'faringoamigdalite',
+  atencao:'Tiram o caso da alta: estridor ou edema de amígdalas que ameaça a via aérea, dor em hipocôndrio esquerdo ou no ombro esquerdo (ruptura esplênica), icterícia importante, anemia hemolítica ou plaquetas muito baixas, desidratação por não conseguir engolir. Amoxicilina ou ampicilina causam exantema em quase todos — não usar. Pedir teste rápido de HIV: HIV agudo imita mononucleose.',
+  unidade:[
+    { med:'HEMOGRAMA, TGO/TGP E MONOTESTE (OU SOROLOGIA EBV)', dose:'—', via:'—', obs:'Linfocitose com atípicos acima de 10% apoia. Monoteste pode ser negativo na 1ª semana.' },
+    { med:'TESTE RÁPIDO DE HIV', dose:'—', via:'—', obs:'Diagnóstico diferencial obrigatório.' },
+    { med:'DIPIRONA SÓDICA 500 MG/ML SOLUÇÃO INJETÁVEL AMP 2 ML', dose:'2 ampolas (2 g)', via:'EV', obs:'Diluir em 100 mL de SF 0,9%.' }
+  ],
+  receita:[
+    { med:'Paracetamol 750 mg comprimido', uso:'Tomar 1 comprimido VO de 6/6 h, se dor ou febre, por 7 dias. Máximo de 3 g por dia; evitar se TGO/TGP muito elevadas.' },
+    { med:'Ibuprofeno 600 mg comprimido', uso:'Tomar 1 comprimido VO de 8/8 h, após as refeições, por até 5 dias, se dor de garganta forte.' },
+    { med:'Benzidamina 1,5 mg/mL spray oral', uso:'Aplicar 4 a 8 jatos na garganta de 3/3 h, se dor.' }
+  ],
+  orientacoes:[
+    'Sem esporte de contato, academia ou esforço por pelo menos 3 a 4 semanas desde o início (risco de rompimento do baço).',
+    'Evitar bebida alcoólica até normalizar o fígado.',
+    'A fadiga pode durar semanas; retorno gradual às atividades.',
+    'Não compartilhar copos e talheres; evitar beijo enquanto doente.',
+    'Retorno imediato se dor forte na barriga do lado esquerdo ou no ombro esquerdo, tontura, falta de ar, não conseguir engolir ou pele amarela.'
+  ] },
+
+{ id:'q-hemorragia-subconjuntival', grupo:'Olhos, ouvido e boca', nome:'Hemorragia subconjuntival', sub:'Mancha vermelha viva no branco do olho, sem dor nem baixa visual',
+  tags:['hemorragia subconjuntival','hiposfagma','olho vermelho','sangue no olho','derrame no olho'], conduta:'olho-vermelho',
+  atencao:'Tiram o caso daqui: trauma com baixa de visão, hemorragia em 360 graus com quemose, pupila irregular ou câmara rasa (ruptura do globo — proteger o olho e oftalmologia já); dor, fotofobia ou baixa visual (não é hiposfagma); episódios de repetição ou outros sangramentos (checar INR, plaquetas e coagulograma); PA muito elevada.',
+  unidade:[
+    { med:'ACUIDADE VISUAL E AFERIÇÃO DE PA', dose:'—', via:'—', obs:'Registrar. Se anticoagulado: INR.' }
+  ],
+  receita:[
+    { med:'Carmelose sódica 5 mg/mL colírio lubrificante', uso:'Instilar 1 gota no olho afetado de 6/6 h, se sensação de areia, por 7 dias.' },
+    { med:'Compressa fria', uso:'Aplicar sobre o olho fechado por 10 minutos, 3 vezes ao dia, nas primeiras 24 h.' }
+  ],
+  orientacoes:[
+    'É benigna: o sangue some sozinho em 1 a 3 semanas, mudando de cor como um roxo na pele.',
+    'Não coçar e não esfregar o olho.',
+    'Não suspender anticoagulante ou AAS por conta própria.',
+    'Medir a pressão na unidade de saúde nos próximos dias.',
+    'Retorno imediato se dor, piora da visão, sensibilidade à luz ou novos sangramentos (gengiva, nariz, manchas roxas).'
+  ] },
+
+{ id:'q-abrasao-cornea', grupo:'Olhos, ouvido e boca', nome:'Abrasão de córnea', sub:'Desepitelização que cora com fluoresceína, após trauma leve',
+  tags:['abrasao corneana','arranhao no olho','lesao de cornea','fluoresceina','lente de contato','tobramicina'], conduta:'trauma-ocular',
+  atencao:'Antes de liberar: everter a pálpebra superior (corpo estranho), checar Seidel (vazamento = perfuração), pupila e câmara anterior. Trauma de alta velocidade (martelar metal, esmeril) pede imagem para corpo estranho intraocular. Lesão em usuário de lente de contato ou com infiltrado branco é ceratite até prova em contrário: cobertura antipseudomonas e oftalmologia em 24 h. NUNCA prescrever colírio anestésico para casa.',
+  unidade:[
+    { med:'PROXIMETACAÍNA (OU TETRACAÍNA) 0,5% COLÍRIO ANESTÉSICO', dose:'1 gota', via:'OCULAR', obs:'Só para o exame. Se a dor some com o anestésico, apoia origem na superfície ocular.' },
+    { med:'FLUORESCEÍNA EM TIRA OU COLÍRIO + LUZ AZUL COBALTO', dose:'—', via:'OCULAR', obs:'Desenhar a área corada no prontuário. Riscos verticais = corpo estranho sob a pálpebra.' },
+    { med:'ACUIDADE VISUAL', dose:'—', via:'—', obs:'Registrar antes de qualquer colírio.' }
+  ],
+  receita:[
+    { med:'Tobramicina 3 mg/mL colírio', uso:'Instilar 1 gota no olho afetado de 6/6 h por 5 a 7 dias.' },
+    { med:'Ciprofloxacino 3,5 mg/mL colírio', uso:'Usuário de lente de contato: instilar 1 gota de 4/4 h acordado por 7 dias (em vez da tobramicina).' },
+    { med:'Carmelose sódica 5 mg/mL colírio lubrificante', uso:'Instilar 1 gota de 4/4 h, por 7 dias, com intervalo de 5 minutos do antibiótico.' },
+    { med:'Dipirona 500 mg comprimido', uso:'Tomar 2 comprimidos VO de 6/6 h, se dor, por 3 dias.' },
+    { med:'Ibuprofeno 600 mg comprimido', uso:'Tomar 1 comprimido VO de 8/8 h, após as refeições, por 3 dias.' }
+  ],
+  orientacoes:[
+    'Não ocluir o olho (o tampão não acelera a cicatrização e piora em usuário de lente).',
+    'Não usar lente de contato até a reavaliação e sem sintomas.',
+    'Não coçar; óculos escuros ajudam na fotofobia.',
+    'Abrasões pequenas cicatrizam em 24 a 72 h. Reavaliar em 24 a 48 h se a lesão for grande, central ou em usuário de lente.',
+    'Retorno imediato se a dor piorar, a visão cair, surgir mancha branca no olho ou secreção.'
+  ] },
+
+{ id:'q-conjuntivite-alergica', grupo:'Olhos, ouvido e boca', nome:'Conjuntivite alérgica', sub:'Prurido ocular bilateral com lacrimejamento e secreção aquosa',
+  tags:['conjuntivite alergica','coceira no olho','alergia ocular','cetotifeno','olopatadina','rinite'], conduta:'olho-vermelho',
+  atencao:'Prurido é a marca da alérgica. Dor, baixa de acuidade, fotofobia, quadro unilateral ou secreção purulenta: não é alérgica. Colírio de corticoide só com oftalmologista (catarata, glaucoma e piora de ceratite herpética). Jovem com papilas gigantes na pálpebra superior e lesão de córnea: ceratoconjuntivite vernal — oftalmologia.',
+  unidade:[],
+  receita:[
+    { med:'Cetotifeno 0,25 mg/mL colírio', uso:'Instilar 1 gota em cada olho de 12/12 h por 14 dias, e depois enquanto durar a exposição ao alérgeno.' },
+    { med:'Olopatadina 1 mg/mL colírio', uso:'ALTERNATIVA: instilar 1 gota em cada olho de 12/12 h por 14 dias.' },
+    { med:'Carmelose sódica 5 mg/mL colírio lubrificante', uso:'Instilar 1 gota em cada olho de 4/4 h, guardado na geladeira — o colírio gelado alivia e lava o alérgeno.' },
+    { med:'Loratadina 10 mg comprimido', uso:'Tomar 1 comprimido VO 1 vez ao dia por 14 dias, se houver rinite associada.' },
+    { med:'Compressa fria', uso:'Aplicar sobre os olhos fechados por 10 minutos, 3 a 4 vezes ao dia.' }
+  ],
+  orientacoes:[
+    'Não coçar os olhos: piora a inflamação e, a longo prazo, deforma a córnea (ceratocone).',
+    'Evitar o alérgeno: poeira, ácaro, pelos, fumaça; lavar o rosto e os cílios ao chegar em casa.',
+    'Usuário de lente de contato: suspender durante a crise.',
+    'Retorno se dor, piora da visão, sensibilidade à luz ou secreção amarelada.'
+  ] },
+
+{ id:'q-calazio', grupo:'Olhos, ouvido e boca', nome:'Calázio', sub:'Nódulo firme e indolor na pálpebra, de evolução lenta',
+  tags:['calazio','caroco na palpebra','nodulo palpebral','tercol cronico','compressa morna'],
+  atencao:'Calázio não é infecção: antibiótico não ajuda. Saem daqui: edema difuso com febre, dor à movimentação ocular ou proptose (celulite orbitária), e lesão que recidiva no mesmo local, ulcera ou faz perder cílios, sobretudo em idoso — carcinoma sebáceo, biópsia.',
+  unidade:[],
+  receita:[
+    { med:'Compressa morna', uso:'Aplicar sobre a pálpebra fechada por 10 a 15 minutos, 4 vezes ao dia, por 4 a 6 semanas, seguida de massagem suave em direção aos cílios. É o tratamento principal.' },
+    { med:'Higiene palpebral', uso:'Limpar a margem dos cílios com xampu neutro infantil diluído em água morna, 2 vezes ao dia.' },
+    { med:'Tobramicina pomada oftálmica 3 mg/g', uso:'SOMENTE se ficar vermelho, quente e doloroso (hordéolo associado): aplicar na margem palpebral de 8/8 h por 7 dias.' }
+  ],
+  orientacoes:[
+    'Não espremer nem furar.',
+    'A maioria regride em 1 a 2 meses com compressa morna.',
+    'Se persistir após 6 semanas ou atrapalhar a visão: oftalmologista para infiltração ou drenagem cirúrgica.',
+    'Calázio que volta no mesmo lugar precisa de avaliação do oftalmologista.'
+  ] },
+
+{ id:'q-olho-seco', grupo:'Olhos, ouvido e boca', nome:'Olho seco', sub:'Ardor, sensação de areia e vermelhidão leve que pioram com tela e ar-condicionado',
+  tags:['olho seco','ressecamento ocular','sindrome do olho seco','lubrificante','areia no olho','tela'], conduta:'olho-vermelho',
+  atencao:'Dor intensa, baixa de visão, fotofobia, secreção purulenta ou mancha branca na córnea não são olho seco (ceratite, uveíte, glaucoma). Paralisia facial com olho que não fecha (lagoftalmo): proteção ocular agressiva. Boca seca junto e dor articular: pensar em Sjögren.',
+  unidade:[],
+  receita:[
+    { med:'Carmelose sódica 5 mg/mL colírio lubrificante', uso:'Instilar 1 gota em cada olho 4 a 6 vezes ao dia, de uso contínuo. Se precisar mais de 6 vezes ao dia, preferir apresentação sem conservante (flaconete).' },
+    { med:'Hialuronato de sódio 1,5 mg/mL colírio', uso:'ALTERNATIVA: instilar 1 gota em cada olho 4 a 6 vezes ao dia.' },
+    { med:'Gel oftálmico lubrificante (carbômero 2 mg/g)', uso:'Aplicar 1 gota em cada olho à noite, ao deitar. A visão fica embaçada por alguns minutos.' },
+    { med:'Compressa morna + higiene palpebral', uso:'Compressa morna por 10 minutos e limpeza dos cílios com xampu neutro infantil diluído, 2 vezes ao dia, se houver blefarite.' }
+  ],
+  orientacoes:[
+    'Regra 20-20-20 nas telas: a cada 20 minutos, olhar para algo a 6 metros por 20 segundos, piscando de propósito.',
+    'Evitar ar-condicionado e ventilador direto no rosto; umidificar o ambiente; hidratação oral.',
+    'Revisar remédios que secam o olho: anti-histamínicos, antidepressivos, isotretinoína, diuréticos.',
+    'É crônico: o lubrificante é de uso contínuo. Acompanhamento com oftalmologista.',
+    'Retorno se dor forte, piora da visão ou secreção.'
+  ] },
+
+{ id:'q-impetigo', grupo:'Pele', nome:'Impetigo', sub:'Crostas melicéricas ou bolhas flácidas superficiais',
+  tags:['impetigo','crosta melicerica','piodermite','mupirocina','cefalexina','ferida com crosta'],
+  atencao:'Febre, celulite ao redor, linfangite ou toxemia saem da receita simples. Urina escura, edema e hipertensão 1 a 3 semanas depois: glomerulonefrite pós-estreptocócica. Impetigo de repetição: procurar escabiose, pediculose ou dermatite de base.',
+  unidade:[],
+  receita:[
+    { med:'Mupirocina 20 mg/g pomada', uso:'Poucas lesões: aplicar nas lesões de 8/8 h por 5 a 7 dias, após remover as crostas.' },
+    { med:'Ácido fusídico 20 mg/g creme', uso:'ALTERNATIVA: aplicar nas lesões de 8/8 h por 5 a 7 dias.' },
+    { med:'Cefalexina 500 mg cápsula', uso:'Lesões numerosas ou extensas, bolhoso extenso ou falha do tópico: tomar 1 cápsula VO de 6/6 h por 7 dias.' },
+    { med:'Sulfametoxazol + trimetoprima 800/160 mg comprimido', uso:'Alergia à penicilina ou suspeita de MRSA: tomar 1 comprimido VO de 12/12 h por 7 dias.' }
+  ],
+  orientacoes:[
+    'Lavar as lesões com água e sabão 2 a 3 vezes ao dia, amolecendo e removendo as crostas antes da pomada.',
+    'É contagioso: unhas curtas, não coçar, toalhas e roupas separadas; afastamento de escola, creche ou trabalho com contato até 24 h de antibiótico.',
+    'Retorno se não melhorar em 3 a 5 dias, febre, vermelhidão que se espalha, urina escura ou inchaço no rosto.'
+  ] },
+
+{ id:'q-abscesso-drenado', grupo:'Pele', nome:'Furúnculo e abscesso após drenagem', sub:'Cuidados e antibiótico após incisão e drenagem no PS',
+  tags:['abscesso','furunculo','carbunculo','drenagem','tumor de pele','mrsa','sulfametoxazol trimetoprima','cefalexina'], conduta:'abscesso-pele',
+  atencao:'Drenar é o tratamento. Antibiótico após a drenagem se: abscesso maior que 2 cm, celulite ao redor, febre, múltiplas lesões, face, mão ou genitália, extremos de idade, diabetes ou imunossupressão. Dor desproporcional, crepitação ou bolha hemorrágica: fasciíte necrotizante. Furúnculo no triângulo nariz-lábio superior: não espremer (trombose do seio cavernoso).',
+  unidade:[
+    { med:'LIDOCAÍNA 2% SEM VASOCONSTRITOR', dose:'Até 4,5 mg/kg', via:'INFILTRAÇÃO', obs:'Bloqueio de campo ao redor (o pus ácido reduz o efeito do anestésico).' },
+    { med:'INCISÃO E DRENAGEM, ROMPER LOJAS, IRRIGAR COM SF 0,9%', dose:'—', via:'—', obs:'Mecha (gaze) só em loja grande, retirar em 24 a 48 h.' },
+    { med:'VACINA dT', dose:'0,5 mL', via:'IM', obs:'Conforme o esquema vacinal.' }
+  ],
+  receita:[
+    { med:'Sulfametoxazol + trimetoprima 800/160 mg comprimido', uso:'Tomar 1 comprimido VO de 12/12 h por 5 a 7 dias (2 comprimidos de 12/12 h se peso acima de 100 kg). Cobre MRSA comunitário. Evitar no 1º e no 3º trimestre de gestação.' },
+    { med:'Cefalexina 500 mg cápsula', uso:'ALTERNATIVA (sem risco de MRSA ou com celulite): tomar 1 cápsula VO de 6/6 h por 5 a 7 dias.' },
+    { med:'Clindamicina 300 mg cápsula', uso:'Alergia à penicilina e à sulfa: tomar 1 cápsula VO de 8/8 h por 5 a 7 dias.' },
+    { med:'Dipirona 500 mg comprimido', uso:'Tomar 2 comprimidos VO de 6/6 h, se dor, por 5 dias.' },
+    { med:'Ibuprofeno 600 mg comprimido', uso:'Tomar 1 comprimido VO de 8/8 h, após as refeições, por 3 dias.' }
+  ],
+  orientacoes:[
+    'Retirar o curativo em 24 h, lavar com água e sabão no chuveiro e trocar 1 a 2 vezes ao dia. Compressa morna ajuda a drenar.',
+    'Voltar em 24 a 48 h para retirar a mecha e reavaliar, se foi colocada.',
+    'Furunculose de repetição: mupirocina nas narinas de 12/12 h por 5 dias e banho com sabonete de clorexidina por 5 a 14 dias, para o paciente e a família; checar glicemia.',
+    'Retorno imediato se febre, vermelhidão que se espalha, dor que aumenta muito ou nova coleção.'
+  ] },
+
+{ id:'q-foliculite', grupo:'Pele', nome:'Foliculite', sub:'Pápulas e pústulas centradas em folículos pilosos',
+  tags:['foliculite','espinha','pustula','pelo encravado','pseudofoliculite','barba','depilacao'], conduta:'abscesso-pele',
+  atencao:'Febre, celulite ou nódulo flutuante (furúnculo ou abscesso) saem daqui. Pústulas monomórficas e pruriginosas no tronco, após calor ou antibiótico: foliculite por Malassezia (fungo) — antifúngico, não antibiótico. Pústulas após banheira ou piscina aquecida: Pseudomonas, autolimitada.',
+  unidade:[],
+  receita:[
+    { med:'Clorexidina degermante 2% (sabonete líquido)', uso:'Lavar a área no banho 1 vez ao dia, deixando agir 1 a 2 minutos antes de enxaguar, por 7 a 14 dias.' },
+    { med:'Mupirocina 20 mg/g pomada', uso:'Aplicar nas lesões de 8/8 h por 7 dias.' },
+    { med:'Cefalexina 500 mg cápsula', uso:'SOMENTE se extensa, profunda ou refratária ao tópico: tomar 1 cápsula VO de 6/6 h por 7 dias.' },
+    { med:'Cetoconazol xampu 20 mg/g', uso:'Se foliculite por Malassezia (tronco, prurido): aplicar no corpo no banho, deixar 5 minutos e enxaguar, 1 vez ao dia por 2 semanas.' }
+  ],
+  orientacoes:[
+    'Não espremer, não depilar nem raspar a área até curar. Barba: aparelho elétrico ou lâmina nova no sentido do pelo.',
+    'Roupas folgadas de algodão; trocar após suar; não compartilhar toalhas e lâminas.',
+    'Foliculite de repetição: descolonização nasal com mupirocina e checar glicemia.',
+    'Retorno se nódulo doloroso, febre ou vermelhidão que se espalha.'
+  ] },
+
+{ id:'q-paroniquia', grupo:'Pele', nome:'Paroníquia aguda', sub:'Inflamação dolorosa da prega ungueal, com ou sem coleção',
+  tags:['paroniquia','unheiro','panaricio','dedo inflamado','abscesso periungueal'], conduta:'abscesso-pele',
+  atencao:'Vesículas agrupadas no dedo é panarício herpético: NÃO incisar (dissemina) — aciclovir. Polpa digital tensa e muito dolorosa (felon) precisa de drenagem própria. Sinais de Kanavel — dedo em flexão, dor à extensão passiva, edema fusiforme, dor no trajeto do tendão — é tenossinovite flexora: cirurgia de mão urgente.',
+  unidade:[
+    { med:'BLOQUEIO DIGITAL COM LIDOCAÍNA 2% SEM VASOCONSTRITOR', dose:'2 a 3 mL de cada lado da base do dedo', via:'INFILTRAÇÃO', obs:'SE houver coleção.' },
+    { med:'DRENAGEM: DESCOLAR O EPONÍQUIO DA UNHA COM LÂMINA 11 OU AGULHA', dose:'—', via:'—', obs:'Lâmina paralela à unha, sem cortar a pele. Se pus sob a unha: retirar a parte lateral da lâmina ungueal.' }
+  ],
+  receita:[
+    { med:'Imersão em água morna com sabão', uso:'Mergulhar o dedo por 15 minutos, 3 a 4 vezes ao dia, por 5 a 7 dias.' },
+    { med:'Mupirocina 20 mg/g pomada', uso:'Aplicar na prega ungueal de 8/8 h por 7 dias.' },
+    { med:'Cefalexina 500 mg cápsula', uso:'SOMENTE se celulite ao redor, imunossupressão ou diabetes: tomar 1 cápsula VO de 6/6 h por 7 dias.' },
+    { med:'Dipirona 500 mg comprimido', uso:'Tomar 2 comprimidos VO de 6/6 h, se dor.' },
+    { med:'Ibuprofeno 600 mg comprimido', uso:'Tomar 1 comprimido VO de 8/8 h, após as refeições, por 3 dias.' }
+  ],
+  orientacoes:[
+    'Não roer unhas, não tirar cutícula e não chupar o dedo.',
+    'Paroníquia crônica (mãos sempre molhadas): luvas de algodão sob luvas de borracha e manter as mãos secas.',
+    'Retorno em 48 h se não melhorar.',
+    'Retorno imediato se o dedo ficar dobrado e doer para esticar, vermelhidão subindo pela mão ou febre.'
+  ] },
+
+{ id:'q-unha-encravada', grupo:'Pele', nome:'Unha encravada', sub:'Onicocriptose do hálux, com ou sem granuloma',
+  tags:['unha encravada','onicocriptose','granuloma','halux','cantoplastia','cantotomia'],
+  atencao:'Diabético, doença arterial periférica (pulsos fracos, pé frio) ou neuropatia: cuidado com procedimento e com infecção — avaliar perfusão e encaminhar ao cirurgião vascular ou ao pé diabético. Celulite que sobe pelo pé, febre ou osteomielite (exposição óssea) saem da receita simples.',
+  unidade:[
+    { med:'BLOQUEIO DIGITAL COM LIDOCAÍNA 2% SEM VASOCONSTRITOR', dose:'2 a 4 mL de cada lado da base do dedo', via:'INFILTRAÇÃO', obs:'SE granuloma ou infecção com espícula: retirada da espícula ou da faixa lateral da unha (cantotomia parcial).' },
+    { med:'GARROTE NA BASE DO DEDO', dose:'Máximo 15 minutos', via:'—', obs:'Retirar ao final do procedimento e conferir a perfusão.' }
+  ],
+  receita:[
+    { med:'Imersão em água morna com sabão', uso:'Mergulhar o pé por 15 minutos, 2 a 3 vezes ao dia, por 7 dias, e secar bem.' },
+    { med:'Mupirocina 20 mg/g pomada', uso:'Aplicar no canto da unha de 12/12 h por 7 dias, após a imersão.' },
+    { med:'Cefalexina 500 mg cápsula', uso:'SOMENTE se celulite ao redor: tomar 1 cápsula VO de 6/6 h por 7 dias. Sem celulite, antibiótico não muda o desfecho.' },
+    { med:'Dipirona 500 mg comprimido', uso:'Tomar 2 comprimidos VO de 6/6 h, se dor, por 5 dias.' },
+    { med:'Ibuprofeno 600 mg comprimido', uso:'Tomar 1 comprimido VO de 8/8 h, após as refeições, por 3 dias.' }
+  ],
+  orientacoes:[
+    'Casos leves: colocar um pedaço de algodão ou fio dental sob o canto da unha, trocando todos os dias, para ela crescer por cima da pele.',
+    'Cortar a unha reta, sem arredondar os cantos e sem cortar muito curto.',
+    'Calçado largo na ponta ou aberto; evitar salto e bico fino.',
+    'Após o procedimento: manter o pé elevado no 1º dia, trocar o curativo diariamente após o banho.',
+    'Recidiva: encaminhar para cantoplastia com matricectomia eletiva.',
+    'Retorno se febre, vermelhidão subindo pelo pé ou pus.'
+  ] },
+
+{ id:'q-larva-migrans', grupo:'Pele', nome:'Larva migrans cutânea', sub:'Bicho geográfico — trajeto serpiginoso muito pruriginoso',
+  tags:['larva migrans','bicho geografico','bicho de praia','albendazol','ivermectina','tiabendazol'],
+  atencao:'Albendazol e ivermectina não são usados na gestação: na gestante, apenas tiabendazol tópico. Ivermectina não é usada abaixo de 15 kg. Infecção secundária (pus, celulite) pede antibiótico.',
+  unidade:[],
+  receita:[
+    { med:'Albendazol 400 mg comprimido', uso:'Tomar 1 comprimido VO 1 vez ao dia por 3 dias (até 7 dias se lesões múltiplas). Tomar com alimento gorduroso.' },
+    { med:'Ivermectina 6 mg comprimido', uso:'ALTERNATIVA: 200 mcg/kg VO em dose única, em jejum (36 a 50 kg: 1 e 1/2 comprimido; 51 a 65 kg: 2; 66 a 79 kg: 2 e 1/2; 80 kg ou mais: 3). Repetir em 7 dias se ainda houver trajeto ativo.' },
+    { med:'Tiabendazol 50 mg/g pomada', uso:'Lesão única, ou na gestante: aplicar sobre o trajeto e 2 cm além da ponta, de 8/8 h por 7 a 10 dias.' },
+    { med:'Loratadina 10 mg comprimido', uso:'Tomar 1 comprimido VO 1 vez ao dia por 7 dias, para o prurido.' }
+  ],
+  orientacoes:[
+    'O prurido melhora em 2 a 3 dias; o trajeto desaparece em 1 a 2 semanas.',
+    'Não coçar (infecta). Unhas curtas.',
+    'Prevenção: calçado na praia e no quintal, não sentar ou deitar diretamente na areia onde andam cães e gatos; vermifugar os animais.',
+    'Retorno se pus, vermelhidão que se espalha ou se o trajeto continuar andando após o tratamento.'
+  ] },
+
+{ id:'q-tungiase', grupo:'Pele', nome:'Tungíase', sub:'Bicho-de-pé — pápula com ponto escuro central, geralmente no pé',
+  tags:['tungiase','bicho de pe','tunga penetrans','pulga','pe'],
+  atencao:'O tratamento é retirar a pulga inteira, sem deixar fragmentos. Infestação maciça, diabetes, doença vascular ou sinais de infecção secundária (celulite, abscesso) pedem antibiótico e seguimento. Sempre conferir a vacina antitetânica — é porta de entrada para tétano.',
+  unidade:[
+    { med:'ANTISSEPSIA COM CLOREXIDINA OU IODOPOVIDONA', dose:'—', via:'TÓPICO', obs:'Antes da retirada.' },
+    { med:'RETIRADA COM AGULHA ESTÉRIL', dose:'—', via:'—', obs:'Ampliar o orifício e enuclear a pulga inteira com o saco de ovos. Lidocaína se lesões numerosas. Lavar a cavidade com SF 0,9%.' },
+    { med:'VACINA dT', dose:'0,5 mL', via:'IM', obs:'Conforme o esquema vacinal (ferida tetanogênica).' }
+  ],
+  receita:[
+    { med:'Clorexidina aquosa 0,2% ou iodopovidona tópica', uso:'Aplicar no local 2 vezes ao dia, após o banho, por 5 dias.' },
+    { med:'Mupirocina 20 mg/g pomada', uso:'Aplicar no local de 12/12 h por 5 dias, se a cavidade ficou grande ou inflamada.' },
+    { med:'Cefalexina 500 mg cápsula', uso:'SOMENTE se infecção secundária (pus, celulite): tomar 1 cápsula VO de 6/6 h por 7 dias.' },
+    { med:'Dipirona 500 mg comprimido', uso:'Tomar 2 comprimidos VO de 6/6 h, se dor.' }
+  ],
+  orientacoes:[
+    'Não retirar em casa com agulha de costura ou alfinete sem esterilizar.',
+    'Usar calçado fechado, sobretudo em solo arenoso, chiqueiro, curral e quintal.',
+    'Tratar cães, gatos e porcos da casa e limpar o ambiente (a pulga vive no solo seco e na areia).',
+    'Retorno se vermelhidão que se espalha, pus, febre ou rigidez na mandíbula.'
+  ] },
+
+{ id:'q-miiase', grupo:'Pele', nome:'Miíase (após remoção)', sub:'Berne ou bicheira já tratados na unidade',
+  tags:['miiase','berne','bicheira','larva','ivermectina','mosca'],
+  atencao:'Miíase em cavidade (nariz, ouvido, olho, boca), em ferida extensa, em paciente acamado, idoso frágil, etilista ou desnutrido: avaliação especializada e muitas vezes internação — pode destruir tecido profundo. Investigar negligência em criança, idoso ou pessoa dependente. Ivermectina: não usar em gestante nem abaixo de 15 kg.',
+  unidade:[
+    { med:'OCLUSÃO DO ORIFÍCIO COM VASELINA (BERNE)', dose:'Por 30 minutos a algumas horas', via:'TÓPICO', obs:'A larva sobe para respirar e sai mais fácil por pressão lateral. Se não sair, pequena incisão sob anestesia local.' },
+    { med:'IVERMECTINA 6 MG COMPRIMIDO', dose:'200 mcg/kg em dose única', via:'VO', obs:'Na bicheira (ferida com muitas larvas): facilita a saída e mata as larvas. Retirada mecânica de todas as larvas visíveis e limpeza com SF 0,9%.' },
+    { med:'VACINA dT', dose:'0,5 mL', via:'IM', obs:'Conforme o esquema vacinal.' }
+  ],
+  receita:[
+    { med:'Ivermectina 6 mg comprimido', uso:'Se não tomou na unidade ou bicheira com larvas restantes: 200 mcg/kg VO em dose única (51 a 65 kg: 2 comprimidos; 66 a 79 kg: 2 e 1/2; 80 kg ou mais: 3).' },
+    { med:'Cefalexina 500 mg cápsula', uso:'Tomar 1 cápsula VO de 6/6 h por 7 dias. Apenas se infecção secundária (celulite, pus, odor fétido).' },
+    { med:'Dipirona 500 mg comprimido', uso:'Tomar 2 comprimidos VO de 6/6 h, se dor.' }
+  ],
+  orientacoes:[
+    'Curativo diário com lavagem com água e sabão e soro fisiológico; manter a ferida coberta para não atrair moscas.',
+    'Voltar em 24 a 48 h para revisão e retirada de larvas que restarem.',
+    'Proteger feridas com curativo e usar telas e repelente em áreas rurais.',
+    'Retorno imediato se febre, sangramento, dor forte ou larvas saindo de nariz, ouvido ou olho.'
+  ] },
+
+{ id:'q-pediculose', grupo:'Pele', nome:'Pediculose', sub:'Piolho do couro cabeludo, do corpo ou pubiano',
+  tags:['piolho','pediculose','lendea','chato','phthirus','permetrina','ivermectina'],
+  atencao:'Pediculose pubiana (chato) é IST: tratar as parcerias e oferecer testes rápidos de HIV, sífilis e hepatites B e C. Nos cílios, não usar permetrina: vaselina sólida. Ivermectina: não usar em gestante, lactante nas primeiras semanas nem abaixo de 15 kg.',
+  unidade:[],
+  receita:[
+    { med:'Permetrina 10 mg/mL (1%) loção capilar', uso:'Aplicar no couro cabeludo e cabelo lavados com xampu comum e secos com toalha, deixar agir 10 minutos e enxaguar. Repetir após 7 a 10 dias.' },
+    { med:'Ivermectina 6 mg comprimido', uso:'ALTERNATIVA ou falha da loção: 200 mcg/kg VO em dose única, repetida após 7 dias (51 a 65 kg: 2 comprimidos; 66 a 79 kg: 2 e 1/2; 80 kg ou mais: 3). Em jejum.' },
+    { med:'Permetrina 50 mg/mL (5%) loção', uso:'Pediculose pubiana: aplicar na região pubiana, perianal, coxas e axilas, deixar 10 minutos e enxaguar. Repetir após 7 dias.' },
+    { med:'Vaselina sólida', uso:'Piolho nos cílios: aplicar na margem palpebral 2 vezes ao dia por 10 dias.' },
+    { med:'Pente fino', uso:'Passar no cabelo úmido, mecha a mecha, todos os dias por 14 dias. Vinagre diluído em água morna (1:1) ajuda a soltar as lêndeas.' }
+  ],
+  orientacoes:[
+    'Examinar e tratar ao mesmo tempo todos os moradores com piolho.',
+    'Lavar roupas de cama, toalhas, bonés e escovas em água quente; o que não puder lavar, guardar em saco fechado por 2 semanas.',
+    'Não usar inseticida doméstico, querosene ou produto veterinário no cabelo.',
+    'Piolho do corpo: o tratamento é a higiene e a lavagem das roupas em água quente.',
+    'Retorno se houver piolhos vivos 2 semanas após o 2º tratamento ou feridas infectadas no couro cabeludo.'
+  ] },
+
+{ id:'q-picada-inseto', grupo:'Pele', nome:'Picada de inseto — reação local', sub:'Pápula, edema e prurido no local, sem sintoma sistêmico',
+  tags:['picada de inseto','picada','mosquito','abelha','vespa','formiga','prurigo','reacao local'],
+  atencao:'Urticária à distância, edema de lábios ou língua, rouquidão, sibilância, vômitos ou hipotensão é anafilaxia: adrenalina IM, não receita. Múltiplas picadas de abelha ou vespa (mais de 50 no adulto) têm risco de envenenamento sistêmico: observação e exames. Vermelhidão nas primeiras 24 a 48 h é inflamatória; celulite surge depois, com dor crescente e febre.',
+  unidade:[
+    { med:'RETIRAR O FERRÃO RASPANDO COM LÂMINA OU CARTÃO', dose:'—', via:'—', obs:'Não pinçar a bolsa de veneno.' },
+    { med:'COMPRESSA FRIA OU GELO ENVOLTO EM PANO', dose:'15 minutos', via:'TÓPICO', obs:'Alivia dor e edema.' },
+    { med:'DEXCLORFENIRAMINA 2 MG COMPRIMIDO', dose:'1 comprimido', via:'VO', obs:'SE prurido intenso.' }
+  ],
+  receita:[
+    { med:'Loratadina 10 mg comprimido', uso:'Tomar 1 comprimido VO 1 vez ao dia por 5 dias.' },
+    { med:'Betametasona (valerato) 1 mg/g creme', uso:'Aplicar fina camada no local de 12/12 h por 5 dias. Não usar na face nem nas dobras.' },
+    { med:'Hidrocortisona (acetato) 10 mg/g creme', uso:'Para face e dobras: aplicar de 12/12 h por 5 dias.' },
+    { med:'Prednisona 20 mg comprimido', uso:'SOMENTE grande reação local (edema que passa de 10 cm ou pega toda a articulação): tomar 2 comprimidos VO pela manhã por 5 dias.' },
+    { med:'Paracetamol 750 mg comprimido', uso:'Tomar 1 comprimido VO de 6/6 h, se dor.' }
+  ],
+  orientacoes:[
+    'Compressa fria e elevação do membro; não coçar.',
+    'Teve falta de ar, inchaço na boca ou tontura com picada de abelha ou vespa: encaminhar ao alergista (imunoterapia com veneno) e orientar a evitar.',
+    'Repelente, roupas de manga comprida e telas em janelas.',
+    'Retorno imediato se falta de ar, inchaço de lábios ou língua, manchas pelo corpo ou tontura.',
+    'Retorno se após 2 dias a vermelhidão aumentar, ficar quente e dolorida, ou houver febre.'
+  ] },
+
+{ id:'q-queimadura-solar', grupo:'Pele', nome:'Queimadura solar', sub:'Eritema doloroso após exposição ao sol, com ou sem bolhas pequenas',
+  tags:['queimadura solar','insolacao','sol','vermelhidao','bolha','praia','eritema solar'], conduta:'queimaduras',
+  atencao:'Saem daqui: bolhas extensas (segundo grau acima de 10% da superfície), febre alta, vômitos, confusão ou síncope (insolação, desidratação — hidratação venosa e avaliar hipertermia), queimadura em face com edema palpebral importante. Queimadura forte com pouca exposição: rever medicamentos fotossensibilizantes (doxiciclina, sulfa, tiazídico, isotretinoína, AINE).',
+  unidade:[
+    { med:'DIPIRONA SÓDICA 500 MG/ML SOLUÇÃO INJETÁVEL AMP 2 ML', dose:'2 ampolas (2 g)', via:'EV', obs:'Diluir em 100 mL de SF 0,9%. Ou VO.' },
+    { med:'HIDRATAÇÃO ORAL OU SF 0,9% 1.000 ML', dose:'—', via:'VO/EV', obs:'EV se sinais de desidratação.' }
+  ],
+  receita:[
+    { med:'Ibuprofeno 600 mg comprimido', uso:'Tomar 1 comprimido VO de 8/8 h, após as refeições, por 3 dias. Reduz dor e vermelhidão se iniciado cedo.' },
+    { med:'Dipirona 500 mg comprimido', uso:'Tomar 2 comprimidos VO de 6/6 h, se dor.' },
+    { med:'Hidratante com aloe vera ou loção de calamina', uso:'Aplicar na pele gelada (guardado na geladeira) 3 a 4 vezes ao dia.' },
+    { med:'Sulfadiazina de prata 10 mg/g creme', uso:'SOMENTE em bolha rompida: aplicar camada fina 1 vez ao dia após lavar, e cobrir com gaze.' }
+  ],
+  orientacoes:[
+    'Banhos frios ou compressas frias por 15 minutos várias vezes ao dia; não usar gelo direto.',
+    'Não estourar bolhas; não passar pomada com anestésico (benzocaína) nem receita caseira.',
+    'Beber bastante água nos próximos dias.',
+    'Evitar sol até curar; depois, protetor FPS 30 ou mais, reaplicando a cada 2 h, e evitar sol das 10 às 16 h.',
+    'Retorno imediato se febre, vômitos, tontura, confusão ou bolhas que se espalham.'
+  ] },
+
+{ id:'q-intertrigo', grupo:'Pele', nome:'Intertrigo', sub:'Eritema macerado nas dobras (inframamária, inguinal, axilar, interdigital)',
+  tags:['intertrigo','assadura','dobra','candidiase cutanea','fungo na virilha','eritrasma','miconazol'],
+  atencao:'Lesões satélites (pápulas e pústulas fora da placa) apontam para Candida. Borda ativa com centro claro é tinha (ver Tinhas). Placa marrom-avermelhada sem satélites e fluorescência coral na lâmpada de Wood: eritrasma (eritromicina tópica ou oral). Odor fétido, dor e exsudato: infecção bacteriana. Intertrigo de repetição: glicemia. Não usar corticoide potente nas dobras.',
+  unidade:[],
+  receita:[
+    { med:'Miconazol creme 20 mg/g', uso:'Aplicar na dobra limpa e seca de 12/12 h por 14 dias (manter 1 semana após sumir).' },
+    { med:'Cetoconazol creme 20 mg/g', uso:'ALTERNATIVA: aplicar 1 vez ao dia por 14 dias.' },
+    { med:'Nistatina + óxido de zinco pomada', uso:'Aplicar 3 vezes ao dia, em camada fina, por 14 dias. Protege a pele macerada.' },
+    { med:'Hidrocortisona (acetato) 10 mg/g creme', uso:'SOMENTE se muito inflamado e com ardor: aplicar 1 vez ao dia por no máximo 5 dias, junto com o antifúngico.' }
+  ],
+  orientacoes:[
+    'Secar bem as dobras após o banho (secador no frio ajuda); separar as dobras com gaze ou tecido de algodão.',
+    'Roupas leves de algodão; trocar quando suar; perder peso ajuda a evitar recidiva.',
+    'Não usar talco sobre a pele molhada nem amido de milho.',
+    'Retorno se não melhorar em 2 semanas, dor, pus ou odor forte.'
+  ] },
+
+{ id:'q-dermatite-atopica', grupo:'Pele', nome:'Dermatite atópica do adulto em crise', sub:'Eczema pruriginoso com xerose, em flexuras, mãos e pescoço',
+  tags:['dermatite atopica','eczema','pele seca','xerose','prurido','corticoide topico','hidratante'],
+  atencao:'Vesículas umbilicadas e erosões em saca-bocado com febre e dor sobre o eczema é eczema herpético: aciclovir urgente e, se face ou extenso, internação. Crostas melicéricas e piora rápida: infecção secundária por estafilococo (cefalexina). Eritrodermia (mais de 90% da pele vermelha) é internação. Evitar corticoide sistêmico — rebote ao suspender.',
+  unidade:[
+    { med:'PROMETAZINA 25 MG/ML SOLUÇÃO INJETÁVEL AMP 2 ML', dose:'1 ampola (50 mg)', via:'IM', obs:'SE prurido incapacitante.' }
+  ],
+  receita:[
+    { med:'Hidratante sem perfume (emoliente)', uso:'Aplicar no corpo todo 2 vezes ao dia, sempre até 3 minutos após o banho, de uso contínuo. É a base do tratamento.' },
+    { med:'Mometasona furoato 1 mg/g creme', uso:'Aplicar fina camada nas placas do corpo 1 vez ao dia por 7 a 14 dias; depois 2 vezes por semana nas áreas que costumam voltar.' },
+    { med:'Hidrocortisona (acetato) 10 mg/g creme', uso:'Para face, pálpebras, dobras e genitália: aplicar de 12/12 h por até 7 dias.' },
+    { med:'Hidroxizina 25 mg comprimido', uso:'Tomar 1 comprimido VO à noite por 14 dias, para o prurido que atrapalha o sono. Causa sonolência.' },
+    { med:'Cefalexina 500 mg cápsula', uso:'SOMENTE se infecção secundária (crostas amareladas, pus): tomar 1 cápsula VO de 6/6 h por 7 dias.' }
+  ],
+  orientacoes:[
+    'Banho morno e rápido (até 5 minutos), sabonete suave apenas nas dobras, sem bucha; secar sem esfregar.',
+    'Roupas de algodão; evitar lã, tecido sintético, perfume e amaciante.',
+    'Unhas curtas; não coçar.',
+    'O corticoide não é para sempre: usar na quantidade e no tempo prescritos.',
+    'Acompanhamento com a atenção primária ou dermatologia para manutenção.',
+    'Retorno imediato se bolhas pequenas com crosta, febre ou piora rápida.'
+  ] },
+
+{ id:'q-varicela-adulto', grupo:'Pele', nome:'Varicela no adulto', sub:'Exantema vesicular em vários estágios, com febre',
+  tags:['varicela','catapora','aciclovir','exantema vesicular','vzv','isolamento'], conduta:'exantematicas',
+  atencao:'Varicela no adulto é mais grave. Tiram o caso da alta: tosse, dispneia ou SpO2 baixa (pneumonia varicelosa, sobretudo fumante e gestante), confusão, ataxia ou convulsão (encefalite), lesões hemorrágicas, dor abdominal intensa ou icterícia (hepatite), celulite ou fasciíte sobre lesões, imunossupressão, gestante — aciclovir EV e internação. Não usar AAS (Reye); evitar AINE.',
+  unidade:[
+    { med:'PARACETAMOL 750 MG COMPRIMIDO', dose:'1 comprimido', via:'VO', obs:'Antitérmico. Nunca AAS.' },
+    { med:'SATURAÇÃO E AUSCULTA PULMONAR', dose:'—', via:'—', obs:'Radiografia de tórax se tosse ou dispneia.' }
+  ],
+  receita:[
+    { med:'Aciclovir 400 mg comprimido', uso:'Tomar 2 comprimidos (800 mg) VO 5 vezes ao dia (de 4/4 h, pulando a madrugada) por 7 dias. Iniciar de preferência nas primeiras 24 h do exantema.' },
+    { med:'Valaciclovir 500 mg comprimido', uso:'ALTERNATIVA: tomar 2 comprimidos (1 g) VO de 8/8 h por 7 dias.' },
+    { med:'Paracetamol 750 mg comprimido', uso:'Tomar 1 comprimido VO de 6/6 h, se febre ou dor. Não usar AAS.' },
+    { med:'Hidroxizina 25 mg comprimido', uso:'Tomar 1 comprimido VO de 8/8 h, se prurido, por 7 dias. Causa sonolência.' },
+    { med:'Loção de calamina', uso:'Aplicar nas lesões 3 a 4 vezes ao dia, para o prurido.' }
+  ],
+  orientacoes:[
+    'Afastamento do trabalho e isolamento em casa até TODAS as lesões virarem crosta (cerca de 5 a 7 dias).',
+    'Evitar contato com gestantes, recém-nascidos e imunossuprimidos. Contatos suscetíveis: vacina em até 5 dias; gestante ou imunossuprimido suscetível: imunoglobulina (CRIE) em até 96 h.',
+    'Unhas curtas, banho com água e sabão, não coçar nem arrancar crostas.',
+    'Notificar casos graves, óbitos e surtos.',
+    'Retorno imediato se falta de ar, tosse, confusão, desequilíbrio, sangramento nas lesões, vermelhidão que se espalha ou febre que volta após melhorar.'
+  ] },
+
+{ id:'q-contusao', grupo:'Dor', nome:'Contusão e trauma leve', sub:'Dor e hematoma sem fratura nem lesão de órgão',
+  tags:['contusao','pancada','hematoma','trauma leve','queda','batida','roxo'], conduta:'analgesia-ps',
+  atencao:'Tiram o caso daqui: dor desproporcional e dor ao estiramento passivo (síndrome compartimental), hematoma expansivo em anticoagulado, mecanismo de alta energia, contusão torácica com dor ventilatória ou dispneia (fratura de costela, pneumotórax), contusão abdominal ou lombar com dor persistente ou hematúria, idoso com queda e dor no quadril ou na bacia (fratura oculta).',
+  unidade:[
+    { med:'DIPIRONA SÓDICA 500 MG/ML SOLUÇÃO INJETÁVEL AMP 2 ML', dose:'2 ampolas (2 g)', via:'EV', obs:'Diluir em 100 mL de SF 0,9%. Ou 1 g VO.' },
+    { med:'CETOPROFENO 100 MG PÓ LIÓFILO PARA SOLUÇÃO INJETÁVEL FA', dose:'1 frasco', via:'EV', obs:'Diluir em 100 mL de SF 0,9%.' },
+    { med:'GELO ENVOLTO EM PANO', dose:'20 minutos', via:'TÓPICO', obs:'Nas primeiras 48 h.' }
+  ],
+  receita:[
+    { med:'Dipirona 500 mg comprimido', uso:'Tomar 2 comprimidos VO de 6/6 h, se dor, por 5 dias.' },
+    { med:'Ibuprofeno 600 mg comprimido', uso:'Tomar 1 comprimido VO de 8/8 h, após as refeições, por 3 a 5 dias. Não usar se anticoagulado, doença renal ou úlcera.' },
+    { med:'Diclofenaco dietilamônio 11,6 mg/g gel', uso:'Aplicar no local de 8/8 h por 7 dias, sem massagear com força. Boa opção para idoso.' },
+    { med:'Paracetamol 750 mg comprimido', uso:'Alternativa ao anti-inflamatório no idoso ou anticoagulado: tomar 1 comprimido VO de 6/6 h, se dor.' }
+  ],
+  orientacoes:[
+    'Gelo envolto em pano por 20 minutos, 3 a 4 vezes ao dia nas primeiras 48 h; depois, calor local.',
+    'Repouso relativo e elevação do membro; voltar às atividades conforme a dor.',
+    'O roxo pode descer e mudar de cor em 1 a 2 semanas — é esperado.',
+    'Retorno imediato se dor que piora muito, inchaço tenso, formigamento ou dedos frios, falta de ar, sangue na urina ou dor na barriga.',
+    'Retorno se a dor não melhorar em 7 a 10 dias (radiografia para fratura oculta).'
+  ] },
+
+{ id:'q-fratura-imobilizada', grupo:'Dor', nome:'Analgesia e cuidados após imobilização', sub:'Fratura estável imobilizada com tala ou gesso, alta com ortopedia',
+  tags:['fratura','gesso','tala','imobilizacao','analgesia','sindrome compartimental','tvp'], conduta:'fraturas-comuns',
+  atencao:'Antes da alta: conferir e registrar perfusão, sensibilidade e motricidade distais APÓS imobilizar. Tiram o caso da alta: fratura exposta, desvio que precisa de redução, déficit neurovascular, dor desproporcional (compartimental). Imobilização de membro inferior com fatores de risco para trombose (TEV prévio, câncer, obesidade, estrogênio, gestação, puerpério): considerar profilaxia com enoxaparina.',
+  unidade:[
+    { med:'DIPIRONA SÓDICA 500 MG/ML SOLUÇÃO INJETÁVEL AMP 2 ML', dose:'2 ampolas (2 g)', via:'EV', obs:'Diluir em 100 mL de SF 0,9%.' },
+    { med:'TRAMADOL CLORIDRATO 50 MG/ML SOLUÇÃO INJETÁVEL AMP 2 ML', dose:'1 ampola (100 mg)', via:'EV', obs:'SE dor intensa. Diluir em 100 mL de SF 0,9% e correr lentamente.' },
+    { med:'TALA GESSADA OU GESSO CIRCULAR CONFORME A FRATURA', dose:'—', via:'—', obs:'Na fratura aguda, preferir tala (permite edema). Radiografia de controle após imobilizar.' }
+  ],
+  receita:[
+    { med:'Dipirona 500 mg comprimido', uso:'Tomar 2 comprimidos VO de 6/6 h, por 5 a 7 dias.' },
+    { med:'Ibuprofeno 600 mg comprimido', uso:'Tomar 1 comprimido VO de 8/8 h, após as refeições, por 3 a 5 dias.' },
+    { med:'Tramadol 50 mg cápsula', uso:'Tomar 1 cápsula VO de 8/8 h, se dor forte apesar dos outros, por até 5 dias. Receita de controle especial em 2 vias. Pode dar náusea e sonolência — não dirigir.' },
+    { med:'Paracetamol 500 mg + codeína 30 mg comprimido', uso:'ALTERNATIVA ao tramadol: tomar 1 comprimido VO de 6/6 h, se dor forte, por até 3 dias. Receita de controle especial em 2 vias.' },
+    { med:'Enoxaparina 40 mg seringa', uso:'SOMENTE se membro inferior imobilizado e fator de risco para trombose: aplicar 1 seringa SC 1 vez ao dia enquanto estiver imobilizado ou sem carga.' }
+  ],
+  orientacoes:[
+    'Manter o membro elevado acima do coração nas primeiras 48 a 72 h; mexer os dedos várias vezes ao dia.',
+    'Não molhar, não cortar e não colocar objetos dentro do gesso para coçar.',
+    'Membro inferior: não apoiar o pé até a ortopedia liberar; usar muletas.',
+    'Retorno à ortopedia em 7 a 10 dias com radiografia, ou na data marcada.',
+    'Retorno IMEDIATO se dor que não passa com o remédio ou piora, dedos roxos, frios, inchados ou dormentes, gesso apertado, ferida ou cheiro ruim sob o gesso, falta de ar ou dor na panturrilha.'
+  ] },
+
+{ id:'q-fissura-anal', grupo:'Gastro', nome:'Fissura anal', sub:'Dor anal intensa ao evacuar, com sangue vivo no papel',
+  tags:['fissura anal','dor ao evacuar','sangue nas fezes','anus','diltiazem','nifedipina','constipacao'], conduta:'doenca-perianal',
+  atencao:'Fissura típica é na linha média posterior (ou anterior). Fissura lateral, múltipla, indolor, grande ou que não cicatriza: pensar em Crohn, HIV, sífilis, tuberculose e câncer — encaminhar. Dor contínua com febre e abaulamento endurecido é abscesso perianal: drenagem, não pomada. Sangramento com alteração do hábito intestinal acima dos 45 a 50 anos pede colonoscopia.',
+  unidade:[
+    { med:'LIDOCAÍNA 2% GELEIA', dose:'Aplicação local', via:'TÓPICO', obs:'Antes da inspeção. Não fazer toque retal nem anuscopia com dor intensa.' }
+  ],
+  receita:[
+    { med:'Diltiazem 2% pomada (manipulada)', uso:'Aplicar uma pequena porção (tamanho de uma ervilha) na borda do ânus de 12/12 h por 6 a 8 semanas. Primeira escolha: cicatriza a fissura sem a cefaleia do nitrato.' },
+    { med:'Nifedipina 0,2% + lidocaína 1,5% pomada (manipulada)', uso:'ALTERNATIVA: aplicar na borda do ânus de 12/12 h por 6 a 8 semanas.' },
+    { med:'Lidocaína 2% geleia', uso:'Aplicar na borda do ânus antes de evacuar, se dor, por até 14 dias.' },
+    { med:'Psyllium 5,8 g pó (sachê)', uso:'Dissolver 1 sachê em 1 copo de água e tomar 1 a 2 vezes ao dia, de uso contínuo.' },
+    { med:'Lactulose 667 mg/mL xarope', uso:'Tomar 15 mL VO 1 vez ao dia, à noite, ajustando para fezes macias diárias.' },
+    { med:'Dipirona 500 mg comprimido', uso:'Tomar 2 comprimidos VO de 6/6 h, se dor.' }
+  ],
+  orientacoes:[
+    'Banho de assento com água morna por 10 a 15 minutos, 2 a 3 vezes ao dia e após evacuar — relaxa o esfíncter e alivia a dor.',
+    'Fibras (frutas, verduras, aveia) e 2 litros de água por dia; não segurar a vontade de evacuar e não fazer força.',
+    'Higiene com água em vez de papel.',
+    'Encaminhar à proctologia se não cicatrizar em 8 semanas (toxina botulínica ou esfincterotomia).',
+    'Retorno imediato se febre, inchaço doloroso ao lado do ânus ou sangramento volumoso.'
+  ] },
+
+{ id:'q-epididimite', grupo:'Urologia', nome:'Epididimite aguda', sub:'Dor escrotal progressiva com epidídimo endurecido',
+  tags:['epididimite','orquiepididimite','dor no testiculo','escroto','ceftriaxona','doxiciclina','ist'], conduta:'escroto-agudo',
+  atencao:'Primeiro afastar TORÇÃO: dor súbita, jovem, testículo horizontalizado e alto, reflexo cremastérico ausente, náusea e vômitos — Doppler e urologia imediatos (janela de 6 h); na dúvida, explorar. Febre alta com toxemia, abscesso, gangrena de Fournier (crepitação, necrose do períneo) ou falha em 72 h: internação. Abaixo de 35 anos ou com risco sexual: tratar como IST. Pacientes com práticas anais insertivas: cobrir também enterobactérias.',
+  unidade:[
+    { med:'CEFTRIAXONA SÓDICA 500 MG', dose:'500 mg', via:'IM', obs:'Dose única, profunda em glúteo. Abaixo de 35 anos ou com risco de IST (PCDT IST 2022).' },
+    { med:'EAS, UROCULTURA E PESQUISA DE GONOCOCO E CLAMÍDIA (SE DISPONÍVEL)', dose:'—', via:'—', obs:'Colher antes do antibiótico, sem atrasar o tratamento.' },
+    { med:'TESTES RÁPIDOS — HIV, SÍFILIS, HEPATITES B E C', dose:'—', via:'—', obs:'Se risco de IST.' },
+    { med:'CETOPROFENO 100 MG PÓ LIÓFILO PARA SOLUÇÃO INJETÁVEL FA', dose:'1 frasco', via:'EV', obs:'Diluir em 100 mL de SF 0,9%.' }
+  ],
+  receita:[
+    { med:'Doxiciclina 100 mg comprimido', uso:'Tomar 1 comprimido VO de 12/12 h por 10 dias, junto com a ceftriaxona da unidade. Tomar com bastante água, sem deitar logo após.' },
+    { med:'Levofloxacino 500 mg comprimido', uso:'Acima de 35 anos, sem risco de IST, ou após sondagem ou procedimento urológico: tomar 1 comprimido VO 1 vez ao dia por 10 dias (no lugar da ceftriaxona + doxiciclina).' },
+    { med:'Ibuprofeno 600 mg comprimido', uso:'Tomar 1 comprimido VO de 8/8 h, após as refeições, por 5 dias.' },
+    { med:'Dipirona 500 mg comprimido', uso:'Tomar 2 comprimidos VO de 6/6 h, se dor.' },
+    { med:'Tratamento da parceria (se IST)', uso:'Parcerias dos últimos 60 dias: ceftriaxona 500 mg IM dose única + doxiciclina 100 mg VO de 12/12 h por 7 dias. Encaminhar ao serviço.' }
+  ],
+  orientacoes:[
+    'Repouso, cueca justa ou suspensório escrotal e gelo envolto em pano por 20 minutos várias vezes ao dia.',
+    'Abstinência sexual até o fim do tratamento do paciente e da parceria e da melhora dos sintomas.',
+    'A dor melhora em 72 h, mas o inchaço pode levar semanas.',
+    'Retorno imediato se dor súbita muito forte, febre alta, vermelhidão escura ou feridas no escroto.',
+    'Retorno se não melhorar em 72 h ou se persistir caroço no testículo após o tratamento (ultrassom para tumor).'
+  ] },
+
+{ id:'q-prostatite', grupo:'Urologia', nome:'Prostatite bacteriana aguda', sub:'Febre, disúria e dor perineal com próstata dolorosa ao toque',
+  tags:['prostatite','dor perineal','disuria','febre','ciprofloxacino','itu masculina'], conduta:'itu',
+  atencao:'Toque retal suave — NUNCA massagem prostática (bacteremia). Internar se toxemia ou sepse, retenção urinária, imunossupressão, intolerância à via oral ou idade avançada com comorbidades. Sem melhora em 48 a 72 h: ultrassom transretal ou TC para abscesso prostático. Retenção: preferir cistostomia suprapúbica ou sonda fina com cuidado. Abaixo de 35 anos com risco sexual: cobrir gonococo e clamídia.',
+  unidade:[
+    { med:'EAS, UROCULTURA E HEMOGRAMA', dose:'—', via:'—', obs:'Colher a urocultura antes do antibiótico. Hemocultura se febre alta.' },
+    { med:'VOLUME URINÁRIO RESIDUAL (US OU BEXIGÔMETRO)', dose:'—', via:'—', obs:'Afastar retenção.' },
+    { med:'CETOPROFENO 100 MG PÓ LIÓFILO PARA SOLUÇÃO INJETÁVEL FA', dose:'1 frasco', via:'EV', obs:'Diluir em 100 mL de SF 0,9%.' },
+    { med:'CIPROFLOXACINO 500 MG COMPRIMIDO', dose:'1 comprimido', via:'VO', obs:'1ª dose na unidade, após colher a urocultura.' }
+  ],
+  receita:[
+    { med:'Ciprofloxacino 500 mg comprimido', uso:'Tomar 1 comprimido VO de 12/12 h por 2 a 4 semanas (mínimo de 14 dias; 4 semanas se demorar a melhorar). Não tomar junto com leite, antiácido ou ferro.' },
+    { med:'Levofloxacino 500 mg comprimido', uso:'ALTERNATIVA: tomar 1 comprimido VO 1 vez ao dia por 2 a 4 semanas.' },
+    { med:'Sulfametoxazol + trimetoprima 800/160 mg comprimido', uso:'Se alergia a quinolona ou conforme urocultura: tomar 1 comprimido VO de 12/12 h por 4 semanas.' },
+    { med:'Tansulosina 0,4 mg cápsula', uso:'Tomar 1 cápsula VO 1 vez ao dia, após o jantar, por 4 semanas, se jato fraco ou dificuldade para urinar.' },
+    { med:'Ibuprofeno 600 mg comprimido', uso:'Tomar 1 comprimido VO de 8/8 h, após as refeições, por 5 dias.' },
+    { med:'Dipirona 500 mg comprimido', uso:'Tomar 2 comprimidos VO de 6/6 h, se dor ou febre.' }
+  ],
+  orientacoes:[
+    'Hidratação abundante.',
+    'Completar o antibiótico até o fim — tratamento curto vira prostatite crônica.',
+    'Ajustar o antibiótico pelo resultado da urocultura (rever em 48 a 72 h).',
+    'Retorno imediato se não conseguir urinar, febre que não cede em 48 h, calafrios fortes ou tontura.',
+    'Seguimento com urologia após o tratamento; dosar PSA só depois de 1 a 2 meses (a prostatite eleva o PSA).'
+  ] },
+
+{ id:'q-balanopostite', grupo:'Urologia', nome:'Balanopostite', sub:'Inflamação da glande e do prepúcio',
+  tags:['balanite','balanopostite','candidiase peniana','glande','prepucio','clotrimazol','fimose'],
+  atencao:'Prepúcio retraído que não volta, com edema da glande, é PARAFIMOSE: redução imediata. Fimose com dificuldade para urinar ou retenção: urologia. Lesão ulcerada, endurecida, que não cicatriza ou placa vermelha aveludada persistente: biópsia (carcinoma, eritroplasia de Queyrat). Úlcera ou corrimento uretral: tratar como IST (ver Uretrite e Úlcera genital). Balanite de repetição: diabetes até prova em contrário — glicemia; inibidor de SGLT2 é causa comum.',
+  unidade:[
+    { med:'GLICEMIA CAPILAR', dose:'—', via:'—', obs:'Sempre.' },
+    { med:'TESTES RÁPIDOS — HIV, SÍFILIS, HEPATITES B E C', dose:'—', via:'—', obs:'Se risco de IST ou lesão ulcerada.' }
+  ],
+  receita:[
+    { med:'Clotrimazol creme 10 mg/g', uso:'Aplicar na glande e no prepúcio de 12/12 h por 7 a 14 dias, após higiene e secagem. Primeira escolha (a maioria é Candida).' },
+    { med:'Miconazol creme 20 mg/g', uso:'ALTERNATIVA: aplicar de 12/12 h por 7 a 14 dias.' },
+    { med:'Fluconazol 150 mg cápsula', uso:'Tomar 1 cápsula VO em dose única, se quadro intenso ou sem resposta ao creme.' },
+    { med:'Hidrocortisona (acetato) 10 mg/g creme', uso:'SOMENTE se muito inflamado: aplicar 1 vez ao dia por até 5 dias, junto com o antifúngico.' },
+    { med:'Metronidazol 400 mg comprimido', uso:'Se odor fétido e secreção (anaeróbios): tomar 1 comprimido VO de 12/12 h por 7 dias. Sem álcool até 24 h após.' }
+  ],
+  orientacoes:[
+    'Higiene diária retraindo o prepúcio, só com água morna e sabonete neutro; secar bem e voltar o prepúcio para o lugar.',
+    'Evitar sabonetes perfumados, antissépticos e lenços umedecidos na região.',
+    'Parceria sexual com sintomas vaginais (coceira, corrimento) deve ser avaliada.',
+    'Preservativo até curar.',
+    'Retorno se não melhorar em 14 dias, ferida que não cicatriza ou dificuldade para urinar. Recorrente ou com fimose: urologia (postectomia).'
+  ] },
+
+{ id:'q-paralisia-facial', grupo:'Neuro e Psiquiatria', nome:'Paralisia facial periférica (Bell)', sub:'Paralisia de toda a hemiface, incluindo a testa, de instalação em até 72 h',
+  tags:['paralisia de bell','paralisia facial','rosto torto','boca torta','prednisona','valaciclovir','lagoftalmo'], conduta:'paralisia-facial',
+  atencao:'Testa POUPADA (consegue franzir) é paralisia central: protocolo de AVC. Tiram do diagnóstico de Bell: outro déficit neurológico, bilateral, vesículas no ouvido ou palato (Ramsay Hunt — antiviral obrigatório), otite média ou colesteatoma, massa em parótida, trauma, instalação lenta ao longo de semanas, picada de carrapato (Lyme), recorrente no mesmo lado. Corticoide eleva a glicemia: orientar o diabético.',
+  unidade:[
+    { med:'EXAME NEUROLÓGICO, OTOSCOPIA E PALPAÇÃO DA PARÓTIDA', dose:'—', via:'—', obs:'Registrar a força da testa e o fechamento ocular (House-Brackmann).' },
+    { med:'GLICEMIA CAPILAR', dose:'—', via:'—', obs:'Antes do corticoide.' },
+    { med:'PREDNISONA 20 MG COMPRIMIDO', dose:'3 comprimidos (60 mg)', via:'VO', obs:'1ª dose na unidade. Benefício comprovado se iniciado em até 72 h.' }
+  ],
+  receita:[
+    { med:'Prednisona 20 mg comprimido', uso:'Tomar 3 comprimidos (60 mg) VO pela manhã por 5 dias; depois reduzir 1/2 comprimido por dia (50, 40, 30, 20, 10 mg) e parar. Total de 10 dias.' },
+    { med:'Valaciclovir 500 mg comprimido', uso:'SOMENTE se paralisia completa (House-Brackmann V ou VI) ou Ramsay Hunt: tomar 2 comprimidos (1 g) VO de 8/8 h por 7 dias, junto com o corticoide.' },
+    { med:'Omeprazol 20 mg cápsula', uso:'Tomar 1 cápsula VO em jejum enquanto usar a prednisona, se houver história de gastrite ou úlcera.' },
+    { med:'Carmelose sódica 5 mg/mL colírio lubrificante', uso:'Instilar 1 gota no olho do lado paralisado de 2/2 h durante o dia, enquanto o olho não fechar bem.' },
+    { med:'Gel oftálmico lubrificante (carbômero 2 mg/g)', uso:'Aplicar no olho do lado paralisado ao deitar, e fechar a pálpebra com fita adesiva hipoalergênica (micropore) para dormir.' }
+  ],
+  orientacoes:[
+    'A maioria recupera em 3 semanas a 3 meses. Proteger o olho é o mais importante: úlcera de córnea pode deixar sequela.',
+    'Óculos escuros de dia; não esfregar o olho.',
+    'Exercícios faciais em frente ao espelho e massagem; encaminhar à fisioterapia.',
+    'Diabético: medir a glicemia mais vezes durante o corticoide.',
+    'Retorno imediato se fraqueza no braço ou na perna, fala enrolada, visão dupla, dor de cabeça forte ou olho vermelho e dolorido.',
+    'Sem nenhuma melhora em 3 semanas ou recuperação incompleta em 3 meses: neurologia ou otorrino para investigação.'
+  ] },
+
+{ id:'q-ansiedade-alta', grupo:'Neuro e Psiquiatria', nome:'Crise de ansiedade — alta', sub:'Ataque de pânico resolvido, causas orgânicas afastadas',
+  tags:['ansiedade','crise de panico','ataque de panico','falta de ar','palpitacao','benzodiazepinico','sertralina'], conduta:'crise-ansiedade',
+  atencao:'Diagnóstico de exclusão. Antes de rotular: dor torácica com fatores de risco ou ECG alterado (SCA), dispneia com taquicardia persistente ou SpO2 baixa (TEP), arritmia, hipoglicemia, tireotoxicose, asma, intoxicação por estimulantes e abstinência de álcool ou benzodiazepínico. Perguntar SEMPRE sobre ideação suicida — se presente, não é alta (ver Risco de suicídio).',
+  unidade:[
+    { med:'ECG, GLICEMIA CAPILAR E SATURAÇÃO', dose:'—', via:'—', obs:'Conforme a queixa e os fatores de risco.' },
+    { med:'AMBIENTE CALMO E RESPIRAÇÃO DIAFRAGMÁTICA LENTA', dose:'Inspirar 4 s, segurar 4 s, soltar 6 s', via:'—', obs:'Não usar saco de papel (risco de hipóxia).' },
+    { med:'CLONAZEPAM 0,5 MG COMPRIMIDO', dose:'1 comprimido', via:'SL/VO', obs:'SE a crise não ceder com medidas não farmacológicas. Alternativa: diazepam 5 a 10 mg VO.' }
+  ],
+  receita:[
+    { med:'Clonazepam 0,5 mg comprimido', uso:'Tomar 1 comprimido VO, se crise intensa, no máximo 2 vezes ao dia, por até 7 dias. Notificação de receita B (azul). Não dirigir; não usar com álcool.' },
+    { med:'Sertralina 50 mg comprimido', uso:'SOMENTE se crises de repetição e seguimento garantido na atenção primária: tomar 1/2 comprimido (25 mg) VO pela manhã por 7 dias e depois 1 comprimido 1 vez ao dia. Efeito em 2 a 4 semanas. Receita de controle especial em 2 vias.' }
+  ],
+  orientacoes:[
+    'Explicar que os sintomas são reais, não são perigosos e passam em 10 a 30 minutos.',
+    'Treinar a respiração lenta diariamente, não só na crise.',
+    'Reduzir cafeína, energético, nicotina e álcool; regular o sono; atividade física regular.',
+    'Benzodiazepínico vicia: uso curto, só na crise, enquanto o tratamento de base não faz efeito.',
+    'Encaminhar à atenção primária e à psicoterapia (terapia cognitivo-comportamental). CVV: ligar 188, 24 horas, gratuito.',
+    'Retorno imediato se dor no peito diferente, desmaio, falta de ar que não passa ou pensamentos de se machucar.'
+  ] },
+
+{ id:'q-pico-has', grupo:'Cardiovascular', nome:'Pico hipertensivo sem lesão de órgão-alvo', sub:'PA elevada, assintomático ou sintomas inespecíficos — alta com ajuste',
+  tags:['pico hipertensivo','pressao alta','hipertensao','urgencia hipertensiva','losartana','anlodipino','pseudocrise'], conduta:'crise-hipertensiva',
+  atencao:'Procurar lesão de órgão-alvo: dor torácica, dispneia, déficit neurológico, confusão, cefaleia súbita intensa, alteração visual, oligúria — é emergência hipertensiva, não receita. Gestante acima de 20 semanas ou puérpera: pré-eclâmpsia. NÃO usar captopril ou nifedipina sublingual: a queda brusca causa isquemia. Muitas vezes é dor, ansiedade, abstinência ou falta de remédio: tratar a causa.',
+  unidade:[
+    { med:'REPOUSO EM AMBIENTE CALMO POR 30 MINUTOS E REAFERIR A PA', dose:'—', via:'—', obs:'Manguito adequado ao braço; medir nos dois braços. Grande parte normaliza só com repouso e analgesia.' },
+    { med:'TRATAR DOR E ANSIEDADE', dose:'—', via:'—', obs:'Dipirona se dor; não dar anti-hipertensivo para baixar número.' },
+    { med:'ECG, CREATININA E EAS', dose:'—', via:'—', obs:'SE sintomas ou PA muito elevada persistente — rastrear lesão de órgão-alvo.' },
+    { med:'MEDICAÇÃO ORAL HABITUAL OU 1ª DOSE DO ESQUEMA NOVO', dose:'—', via:'VO', obs:'Meta: reduzir de forma gradual em 24 a 48 h, não na hora.' }
+  ],
+  receita:[
+    { med:'Losartana 50 mg comprimido', uso:'Sem tratamento prévio: tomar 1 comprimido VO 1 vez ao dia. Já usa 50 mg: passar para 1 comprimido de 12/12 h (100 mg por dia). Evitar na gestação.' },
+    { med:'Anlodipino 5 mg comprimido', uso:'Tomar 1 comprimido VO 1 vez ao dia. Associar à losartana se PA a partir de 160/100 mmHg ou se já usa losartana em dose plena. Pode inchar os tornozelos.' },
+    { med:'Hidroclorotiazida 25 mg comprimido', uso:'ALTERNATIVA ou 3º remédio: tomar 1/2 a 1 comprimido VO pela manhã. Checar potássio e creatinina na atenção primária.' }
+  ],
+  orientacoes:[
+    'Tomar os remédios todos os dias, mesmo sem sintomas — pressão alta não dá sinal.',
+    'Reduzir sal (menos de 5 g por dia), evitar embutidos, enlatados e temperos prontos; atividade física e perda de peso.',
+    'Evitar anti-inflamatórios, descongestionantes nasais e excesso de álcool.',
+    'Medir a pressão em casa ou na farmácia por 7 dias, de manhã e à noite, e levar as anotações à atenção primária em até 1 a 2 semanas.',
+    'Retorno imediato se dor no peito, falta de ar, fraqueza ou dormência de um lado, fala enrolada, visão turva ou dor de cabeça muito forte e súbita.'
+  ] },
+
+{ id:'q-hiperemese-leve', grupo:'Ginecologia', nome:'Náusea e vômito da gestação — alta', sub:'Gestante que aceita via oral após hidratação e antiemético',
+  tags:['nausea gestacao','vomito gestacao','hiperemese','enjoo gravidez','doxilamina','ondansetrona','puqe'], conduta:'hiperemese',
+  atencao:'Internar: não tolera via oral após tratamento, perda de mais de 5% do peso, cetonúria persistente, distúrbio eletrolítico, alteração de função renal ou hepática, ou confusão. Vômito que começa após 10 semanas, com febre, dor abdominal, cefaleia ou PA alta não é hiperêmese: buscar outra causa (ITU, apendicite, hepatite, pré-eclâmpsia). Primeiro episódio sem ultrassom: pedir para afastar gemelar e mola.',
+  unidade:[
+    { med:'CLORETO DE SÓDIO 0,9% OU RINGER LACTATO', dose:'1.000 mL', via:'EV', obs:'Correr em 1 a 2 h. Evitar soro glicosado antes da tiamina se vômitos há mais de 3 semanas.' },
+    { med:'TIAMINA 100 MG', dose:'100 mg', via:'EV', obs:'SE vômitos prolongados — previne encefalopatia de Wernicke. Antes de qualquer glicose.' },
+    { med:'METOCLOPRAMIDA 5 MG/ML SOLUÇÃO INJETÁVEL AMP 2 ML', dose:'1 ampola (10 mg)', via:'EV', obs:'Diluir e correr lentamente.' },
+    { med:'ONDANSETRONA 2 MG/ML SOLUÇÃO INJETÁVEL AMP 4 ML', dose:'4 a 8 mg', via:'EV', obs:'SE persistir. Preferir após a 10ª semana; pode prolongar QT.' },
+    { med:'EAS E CETONÚRIA; ELETRÓLITOS SE VÔMITOS INTENSOS', dose:'—', via:'—', obs:'Afastar ITU.' }
+  ],
+  receita:[
+    { med:'Doxilamina 10 mg + piridoxina 10 mg comprimido', uso:'Tomar 2 comprimidos VO à noite. Se não melhorar em 2 dias, acrescentar 1 de manhã e 1 à tarde (máximo 4 por dia). Primeira escolha na gestação. Causa sonolência.' },
+    { med:'Dimenidrinato 50 mg + piridoxina 10 mg comprimido', uso:'ALTERNATIVA: tomar 1 comprimido VO de 6/6 h, se náusea. Máximo de 4 por dia.' },
+    { med:'Metoclopramida 10 mg comprimido', uso:'Tomar 1 comprimido VO de 8/8 h, 30 minutos antes das refeições, se vômitos, por até 5 dias.' },
+    { med:'Ondansetrona 8 mg comprimido orodispersível', uso:'SOMENTE se falhar o anterior: dissolver 1/2 a 1 comprimido na língua de 8/8 h, se vômitos. Preferir após a 10ª semana.' }
+  ],
+  orientacoes:[
+    'Refeições pequenas e frequentes, a cada 2 a 3 h, secas e frias; comer biscoito de água e sal antes de levantar da cama.',
+    'Separar sólidos de líquidos (beber nos intervalos), em pequenos goles.',
+    'Evitar cheiros fortes, frituras e alimentos gordurosos; gengibre pode ajudar.',
+    'Trocar o polivitamínico com ferro por ácido fólico isolado enquanto houver náusea.',
+    'Retorno imediato se não conseguir beber nem manter líquidos por 12 a 24 h, urina escura e pouca, tontura, dor abdominal, febre ou sangramento.',
+    'Manter o pré-natal; levar a receita à consulta.'
+  ] }
+
+]);
+
 /* ===========================================================
    INTERNADOS — prescrição de enfermaria, pronta para copiar.
    Adulto, enfermaria (não UTI). Cada item: med | dose | via | obs.
@@ -3217,6 +4232,33 @@ var FERR_INTERNADOS = [
     { med:'Controles', dose:'SSVV e SpO2 de 6/6 h', via:'—', obs:'Balanço hídrico. Glicemia capilar de 12/12 h se diabético.' }
   ],
   cuidados:['Cabeceira elevada a 30°.', 'Deambular assim que possível.', 'Reavaliar em 48–72 h: sem melhora, rever o ATB e pedir imagem.', 'Hemocultura 2 amostras e escarro antes da 1ª dose se ainda não colhidos.'] },
+
+{ id:'i-dip', grupo:'Gineco e Obstetrícia', nome:'Doença inflamatória pélvica', sub:'Internada, com ou sem abscesso tubo-ovariano', conduta:'obstetricia/dip',
+  itens:[
+    { med:'Dieta', dose:'geral, ou zero se programação cirúrgica', via:'VO', obs:'' },
+    { med:'SF 0,9%', dose:'1000 mL', via:'EV', obs:'Correr em 8–12 h se vômitos ou desidratação. Suspender quando aceitar VO.' },
+    { med:'Ceftriaxona 1 g', dose:'1 g', via:'EV', obs:'1x/dia, em 100 mL de SF 0,9%. Até 24 h sem sintomas, depois VO até 14 dias.' },
+    { med:'Doxiciclina 100 mg', dose:'1 comprimido', via:'VO', obs:'De 12/12 h por 14 dias. Com um copo de água, sem deitar por 30 min. Contraindicada na gestação.' },
+    { med:'Metronidazol 500 mg/100 mL', dose:'500 mg', via:'EV', obs:'De 12/12 h (PCDT: 400 mg). Passar para 250 mg 2 comprimidos VO 12/12 h até completar 14 dias.' },
+    { med:'Dipirona 1 g', dose:'1 g (2 mL)', via:'EV', obs:'De 6/6 h, se dor ou temperatura ≥ 37,8 °C.' },
+    { med:'Cetoprofeno 100 mg', dose:'100 mg em 100 mL de SF 0,9%', via:'EV', obs:'De 12/12 h por até 3 dias, se função renal normal.' },
+    { med:'Ondansetrona 4 mg', dose:'4 mg', via:'EV', obs:'De 8/8 h, se náusea.' },
+    { med:'Controles', dose:'SSVV e temperatura de 6/6 h', via:'—', obs:'Hemograma e PCR em 48–72 h.' }
+  ],
+  cuidados:['Ultrassom transvaginal na entrada se massa ou febre; repetir em 48–72 h se abscesso.', 'Sem melhora em 72 h ou abscesso ≥ 7–8 cm: discutir drenagem ou cirurgia.', 'Abscesso roto (peritonite difusa, choque): cirurgia de emergência.', 'Testes rápidos de HIV, sífilis e hepatites; parceiros dos últimos 60 dias tratados (ceftriaxona 500 mg IM + azitromicina 1 g VO).', 'DIU não precisa ser retirado; se for, só após duas doses do antibiótico.'] },
+
+{ id:'i-sua', grupo:'Gineco e Obstetrícia', nome:'Sangramento uterino anormal agudo', sub:'Internada, não gestante', conduta:'obstetricia/sangramento-uterino-anormal',
+  itens:[
+    { med:'Dieta', dose:'zero até definir se vai para curetagem; depois geral', via:'VO', obs:'' },
+    { med:'Ringer lactato', dose:'1000 mL', via:'EV', obs:'Conforme a hemodinâmica. Concentrado de hemácias se Hb < 7 ou sintomática.' },
+    { med:'Ácido tranexâmico 250 mg/5 mL', dose:'1 g (4 ampolas) em 100 mL de SF 0,9%', via:'EV', obs:'De 8/8 h, em 10–20 min. Máximo 4 g/dia. Evitar se TEV ativo.' },
+    { med:'Estrogênios conjugados 0,625 mg', dose:'2,5 mg (4 comprimidos)', via:'VO', obs:'De 6/6 h por 24 h se sangramento grave e sem contraindicação a estrogênio; depois anticoncepcional ou progestagênio.' },
+    { med:'Etinilestradiol 0,03 mg + levonorgestrel 0,15 mg', dose:'1 comprimido', via:'VO', obs:'De 8/8 h por 7 dias, depois 1x/dia (se pode estrogênio). Alternativa: medroxiprogesterona 10 mg 8/8 h.' },
+    { med:'Ondansetrona 4 mg', dose:'4 mg', via:'EV', obs:'De 8/8 h — o hormônio em dose alta dá náusea.' },
+    { med:'Dipirona 1 g', dose:'1 g (2 mL)', via:'EV', obs:'De 6/6 h, se dor.' },
+    { med:'Controles', dose:'SSVV de 4/4 h, contagem de absorventes', via:'—', obs:'Hemograma de 12/12 h nas primeiras 24 h.' }
+  ],
+  cuidados:['Beta-HCG negativo confirmado antes do hormônio.', 'Sem resposta em 24 h: balão de Foley intrauterino e curetagem com a ginecologia.', 'Adolescente: colher rastreio de von Willebrand antes do estrogênio.', 'Profilaxia de TEV mecânica (não farmacológica enquanto sangra).', 'Alta com esquema de manutenção por 3 meses e ferro oral.'] },
 
 { id:'i-dpoc', grupo:'Respiratório', nome:'Exacerbação de DPOC', sub:'Internado por dispneia e hipoxemia', conduta:'resp/dpoc-exacerbacao',
   itens:[

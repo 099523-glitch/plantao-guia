@@ -7,11 +7,11 @@ dependência externa: abre o `index.html` e funciona — inclusive **sem interne
 
 | | |
 |---|---|
-| Condutas | **135** em 12 áreas e **63 subpastas**, todas com fluxograma, red flags, doses, "não fazer" e destino |
-| Queixas | **16** portas de entrada por sintoma, para quem ainda não tem diagnóstico |
-| Prescrições | **Porta** (na unidade) · **Internados** (17 prescrições de enfermaria, `FERR_INTERNADOS`) · **Casa** (receita + orientações) — o contexto decide o que se copia |
-| Pediatria | **37** medicações com dose por quilo calculada e faixa etária, mais **15** vetos por idade |
-| Antibióticos | **39** esquemas empíricos, cada doença como uma linha de Prescrições (grupos "Antibióticos · sítio"); `#atb/<sítio>` abre Prescrições já filtrada |
+| Condutas | **204** em 15 áreas e **83 subpastas**, todas com fluxograma, red flags, doses, "não fazer" e destino |
+| Queixas | **45** portas (35 de adulto, 10 pediátricas) de entrada por sintoma, para quem ainda não tem diagnóstico |
+| Prescrições | **Porta** (na unidade) · **Internados** (19 prescrições de enfermaria, `FERR_INTERNADOS`) · **Casa** (receita + orientações) — o contexto decide o que se copia |
+| Pediatria | **84** medicações com dose por quilo calculada e faixa etária, e **24 receitas pediátricas** que saem em mL pelo peso digitado (`js/receitas-pediatria.js`), mais **15** vetos por idade |
+| Antibióticos | **42** esquemas empíricos, cada doença como uma linha de Prescrições (grupos "Antibióticos · sítio"); `#atb/<sítio>` abre Prescrições já filtrada |
 | Escores e calculadoras | **41** escores em 11 ramos + 7 contas do plantão |
 | Doses de emergência | índice A–Z de drogas: **bulário curado** (`js/bulario-dados.js`, ~90 verbetes com apresentação brasileira, diluição de bancada, dose por indicação, ajuste renal/hepático, contraindicações) + usos derivados das condutas; `#droga/<slug>` abre o verbete |
 | Eletrólitos | **7** ferramentas (K⁺, Na⁺ Adrogué-Madias, HCO₃⁻, Mg²⁺, Na corrigido, hipocalcemia, Ca corrigido): valor entra, diluição e vazão saem |
@@ -161,8 +161,8 @@ inventa um nome. Enquanto não houver responsável registrado e a caixa
 "conteúdo revisado clinicamente" marcada, toda conduta exibe o aviso de
 conteúdo não validado.
 
-> **Estado atual: sem revisão clínica.** As 135 condutas, 16 queixas, 104
-> quadros, 39 esquemas de antibiótico, 41 escores e 37 medicações pediátricas
+> **Estado atual: sem revisão clínica.** As 204 condutas, 45 queixas, 135
+> quadros, 42 esquemas de antibiótico, 41 escores e 84 medicações pediátricas
 > foram redigidos a partir das diretrizes citadas, com apoio de IA, e **não
 > passaram por revisão médica**. Isso precisa acontecer antes de qualquer
 > distribuição.

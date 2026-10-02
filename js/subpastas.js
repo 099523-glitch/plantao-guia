@@ -32,11 +32,11 @@ const SUBPASTAS = {
   ],
 
   neuro: [
-    { id:'avc',             nome:'Doença cerebrovascular',       ids:['avc-isquemico','avc-hemorragico'] },
+    { id:'avc',             nome:'Doença cerebrovascular',       ids:['avc-isquemico','avc-hemorragico','ait'] },
     { id:'consciencia',     nome:'Alteração de consciência',     ids:['rebaixamento-consciencia','delirium'] },
     { id:'convulsao',       nome:'Crise convulsiva',             ids:['status-epilepticus'] },
     { id:'cefaleia-hic',    nome:'Cefaleia e pressão intracraniana', ids:['cefaleia','hipertensao-intracraniana'] },
-    { id:'medula',          nome:'Déficit focal e medula',       ids:['compressao-medular','fraqueza-aguda'] },
+    { id:'medula',          nome:'Déficit focal e medula',       ids:['compressao-medular','fraqueza-aguda','paralisia-facial'] },
     { id:'tontura',         nome:'Tontura',                      ids:['vertigem'] }
   ],
 
@@ -45,13 +45,14 @@ const SUBPASTAS = {
     { id:'hemorragia',      nome:'Hemorragia digestiva',         ids:['hda','hdb'] },
     { id:'biliar',          nome:'Pâncreas e via biliar',        ids:['pancreatite','colecistite-colangite'] },
     { id:'figado',          nome:'Fígado',                       ids:['cirrose-descompensada'] },
-    { id:'diarreia',        nome:'Diarreia',                     ids:['diarreia-aguda'] }
+    { id:'diarreia',        nome:'Diarreia',                     ids:['diarreia-aguda'] },
+    { id:'esofago-anus',    nome:'Esôfago e região anal',        ids:['corpo-estranho-esofago','doenca-perianal'] }
   ],
 
   infecto: [
     { id:'sepse-neutro',    nome:'Sepse e neutropenia',          ids:['sepse','neutropenia-febril'] },
-    { id:'febril',          nome:'Síndrome febril',              ids:['sindrome-febril','dengue'] },
-    { id:'pele',            nome:'Pele e partes moles',          ids:['celulite-erisipela','fasciite-necrotizante'] },
+    { id:'febril',          nome:'Síndrome febril',              ids:['sindrome-febril','dengue','exantematicas'] },
+    { id:'pele',            nome:'Pele e partes moles',          ids:['celulite-erisipela','fasciite-necrotizante','abscesso-pele'] },
     { id:'snc',             nome:'Sistema nervoso central',      ids:['meningite'] },
     { id:'urinaria',        nome:'Trato urinário',               ids:['itu'] },
     { id:'cardio-resp',     nome:'Coração e pulmão',             ids:['endocardite','tuberculose-ps'] },
@@ -69,8 +70,8 @@ const SUBPASTAS = {
     { id:'funcao-renal',    nome:'Função renal',                 ids:['lesao-renal-aguda','indicacao-dialise','rabdomiolise'] },
     { id:'potassio',        nome:'Potássio',                     ids:['hipercalemia','hipocalemia'] },
     { id:'sodio',           nome:'Sódio',                        ids:['hiponatremia','hipernatremia'] },
-    { id:'calcio-ab',       nome:'Cálcio e ácido-base',          ids:['calcio','acido-base'] },
-    { id:'urologia',        nome:'Trato urinário',               ids:['colica-renal','retencao-urinaria'] }
+    { id:'calcio-ab',       nome:'Cálcio, magnésio e ácido-base', ids:['calcio','hipomagnesemia','acido-base'] },
+    { id:'urologia',        nome:'Trato urinário e escroto',     ids:['colica-renal','retencao-urinaria','escroto-agudo'] }
   ],
 
   psiq: [
@@ -83,29 +84,52 @@ const SUBPASTAS = {
   trauma: [
     { id:'inicial',         nome:'Atendimento inicial',          ids:['atendimento-trauma'] },
     { id:'segmentos',       nome:'Trauma por segmento',          ids:['tce','trauma-toracico','trauma-abdominal','trauma-raquimedular'] },
-    { id:'ortopedia',       nome:'Ortopedia',                    ids:['fratura-exposta','luxacoes','sindrome-compartimental','entorse-tornozelo'] },
-    { id:'partes-moles',    nome:'Pele e partes moles',          ids:['queimaduras','ferimentos-sutura','mordeduras'] }
+    { id:'ortopedia',       nome:'Ortopedia',                    ids:['fraturas-comuns','fratura-exposta','luxacoes','sindrome-compartimental','entorse-tornozelo'] },
+    { id:'partes-moles',    nome:'Pele e partes moles',          ids:['queimaduras','ferimentos-sutura','mordeduras'] },
+    { id:'ambientais',      nome:'Calor, água e eletricidade',   ids:['hipertermia','afogamento','choque-eletrico'] }
   ],
 
   pedia: [
-    { id:'emerg-pedia',     nome:'Emergência pediátrica',        ids:['pcr-pediatrica','crianca-gravemente-doente','sepse-pediatrica'] },
-    { id:'resp-pedia',      nome:'Respiratório',                 ids:['bronquiolite','asma-pedia','laringite','ivas-pedia'] },
-    { id:'digestivo-pedia', nome:'Desidratação e digestivo',     ids:['desidratacao-crianca','gastroenterite-pedia'] },
-    { id:'febre-convulsao', nome:'Febre e convulsão',            ids:['febre-sem-foco','convulsao-febril'] },
+    { id:'emerg-pedia',     nome:'Emergência pediátrica',        ids:['pcr-pediatrica','crianca-gravemente-doente','sepse-pediatrica','anafilaxia-pedia','cad-pedia'] },
+    { id:'resp-pedia',      nome:'Respiratório',                 ids:['bronquiolite','asma-pedia','laringite','ivas-pedia','pac-pedia','coqueluche'] },
+    { id:'febre-convulsao', nome:'Febre e convulsão',            ids:['febre-sem-foco','febre-petequias','itu-pedia','convulsao-febril','estado-mal-pedia'] },
+    { id:'infec-pedia',     nome:'Febre prolongada e infecções', ids:['kawasaki','dengue-pedia','celulite-periorbitaria'] },
+    { id:'digestivo-pedia', nome:'Hidratação e digestivo',       ids:['desidratacao-crianca','hidratacao-manutencao','gastroenterite-pedia','dor-abdominal-pedia','lactente-gastro'] },
+    { id:'acidentes-pedia', nome:'Trauma, corpo estranho e ingestão', ids:['tce-pedia','corpo-estranho-pedia','ingestao-acidental','claudicacao'] },
+    { id:'rn',              nome:'Recém-nascido',                ids:['rn-ps'] },
     { id:'protecao',        nome:'Proteção da criança',          ids:['maus-tratos'] }
   ],
   obstetricia: [
     { id:'hipertensao-gestacao',  nome:'Hipertensão na gestação',      ids:['pre-eclampsia'] },
-    { id:'hemorragia-obstetrica', nome:'Hemorragia obstétrica',        ids:['sangramento-gestacao','hemorragia-pos-parto'] }
+    { id:'hemorragia-obstetrica', nome:'Hemorragia obstétrica',        ids:['sangramento-gestacao','hemorragia-pos-parto'] },
+    { id:'gestacao-parto',        nome:'Gestação e parto',             ids:['hiperemese','rpmo','parto-iminente'] },
+    { id:'dor-pelvica',           nome:'Dor pélvica aguda',            ids:['torcao-anexial','cisto-ovariano-roto','dip','dismenorreia'] },
+    { id:'sangramento-gineco',    nome:'Sangramento fora da gestação', ids:['sangramento-uterino-anormal'] },
+    { id:'infeccoes-genitais',    nome:'Corrimento, IST e vulva',      ids:['corrimento-vaginal','ulcera-genital','bartholinite'] },
+    { id:'violencia-contracepcao', nome:'Violência sexual e contracepção', ids:['violencia-sexual','contracepcao-emergencia','complicacoes-diu'] },
+    { id:'mama-graves',           nome:'Mama, choque tóxico e reprodução', ids:['mastite','choque-toxico','hiperestimulacao-ovariana'] }
+  ],
+
+  orl: [
+    { id:'olho',            nome:'Olho',                         ids:['olho-vermelho','trauma-ocular'] },
+    { id:'nariz-garganta',  nome:'Nariz e garganta',             ids:['epistaxe','faringoamigdalite'] },
+    { id:'ouvido',          nome:'Ouvido e corpo estranho',      ids:['otite-adulto','corpo-estranho-orl'] }
+  ],
+
+  hemato: [
+    { id:'anticoagulacao',  nome:'Anticoagulação e sangramento', ids:['anticoagulado'] },
+    { id:'falciforme',      nome:'Doença falciforme',            ids:['anemia-falciforme'] },
+    { id:'onco',            nome:'Urgências oncológicas',        ids:['lise-tumoral','veia-cava-superior'] }
   ],
 
   toxico: [
     { id:'geral',           nome:'Abordagem geral',              ids:['intoxicado-abordagem'] },
-    { id:'medicamentos',    nome:'Medicamentos',                 ids:['paracetamol','triciclicos','benzo-opioide'] },
+    { id:'medicamentos',    nome:'Medicamentos',                 ids:['paracetamol','triciclicos','benzo-opioide','digoxina','bb-bcc'] },
+    { id:'domesticos',      nome:'Produtos domésticos e raticidas', ids:['causticos','cumarinicos'] },
     { id:'drogas',          nome:'Álcool e drogas',              ids:['alcool-metanol','cocaina-estimulantes'] },
     { id:'gases',           nome:'Agrotóxicos e gases',          ids:['organofosforado','monoxido-carbono'] },
     { id:'sindromes',       nome:'Síndromes por fármaco',        ids:['sindrome-serotoninergica'] },
-    { id:'animais',         nome:'Animais peçonhentos',          ids:['acidente-ofidico','acidente-escorpiao-aranha'] }
+    { id:'animais',         nome:'Animais peçonhentos',          ids:['acidente-ofidico','acidente-escorpiao-aranha','abelhas','lonomia','animais-aquaticos'] }
   ],
 
   proced: [
